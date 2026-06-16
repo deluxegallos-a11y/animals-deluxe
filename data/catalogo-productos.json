@@ -1,0 +1,440 @@
+{
+  "store": {
+    "name": "Animals Deluxe",
+    "country": "Colombia",
+    "currency": "COP",
+    "sales_channel": "WhatsApp contraentrega (pago al recibir)",
+    "whatsapp": "57XXXXXXXXXX",
+    "voice": "Vendedor experto en gallos de combate. Tono cercano, seguro, dopaminérgico. Usa StoryBrand: el cliente es el héroe, Animals Deluxe es el guía.",
+    "compliance": "Lenguaje de bienestar y rendimiento. NO prometer curar enfermedades."
+  },
+  "categories": [
+    { "id": "energia",         "name": "Energizantes & Doping",        "color": "#FF4D2E" },
+    { "id": "vitaminas",       "name": "Vitaminas & Multivitamínicos", "color": "#22B8FF" },
+    { "id": "desparasitantes", "name": "Desparasitantes & Purgantes",  "color": "#2BE36B" },
+    { "id": "respiratorio",    "name": "Respiratorio",                 "color": "#1FE0D0" },
+    { "id": "cuidado",         "name": "Piel, Pluma & Cuidado",        "color": "#B061FF" },
+    { "id": "suplementos",     "name": "Suplementos en Polvo",         "color": "#FFB02E" },
+    { "id": "entrenamiento",   "name": "Entrenamiento & Recuperación", "color": "#FF7A1A" },
+    { "id": "pollos",          "name": "Pollos & Levante",             "color": "#FFD23D" },
+    { "id": "perros",          "name": "Perros",                       "color": "#8A6BFF" },
+    { "id": "caballos",        "name": "Caballos",                     "color": "#D8A24A" }
+  ],
+  "products": [
+    {
+      "slug": "energy-cobra", "name": "Energy Cobra", "category": "energia", "audience": "Gallos de combate y exhibición",
+      "origin": "us", "priceCOP": 70000, "presentations": [{ "label": "30 ml · ~40 dosis", "priceCOP": 70000 }],
+      "image": "energy-cobra.jpg", "badges": ["Original", "Best Choice", "Fórmula americana"],
+      "tagline": "El doping americano que despierta la fiera justo antes del juego.",
+      "shortDesc": "Doping en gotas de calidad americana: energía instantánea, resistencia y oxigenación para el momento clave.",
+      "benefits": ["Energía instantánea", "Más oxigenación sanguínea", "Estado de alerta y reflejos", "Más resistencia", "No genera adicción"],
+      "usage": "6 a 8 gotas 1 hora antes del juego (4 gotas si es la primera vez). Acostumbrar de forma progresiva.",
+      "pitch": "Para el gallo que entrena duro pero llega sin chispa al careo: Energy Cobra lo enciende, lo oxigena y le afila los reflejos en el momento exacto. 40 dosis. Contraentrega."
+    },
+    {
+      "slug": "atp-fighter-rooster", "name": "ATP Fighter Rooster", "category": "energia", "audience": "Gallos de combate",
+      "origin": "us", "priceCOP": 70000, "presentations": [{ "label": "100 ml", "priceCOP": 70000 }],
+      "image": "atp-fighter-rooster.jpg", "badges": ["Original", "Fórmula americana"],
+      "tagline": "Energizante de fórmula americana, listo para usar.",
+      "shortDesc": "Energía continua, fuerza estable y carga muscular con fórmula americana lista para usar.",
+      "benefits": ["Energía continua", "Fuerza estable", "Vitalidad diaria", "Carga muscular"],
+      "usage": "Según dosis recomendada por presentación. Fórmula lista para usar.",
+      "pitch": "Energía pareja y carga muscular todos los días, sin altibajos. Fórmula americana lista para usar."
+    },
+    {
+      "slug": "atp-rooster-gold", "name": "ATP Rooster Gold", "category": "energia", "audience": "Gallos de combate",
+      "origin": "us", "priceCOP": 75000, "presentations": [{ "label": "50 ml", "priceCOP": 75000 }],
+      "image": "atp-rooster-gold.jpg", "badges": ["Original", "Premium"],
+      "tagline": "Energizante premium: energía rápida, concentración y resistencia.",
+      "shortDesc": "All-energy: energía rápida, más concentración y resistencia en el momento clave.",
+      "benefits": ["Energía rápida", "Concentración", "Resistencia"],
+      "usage": "Aplica la dosis recomendada antes del juego.",
+      "pitch": "El energizante premium para foco y resistencia en el momento clave."
+    },
+    {
+      "slug": "black-rooster", "name": "Black Rooster", "category": "energia", "audience": "Gallos de combate",
+      "origin": "us", "priceCOP": 70000, "presentations": [{ "label": "20 ml", "priceCOP": 70000 }],
+      "image": "black-rooster.jpg", "badges": ["Best Choice", "Fórmula americana"],
+      "tagline": "Original energy doping: el energizante ideal para tus ejemplares.",
+      "shortDesc": "Energía, resistencia y fortaleza con calidad y fórmula original americana.",
+      "benefits": ["Energía", "Resistencia", "Fortaleza"],
+      "usage": "6 a 8 gotas 2 horas antes del juego.",
+      "pitch": "Energía, resistencia y fortaleza con fórmula original americana. El energizante ideal pre-juego."
+    },
+    {
+      "slug": "rooster-xt-impulsor", "name": "Rooster XT Impulsor", "category": "energia", "audience": "Gallos de combate",
+      "origin": "us", "priceCOP": 70000, "presentations": [{ "label": "20 ml", "priceCOP": 70000 }],
+      "image": "rooster-xt-impulsor.jpg", "badges": ["Best Choice", "Fórmula americana"],
+      "tagline": "American doping for cocks: energía, resistencia y fortaleza.",
+      "shortDesc": "El energizante ideal para tus ejemplares con calidad y fórmula original americana.",
+      "benefits": ["Energía", "Resistencia", "Fortaleza"],
+      "usage": "6 a 8 gotas 2 horas antes del juego.",
+      "pitch": "Impulso de energía, resistencia y fortaleza con calidad americana."
+    },
+    {
+      "slug": "dragon-mamba", "name": "Dragon Mamba", "category": "energia", "audience": "Gallos de exhibición",
+      "origin": "br", "priceCOP": 90000, "presentations": [{ "label": "10 ml", "priceCOP": 90000 }],
+      "image": "dragon-mamba.jpg", "badges": ["Premium", "Importado"],
+      "tagline": "El mejor doping importado: vitalidad, resistencia, energía y movilidad.",
+      "shortDesc": "Doping especial para gallos de exhibición. No combinar con otros medicamentos.",
+      "benefits": ["Vitalidad", "Resistencia", "Energía", "Movilidad"],
+      "usage": "0.2 ml por ejemplar. No utilizar otro medicamento que interfiera.",
+      "pitch": "Doping importado premium para exhibición: vitalidad, resistencia, energía y movilidad."
+    },
+    {
+      "slug": "red-copping-mamba", "name": "Red Copping Mamba", "category": "energia", "audience": "Gallos de exhibición",
+      "origin": "us", "priceCOP": 90000, "presentations": [{ "label": "10 ml", "priceCOP": 90000 }],
+      "image": "red-copping-mamba.jpg", "badges": ["Exclusivo", "Contiene ATP"],
+      "tagline": "Energizante para gallos antes del juego — contiene ATP.",
+      "shortDesc": "Energía rápida, estado de alerta y mejor movimiento en el juego.",
+      "benefits": ["Energía rápida", "Estado de alerta", "Mejor movimiento"],
+      "usage": "Aplica la dosis recomendada antes del juego.",
+      "pitch": "Energía rápida y estado de alerta con ATP, justo antes del juego."
+    },
+    {
+      "slug": "super-energy-77", "name": "Super Energy 77 Dopping", "category": "energia", "audience": "Gallos de exhibición",
+      "origin": "us", "priceCOP": 80000, "presentations": [{ "label": "Gotero", "priceCOP": 80000 }],
+      "image": "super-energy-77.jpg", "badges": ["Exclusivo"],
+      "tagline": "Energizante para gallos antes del juego.",
+      "shortDesc": "Más energía, más rendimiento y mejor tiempo de reacción.",
+      "benefits": ["Más energía", "Más rendimiento", "Mejor tiempo de reacción"],
+      "usage": "Aplica la dosis recomendada antes del juego.",
+      "pitch": "Más energía y mejor tiempo de reacción para el momento del juego."
+    },
+    {
+      "slug": "super-energizante-b15", "name": "Super Energizante B15 5500 Ultra", "category": "energia", "audience": "Gallos de exhibición",
+      "origin": "us", "priceCOP": 85000, "presentations": [{ "label": "30 ml", "priceCOP": 85000 }],
+      "image": "super-energizante-b15.jpg", "badges": ["Original", "Fórmula americana"],
+      "tagline": "Energizante USA: rendimiento, alerta y oxigenación en juego.",
+      "shortDesc": "Mejora el rendimiento, mantiene el estado de alerta y la oxigenación en juego.",
+      "benefits": ["Más rendimiento", "Estado de alerta", "Oxigenación"],
+      "usage": "Aplica la dosis recomendada antes del juego.",
+      "pitch": "Rendimiento, alerta y oxigenación superiores en el ruedo. Fórmula USA."
+    },
+    {
+      "slug": "american-rooster-fury", "name": "American Rooster Fury", "category": "energia", "audience": "Gallos de combate",
+      "origin": "us", "priceCOP": 150000, "presentations": [{ "label": "Frasco", "priceCOP": 150000 }],
+      "image": "american-rooster-fury.jpg", "badges": ["Premium", "Fórmula americana"],
+      "tagline": "Original doping inyectable: energía, resistencia y agilidad.",
+      "shortDesc": "Doping inyectable que genera estimulación y oxigenación. Uno de los mejores a nivel mundial.",
+      "benefits": ["Energía", "Resistencia", "Agilidad", "Sin contraindicaciones reportadas"],
+      "usage": "0.3 ml con jeringa de insulina en la pechuga, 3 días antes de la pelea.",
+      "pitch": "Doping inyectable de élite mundial: estimulación y oxigenación máximas. Se aplica 3 días antes."
+    },
+    {
+      "slug": "ultra-gallo", "name": "Ultra Gallo (Vitamina Inyectable)", "category": "energia", "audience": "Gallos en preparación",
+      "origin": "co", "priceCOP": 120000, "presentations": [{ "label": "Frasco", "priceCOP": 120000 }],
+      "image": "ultra-gallo.jpg", "badges": ["Exclusivo"],
+      "tagline": "Vitamina inyectable para gallos en preparación.",
+      "shortDesc": "Aumento de masa muscular, regula el PH de la sangre, mayor resistencia y fortaleza.",
+      "benefits": ["Masa muscular", "Regula el PH de la sangre", "Resistencia y fortaleza"],
+      "usage": "Aplica la dosis recomendada para la etapa de preparación.",
+      "pitch": "Inyectable de preparación: masa muscular, regula el PH y sube la resistencia."
+    },
+    {
+      "slug": "rooster-booster", "name": "Rooster Booster", "category": "vitaminas", "audience": "Gallos finos",
+      "origin": "co", "priceCOP": 80000, "presentations": [{ "label": "100 ml", "priceCOP": 80000 }],
+      "image": "rooster-booster.jpg", "badges": ["Original"],
+      "tagline": "Activación total, enfoque máximo y alto rendimiento.",
+      "shortDesc": "Vitamina exclusiva para gallos: activación total, enfoque y rápida absorción.",
+      "benefits": ["Activación total", "Enfoque máximo", "Alto rendimiento", "Rápida absorción"],
+      "usage": "Dosis recomendada según la etapa del ejemplar.",
+      "pitch": "Vitamina que activa, enfoca y rinde — con absorción rápida. Para gallos finos."
+    },
+    {
+      "slug": "nordic-rooster-vitamins", "name": "Nordic Rooster Vitamins", "category": "vitaminas", "audience": "Gallos finos",
+      "origin": "us", "priceCOP": 80000, "presentations": [{ "label": "100 ml", "priceCOP": 80000 }],
+      "image": "nordic-rooster-vitamins.jpg", "badges": ["Original", "Fórmula americana"],
+      "tagline": "Vitamina completa para gallos, fórmula americana.",
+      "shortDesc": "Mejor desarrollo, más recuperación, vitalidad y musculatura.",
+      "benefits": ["Mejor desarrollo", "Recuperación", "Vitalidad", "Musculatura"],
+      "usage": "Dosis recomendada según la etapa.",
+      "pitch": "Desarrollo, recuperación, vitalidad y músculo en una sola vitamina americana."
+    },
+    {
+      "slug": "the-avian-pro", "name": "The Avian Pro", "category": "vitaminas", "audience": "Gallos de entrenamiento y exhibición",
+      "origin": "us", "priceCOP": 80000, "presentations": [{ "label": "100 tabletas", "priceCOP": 80000 }],
+      "image": "the-avian-pro.jpg", "badges": ["Original", "Estándares americanos"],
+      "tagline": "Vitaminas y minerales con biodisponibilidad superior.",
+      "shortDesc": "Multivitamínico con balance ideal de vitaminas y minerales y máxima absorción.",
+      "benefits": ["Balance perfecto", "Máxima absorción", "Sistema inmune"],
+      "usage": "1 tableta diaria por ejemplar. Todas las etapas.",
+      "pitch": "El multivitamínico con balance y absorción superior. 1 tableta diaria, todas las etapas."
+    },
+    {
+      "slug": "vitalmin-rooster", "name": "Vitalmin Rooster", "category": "vitaminas", "audience": "Gallos crestones / todas las etapas",
+      "origin": "us", "priceCOP": 80000, "presentations": [{ "label": "300 caps", "priceCOP": 80000 }],
+      "image": "vitalmin-rooster.jpg", "badges": ["Original", "Fórmula americana"],
+      "tagline": "Multivitamina para el desarrollo óptimo del gallo fino.",
+      "shortDesc": "Más masa muscular, mejora el apetito, vitaminas, minerales y aminoácidos.",
+      "benefits": ["Más masa muscular", "Mejora el apetito", "Calidad de pluma", "Sistema inmune"],
+      "usage": "1 tableta diaria por ejemplar.",
+      "pitch": "Una de las vitaminas más completas: músculo, apetito, pluma e inmunidad. 300 cápsulas."
+    },
+    {
+      "slug": "dragon-rooster", "name": "Dragon Rooster", "category": "vitaminas", "audience": "Gallos de combate",
+      "origin": "us", "priceCOP": 80000, "presentations": [{ "label": "100 tabletas", "priceCOP": 80000 }],
+      "image": "dragon-rooster.jpg", "badges": ["Original", "Fórmula americana"],
+      "tagline": "Multivitamínico americano para el ave fight.",
+      "shortDesc": "Complejo multivitamínico con vitaminas, minerales y aminoácidos.",
+      "benefits": ["Complejo completo", "Desarrollo óptimo", "Vitalidad"],
+      "usage": "1 tableta diaria por ejemplar.",
+      "pitch": "Complejo multivitamínico completo para el desarrollo óptimo del ave fight."
+    },
+    {
+      "slug": "champions-choice", "name": "Champions Choice", "category": "vitaminas", "audience": "Gallos de entrenamiento y exhibición",
+      "origin": "co", "priceCOP": 70000, "presentations": [{ "label": "Frasco gotas", "priceCOP": 70000 }],
+      "image": "champions-choice.jpg", "badges": ["Multivitamínico"],
+      "tagline": "Vitamina en gotas: aporte completo de complejo vitamínico.",
+      "shortDesc": "Vitamina en gotas para gallos fight con aporte completo de complejo vitamínico.",
+      "benefits": ["Complejo vitamínico", "En gotas", "Para campeones"],
+      "usage": "Dosis recomendada en gotas.",
+      "pitch": "Aporte vitamínico completo en gotas, fácil de administrar. Para campeones."
+    },
+    {
+      "slug": "vitapower", "name": "VitaPower", "category": "vitaminas", "audience": "Gallos finos (desde 5 meses)",
+      "origin": "us", "priceCOP": 25000, "presentations": [{ "label": "10 ml", "priceCOP": 25000 }],
+      "image": "vitapower.jpg", "badges": ["Fórmula americana", "Desde $25.000"],
+      "tagline": "Multivitamínico en gotas para preparar a tus ejemplares.",
+      "shortDesc": "Complejo multivitamínico completo con minerales, fácil absorción y gotero portátil.",
+      "benefits": ["Multi completo", "Fácil absorción", "Gotero portátil"],
+      "usage": "6 gotas diarias de lunes a viernes, desde los 5 meses.",
+      "pitch": "Multivitamínico completo en gotas, gotero de bolsillo. Desde $25.000."
+    },
+    {
+      "slug": "cyanomax-b12-5500", "name": "CyanoMax B12 5500", "category": "vitaminas", "audience": "Gallos de combate",
+      "origin": "us", "priceCOP": 60000, "presentations": [{ "label": "10 ml", "priceCOP": 60000 }],
+      "image": "cyanomax-b12-5500.jpg", "badges": ["Fórmula americana"],
+      "tagline": "B12 5500: fortalecimiento y masa muscular.",
+      "shortDesc": "Vitamina B12 para fortalecimiento, masa muscular y alto rendimiento.",
+      "benefits": ["Fortalecimiento", "Masa muscular", "Alto rendimiento"],
+      "usage": "Aplica la dosis recomendada de B12.",
+      "pitch": "B12 concentrada para fuerza y masa muscular. Fórmula americana."
+    },
+    {
+      "slug": "rooscer-b12-complete", "name": "Rooscer B12 Complete", "category": "vitaminas", "audience": "Gallos de combate",
+      "origin": "br", "priceCOP": 60000, "presentations": [{ "label": "30 ml", "priceCOP": 60000 }],
+      "image": "rooscer-b12-complete.jpg", "badges": ["Original", "Importado"],
+      "tagline": "B12 para gallos: músculo activo y absorción óptima.",
+      "shortDesc": "Oxigenación, recuperación, vigor y fortalecimiento con absorción óptima.",
+      "benefits": ["Oxigenación", "Recuperación profunda", "Carga muscular", "Absorción óptima"],
+      "usage": "Aplica la dosis recomendada de B12.",
+      "pitch": "B12 importada: oxigena, recupera y carga el músculo con absorción óptima."
+    },
+    {
+      "slug": "gallo-purga-plus", "name": "Gallo Purga Plus", "category": "desparasitantes", "audience": "Aves mayores a 4 meses",
+      "origin": "co", "priceCOP": 45000, "presentations": [{ "label": "100 pastillas", "priceCOP": 45000 }],
+      "image": "gallo-purga-plus.jpg", "badges": ["Best Choice", "Non Toxic"],
+      "tagline": "Purgante original: elimina parásitos internos y limpia.",
+      "shortDesc": "Elimina parásitos internos, remueve y limpia, mejora el flujo intestinal.",
+      "benefits": ["Elimina parásitos internos", "Remueve y limpia", "Flujo intestinal", "Acondiciona el estómago"],
+      "usage": "1 pastilla en aves mayores a 4 meses.",
+      "pitch": "Purgante original: limpia parásitos internos y acondiciona el estómago. 100 pastillas."
+    },
+    {
+      "slug": "super-cobra-500", "name": "Super Cobra 500", "category": "desparasitantes", "audience": "Gallos",
+      "origin": "co", "priceCOP": 40000, "presentations": [{ "label": "Frasco", "priceCOP": 40000 }],
+      "image": "super-cobra-500.jpg", "badges": ["Uso veterinario"],
+      "tagline": "Excelente desparasitante: elimina todo tipo de lombriz.",
+      "shortDesc": "Fortalece las paredes estomacales, elimina lombrices y previene parches o huecos estomacales.",
+      "benefits": ["Elimina lombriz", "Fortalece paredes estomacales", "Previene parches"],
+      "usage": "Aplica la dosis recomendada para desparasitar.",
+      "pitch": "Desparasitante potente que elimina lombriz y fortalece el estómago."
+    },
+    {
+      "slug": "rooster-and-worm", "name": "Rooster And Worm", "category": "desparasitantes", "audience": "Gallos de exhibición",
+      "origin": "us", "priceCOP": 40000, "presentations": [{ "label": "Frasco", "priceCOP": 40000 }],
+      "image": "rooster-and-worm.jpg", "badges": ["Fórmula americana"],
+      "tagline": "Desparasitante de rápida absorción.",
+      "shortDesc": "Remueve, desparasita y elimina con rápida absorción.",
+      "benefits": ["Remueve", "Desparasita", "Rápida absorción"],
+      "usage": "Aplica la dosis recomendada.",
+      "pitch": "Desparasita y remueve rápido. Fórmula americana."
+    },
+    {
+      "slug": "purge-beach", "name": "Purge Beach", "category": "desparasitantes", "audience": "Gallos de todas las edades",
+      "origin": "us", "priceCOP": 25000, "presentations": [{ "label": "10 ml", "priceCOP": 25000 }],
+      "image": "purge-beach.jpg", "badges": ["Calidad norteamericana", "Desde $25.000"],
+      "tagline": "El mejor purgante para gallos, calidad norteamericana.",
+      "shortDesc": "Ayuda a expulsar lombrices, gusanos redondos, tenias y protozoos. Cuida el intestino.",
+      "benefits": ["Expulsa parásitos", "Cuida el intestino", "Mejor conversión"],
+      "usage": "Dosis recomendada según la edad del ave.",
+      "pitch": "Purgante norteamericano que expulsa lombrices, tenias y protozoos. Desde $25.000."
+    },
+    {
+      "slug": "cure-chest-rooster", "name": "Cure Chest for Rooster", "category": "respiratorio", "audience": "Gallos con problemas respiratorios",
+      "origin": "co", "priceCOP": 35000,
+      "presentations": [{ "label": "Gotero", "priceCOP": 35000 }, { "label": "60 cápsulas", "priceCOP": 45000 }],
+      "image": "cure-chest-rooster.jpg", "badges": ["Best Choice", "Non Toxic"],
+      "tagline": "Para problemas respiratorios: ayuda a oxigenar.",
+      "shortDesc": "Ayuda a oxigenar pulmones, controla la mucosa interna, mitiga y previene malestares.",
+      "benefits": ["Oxigena pulmones", "Controla la mucosa", "Previene malestares"],
+      "usage": "Gotero: dosis en gotas. Cápsulas: 1 cápsula diaria por 3 días.",
+      "pitch": "Respiración limpia: oxigena pulmones y controla la mucosa. Gotero o cápsulas."
+    },
+    {
+      "slug": "clear-chicks", "name": "Clear Chicks", "category": "respiratorio", "audience": "Gallos y pollos",
+      "origin": "us", "priceCOP": 25000, "presentations": [{ "label": "10 ml", "priceCOP": 25000 }],
+      "image": "clear-chicks.jpg", "badges": ["Exclusivo", "Desde $25.000"],
+      "tagline": "Acaba con los mocos y problemas respiratorios.",
+      "shortDesc": "Para dificultad para respirar, sibilancias, secreción nasal, estornudos y letargo.",
+      "benefits": ["Mejor respiración", "Menos secreción", "Más energía"],
+      "usage": "Dosis recomendada en gotas.",
+      "pitch": "Acaba con mocos, sibilancias y estornudos. Tu gallo respira y rinde. Desde $25.000."
+    },
+    {
+      "slug": "plume-king-shampoo", "name": "Plume King Shampoo", "category": "cuidado", "audience": "Gallos finos",
+      "origin": "co", "priceCOP": 45000, "presentations": [{ "label": "1 litro", "priceCOP": 45000 }],
+      "image": "plume-king-shampoo.jpg", "badges": ["Premium"],
+      "tagline": "El shampoo para gallos: limpieza, brillo y desinfección.",
+      "shortDesc": "Limpieza, brillo en pluma, desinfecta y elimina ácaros y piojos.",
+      "benefits": ["Limpieza profunda", "Brillo en pluma", "Elimina ácaros y piojos"],
+      "usage": "Aplica como shampoo, masajea y enjuaga.",
+      "pitch": "Shampoo premium: pluma brillante, piel limpia y sin ácaros ni piojos. 1 litro."
+    },
+    {
+      "slug": "rooster-deluxe-shampoo", "name": "Rooster Deluxe Shampoo", "category": "cuidado", "audience": "Gallos y gallera",
+      "origin": "co", "priceCOP": 45000, "presentations": [{ "label": "1 litro", "priceCOP": 45000 }],
+      "image": "rooster-deluxe-shampoo.jpg", "badges": ["Best Choice", "Non Toxic"],
+      "tagline": "Limpieza profunda y espumosa, elimina ácaros.",
+      "shortDesc": "Elimina suciedad profunda, desinfecta, humecta y previene problemas en piel o plumas.",
+      "benefits": ["Limpieza profunda", "Humecta y protege", "Elimina ácaros"],
+      "usage": "Aplica como shampoo, masajea y enjuaga.",
+      "pitch": "Shampoo espumoso que limpia a fondo, humecta y elimina ácaros del gallo y la gallera."
+    },
+    {
+      "slug": "red-rooster", "name": "Red Rooster (Enrojecedor)", "category": "cuidado", "audience": "Gallos",
+      "origin": "co", "priceCOP": 50000,
+      "presentations": [{ "label": "1 litro", "priceCOP": 50000 }, { "label": "2 litros", "priceCOP": 90000 }, { "label": "4 litros", "priceCOP": 160000 }],
+      "image": "red-rooster.jpg", "badges": ["Non Toxic"],
+      "tagline": "Frota para enrojecer: humecta, desinfecta y enrojece.",
+      "shortDesc": "Humecta y desinfecta la piel, previene hongos, mejora la circulación y enrojece de forma efectiva.",
+      "benefits": ["Enrojece efectivo", "Humecta y desinfecta", "Previene hongos"],
+      "usage": "Frota sobre la piel del ejemplar según necesidad.",
+      "pitch": "Enrojecedor que además humecta, desinfecta y previene hongos. 1, 2 o 4 litros."
+    },
+    {
+      "slug": "omega-3", "name": "Omega-3 for Rooster", "category": "cuidado", "audience": "Gallos de entrenamiento y exhibición",
+      "origin": "us", "priceCOP": 75000, "presentations": [{ "label": "100 soft gel", "priceCOP": 75000 }],
+      "image": "omega-3.jpg", "badges": ["Original"],
+      "tagline": "Omega-3 para gallos: piel y plumaje sano.",
+      "shortDesc": "Fundamental para piel y plumaje sano; aporta ácidos grasos, mejora circulación y oxigenación.",
+      "benefits": ["Piel y plumaje sano", "Salud cardiovascular", "Oxigenación", "Inmunidad y fertilidad"],
+      "usage": "Administra según la dosis por ejemplar.",
+      "pitch": "Omega-3 con krill y algas: pluma brillante, mejor circulación, corazón y fertilidad. 100 soft gel."
+    },
+    {
+      "slug": "rooster-smallpox", "name": "Rooster Smallpox", "category": "cuidado", "audience": "Gallos",
+      "origin": "co", "priceCOP": 35000, "presentations": [{ "label": "Roll-on", "priceCOP": 35000 }],
+      "image": "rooster-smallpox.jpg", "badges": ["Best Choice", "Non Toxic"],
+      "tagline": "Producto en roll para condiciones de viruela.",
+      "shortDesc": "Uso tópico en roll que ayuda a controlar y mejorar condiciones de viruela.",
+      "benefits": ["Uso tópico en roll", "Ayuda a controlar", "Fácil de aplicar"],
+      "usage": "Aplica tópicamente con el roll, dejando actuar sobre la zona.",
+      "pitch": "Roll-on tópico que ayuda a controlar y mejorar la viruela del gallo. Práctico."
+    },
+    {
+      "slug": "rooster-deluxe-supplement", "name": "Rooster Deluxe Supplement", "category": "suplementos", "audience": "Gallos crestones",
+      "origin": "co", "priceCOP": 45000,
+      "presentations": [{ "label": "400 gr", "priceCOP": 45000 }, { "label": "1 kg", "priceCOP": 80000 }, { "label": "3 kg", "priceCOP": 180000 }],
+      "image": "rooster-deluxe-supplement.jpg", "badges": ["Best Choice"],
+      "tagline": "Suplemento para crestones: todo lo que necesita.",
+      "shortDesc": "Aporta vitaminas y minerales, aumenta masa muscular, oxigenador, vitalidad y sistema inmune.",
+      "benefits": ["Vitaminas y minerales", "Masa muscular", "Oxigenador", "Sistema inmune"],
+      "usage": "1 a 2 dosis diarias por ejemplar.",
+      "pitch": "Suplemento completo para crestones: músculo, vitaminas, oxigenación e inmunidad. 400gr/1kg/3kg."
+    },
+    {
+      "slug": "rooster-deluxe-max", "name": "Rooster Deluxe Max", "category": "suplementos", "audience": "Gallos · etapa de cuido final",
+      "origin": "co", "priceCOP": 45000,
+      "presentations": [{ "label": "400 gr", "priceCOP": 45000 }, { "label": "1 kg", "priceCOP": 80000 }],
+      "image": "rooster-deluxe-max.jpg", "badges": ["Best Choice"],
+      "tagline": "Etapa de cuido final: calcio, fósforo, color, minerales y vitaminas.",
+      "shortDesc": "Para la etapa de cuido final: aporte de calcio, fósforo, color, minerales y vitaminas.",
+      "benefits": ["Calcio y fósforo", "Aporte de color", "Minerales y vitaminas"],
+      "usage": "1 a 2 dosis diarias en la etapa de cuido final.",
+      "pitch": "El suplemento de cuido final: calcio, fósforo y color para rematar la preparación."
+    },
+    {
+      "slug": "rooster-deluxe-chicks", "name": "Rooster Deluxe Chicks", "category": "suplementos", "audience": "Pollos de 0 a 3 meses (levante)",
+      "origin": "co", "priceCOP": 45000,
+      "presentations": [{ "label": "400 gr", "priceCOP": 45000 }, { "label": "1 kg", "priceCOP": 80000 }, { "label": "3 kg", "priceCOP": 180000 }],
+      "image": "rooster-deluxe-chicks.jpg", "badges": ["Best Choice"],
+      "tagline": "Crecimiento explosivo para la etapa de levante.",
+      "shortDesc": "Nutrición completa para levante (0–3 meses): vitaminas, minerales, base ósea y sistema inmune fuerte.",
+      "benefits": ["Growth formula", "Base ósea sólida", "Sistema inmune", "Aporte proteico"],
+      "usage": "Suministra según la etapa de levante (0 a 3 meses).",
+      "pitch": "Asegura el futuro de tus aves: crecimiento, huesos e inmunidad desde el día 0. 400gr/1kg/3kg."
+    },
+    {
+      "slug": "super-trainer", "name": "Super Trainer (Pre-entreno)", "category": "entrenamiento", "audience": "Gallos de combate",
+      "origin": "mx", "priceCOP": 80000, "presentations": [{ "label": "Frasco gotas", "priceCOP": 80000 }],
+      "image": "super-trainer.jpg", "badges": ["Exclusivo"],
+      "tagline": "Pre-entreno líquido: maximiza cada sesión.",
+      "shortDesc": "Prepara los músculos, previene el entumecimiento, promueve la estimulación sanguínea y mejora la oxigenación.",
+      "benefits": ["Potencia el rendimiento", "Más movilidad", "Efecto rápido"],
+      "usage": "6 gotas antes de iniciar el entrenamiento.",
+      "pitch": "Pre-entreno que prepara músculos y oxigena: cada sesión rinde el doble. 6 gotas antes."
+    },
+    {
+      "slug": "gallo-post-recovery", "name": "Gallo Post Recovery", "category": "entrenamiento", "audience": "Gallos de entrenamiento",
+      "origin": "co", "priceCOP": 80000, "presentations": [{ "label": "200 pastillas", "priceCOP": 80000 }],
+      "image": "gallo-post-recovery.jpg", "badges": ["Mejor producto", "Libre de tóxicos"],
+      "tagline": "Minimiza la fatiga y acelera la recuperación.",
+      "shortDesc": "Relaja la musculatura tensionada, reduce la fatiga y mejora la salud general tras el entreno.",
+      "benefits": ["Relaja músculos", "Reduce fatiga", "Salud general"],
+      "usage": "1 tableta inmediatamente después de cada entrenamiento.",
+      "pitch": "Recuperación rápida post-entreno: menos fatiga, músculo relajado, listo antes. 200 pastillas."
+    },
+    {
+      "slug": "weight-muscle-protein", "name": "Weight Muscle Protein", "category": "entrenamiento", "audience": "Gallos de entrenamiento y exhibición",
+      "origin": "us", "priceCOP": 90000, "presentations": [{ "label": "1 litro", "priceCOP": 90000 }],
+      "image": "weight-muscle-protein.jpg", "badges": ["Fórmula americana"],
+      "tagline": "Proteína líquida americana: fuerza, energía y musculatura.",
+      "shortDesc": "Fuerza, energía, rendimiento y musculatura con probióticos, omega 3 y aminoácidos.",
+      "benefits": ["Masa muscular", "Energía y rendimiento", "Probióticos"],
+      "usage": "Consulta la dosis por ejemplar.",
+      "pitch": "Proteína líquida con probióticos y omega 3: fuerza y músculo de verdad. 1 litro."
+    },
+    {
+      "slug": "poultry-prime", "name": "Poultry Prime", "category": "pollos", "audience": "Pollos en levante",
+      "origin": "co", "priceCOP": 50000, "presentations": [{ "label": "100 ml", "priceCOP": 50000 }],
+      "image": "poultry-prime.jpg", "badges": ["Best Choice"],
+      "tagline": "Vitamina para pollos: todas las vitaminas y minerales.",
+      "shortDesc": "Para pollos en levante: todas las vitaminas y minerales, rápida absorción, fácil de emplear.",
+      "benefits": ["Vitaminas y minerales", "Rápida absorción", "Fácil de emplear"],
+      "usage": "8 gotas en el agua del bebedero.",
+      "pitch": "Todas las vitaminas y minerales para pollos en levante. 8 gotas en el agua."
+    },
+    {
+      "slug": "nutripeep-refoce", "name": "Nutripeep Refoce", "category": "pollos", "audience": "Pollitos",
+      "origin": "us", "priceCOP": 25000, "presentations": [{ "label": "Gotero", "priceCOP": 25000 }],
+      "image": "nutripeep-refoce.jpg", "badges": ["Fórmula americana", "Desde $25.000"],
+      "tagline": "Ideal para tus pollitos: salud y crecimiento óptimo.",
+      "shortDesc": "Vitaminas y minerales: aumenta peso y crecimiento, fortalece el sistema óseo y muscular.",
+      "benefits": ["Peso y crecimiento", "Óseo y muscular", "Previene enfermedades comunes"],
+      "usage": "6 gotas diarias en el bebedero.",
+      "pitch": "Pollitos más sanos y grandes: peso, huesos y defensas. Desde $25.000."
+    },
+    {
+      "slug": "more-muscle-dogs", "name": "More Muscle Dogs Premium", "category": "perros", "audience": "Perros",
+      "origin": "co", "priceCOP": 180000, "presentations": [{ "label": "Pote Premium", "priceCOP": 180000 }],
+      "image": "more-muscle-dogs.jpg", "badges": ["High Quality", "Best Product"],
+      "tagline": "Suplementa a tu mascota durante 6 meses.",
+      "shortDesc": "Suplemento premium para perros: desarrollo muscular y rendimiento por 6 meses.",
+      "benefits": ["Más músculo", "Más energía", "Soporte integral"],
+      "usage": "Administra según peso y etapa de tu mascota.",
+      "pitch": "Suplemento premium canino: músculo y energía por 6 meses. Contraentrega."
+    },
+    {
+      "slug": "horse-deluxe", "name": "Horse Deluxe — Protein Lysine", "category": "caballos", "audience": "Caballos",
+      "origin": "co", "priceCOP": 200000, "presentations": [{ "label": "Pote", "priceCOP": 200000 }],
+      "image": "horse-deluxe.jpg", "badges": ["Premium"],
+      "tagline": "La fórmula definitiva para el éxito equino.",
+      "shortDesc": "Probióticos digestivos, energía, brío, masa muscular y modulación del sistema inmune.",
+      "benefits": ["Probióticos digestivos", "Masa muscular", "Energía y brío", "Sistema inmune"],
+      "usage": "Administra según peso y etapa del equino.",
+      "pitch": "Fórmula deluxe equina: digestión, músculo, brío e inmunidad. Para caballos de alto rendimiento."
+    }
+  ]
+}

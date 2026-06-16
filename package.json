@@ -1,0 +1,36 @@
+{
+  "name": "animals-deluxe",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Plataforma e-commerce headless de Animals Deluxe — Web pública + Panel admin + API del bot UChat (contraentrega)",
+  "scripts": {
+    "dev": "NODE_OPTIONS=--no-experimental-webstorage next dev",
+    "build": "NODE_OPTIONS=--no-experimental-webstorage next build",
+    "start": "NODE_OPTIONS=--no-experimental-webstorage next start",
+    "lint": "next lint",
+    "test": "node --test --import tsx tests/*.test.ts",
+    "seed": "node --import tsx scripts/seed.mjs",
+    "db:push": "drizzle-kit push"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.5.1",
+    "@supabase/supabase-js": "^2.45.0",
+    "drizzle-orm": "^0.36.0",
+    "next": "^15.5.19",
+    "postgres": "^3.4.5",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "drizzle-kit": "^0.28.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": "22.x"
+  }
+}
