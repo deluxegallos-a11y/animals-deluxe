@@ -185,6 +185,22 @@ create table if not exists events (
   tipo text not null, payload jsonb, created_at timestamptz default now()
 );
 
+-- ===========================================================
+-- ESPEJO SHOPIFY (la plataforma es la fuente de verdad).
+-- Columnas idempotentes: seguras de re-correr.
+-- ===========================================================
+alter table products add column if not exists shopify_product_id text;
+alter table products add column if not exists shopify_sync text default 'pending';
+alter table products add column if not exists shopify_sync_error text default '';
+alter table products add column if not exists shopify_synced_at timestamptz;
+create index if not exists idx_products_shopify_sync on products (shopify_sync);
+
+alter table orders add column if not exists shopify_order_id text;
+alter table orders add column if not exists shopify_order_name text default '';
+
+-- Cuentas bancarias para pago anticipado (las lee el bot en asignar-asesor).
+alter table store_config add column if not exists cuentas_bancarias jsonb default '[]'::jsonb;
+
 -- trigger updated_at
 create or replace function set_updated_at() returns trigger
 language plpgsql as $$ begin new.updated_at = now(); return new; end $$;

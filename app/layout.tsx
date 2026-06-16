@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./store-theme.css";
 
 export const metadata: Metadata = {
   title: "Animals Deluxe · Suplementos premium para campeones",

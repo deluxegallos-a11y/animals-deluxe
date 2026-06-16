@@ -1,12 +1,14 @@
 import { listOrders } from "@/lib/queries";
 import { PageHead, Card } from "@/components/ui";
 import { cop } from "@/lib/ai/format";
+import { getShopifyCreds, shopifyOrderAdminUrl } from "@/lib/shopify";
 import { OrderStatus } from "./order-actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function PedidosPage() {
-  const pedidos = await listOrders();
+  const [pedidos, creds] = await Promise.all([listOrders(), getShopifyCreds()]);
+  const domain = creds?.domain || "";
   return (
     <>
       <PageHead title="Pedidos" subtitle={`${pedidos.length} pedidos · contraentrega`} />
@@ -14,12 +16,21 @@ export default async function PedidosPage() {
         {pedidos.length ? (
           <table>
             <thead>
-              <tr><th>Ref</th><th>Cliente</th><th>Ciudad</th><th>Items</th><th>Total</th><th>Asesor</th><th>Estado</th></tr>
+              <tr><th>Ref</th><th>Shopify</th><th>Cliente</th><th>Ciudad</th><th>Items</th><th>Total</th><th>Asesor</th><th>Estado</th></tr>
             </thead>
             <tbody>
               {pedidos.map((o) => (
                 <tr key={o.id}>
                   <td><b>{o.ref}</b><div className="t-mut" style={{ fontSize: 11 }}>{o.metodoPago}</div></td>
+                  <td>
+                    {o.shopifyOrderName ? (
+                      domain && o.shopifyOrderId ? (
+                        <a href={shopifyOrderAdminUrl(domain, o.shopifyOrderId)} target="_blank" rel="noreferrer" style={{ fontWeight: 600 }}>
+                          {o.shopifyOrderName} ↗
+                        </a>
+                      ) : <b>{o.shopifyOrderName}</b>
+                    ) : <span className="t-mut" style={{ fontSize: 11 }}>—</span>}
+                  </td>
                   <td>{o.nombre}<div className="t-mut" style={{ fontSize: 11 }}>{o.telefono}</div></td>
                   <td>{o.ciudad}<div className="t-mut" style={{ fontSize: 11 }}>{o.direccion}</div></td>
                   <td style={{ fontSize: 12 }}>{o.items.map((it) => `${it.cantidad}× ${it.name}`).join(", ") || "—"}</td>

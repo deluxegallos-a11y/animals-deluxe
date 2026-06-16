@@ -6,7 +6,7 @@ import { and, eq, asc, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import {
   products, categories, promotions, coupons, advisors, storeConfig,
-  type CiudadCobertura,
+  type CiudadCobertura, type CuentaBancaria,
 } from "@/lib/db/schema";
 import type { ProductView, CategoryView } from "@/lib/ai/types";
 import { demoProducts, demoCategories, demoStore } from "@/lib/demo-data";
@@ -93,7 +93,7 @@ export async function getProductBySlug(slug: string): Promise<ProductView | null
 export type StoreCfg = {
   nombre: string; whatsapp: string; ciudadBase: string;
   envioDefaultCop: number; ciudadesCobertura: CiudadCobertura[];
-  mensajeBienvenida: string;
+  mensajeBienvenida: string; cuentasBancarias: CuentaBancaria[];
 };
 
 export async function getStoreConfig(): Promise<StoreCfg> {
@@ -105,6 +105,7 @@ export async function getStoreConfig(): Promise<StoreCfg> {
       envioDefaultCop: 12000,
       ciudadesCobertura: [],
       mensajeBienvenida: "¡Bienvenido a Animals Deluxe! 🐓 Suplementos premium para tus campeones, contraentrega en toda Colombia.",
+      cuentasBancarias: [],
     };
   }
   const [row] = await db.select().from(storeConfig).limit(1);
@@ -115,6 +116,7 @@ export async function getStoreConfig(): Promise<StoreCfg> {
     envioDefaultCop: row?.envioDefaultCop ?? 12000,
     ciudadesCobertura: (row?.ciudadesCobertura as CiudadCobertura[]) || [],
     mensajeBienvenida: row?.mensajeBienvenida || "",
+    cuentasBancarias: (row?.cuentasBancarias as CuentaBancaria[]) || [],
   };
 }
 

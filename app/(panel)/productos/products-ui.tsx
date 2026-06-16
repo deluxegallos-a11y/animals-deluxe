@@ -3,7 +3,7 @@
 import * as React from "react";
 import { PageHead, Card } from "@/components/ui";
 import { ImageUpload, SubmitButton } from "@/components/forms";
-import { saveProduct, deleteProduct, toggleProduct } from "../actions";
+import { saveProduct, deleteProduct, toggleProduct, syncProductNow, retryShopifySync } from "../actions";
 import { cop, flag } from "@/lib/ai/format";
 import type { Presentacion, Ingrediente, FaqItem } from "@/lib/db/schema";
 
@@ -12,17 +12,48 @@ type P = {
   audience: string; origin: string; priceCOP: number; presentations: Presentacion[]; imageUrl: string;
   badges: string[]; tagline: string; shortDesc: string; benefits: string[]; ingredients: Ingrediente[];
   usage: string; pitch: string; faq: FaqItem[]; disclaimer: string; stock: number; activo: boolean;
+  shopifyProductId: string; shopifySync: "synced" | "pending" | "error"; shopifySyncError: string;
 };
+
+function SyncBadge({ p, shopifyOn }: { p: P; shopifyOn: boolean }) {
+  const [busy, setBusy] = React.useState(false);
+  const sync = async () => { setBusy(true); await syncProductNow(p.id); setBusy(false); };
+  const label = !shopifyOn
+    ? { txt: "Shopify off", cls: "starter", title: "Configura Shopify en /configuracion" }
+    : p.shopifySync === "synced"
+      ? { txt: "✓ Shopify", cls: "pro", title: `Sincronizado · ${p.shopifyProductId}` }
+      : p.shopifySync === "error"
+        ? { txt: "✗ error", cls: "starter", title: p.shopifySyncError || "Error de sincronía" }
+        : { txt: "⏳ pendiente", cls: "starter", title: "Pendiente de sincronizar" };
+  return (
+    <span className="flex aic gap10" style={{ fontSize: 11 }}>
+      <span className={`badge-plan ${label.cls}`} title={label.title}>{busy ? "…" : label.txt}</span>
+      {shopifyOn && p.shopifySync !== "synced" ? (
+        <button className="icon-act" title="Sincronizar con Shopify" disabled={busy} onClick={sync}>🔄</button>
+      ) : null}
+    </span>
+  );
+}
 
 const presToText = (p: Presentacion[]) => p.map((x) => `${x.label} | ${x.priceCOP}`).join("\n");
 const ingToText = (p: Ingrediente[]) => p.map((x) => `${x.name} | ${x.detail}`).join("\n");
 const faqToText = (p: FaqItem[]) => p.map((x) => `${x.q} | ${x.a}`).join("\n");
 
-export function ProductsUI({ productos, categorias }: { productos: P[]; categorias: { slug: string; name: string }[] }) {
+export function ProductsUI({ productos, categorias, shopifyOn }: { productos: P[]; categorias: { slug: string; name: string }[]; shopifyOn: boolean }) {
   const [editing, setEditing] = React.useState<P | null>(null);
   const [open, setOpen] = React.useState(false);
   const [q, setQ] = React.useState("");
   const [cat, setCat] = React.useState("");
+  const [retrying, setRetrying] = React.useState(false);
+  const [retryMsg, setRetryMsg] = React.useState("");
+  const pendientes = productos.filter((p) => p.shopifySync !== "synced").length;
+
+  async function onRetry() {
+    setRetrying(true); setRetryMsg("");
+    const r = await retryShopifySync();
+    setRetrying(false);
+    setRetryMsg(`Sincronizados ${r.ok}/${r.procesados}${r.fallidos ? ` · ${r.fallidos} con error` : ""}.`);
+  }
 
   const filtered = productos.filter((p) =>
     (!cat || p.categorySlug === cat) &&
@@ -36,9 +67,19 @@ export function ProductsUI({ productos, categorias }: { productos: P[]; categori
     <>
       <PageHead
         title="Productos"
-        subtitle={`${productos.length} productos en el catálogo`}
-        right={<button className="btn auto" onClick={openNew}>+ Nuevo producto</button>}
+        subtitle={`${productos.length} productos · ${shopifyOn ? `${pendientes} sin sincronizar` : "Shopify no configurado"}`}
+        right={
+          <div className="flex aic gap10">
+            {shopifyOn && pendientes > 0 ? (
+              <button className="btn soft" disabled={retrying} onClick={onRetry}>
+                {retrying ? "Sincronizando…" : `🔄 Sincronizar Shopify (${pendientes})`}
+              </button>
+            ) : null}
+            <button className="btn auto" onClick={openNew}>+ Nuevo producto</button>
+          </div>
+        }
       />
+      {retryMsg ? <div className="form-msg ok" style={{ marginBottom: 16 }}>{retryMsg}</div> : null}
 
       <Card style={{ marginBottom: 16 }}>
         <div className="flex aic gap10" style={{ flexWrap: "wrap" }}>
@@ -68,6 +109,7 @@ export function ProductsUI({ productos, categorias }: { productos: P[]; categori
             <h4>{p.name} {p.activo ? "" : <span className="off-tag">· inactivo</span>}</h4>
             <div className="desc">{p.tagline || p.shortDesc}</div>
             <div className="pr">{cop(p.priceCOP)} <small>· {p.categoryName}</small></div>
+            <div style={{ marginTop: 8 }}><SyncBadge p={p} shopifyOn={shopifyOn} /></div>
           </div>
         ))}
       </div>

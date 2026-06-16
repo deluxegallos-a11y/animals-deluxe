@@ -11,11 +11,15 @@ const id = () => uuid("id").primaryKey().defaultRandom();
 const now = () => timestamp("created_at", { withTimezone: true }).defaultNow();
 
 /* tipos jsonb */
-export type Presentacion = { label: string; priceCOP: number };
+export type Presentacion = { label: string; priceCOP: number; shopifyVariantId?: string };
 export type Ingrediente = { name: string; detail: string };
 export type FaqItem = { q: string; a: string };
 export type CiudadCobertura = { ciudad: string; costo_envio: number; contraentrega: boolean };
 export type Branding = { logoUrl?: string; colorPrimario?: string; colorAcento?: string };
+export type CuentaBancaria = { banco: string; tipo: string; numero: string; titular: string };
+
+/** Estado de sincronización con Shopify (plataforma = fuente de verdad). */
+export type ShopifySync = "synced" | "pending" | "error";
 
 /* 1. categories */
 export const categories = pgTable("categories", {
@@ -52,6 +56,11 @@ export const products = pgTable(
     disclaimer: text("disclaimer").default(""),
     stock: integer("stock").default(999),
     activo: boolean("activo").default(true),
+    // --- Espejo Shopify (la plataforma es la fuente de verdad) ---
+    shopifyProductId: text("shopify_product_id"),
+    shopifySync: text("shopify_sync").$type<"synced" | "pending" | "error">().default("pending"),
+    shopifySyncError: text("shopify_sync_error").default(""),
+    shopifySyncedAt: timestamp("shopify_synced_at", { withTimezone: true }),
     // search_text es columna generada en SQL (unaccent); no se escribe desde Drizzle.
     createdAt: now(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
@@ -119,6 +128,9 @@ export const orders = pgTable(
     advisorId: uuid("advisor_id"),
     notas: text("notas").default(""),
     idempotencyKey: text("idempotency_key"),
+    // --- Espejo Shopify (registro/libro de pedidos) ---
+    shopifyOrderId: text("shopify_order_id"),
+    shopifyOrderName: text("shopify_order_name").default(""),
     createdAt: now(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
   },
@@ -168,6 +180,8 @@ export const storeConfig = pgTable("store_config", {
   ciudadesCobertura: jsonb("ciudades_cobertura").$type<CiudadCobertura[]>().default([]),
   mensajeBienvenida: text("mensaje_bienvenida").default(""),
   branding: jsonb("branding").$type<Branding>().default({}),
+  // Cuentas para pago anticipado (lo lee el bot en asignar-asesor).
+  cuentasBancarias: jsonb("cuentas_bancarias").$type<CuentaBancaria[]>().default([]),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });
 

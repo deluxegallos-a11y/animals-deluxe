@@ -15,6 +15,7 @@ export type ItemInput = { slug: string; presentacion?: string; cantidad?: number
 export type ResolvedItem = {
   productId: string; slug: string; name: string; presentacionLabel: string;
   precioCop: number; cantidad: number; subtotalCop: number;
+  shopifyVariantId?: string;
 };
 
 /** Resuelve items contra el catálogo. Lanza domainError si falta producto/stock. */
@@ -30,13 +31,15 @@ export function resolveItems(items: ItemInput[], catalog: ProductView[]): Resolv
     // precio por presentación (si se indicó y existe)
     let label = prod.presentations[0]?.label || "Unidad";
     let precio = prod.presentations[0]?.priceCOP ?? prod.priceCOP;
+    let shopifyVariantId = prod.presentations[0]?.shopifyVariantId;
     if (it.presentacion) {
       const pres = prod.presentations.find((pr) => pr.label.toLowerCase().includes(it.presentacion!.toLowerCase()));
-      if (pres) { label = pres.label; precio = pres.priceCOP; }
+      if (pres) { label = pres.label; precio = pres.priceCOP; shopifyVariantId = pres.shopifyVariantId; }
     }
     out.push({
       productId: prod.id, slug: prod.slug, name: prod.name,
       presentacionLabel: label, precioCop: precio, cantidad, subtotalCop: precio * cantidad,
+      shopifyVariantId,
     });
   }
   return out;
@@ -84,6 +87,7 @@ export interface CreatedOrder {
   envio_cop: number; total_cop: number; estado: string;
   asesor: { nombre: string; whatsapp: string };
   reused: boolean;
+  items: ResolvedItem[];
 }
 
 /** Crea (o devuelve, si es idempotente) un pedido COD. */
@@ -103,6 +107,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreatedOrder
       envio_cop: totals.envio, total_cop: totals.total, estado: "pendiente_confirmacion",
       asesor: { nombre: "Asesor Animals Deluxe", whatsapp: process.env.NEXT_PUBLIC_WHATSAPP || "" },
       reused: false,
+      items: resolved,
     };
   }
 
@@ -120,6 +125,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreatedOrder
       envio_cop: existing.envioCop ?? 0, total_cop: existing.totalCop ?? 0,
       estado: existing.estado || "pendiente_confirmacion",
       asesor: { nombre: "", whatsapp: "" }, reused: true,
+      items: resolved,
     };
   }
 
@@ -153,5 +159,6 @@ export async function createOrder(input: CreateOrderInput): Promise<CreatedOrder
     subtotal_cop: totals.subtotal, descuento_cop: totals.descuento,
     envio_cop: totals.envio, total_cop: totals.total, estado: created.estado || "pendiente_confirmacion",
     asesor: { nombre: asesor.nombre, whatsapp: asesor.whatsapp || "" }, reused: false,
+    items: resolved,
   };
 }

@@ -7,11 +7,11 @@ import { saveStoreConfig, saveIntegration } from "../actions";
 
 type Cfg = {
   nombre: string; whatsapp: string; ciudadBase: string; envioDefaultCop: number;
-  ciudades: string; mensajeBienvenida: string; logoUrl: string; colorPrimario: string; colorAcento: string;
+  ciudades: string; cuentas: string; mensajeBienvenida: string; logoUrl: string; colorPrimario: string; colorAcento: string;
 };
 type Integ = { proveedor: string; activo: boolean; tiene: boolean };
 
-export function ConfigUI({ config, integraciones }: { config: Cfg; integraciones: Integ[] }) {
+export function ConfigUI({ config, integraciones, shopifyOn }: { config: Cfg; integraciones: Integ[]; shopifyOn: boolean }) {
   const [tab, setTab] = React.useState<"tienda" | "integraciones">("tienda");
   const [logoUrl, setLogoUrl] = React.useState(config.logoUrl);
   const [msg, setMsg] = React.useState("");
@@ -52,6 +52,11 @@ export function ConfigUI({ config, integraciones }: { config: Cfg; integraciones
                 <textarea name="ciudades" rows={5} defaultValue={config.ciudades} placeholder={"Medellín | 0 | si\nBogotá | 12000 | si\nLeticia | 25000 | no"} />
                 <span className="field-hint">Una por línea: <code>ciudad | costo_envio | si/no contraentrega</code>. Sin lista = cobertura nacional contraentrega.</span>
               </div>
+              <div className="field">
+                <label>Cuentas bancarias (pago anticipado)</label>
+                <textarea name="cuentas" rows={4} defaultValue={config.cuentas} placeholder={"Bancolombia | Ahorros | 123-456789-00 | Animals Deluxe SAS\nNequi | Nequi | 3001234567 | Animals Deluxe"} />
+                <span className="field-hint">Una por línea: <code>banco | tipo | número | titular</code>. El bot las comparte cuando el cliente pide pago anticipado.</span>
+              </div>
               <div className="field"><label>Mensaje de bienvenida</label><textarea name="mensajeBienvenida" rows={2} defaultValue={config.mensajeBienvenida} /></div>
               <div className="field-row">
                 <div className="field"><label>Color primario</label><input name="colorPrimario" type="color" defaultValue={config.colorPrimario} style={{ height: 44, padding: 4 }} /></div>
@@ -73,6 +78,19 @@ export function ConfigUI({ config, integraciones }: { config: Cfg; integraciones
         </div>
       ) : (
         <div className="cfg-grid">
+          <Card>
+            <CardHead icon="🛒" title="Shopify (espejo de catálogo + pedidos)" right={<span className={shopifyOn ? "badge-plan pro" : "badge-plan starter"}>{shopifyOn ? "Conectado" : "Pendiente"}</span>} />
+            <form action={onSaveInteg}>
+              <input type="hidden" name="proveedor" value="shopify" />
+              <div className="field"><label>Dominio de la tienda</label><input name="storeDomain" placeholder="tu-tienda.myshopify.com" /></div>
+              <div className="field-row">
+                <div className="field"><label>Admin API access token</label><input name="token" type="password" placeholder={has("shopify") ? "•••••••• (guardado)" : "shpat_..."} /></div>
+                <div className="field"><label>API version</label><input name="apiVersion" defaultValue="2024-10" placeholder="2024-10" /></div>
+              </div>
+              <span className="field-hint">Se guarda cifrado AES-256. Tiene prioridad lo definido en variables de entorno del servidor (<code>SHOPIFY_*</code>).</span>
+              <SubmitButton>Guardar Shopify</SubmitButton>
+            </form>
+          </Card>
           <Card>
             <CardHead icon="🤖" title="UChat" right={<span className={has("uchat") ? "badge-plan pro" : "badge-plan starter"}>{has("uchat") ? "Configurado" : "Pendiente"}</span>} />
             <form action={onSaveInteg}>

@@ -67,8 +67,18 @@ export async function getDashboard(): Promise<DashboardKpis> {
 }
 
 /* ---------- Productos (incluye inactivos) ---------- */
-export async function listProducts(): Promise<(ProductView & { categoryColor: string })[]> {
-  if (!db) return demoProducts.map((p) => ({ ...p, categoryColor: demoCategories.find((c) => c.slug === p.categorySlug)?.color || "#FF4D2E" }));
+export type ProductAdminRow = ProductView & {
+  categoryColor: string;
+  shopifyProductId: string;
+  shopifySync: "synced" | "pending" | "error";
+  shopifySyncError: string;
+};
+
+export async function listProducts(): Promise<ProductAdminRow[]> {
+  if (!db) return demoProducts.map((p) => ({
+    ...p, categoryColor: demoCategories.find((c) => c.slug === p.categorySlug)?.color || "#FF4D2E",
+    shopifyProductId: "", shopifySync: "pending" as const, shopifySyncError: "",
+  }));
   const rows = await db
     .select({ p: products, c: categories })
     .from(products)
@@ -86,6 +96,9 @@ export async function listProducts(): Promise<(ProductView & { categoryColor: st
     benefits: (r.p.benefits as string[]) || [], ingredients: (r.p.ingredients as ProductView["ingredients"]) || [],
     usage: r.p.usage || "", pitch: r.p.pitch || "", faq: (r.p.faq as ProductView["faq"]) || [],
     disclaimer: r.p.disclaimer || "", stock: r.p.stock ?? 999, activo: r.p.activo ?? true,
+    shopifyProductId: r.p.shopifyProductId || "",
+    shopifySync: (r.p.shopifySync as "synced" | "pending" | "error") || "pending",
+    shopifySyncError: r.p.shopifySyncError || "",
   }));
 }
 
@@ -99,6 +112,7 @@ export type OrderRow = {
   id: string; ref: string; nombre: string; telefono: string; ciudad: string; direccion: string;
   estado: string; metodoPago: string; total: number; subtotal: number; envio: number; descuento: number;
   createdAt: Date | null; advisor: string; items: { name: string; presentacion: string; cantidad: number; precio: number }[];
+  shopifyOrderId: string; shopifyOrderName: string;
 };
 
 export async function listOrders(): Promise<OrderRow[]> {
@@ -123,6 +137,7 @@ export async function listOrders(): Promise<OrderRow[]> {
       name: it.productName || "", presentacion: it.presentacionLabel || "",
       cantidad: it.cantidad ?? 1, precio: it.precioCop ?? 0,
     })),
+    shopifyOrderId: r.o.shopifyOrderId || "", shopifyOrderName: r.o.shopifyOrderName || "",
   }));
 }
 

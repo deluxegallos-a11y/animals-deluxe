@@ -5,6 +5,7 @@ import { db } from "@/lib/db/client";
 import { customers } from "@/lib/db/schema";
 import { getProducts } from "@/lib/ai/data";
 import { createOrder } from "@/lib/ai/orders";
+import { pushOrderToShopify } from "@/lib/shopify-sync";
 import { cop } from "@/lib/ai/format";
 
 export const runtime = "nodejs";
@@ -52,13 +53,33 @@ export const POST = withBridge(
       catalog,
     });
 
+    // Registrar la orden en Shopify (libro de pedidos / inventario). NO notifica
+    // al cliente. Si Shopify falla o no está configurado, el pedido COD ya quedó
+    // guardado en Supabase y el flujo del bot continúa con la ref interna.
+    let ref = order.ref;
+    if (!order.reused && !order.pedido_id.startsWith("demo-")) {
+      const shop = await pushOrderToShopify({
+        orderId: order.pedido_id,
+        nombre: body.nombre, telefono: body.telefono, ciudad: body.ciudad, direccion: body.direccion,
+        items: order.items.map((it) => ({
+          slug: it.slug, name: it.name, presentacionLabel: it.presentacionLabel,
+          precioCop: it.precioCop, cantidad: it.cantidad, shopifyVariantId: it.shopifyVariantId,
+        })),
+        note: `Pedido contraentrega tomado por el bot (WhatsApp). Ref interna: ${order.ref}`,
+      });
+      if (shop.ok && shop.shopifyOrderName) ref = shop.shopifyOrderName;
+      await logEvent(shop.ok ? "pedido_shopify_ok" : "pedido_shopify_error", {
+        ref: order.ref, shopify: shop.shopifyOrderName, error: shop.error, skipped: shop.skipped,
+      });
+    }
+
     if (!order.reused) {
       await audit("crear_pedido", "orders", { ref: order.ref, total: order.total_cop });
       await logEvent("pedido_creado", { ref: order.ref, total: order.total_cop, metodo: body.metodo });
     }
 
     const mensaje =
-      `¡Pedido confirmado! 🎉 Ref *${order.ref}*\n` +
+      `¡Pedido confirmado! 🎉 Ref *${ref}*\n` +
       `Subtotal: ${cop(order.subtotal_cop)}` +
       (order.descuento_cop ? ` · Descuento: -${cop(order.descuento_cop)}` : "") +
       ` · Envío: ${order.envio_cop ? cop(order.envio_cop) : "GRATIS"}\n` +
@@ -67,7 +88,7 @@ export const POST = withBridge(
 
     return {
       pedido_id: order.pedido_id,
-      ref: order.ref,
+      ref,
       total_cop: order.total_cop,
       envio_cop: order.envio_cop,
       descuento_cop: order.descuento_cop,

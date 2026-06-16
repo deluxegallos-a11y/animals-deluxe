@@ -5,10 +5,11 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import {
   products, categories, orders, advisors, promotions, storeConfig, integrations, auditLog,
-  type Presentacion, type Ingrediente, type FaqItem, type CiudadCobertura,
+  type Presentacion, type Ingrediente, type FaqItem, type CiudadCobertura, type CuentaBancaria,
 } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth";
 import { encrypt } from "@/lib/crypto";
+import { syncProductToShopify, archiveProductInShopify, retryPendingProducts } from "@/lib/shopify-sync";
 
 /* ---------- helpers de parseo ---------- */
 function slugify(s: string): string {
@@ -32,6 +33,12 @@ function parseIngredients(s: string): Ingrediente[] {
 }
 function parseFaq(s: string): FaqItem[] {
   return lines(s).map((l) => { const [q, a] = l.split("|").map((x) => x.trim()); return { q: q || "", a: a || "" }; }).filter((f) => f.q);
+}
+function parseCuentas(s: string): CuentaBancaria[] {
+  return lines(s).map((l) => {
+    const [banco, tipo, numero, titular] = l.split("|").map((x) => x.trim());
+    return { banco: banco || "", tipo: tipo || "Ahorros", numero: numero || "", titular: titular || "" };
+  }).filter((c) => c.banco && c.numero);
 }
 async function logAudit(accion: string, entidad: string, despues: unknown) {
   if (!db) return;
@@ -89,21 +96,33 @@ export async function saveProduct(formData: FormData) {
     activo: formData.get("activo") === "on" || formData.get("activo") === "true",
   };
 
+  // Marca pendiente de sincronía; syncProductToShopify lo pondrá en 'synced'.
+  let productId = id;
   if (id) {
-    await db.update(products).set({ ...values, updatedAt: new Date() }).where(eq(products.id, id));
+    await db.update(products).set({ ...values, shopifySync: "pending", updatedAt: new Date() }).where(eq(products.id, id));
     await logAudit("editar_producto", "products", { id, slug });
   } else {
-    const [created] = await db.insert(products).values(values).returning();
-    await logAudit("crear_producto", "products", { id: created?.id, slug });
+    const [created] = await db.insert(products).values({ ...values, shopifySync: "pending" }).returning();
+    productId = created?.id || "";
+    await logAudit("crear_producto", "products", { id: productId, slug });
   }
+
+  // Espejo en Shopify (la plataforma es la fuente de verdad). No rompe el panel
+  // si Shopify falla: queda 'pending'/'error' y se reintenta desde el botón.
+  let shopify: { ok: boolean; skipped?: boolean; error?: string } = { ok: false, skipped: true };
+  if (productId) shopify = await syncProductToShopify(productId);
+
   revalidatePath("/productos");
   revalidatePath("/");
-  return { ok: true };
+  return { ok: true, shopify };
 }
 
 export async function deleteProduct(id: string) {
   await requireUser();
   if (!db || !id) return;
+  // Archiva en Shopify (no borrar en duro) antes de eliminar el registro local.
+  const [row] = await db.select({ sid: products.shopifyProductId }).from(products).where(eq(products.id, id)).limit(1);
+  await archiveProductInShopify(row?.sid);
   await db.delete(products).where(eq(products.id, id));
   await logAudit("eliminar_producto", "products", { id });
   revalidatePath("/productos");
@@ -112,8 +131,27 @@ export async function deleteProduct(id: string) {
 export async function toggleProduct(id: string, activo: boolean) {
   await requireUser();
   if (!db || !id) return;
-  await db.update(products).set({ activo, updatedAt: new Date() }).where(eq(products.id, id));
+  await db.update(products).set({ activo, shopifySync: "pending", updatedAt: new Date() }).where(eq(products.id, id));
+  // Refleja el estado en Shopify (ACTIVE/ARCHIVED) según 'activo'.
+  await syncProductToShopify(id);
   revalidatePath("/productos");
+}
+
+/** Botón del panel: fuerza/repara la sincronía de UN producto con Shopify. */
+export async function syncProductNow(id: string) {
+  await requireUser();
+  if (!db || !id) return { ok: false, error: "Sin DB." };
+  const res = await syncProductToShopify(id);
+  revalidatePath("/productos");
+  return res;
+}
+
+/** Botón del panel: reintenta TODOS los productos pendientes/errados. */
+export async function retryShopifySync() {
+  await requireUser();
+  const res = await retryPendingProducts();
+  revalidatePath("/productos");
+  return res;
 }
 
 /* ===========================================================
@@ -217,6 +255,7 @@ export async function saveStoreConfig(formData: FormData) {
     ciudadBase: String(formData.get("ciudadBase") || ""),
     envioDefaultCop: parseInt(String(formData.get("envioDefaultCop") || "0").replace(/\D/g, ""), 10) || 0,
     ciudadesCobertura: ciudades,
+    cuentasBancarias: parseCuentas(String(formData.get("cuentas") || "")),
     mensajeBienvenida: String(formData.get("mensajeBienvenida") || ""),
     branding: {
       logoUrl: String(formData.get("logoUrl") || ""),
@@ -241,13 +280,29 @@ export async function saveIntegration(formData: FormData) {
   await requireUser();
   if (!db) return { ok: false, error: "demo" };
   const proveedor = String(formData.get("proveedor") || "");
-  const token = String(formData.get("token") || "");
   if (!proveedor) return { ok: false, error: "Proveedor requerido." };
 
-  const configEnc = token ? encrypt(token) : null;
+  let configEnc: string | null = null;
+  if (proveedor === "shopify") {
+    // Shopify guarda un objeto {domain, token, apiVersion} cifrado.
+    const domain = String(formData.get("storeDomain") || "").trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+    const token = String(formData.get("token") || "").trim();
+    const apiVersion = String(formData.get("apiVersion") || "2024-10").trim() || "2024-10";
+    if (!domain || !token) return { ok: false, error: "Dominio y token de Shopify son obligatorios." };
+    configEnc = encrypt(JSON.stringify({ domain, token, apiVersion }));
+  } else {
+    const token = String(formData.get("token") || "");
+    configEnc = token ? encrypt(token) : null;
+  }
+
   const [existing] = await db.select().from(integrations).where(eq(integrations.proveedor, proveedor)).limit(1);
-  if (existing) await db.update(integrations).set({ configEnc, activo: true }).where(eq(integrations.id, existing.id));
-  else await db.insert(integrations).values({ proveedor, configEnc, activo: true });
+  // No sobreescribir con vacío si el usuario dejó el campo en blanco (mantener el token guardado).
+  if (existing) {
+    if (configEnc) await db.update(integrations).set({ configEnc, activo: true }).where(eq(integrations.id, existing.id));
+    else await db.update(integrations).set({ activo: true }).where(eq(integrations.id, existing.id));
+  } else {
+    await db.insert(integrations).values({ proveedor, configEnc, activo: true });
+  }
   await logAudit("guardar_integracion", "integrations", { proveedor });
   revalidatePath("/configuracion");
   return { ok: true };
