@@ -4,11 +4,12 @@ import { withBridge, logEvent } from "@/lib/ai/bridge";
 import { db } from "@/lib/db/client";
 import { orders } from "@/lib/db/schema";
 import { cop } from "@/lib/ai/format";
+import { createBoldPaymentLink, boldConfigured } from "@/lib/bold";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/* Pago opcional (anticipo/prepago). Si Wompi no está activo → mensaje COD. */
+/* Pago anticipado con Bold. Si Bold no está activo → mensaje contraentrega. */
 export const POST = withBridge(
   z.object({ ref: z.string().min(1), metodo: z.string().optional().default("") }),
   async ({ body }) => {
@@ -19,8 +20,8 @@ export const POST = withBridge(
       total = o?.totalCop ?? 0;
     }
 
-    const wompiPub = process.env.WOMPI_PUBLIC_KEY || "";
-    if (!wompiPub) {
+    // Sin Bold configurado → seguimos contraentrega (no se requiere pago anticipado).
+    if (!boldConfigured()) {
       return {
         link: "",
         ref_pago: "",
@@ -29,12 +30,27 @@ export const POST = withBridge(
     }
 
     const site = process.env.NEXT_PUBLIC_SITE_URL || "https://animalsdeluxe.com";
-    const link = `https://checkout.wompi.co/p/?public-key=${encodeURIComponent(wompiPub)}&currency=COP&amount-in-cents=${Math.max(0, total) * 100}&reference=${encodeURIComponent(ref)}&redirect-url=${encodeURIComponent(site + "/producto")}`;
-    await logEvent("link_pago_generado", { ref, total });
+    const r = await createBoldPaymentLink({
+      amountCop: total,
+      reference: ref,
+      description: `Pedido ${ref} · Animals Deluxe`,
+      callbackUrl: `${site}/gracias`,
+    });
+
+    if (!r.ok) {
+      await logEvent("link_pago_error", { ref, total, error: r.error });
+      return {
+        link: "",
+        ref_pago: "",
+        mensaje: `No pude generar el link de pago ahora mismo, pero tranquilo: tu pedido ${ref} también puede ir *contraentrega* (pagas al recibir) 🚚. ¿Lo dejamos así?`,
+      };
+    }
+
+    await logEvent("link_pago_generado", { ref, total, payment_link: r.paymentLink });
     return {
-      link,
-      ref_pago: ref,
-      mensaje: `Aquí tienes el link para pagar tu anticipo (${cop(total)}) de forma segura 👇 Apenas pagues, confirmamos el despacho.`,
+      link: r.link,
+      ref_pago: r.paymentLink,
+      mensaje: `Aquí tienes el link para pagar tu pedido ${ref} (${cop(total)}) de forma segura con Bold 👇 Apenas pagues, confirmamos el despacho.`,
     };
   },
 );

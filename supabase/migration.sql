@@ -44,6 +44,7 @@ create table if not exists products (
   usage text default '',
   pitch text default '',
   faq jsonb default '[]'::jsonb,
+  keywords jsonb default '[]'::jsonb,
   disclaimer text default '',
   stock int default 999,
   activo boolean default true,
@@ -58,6 +59,8 @@ create table if not exists products (
 );
 create index if not exists idx_products_category on products (category_id);
 create index if not exists idx_products_search_trgm on products using gin (search_text gin_trgm_ops);
+-- idempotente: añade keywords si la tabla ya existía
+alter table products add column if not exists keywords jsonb default '[]'::jsonb;
 
 -- 3. customers (leads)
 create table if not exists customers (
@@ -200,6 +203,19 @@ alter table orders add column if not exists shopify_order_name text default '';
 
 -- Cuentas bancarias para pago anticipado (las lee el bot en asignar-asesor).
 alter table store_config add column if not exists cuentas_bancarias jsonb default '[]'::jsonb;
+
+-- ===========================================================
+-- Columnas del bot/venta presentes en el ORM (lib/db/schema.ts)
+-- pero ausentes del CREATE TABLE original. Idempotentes.
+--  · ad_ids       → identificación por anuncio (producto-por-anuncio)
+--  · objeciones   → respuestas a objeciones que usa el agente
+--  · sales_prompt → prompt de venta por producto
+--  · envio_gratis → bandera de envío gratis
+-- ===========================================================
+alter table products add column if not exists ad_ids jsonb default '[]'::jsonb;
+alter table products add column if not exists objeciones jsonb default '{}'::jsonb;
+alter table products add column if not exists sales_prompt text default '';
+alter table products add column if not exists envio_gratis boolean default false;
 
 -- trigger updated_at
 create or replace function set_updated_at() returns trigger

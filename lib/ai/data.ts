@@ -6,11 +6,12 @@ import { and, eq, asc, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import {
   products, categories, promotions, coupons, advisors, storeConfig,
-  type CiudadCobertura, type CuentaBancaria,
+  type CiudadCobertura, type CuentaBancaria, type CodFormConfig,
 } from "@/lib/db/schema";
 import type { ProductView, CategoryView } from "@/lib/ai/types";
 import { demoProducts, demoCategories, demoStore } from "@/lib/demo-data";
 import { normalize } from "@/lib/ai/format";
+import { computeShipping, resolveZona, TIEMPO_ENTREGA } from "@/lib/ai/shipping";
 
 type ProdRow = typeof products.$inferSelect;
 type CatRow = typeof categories.$inferSelect;
@@ -46,9 +47,12 @@ function toView(p: ProdRow, cat?: CatRow | null): ProductView {
     usage: p.usage || "",
     pitch: p.pitch || "",
     faq: (p.faq as ProductView["faq"]) || [],
+    keywords: (p.keywords as string[]) || [],
+    objeciones: (p.objeciones as Record<string, string>) || {}, adIds: (p.adIds as string[]) || [],
     disclaimer: p.disclaimer || "",
     stock: p.stock ?? 999,
     activo: p.activo ?? true,
+    envioGratis: p.envioGratis ?? false,
   };
 }
 
@@ -94,6 +98,7 @@ export type StoreCfg = {
   nombre: string; whatsapp: string; ciudadBase: string;
   envioDefaultCop: number; ciudadesCobertura: CiudadCobertura[];
   mensajeBienvenida: string; cuentasBancarias: CuentaBancaria[];
+  codForm: CodFormConfig;
 };
 
 export async function getStoreConfig(): Promise<StoreCfg> {
@@ -106,6 +111,7 @@ export async function getStoreConfig(): Promise<StoreCfg> {
       ciudadesCobertura: [],
       mensajeBienvenida: "¡Bienvenido a Animals Deluxe! 🐓 Suplementos premium para tus campeones, contraentrega en toda Colombia.",
       cuentasBancarias: [],
+      codForm: {},
     };
   }
   const [row] = await db.select().from(storeConfig).limit(1);
@@ -117,29 +123,82 @@ export async function getStoreConfig(): Promise<StoreCfg> {
     ciudadesCobertura: (row?.ciudadesCobertura as CiudadCobertura[]) || [],
     mensajeBienvenida: row?.mensajeBienvenida || "",
     cuentasBancarias: (row?.cuentasBancarias as CuentaBancaria[]) || [],
+    codForm: (row?.codForm as CodFormConfig) || {},
   };
 }
 
-/** Resuelve cobertura/envío por ciudad. */
-export async function resolveCobertura(ciudad: string) {
+export interface CotizarOpts {
+  /** Subtotal de los productos en COP (para sobreflete + recargo contraentrega). */
+  subtotalCop?: number;
+  /** Total de unidades del pedido (≈1 kg c/u). */
+  unidades?: number;
+  metodo?: "contraentrega" | "anticipado";
+  /** El pedido completo califica a envío gratis. */
+  envioGratis?: boolean;
+}
+
+export interface CoberturaResult {
+  cobertura: boolean; // legacy (alias de cubre)
+  cubre: boolean;
+  contraentrega: boolean;
+  costo_envio: number;
+  envio_gratis: boolean;
+  zona: string;
+  zona_label: string;
+  tiempo: string;
+  ciudad: string;
+}
+
+/** Cotiza el envío por ciudad usando la tabla de zonas desde Medellín.
+    Respeta overrides explícitos del admin (store_config.ciudadesCobertura). */
+export async function cotizarEnvio(ciudad: string, opts: CotizarOpts = {}): Promise<CoberturaResult> {
   const cfg = await getStoreConfig();
   const norm = normalize(ciudad);
-  const match = cfg.ciudadesCobertura.find((c) => normalize(c.ciudad) && (normalize(c.ciudad).includes(norm) || norm.includes(normalize(c.ciudad))));
+  const metodo = opts.metodo ?? "contraentrega";
+
+  // 1) override explícito configurado por el admin para esa ciudad
+  const match = cfg.ciudadesCobertura.find(
+    (c) => normalize(c.ciudad) && (normalize(c.ciudad).includes(norm) || norm.includes(normalize(c.ciudad))),
+  );
   if (match) {
-    return { cobertura: true, contraentrega: match.contraentrega, costo_envio: match.costo_envio, ciudad: match.ciudad };
+    const gratis = !!opts.envioGratis || match.costo_envio === 0;
+    return {
+      cobertura: true, cubre: true,
+      contraentrega: match.contraentrega,
+      costo_envio: gratis ? 0 : match.costo_envio,
+      envio_gratis: gratis,
+      zona: resolveZona(match.ciudad), zona_label: "",
+      tiempo: TIEMPO_ENTREGA,
+      ciudad: match.ciudad,
+    };
   }
-  // sin lista configurada o ciudad no listada → cobertura nacional contraentrega por defecto
-  const fallbackNacional = cfg.ciudadesCobertura.length === 0;
+
+  // 2) tabla de zonas (cobertura nacional por defecto)
+  const s = computeShipping({
+    ciudad: ciudad || cfg.ciudadBase,
+    subtotalCop: opts.subtotalCop ?? 0,
+    unidades: opts.unidades,
+    metodo,
+    envioGratis: opts.envioGratis,
+  });
   return {
-    cobertura: fallbackNacional,
-    contraentrega: fallbackNacional,
-    costo_envio: cfg.envioDefaultCop,
+    cobertura: true, cubre: true,
+    contraentrega: metodo === "contraentrega",
+    costo_envio: s.costo_envio,
+    envio_gratis: s.envio_gratis,
+    zona: s.zona, zona_label: s.zona_label,
+    tiempo: s.tiempo,
     ciudad: ciudad || cfg.ciudadBase,
   };
 }
 
+/** Compat: resuelve cobertura por ciudad (sin contexto de pedido). */
+export async function resolveCobertura(ciudad: string) {
+  return cotizarEnvio(ciudad);
+}
+
 export async function envioParaCiudad(ciudad: string): Promise<number> {
-  const c = await resolveCobertura(ciudad);
+  const c = await cotizarEnvio(ciudad);
   return c.costo_envio || 0;
 }
 

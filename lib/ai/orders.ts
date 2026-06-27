@@ -9,7 +9,8 @@ import { orders, orderItems } from "@/lib/db/schema";
 import type { ProductView } from "@/lib/ai/types";
 import { domainError } from "@/lib/ai/bridge";
 import { shortCode } from "@/lib/ai/format";
-import { assignAdvisor, envioParaCiudad, validateCoupon } from "@/lib/ai/data";
+import { assignAdvisor, cotizarEnvio, validateCoupon } from "@/lib/ai/data";
+import { pedidoEnvioGratis } from "@/lib/ai/shipping";
 
 export type ItemInput = { slug: string; presentacion?: string; cantidad?: number };
 export type ResolvedItem = {
@@ -94,7 +95,22 @@ export interface CreatedOrder {
 export async function createOrder(input: CreateOrderInput): Promise<CreatedOrder> {
   const metodo = input.metodo || "contraentrega";
   const resolved = resolveItems(input.items, input.catalog);
-  const envio = await envioParaCiudad(input.ciudad);
+  // Flete con la tabla de zonas desde Medellín (valor real → sobreflete + recargo + gratis).
+  const subtotalProductos = resolved.reduce((s, r) => s + r.subtotalCop, 0);
+  const unidades = resolved.reduce((s, r) => s + r.cantidad, 0);
+  const envioGratis = pedidoEnvioGratis(
+    resolved.map((r) => ({
+      slug: r.slug,
+      envioGratis: input.catalog.find((p) => p.slug === r.slug)?.envioGratis,
+    })),
+  );
+  const cobertura = await cotizarEnvio(input.ciudad, {
+    subtotalCop: subtotalProductos,
+    unidades,
+    metodo,
+    envioGratis,
+  });
+  const envio = cobertura.costo_envio;
   const coupon = input.cupon ? await validateCoupon(input.cupon) : null;
   const totals = computeTotals(resolved, envio, coupon ? { tipo: coupon.tipo || "porcentaje", valor: coupon.valor } : null);
   const idem = idempotencyKey(input.subId, metodo, resolved);
