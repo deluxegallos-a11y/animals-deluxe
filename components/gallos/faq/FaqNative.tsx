@@ -22,7 +22,7 @@ export function FaqNative() {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="scroll-mt-16 bg-background px-5 py-16">
+    <section id="faq" className="scroll-mt-16 bg-background px-5 py-20">
       <SectionHeading
         eyebrow="Soporte"
         title={
@@ -33,7 +33,7 @@ export function FaqNative() {
         subtitle="Todo lo que necesitas saber sobre nuestro doping"
       />
 
-      <div className="mx-auto mt-10 max-w-2xl space-y-2.5">
+      <div className="mx-auto mt-12 max-w-2xl space-y-3.5">
         {FAQS.map((f, i) => {
           const isOpen = open === i;
           return (

@@ -14,7 +14,11 @@
   --shadow:0 10px 30px rgba(20,30,60,.06); --shadow-sm:0 4px 14px rgba(20,30,60,.05);
   --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
 }
-*{box-sizing:border-box;margin:0;padding:0}
+*{box-sizing:border-box}
+/* El reset de margin/padding va en una capa (@layer base) para que NO anule las
+   utilidades de Tailwind v4 (que viven en @layer utilities) en la landing /gallos.
+   La tienda y el panel usan clases planas sin capa, que siguen ganando igual. */
+@layer base{*{margin:0;padding:0}}
 html,body{height:100%}
 body{font-family:var(--sans);background:var(--bg);color:var(--ink);
   -webkit-font-smoothing:antialiased;line-height:1.5;

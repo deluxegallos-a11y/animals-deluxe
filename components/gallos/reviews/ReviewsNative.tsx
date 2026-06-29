@@ -134,7 +134,7 @@ export function ReviewsNative() {
     "font-ui h-12 w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 text-[15px] text-white placeholder:text-white/35 transition-colors focus:border-[#ffd76a]/60 focus:bg-white/[0.05] focus:outline-none";
 
   return (
-    <section id="testimonios" className="scroll-mt-16 bg-background px-5 py-16">
+    <section id="testimonios" className="scroll-mt-16 bg-background px-5 py-20">
       <SectionHeading
         eyebrow="Testimonios reales"
         title={
@@ -143,20 +143,20 @@ export function ReviewsNative() {
           </>
         }
       />
-      <div className="mt-4 flex items-center justify-center gap-2.5">
+      <div className="mt-5 flex items-center justify-center gap-2.5">
         <Stars value={Math.round(avg)} size={17} />
         <span className="font-ui text-sm font-medium text-white/55">
           {avg.toFixed(1)} · {all.length} reseñas
         </span>
       </div>
 
-      <div className="mt-10 grid gap-4 sm:grid-cols-2">
+      <div className="mx-auto mt-12 grid max-w-2xl gap-5 sm:grid-cols-2">
         {all.map((r, i) => (
           <ReviewCard key={`${r.name}-${i}`} r={r} />
         ))}
       </div>
 
-      <div className="mt-9">
+      <div className="mx-auto mt-12 max-w-2xl">
         {done && (
           <p className="font-ui mb-5 flex items-center justify-center gap-2 rounded-2xl border border-[#27c34a]/40 bg-[#27c34a]/10 px-4 py-3 text-center text-sm font-medium text-[#5fe085]">
             ✓ ¡Gracias! Tu reseña fue publicada.

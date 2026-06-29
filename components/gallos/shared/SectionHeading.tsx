@@ -25,11 +25,11 @@ export function SectionHeading({
           <span className="h-px w-7 bg-gradient-to-l from-transparent to-[#ffc928]/60" />
         </div>
       )}
-      <h2 className="font-heading mx-auto max-w-[12ch] text-[clamp(30px,9.5vw,52px)] leading-[0.95] text-white">
+      <h2 className="font-heading mx-auto max-w-[15ch] text-[clamp(28px,8vw,44px)] leading-[1.02] text-white">
         {title}
       </h2>
       {subtitle && (
-        <p className="font-ui mx-auto mt-3.5 max-w-md text-[15px] leading-relaxed text-white/50">
+        <p className="font-ui mx-auto mt-4 max-w-md px-2 text-[15px] leading-relaxed text-white/50">
           {subtitle}
         </p>
       )}

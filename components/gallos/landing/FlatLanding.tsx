@@ -88,7 +88,7 @@ export function FlatLanding() {
   const cart = (size = 16) => <Icon name="cart" size={size} />;
 
   return (
-    <div className="mx-auto w-full max-w-[760px] bg-background">
+    <div className="mx-auto w-full max-w-[760px] bg-background pt-20 md:pt-24">
       {/* SECCIÓN 1 — Hero + beneficios + "la diferencia es real" */}
       <FlatImage
         id="top"
