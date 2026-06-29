@@ -1,14 +1,39 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { useCart } from "@/components/gallos/_lib/useCart";
 import { Button } from "@/components/gallos/shared/Button";
 import { Icon } from "@/components/gallos/shared/Icon";
+import { CodForm, type CodItem } from "@/components/store/cod-form";
 
 export function CartDrawer() {
   const { isOpen, close, lines, subtotal, setQty, remove, checkout, loading } =
     useCart();
+
+  // Paso del checkout: "cart" = lista; "pay" = elegir método de pago.
+  const [phase, setPhase] = useState<"cart" | "pay">("cart");
+  // Formulario contraentrega (el mismo de la página principal) sobre el carrito.
+  const [codOpen, setCodOpen] = useState(false);
+
+  // Al cerrar el carrito, volver siempre al primer paso.
+  useEffect(() => {
+    if (!isOpen) {
+      setPhase("cart");
+      setCodOpen(false);
+    }
+  }, [isOpen]);
+
+  // Mapea las líneas del carrito al formato que consume el CodForm.
+  const codItems: CodItem[] = lines.map((l) => ({
+    slug: l.product.id,
+    name: l.product.name,
+    presLabel: "",
+    qty: l.qty,
+    priceCOP: l.product.price,
+    imageUrl: l.product.image,
+  }));
 
   return (
     <AnimatePresence>
@@ -111,22 +136,77 @@ export function CartDrawer() {
                     ${subtotal.toLocaleString("es-CO")} COP
                   </span>
                 </div>
-                <Button
-                  variant="primary"
-                  icon="arrow-right"
-                  fullWidth
-                  pulse
-                  disabled={loading}
-                  onClick={checkout}
-                >
-                  {loading ? "Procesando…" : "Finalizar compra"}
-                </Button>
-                <p className="mt-2 text-center text-[11px] text-white/40">
-                  Pago seguro · Compra en menos de un minuto
-                </p>
+
+                {phase === "cart" ? (
+                  <>
+                    <Button
+                      variant="primary"
+                      icon="arrow-right"
+                      fullWidth
+                      pulse
+                      onClick={() => setPhase("pay")}
+                    >
+                      Finalizar compra
+                    </Button>
+                    <p className="mt-2 text-center text-[11px] text-white/40">
+                      Pago seguro · Compra en menos de un minuto
+                    </p>
+                  </>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-center text-sm font-semibold text-white">
+                      ¿Cómo quieres pagar?
+                    </p>
+                    <button
+                      onClick={() => setCodOpen(true)}
+                      className="flex w-full items-center gap-3 rounded-[18px] border border-border bg-surface p-4 text-left transition-colors hover:border-gold/60"
+                    >
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/[0.06] text-xl">
+                        💵
+                      </span>
+                      <span className="flex-1">
+                        <span className="block text-sm font-semibold text-white">
+                          Pagar contraentrega
+                        </span>
+                        <span className="block text-xs text-white/50">
+                          Pagas cuando recibes el pedido en tu casa
+                        </span>
+                      </span>
+                      <Icon name="arrow-right" size={18} />
+                    </button>
+                    <button
+                      onClick={checkout}
+                      disabled={loading}
+                      className="flex w-full items-center gap-3 rounded-[18px] border border-border bg-surface p-4 text-left transition-colors hover:border-gold/60 disabled:opacity-60"
+                    >
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/[0.06] text-xl">
+                        💳
+                      </span>
+                      <span className="flex-1">
+                        <span className="block text-sm font-semibold text-white">
+                          {loading ? "Redirigiendo…" : "Pagar anticipado"}
+                        </span>
+                        <span className="block text-xs text-white/50">
+                          Paga online ahora por la pasarela segura
+                        </span>
+                      </span>
+                      <Icon name="arrow-right" size={18} />
+                    </button>
+                    <button
+                      onClick={() => setPhase("cart")}
+                      className="w-full text-center text-xs font-medium text-white/45 hover:text-white"
+                    >
+                      ← Volver al carrito
+                    </button>
+                  </div>
+                )}
               </footer>
             )}
           </motion.aside>
+
+          {codOpen && (
+            <CodForm items={codItems} onClose={() => setCodOpen(false)} />
+          )}
         </>
       )}
     </AnimatePresence>
