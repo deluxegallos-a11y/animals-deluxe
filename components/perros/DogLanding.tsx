@@ -13,6 +13,7 @@ import {
 } from "@/components/perros/_lib/dog";
 import { ReviewsDogs } from "@/components/perros/ReviewsDogs";
 import { FaqNative } from "@/components/perros/FaqNative";
+import { Reveal3D } from "@/components/gallos/shared/Reveal3D";
 
 /* Mismo patrón que gallos y caballos: imágenes planas a ancho completo +
    botones reales superpuestos (posición absoluta en % vía style inline).
@@ -123,44 +124,48 @@ export function DogLanding() {
       </FlatImage>
 
       {/* 2 — ANTES/DESPUÉS + INGREDIENTES PREMIUM */}
-      <FlatImage
-        src="/assets/dog/d2.png"
-        width={864}
-        height={1821}
-        alt="Resultados que se ven, se notan y se sienten. Ingredientes premium de More Muscle Dogs"
-      >
-        <BuyButton
-          box={{ top: "91.0%", left: "5.4%", width: "89.2%", height: "7.0%" }}
-          onClick={() => buy()}
-          fontClass="text-[clamp(15px,4vw,22px)]"
-        />
-      </FlatImage>
+      <Reveal3D>
+        <FlatImage
+          src="/assets/dog/d2.png"
+          width={864}
+          height={1821}
+          alt="Resultados que se ven, se notan y se sienten. Ingredientes premium de More Muscle Dogs"
+        >
+          <BuyButton
+            box={{ top: "91.0%", left: "5.4%", width: "89.2%", height: "7.0%" }}
+            onClick={() => buy()}
+            fontClass="text-[clamp(15px,4vw,22px)]"
+          />
+        </FlatImage>
+      </Reveal3D>
 
       {/* 3 — PARA TODAS LAS RAZAS + ELIGE TU PLAN IDEAL */}
-      <FlatImage
-        src="/assets/dog/d3.png"
-        width={862}
-        height={1824}
-        alt="Para todas las razas. Elige tu plan ideal: 3 meses o 6 meses"
-      >
-        <BuyButton
-          box={{ top: "82.7%", left: "8.8%", width: "36.0%", height: "3.7%" }}
-          onClick={() => buy(DOG_PRODUCT)}
-          label="Comprar"
-          fontClass="text-[clamp(12px,3vw,16px)]"
-        />
-        <BuyButton
-          box={{ top: "82.7%", left: "54.2%", width: "36.0%", height: "3.7%" }}
-          onClick={() => buy(DOG_PRODUCT_6M)}
-          label="Comprar"
-          fontClass="text-[clamp(12px,3vw,16px)]"
-        />
-        <BuyButton
-          box={{ top: "95.3%", left: "5.4%", width: "89.0%", height: "3.7%" }}
-          onClick={() => buy(DOG_PRODUCT)}
-          fontClass="text-[clamp(13px,3.4vw,19px)]"
-        />
-      </FlatImage>
+      <Reveal3D>
+        <FlatImage
+          src="/assets/dog/d3.png"
+          width={862}
+          height={1824}
+          alt="Para todas las razas. Elige tu plan ideal: 3 meses o 6 meses"
+        >
+          <BuyButton
+            box={{ top: "82.7%", left: "8.8%", width: "36.0%", height: "3.7%" }}
+            onClick={() => buy(DOG_PRODUCT)}
+            label="Comprar"
+            fontClass="text-[clamp(12px,3vw,16px)]"
+          />
+          <BuyButton
+            box={{ top: "82.7%", left: "54.2%", width: "36.0%", height: "3.7%" }}
+            onClick={() => buy(DOG_PRODUCT_6M)}
+            label="Comprar"
+            fontClass="text-[clamp(12px,3vw,16px)]"
+          />
+          <BuyButton
+            box={{ top: "95.3%", left: "5.4%", width: "89.0%", height: "3.7%" }}
+            onClick={() => buy(DOG_PRODUCT)}
+            fontClass="text-[clamp(13px,3.4vw,19px)]"
+          />
+        </FlatImage>
+      </Reveal3D>
 
       {/* Reseñas nativas (sección añadida) */}
       <ReviewsDogs
@@ -179,19 +184,21 @@ export function DogLanding() {
       />
 
       {/* 4 — TU PERRO MERECE LO MEJOR + CTA FINAL */}
-      <FlatImage
-        src="/assets/dog/d4.png"
-        width={863}
-        height={1823}
-        alt="Tu perro merece lo mejor. Beneficios que se notan — Comprar More Muscle Dogs Premium"
-      >
-        <BuyButton
-          box={{ top: "82.3%", left: "4.6%", width: "90.6%", height: "6.0%" }}
-          onClick={() => buy()}
-          label="Comprar"
-          fontClass="text-[clamp(15px,4.4vw,24px)]"
-        />
-      </FlatImage>
+      <Reveal3D>
+        <FlatImage
+          src="/assets/dog/d4.png"
+          width={863}
+          height={1823}
+          alt="Tu perro merece lo mejor. Beneficios que se notan — Comprar More Muscle Dogs Premium"
+        >
+          <BuyButton
+            box={{ top: "82.3%", left: "4.6%", width: "90.6%", height: "6.0%" }}
+            onClick={() => buy()}
+            label="Comprar"
+            fontClass="text-[clamp(15px,4.4vw,24px)]"
+          />
+        </FlatImage>
+      </Reveal3D>
     </div>
   );
 }

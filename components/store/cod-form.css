@@ -1,0 +1,47 @@
+/* Estilos del modal de pedido contraentrega (CodForm). Extraídos de
+   store-theme.css para que el formulario sea autocontenido y se pueda
+   reutilizar fuera del storefront (p. ej. en las landings /gallos, /caballos,
+   /perros) sin cargar todo el tema de la tienda. Colores literales, sin vars. */
+.cod-back{position:fixed;inset:0;z-index:400;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(4,5,8,.66);backdrop-filter:blur(4px);font-family:'Inter',system-ui,sans-serif}
+.cod-modal{position:relative;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;background:linear-gradient(180deg,#12141b,#0b0c10);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:26px 24px;color:#F4F6FB;box-shadow:0 30px 70px rgba(0,0,0,.6)}
+.cod-x{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#C7CCDA;cursor:pointer}
+.cod-modal h3{font-size:20px;font-weight:900;margin-bottom:4px}
+.cod-sub{font-size:13px;color:#9097A6;margin-bottom:16px}.cod-sub b{color:#fff}
+.cod-modal form{display:flex;flex-direction:column;gap:10px}
+.cod-modal input{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:12px 14px;font-size:14px;color:#fff;outline:none}
+.cod-modal input:focus{border-color:#FF6A4D;box-shadow:0 0 0 3px rgba(255,77,46,.18)}
+.cod-modal input::placeholder{color:#6b7180}
+.cod-submit{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px;padding:14px;border-radius:12px;font-weight:800;font-size:15px;background:linear-gradient(135deg,#FF6A4D,#D11616 55%,#8E0E0E);color:#fff;border:none;cursor:pointer}
+.cod-submit:disabled{opacity:.6;cursor:wait}
+.cod-note{font-size:11.5px;color:#838AA0;text-align:center;margin-top:8px}
+.cod-err{background:rgba(255,90,77,.14);color:#FF8A7D;border:1px solid rgba(255,90,77,.25);border-radius:10px;padding:9px 12px;font-size:12.5px}
+.cod-done{text-align:center;padding:10px 0}
+.cod-done .ic{font-size:40px;margin-bottom:8px}.cod-done h3{margin-bottom:8px}
+.cod-done p{font-size:14px;color:#C7CCDA;line-height:1.6;margin-bottom:16px}.cod-done b{color:#fff}
+.cod-items{display:grid;gap:8px;max-height:230px;overflow-y:auto;margin:4px 0 14px;padding-right:2px}
+.cod-item{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:8px 10px}
+.cod-item-img{width:46px;height:46px;border-radius:9px;overflow:hidden;flex:0 0 auto;background:#0d0d10;display:grid;place-items:center}
+.cod-item-img img{width:100%;height:100%;object-fit:contain}
+.cod-item-img span{font-size:20px}
+.cod-item-info{flex:1;min-width:0;line-height:1.25}
+.cod-item-info b{display:block;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}
+.cod-item-pres{font-size:11px;color:#9097A6;display:block}
+.cod-item-price{font-size:11.5px;color:#C7CCDA}
+.cod-item-right{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+.cod-step{display:flex;align-items:center;gap:8px;background:#0d0d10;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:3px 6px}
+.cod-step button{background:none;border:none;color:#fff;display:grid;place-items:center;cursor:pointer;padding:2px}
+.cod-step span{font-size:13px;font-weight:800;min-width:16px;text-align:center;color:#fff}
+.cod-item-del{background:none;border:none;color:#9097A6;cursor:pointer;padding:4px}
+.cod-item-del:hover{color:#FF6A4D}
+.cod-sel{width:100%;background:#0d0d10;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:13px 14px;color:#fff;font-size:14.5px;font-family:inherit;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpath d='M3 5l4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
+.cod-sel:invalid{color:#6b7180}
+.cod-upsell{display:flex;align-items:center;gap:11px;border:1.5px solid rgba(255,255,255,.1);border-radius:14px;padding:13px 14px;cursor:pointer;transition:.18s;position:relative}
+.cod-upsell.on{border-color:#FF4D3D;background:rgba(255,77,61,.08)}
+.cod-upsell input{position:absolute;opacity:0;pointer-events:none}
+.cod-upsell .cu-check{width:24px;height:24px;border-radius:7px;border:2px solid rgba(255,255,255,.18);display:grid;place-items:center;flex:0 0 auto;font-weight:900;color:#fff;font-size:14px}
+.cod-upsell.on .cu-check{background:#FF4D3D;border-color:#FF4D3D}
+.cod-upsell .cu-body{flex:1;min-width:0;line-height:1.3}
+.cod-upsell .cu-body b{display:block;font-size:14px;color:#fff}
+.cod-upsell .cu-body span{font-size:12px;color:#C7CCDA}
+.cod-upsell .cu-price{font-weight:900;color:#FF6A4D;font-size:14px;white-space:nowrap}

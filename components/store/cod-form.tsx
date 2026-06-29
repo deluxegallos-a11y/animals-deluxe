@@ -6,6 +6,9 @@ import { ShoppingCart, Plus, Minus, Trash2 } from "lucide-react";
 import { cop } from "@/lib/ai/format";
 import { crearPedidoWeb } from "@/app/order-actions";
 import type { CodFormConfig } from "@/lib/db/schema";
+// Estilos del modal empaquetados con el componente, para que el formulario se
+// pueda reutilizar fuera del storefront (landings) sin cargar store-theme.css.
+import "./cod-form.css";
 
 export type CodItem = { slug: string; name: string; presLabel: string; qty: number; priceCOP: number; imageUrl: string };
 

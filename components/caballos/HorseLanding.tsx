@@ -8,6 +8,7 @@ import { HORSE_PRODUCT, HORSE_REVIEWS, HORSE_FAQS } from "@/components/caballos/
 import { StatsBar } from "@/components/gallos/sections/StatsBar";
 import { ReviewsNative } from "@/components/caballos/ReviewsNative";
 import { FaqNative } from "@/components/caballos/FaqNative";
+import { Reveal3D } from "@/components/gallos/shared/Reveal3D";
 
 /* Mismo patrón que la landing de gallos: imágenes planas + botones reales
    (posición absoluta en % vía style inline, que gana al .btn-shine).
@@ -119,40 +120,46 @@ export function HorseLanding() {
       </FlatImage>
 
       {/* 2 — BENEFICIOS CLAVE */}
-      <FlatImage
-        src="/assets/horse/h2.png"
-        width={862}
-        height={1824}
-        alt="Beneficios clave: más energía, resistencia, fuerza, recuperación y sistema inmune"
-      >
-        <BuyButton
-          box={{ top: "87.2%", left: "6.5%", width: "86.0%", height: "10.1%" }}
-          onClick={buy}
-          fontClass="text-[clamp(15px,4vw,22px)]"
-        />
-      </FlatImage>
+      <Reveal3D>
+        <FlatImage
+          src="/assets/horse/h2.png"
+          width={862}
+          height={1824}
+          alt="Beneficios clave: más energía, resistencia, fuerza, recuperación y sistema inmune"
+        >
+          <BuyButton
+            box={{ top: "87.2%", left: "6.5%", width: "86.0%", height: "10.1%" }}
+            onClick={buy}
+            fontClass="text-[clamp(15px,4vw,22px)]"
+          />
+        </FlatImage>
+      </Reveal3D>
 
       {/* 3 — ANTES Y DESPUÉS */}
-      <FlatImage
-        src="/assets/horse/h3.png"
-        width={863}
-        height={1822}
-        alt="Antes y después — Por qué elegir Horse Deluxe, proteína original americana"
-      >
-        <BuyButton
-          box={{ top: "91.5%", left: "12.4%", width: "75.2%", height: "6.4%" }}
-          onClick={buy}
-          fontClass="text-[clamp(13px,3.4vw,19px)]"
-        />
-      </FlatImage>
+      <Reveal3D>
+        <FlatImage
+          src="/assets/horse/h3.png"
+          width={863}
+          height={1822}
+          alt="Antes y después — Por qué elegir Horse Deluxe, proteína original americana"
+        >
+          <BuyButton
+            box={{ top: "91.5%", left: "12.4%", width: "75.2%", height: "6.4%" }}
+            onClick={buy}
+            fontClass="text-[clamp(13px,3.4vw,19px)]"
+          />
+        </FlatImage>
+      </Reveal3D>
 
       {/* 4a — FÓRMULA EXCLUSIVA + IDEAL PARA (sin botón) */}
-      <FlatImage
-        src="/assets/horse/h4a.png"
-        width={862}
-        height={1030}
-        alt="Fórmula exclusiva: aminoácidos, vitaminas, complejo B, minerales y esencia de manzana"
-      />
+      <Reveal3D>
+        <FlatImage
+          src="/assets/horse/h4a.png"
+          width={862}
+          height={1030}
+          alt="Fórmula exclusiva: aminoácidos, vitaminas, complejo B, minerales y esencia de manzana"
+        />
+      </Reveal3D>
 
       {/* Contador premium */}
       <StatsBar />
@@ -181,18 +188,20 @@ export function HorseLanding() {
       />
 
       {/* 4b — PRECIO + COMPRA + GARANTÍA + sellos (imagen recortada) */}
-      <FlatImage
-        src="/assets/horse/h4b.png"
-        width={862}
-        height={523}
-        alt="Por solo 160.000 COP — Garantía 100% de satisfacción, envío contraentrega"
-      >
-        <BuyButton
-          box={{ top: "31.2%", left: "8.0%", width: "83.5%", height: "18.2%" }}
-          onClick={buy}
-          fontClass="text-[clamp(15px,4vw,22px)]"
-        />
-      </FlatImage>
+      <Reveal3D>
+        <FlatImage
+          src="/assets/horse/h4b.png"
+          width={862}
+          height={523}
+          alt="Por solo 160.000 COP — Garantía 100% de satisfacción, envío contraentrega"
+        >
+          <BuyButton
+            box={{ top: "31.2%", left: "8.0%", width: "83.5%", height: "18.2%" }}
+            onClick={buy}
+            fontClass="text-[clamp(15px,4vw,22px)]"
+          />
+        </FlatImage>
+      </Reveal3D>
     </div>
   );
 }
