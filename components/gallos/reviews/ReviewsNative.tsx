@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { REVIEWS } from "@/components/gallos/_lib/data";
 import type { Review } from "@/components/gallos/_lib/types";
 import { track } from "@/components/gallos/_lib/tracking";
+import { SectionHeading } from "@/components/gallos/shared/SectionHeading";
 import {
   listGallosReviews,
   submitGallosReview,
@@ -134,17 +135,19 @@ export function ReviewsNative() {
 
   return (
     <section id="testimonios" className="scroll-mt-16 bg-background px-5 py-16">
-      <div className="text-center">
-        <p className="eyebrow mb-3 text-[#ffd76a]/80">Testimonios reales</p>
-        <h2 className="h-apple text-frost mx-auto max-w-md text-[clamp(28px,8vw,44px)]">
-          Lo que dicen nuestros campeones
-        </h2>
-        <div className="mt-4 flex items-center justify-center gap-2.5">
-          <Stars value={Math.round(avg)} size={17} />
-          <span className="font-ui text-sm font-medium text-white/55">
-            {avg.toFixed(1)} · {all.length} reseñas
-          </span>
-        </div>
+      <SectionHeading
+        eyebrow="Testimonios reales"
+        title={
+          <>
+            Lo que dicen nuestros <span className="accent-gold">campeones</span>
+          </>
+        }
+      />
+      <div className="mt-4 flex items-center justify-center gap-2.5">
+        <Stars value={Math.round(avg)} size={17} />
+        <span className="font-ui text-sm font-medium text-white/55">
+          {avg.toFixed(1)} · {all.length} reseñas
+        </span>
       </div>
 
       <div className="mt-10 grid gap-4 sm:grid-cols-2">

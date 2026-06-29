@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Icon, type IconName } from "@/components/gallos/shared/Icon";
+import { SectionHeading } from "@/components/gallos/shared/SectionHeading";
 import { FAQS } from "@/components/gallos/_lib/data";
 import { track } from "@/components/gallos/_lib/tracking";
 
@@ -22,15 +23,15 @@ export function FaqNative() {
 
   return (
     <section id="faq" className="scroll-mt-16 bg-background px-5 py-16">
-      <div className="text-center">
-        <p className="eyebrow mb-3 text-[#ffd76a]/80">Soporte</p>
-        <h2 className="h-apple text-frost text-[clamp(28px,8.5vw,46px)]">
-          Preguntas frecuentes
-        </h2>
-        <p className="font-ui mx-auto mt-3 max-w-md text-[15px] leading-relaxed text-white/45">
-          Todo lo que necesitas saber sobre nuestro doping
-        </p>
-      </div>
+      <SectionHeading
+        eyebrow="Soporte"
+        title={
+          <>
+            Preguntas <span className="accent-gold">frecuentes</span>
+          </>
+        }
+        subtitle="Todo lo que necesitas saber sobre nuestro doping"
+      />
 
       <div className="mx-auto mt-10 max-w-2xl space-y-2.5">
         {FAQS.map((f, i) => {
@@ -51,13 +52,11 @@ export function FaqNative() {
                 className="flex w-full items-center gap-3.5 p-4 text-left sm:p-5"
               >
                 <span
-                  className={`grid h-10 w-10 shrink-0 place-items-center rounded-full text-[#ffd76a] transition-colors ${
-                    isOpen
-                      ? "bg-[#ffd76a]/12 ring-1 ring-[#ffd76a]/30"
-                      : "bg-white/[0.04] ring-1 ring-white/10"
+                  className={`icon-coin grid h-10 w-10 shrink-0 place-items-center rounded-full transition-transform ${
+                    isOpen ? "scale-105" : ""
                   }`}
                 >
-                  <Icon name={ICONS[i] ?? "energia"} size={18} />
+                  <Icon name={ICONS[i] ?? "energia"} size={18} strokeWidth={2.1} />
                 </span>
                 <span className="font-ui flex-1 text-[15px] font-semibold tracking-tight text-white sm:text-base">
                   {f.q}
