@@ -9,23 +9,23 @@ export function Footer() {
         <div>
           <Logo />
           <p className="mt-4 max-w-xs text-sm text-white/55">
-            Suplementos premium para gallos de combate. Máximo rendimiento,
-            fuerza y energía. Envío a todo Colombia.
+            Suplementos premium para tus animales de competencia. Máximo
+            rendimiento, fuerza y energía. Envío a todo Colombia.
           </p>
         </div>
 
         <div className="grid grid-cols-2 gap-6 text-sm">
           <div>
-            <h4 className="mb-3 font-heading text-base text-white">Producto</h4>
+            <h4 className="mb-3 font-heading text-base text-white">Líneas</h4>
             <ul className="space-y-2 text-white/55">
               <li>
-                <a href="#productos" className="hover:text-gold">
-                  American Rooster Fury
+                <a href="/gallos" className="hover:text-gold">
+                  Gallos
                 </a>
               </li>
               <li>
-                <a href="#productos" className="hover:text-gold">
-                  Dragon Mamba
+                <a href="/caballos" className="hover:text-gold">
+                  Caballos
                 </a>
               </li>
               <li>

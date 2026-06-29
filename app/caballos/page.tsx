@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { getProductBySlug } from "@/lib/ai/data";
 import { CaballosProviders } from "@/components/caballos/CaballosProviders";
 import { HorseLanding } from "@/components/caballos/HorseLanding";
 import { HorseStickyCTA } from "@/components/caballos/HorseStickyCTA";
@@ -17,12 +16,12 @@ export const metadata: Metadata = {
   alternates: { canonical: "/caballos" },
 };
 
-export default async function CaballosPage() {
-  // CONEXIÓN 1 — precio real por slug (única fuente de precio de la landing).
-  const product = await getProductBySlug("horse-deluxe");
-
+export default function CaballosPage() {
+  // CONEXIÓN 1 — precio: la IMAGEN (h1/h4b) tiene "160.000" quemado, así que la
+  // landing usa 160.000 (HORSE_PRODUCT.price) para que carrito y CTA coincidan
+  // con la imagen. Si en el futuro se cambia la imagen, conectar getProductBySlug.
   return (
-    <CaballosProviders price={product?.priceCOP}>
+    <CaballosProviders>
       <main>
         <HorseLanding />
       </main>
