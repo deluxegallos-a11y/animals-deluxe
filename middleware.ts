@@ -5,9 +5,9 @@ import { updateSession } from "@/lib/supabase/middleware";
 /* Rutas públicas:
    - el bot se autentica con x-bridge-token (/api/ai) o x-api-key (/api/products/search)
    - los webhooks con su propia firma
-   - la web pública: home "/", fichas de producto "/producto/*" y las landings "/gallos", "/caballos"
+   - la web pública: home "/", fichas de producto "/producto/*" y las landings "/gallos", "/caballos", "/perros"
    - el upload se protege por sesión dentro del handler */
-const PUBLIC_PREFIXES = ["/api", "/producto", "/gallos", "/caballos"];
+const PUBLIC_PREFIXES = ["/api", "/producto", "/gallos", "/caballos", "/perros"];
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
