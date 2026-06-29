@@ -2,6 +2,7 @@ import { z } from "zod";
 import { withBridge, logEvent } from "@/lib/ai/bridge";
 import { getProducts } from "@/lib/ai/data";
 import { searchProducts } from "@/lib/ai/search";
+import { buildContexto, richMensaje } from "@/lib/ai/present";
 import { cop } from "@/lib/ai/format";
 
 export const runtime = "nodejs";
@@ -18,6 +19,7 @@ export const POST = withBridge(
 
     const productos = top.map((p) => ({
       slug: p.slug, name: p.name, priceCOP: p.priceCOP, pitch: p.pitch || p.shortDesc,
+      mensaje: richMensaje(p), producto_contexto: buildContexto(p),
     }));
     const mensaje = productos.length
       ? `Para "${body.necesidad}" te recomiendo: ` +

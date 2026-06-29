@@ -1,0 +1,338 @@
+@import "tailwindcss";
+
+/* ============================================================
+   ROOSTER LANDING — Design System (handoff sección 2)
+   ============================================================ */
+
+@theme {
+  /* Paleta */
+  --color-background: #050505;
+  --color-surface: #111111;
+  --color-surface-2: #1a1a1a;
+  --color-gold: #ffc928;
+  --color-american: #ff6900;
+  --color-dragon: #27c34a;
+  --color-white: #ffffff;
+  --color-danger: #c62828;
+  --color-muted: #8a8a8a;
+  --color-border: #2a2a2a;
+
+  /* Tipografía (cargada con next/font en layout.tsx) */
+  --font-display: var(--font-bebas), "Arial Narrow", sans-serif;
+  --font-heading: var(--font-anton), "Arial Narrow", sans-serif;
+  --font-body: var(--font-montserrat), system-ui, sans-serif;
+
+  /* Formas */
+  --radius-card: 20px;
+
+  /* Sombras profundas */
+  --shadow-deep: 0 24px 60px -15px rgba(0, 0, 0, 0.75);
+  --shadow-card: 0 12px 40px -12px rgba(0, 0, 0, 0.8);
+}
+
+:root {
+  --background: var(--color-background);
+  --foreground: var(--color-white);
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+html {
+  scroll-behavior: auto; /* Lenis controla el scroll */
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-white);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-gold);
+  color: #050505;
+}
+
+/* ---------- Utilidades tipográficas ---------- */
+.font-display {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  line-height: 0.92;
+}
+.font-heading {
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+
+/* ---------- Glow ---------- */
+.glow-gold {
+  box-shadow:
+    0 0 24px rgba(255, 201, 40, 0.45),
+    0 0 4px rgba(255, 201, 40, 0.6);
+}
+.glow-american {
+  box-shadow:
+    0 0 60px -10px rgba(255, 105, 0, 0.55),
+    0 0 18px rgba(255, 105, 0, 0.35);
+}
+.glow-dragon {
+  box-shadow:
+    0 0 60px -10px rgba(39, 195, 74, 0.55),
+    0 0 18px rgba(39, 195, 74, 0.35);
+}
+.text-glow-gold {
+  text-shadow: 0 0 18px rgba(255, 201, 40, 0.5);
+}
+
+/* Radial helpers para los degradados de fondo del hero */
+.bg-hero-radial {
+  background:
+    radial-gradient(120% 90% at 15% 30%, rgba(255, 105, 0, 0.28), transparent 55%),
+    radial-gradient(120% 90% at 85% 30%, rgba(39, 195, 74, 0.26), transparent 55%),
+    radial-gradient(100% 100% at 50% 0%, #0c0c0c, #050505 70%);
+}
+
+/* ---------- Botón shine ---------- */
+.btn-shine {
+  position: relative;
+  overflow: hidden;
+}
+.btn-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-120%);
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 70%
+  );
+  transition: transform 0.7s ease;
+  pointer-events: none;
+}
+.btn-shine:hover::after {
+  transform: translateX(120%);
+}
+
+/* ---------- Pulso del CTA cada 8s ---------- */
+@keyframes ctaPulse {
+  0%,
+  88%,
+  100% {
+    box-shadow:
+      0 0 24px rgba(255, 201, 40, 0.45),
+      0 0 4px rgba(255, 201, 40, 0.6);
+  }
+  94% {
+    box-shadow:
+      0 0 44px rgba(255, 201, 40, 0.85),
+      0 0 10px rgba(255, 201, 40, 0.9);
+  }
+}
+.cta-pulse {
+  animation: ctaPulse 8s ease-in-out infinite;
+}
+
+/* ---------- Texto metálico (titular hero) ---------- */
+.text-steel {
+  background: linear-gradient(180deg, #ffffff 0%, #e8e8e8 45%, #9a9a9a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+.text-gold-grad {
+  background: linear-gradient(180deg, #ffe89a 0%, #ffc928 50%, #f59e0b 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ============================================================
+   APPLE-GRADE — sistema para secciones NATIVAS (alta calidad)
+   ============================================================ */
+:root {
+  /* Tipografía estilo SF Pro: el sistema en Apple, Montserrat de respaldo */
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+    "Helvetica Neue", var(--font-montserrat), system-ui, sans-serif;
+}
+
+.font-ui {
+  font-family: var(--font-ui);
+}
+
+/* Titular Apple: grande, peso medio, tracking negativo, interlínea ajustada */
+.h-apple {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.04;
+}
+.eyebrow {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-size: 0.72rem;
+}
+
+/* Vidrio esmerilado (frosted glass) — tarjetas premium */
+.glass {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.065),
+    rgba(255, 255, 255, 0.018)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.085);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.07),
+    0 24px 60px -28px rgba(0, 0, 0, 0.85);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+}
+.glass-gold {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 201, 40, 0.12),
+    rgba(255, 201, 40, 0.025)
+  );
+  border: 1px solid rgba(255, 201, 40, 0.2);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 235, 170, 0.18),
+    0 24px 60px -26px rgba(0, 0, 0, 0.9);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+}
+.glass-hover {
+  transition:
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.4s ease,
+    box-shadow 0.4s ease;
+}
+.glass-hover:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+/* Texto metálico frío (plata refinada) para titulares nativos */
+.text-frost {
+  background: linear-gradient(180deg, #ffffff 0%, #eef0f3 42%, #b6bac3 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+/* Oro champaña refinado (gradiente premium, no plano) */
+.text-champagne {
+  background: linear-gradient(135deg, #fff3cf 0%, #ffd76a 42%, #e0a92e 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.divide-hairline > * + * {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* ---------- Flotación suave (capas hero) ---------- */
+@keyframes floatSoft {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-9px);
+  }
+}
+.float-soft {
+  animation: floatSoft 3.4s ease-in-out infinite;
+}
+
+/* ---------- Loader premium (estilo Apple) ---------- */
+.loader-smoke {
+  background: radial-gradient(
+    circle,
+    rgba(255, 201, 40, 0.22),
+    rgba(255, 105, 0, 0.1) 40%,
+    transparent 70%
+  );
+  filter: blur(34px);
+  animation: loaderGlow 1.5s ease-in-out infinite;
+}
+@keyframes loaderGlow {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+}
+.loader-particle {
+  position: absolute;
+  bottom: 40%;
+  width: 4px;
+  height: 4px;
+  border-radius: 9999px;
+  background: rgba(255, 201, 40, 0.9);
+  box-shadow: 0 0 8px rgba(255, 201, 40, 0.9);
+  opacity: 0;
+  animation-name: loaderRise;
+  animation-timing-function: ease-out;
+  animation-iteration-count: infinite;
+}
+@keyframes loaderRise {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-190px) scale(0.3);
+    opacity: 0;
+  }
+}
+
+/* ---------- Podio (CSS) ---------- */
+.podium {
+  background: radial-gradient(
+    60% 100% at 50% 0%,
+    rgba(255, 201, 40, 0.55),
+    rgba(120, 90, 20, 0.35) 45%,
+    rgba(10, 10, 10, 0.9) 100%
+  );
+  box-shadow:
+    0 -2px 14px rgba(255, 201, 40, 0.35) inset,
+    0 18px 50px -10px rgba(0, 0, 0, 0.8);
+}
+
+/* ---------- Scrollbar ---------- */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+::-webkit-scrollbar-thumb {
+  background: #2a2a2a;
+  border-radius: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

@@ -1,0 +1,315 @@
+/* ===========================================================
+   ANIMALS DELUXE · ADMIN — diseño claro estilo "Fintrixity"
+   Fondo blanco · acentos azul · sidebar + topbar + tarjetas.
+   Scoped a .adm (no toca tienda ni auth).
+   =========================================================== */
+.adm{
+  --bg:#F4F6FB; --card:#FFFFFF; --ink:#101828; --ink-2:#344054; --muted:#8A93A5; --line:#EAEDF3; --line-2:#E2E6EF;
+  --blue:#2F6BFF; --blue-2:#1E50E6; --blue-soft:#EAF0FF; --blue-3:#5C8BFF;
+  --green:#16C784; --green-soft:#E6F9F1; --amber:#F79009; --amber-soft:#FFF4E5; --red:#F04438; --red-soft:#FEECEB;
+  --radius:18px; --radius-sm:13px;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 10px 28px -14px rgba(16,24,40,.16);
+  --shadow-sm:0 1px 2px rgba(16,24,40,.05);
+  --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  display:grid; grid-template-columns:262px 1fr; min-height:100vh;
+  background:var(--bg); color:var(--ink); font-family:var(--sans); -webkit-font-smoothing:antialiased;
+}
+.adm *{box-sizing:border-box}
+.adm a{color:inherit;text-decoration:none}
+.adm ::selection{background:var(--blue);color:#fff}
+
+/* ---------- SIDEBAR ---------- */
+.adm .sb{position:sticky;top:0;height:100vh;background:#fff;border-right:1px solid var(--line);
+  display:flex;flex-direction:column;padding:18px 14px;overflow-y:auto}
+.adm .sb .brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:17px;letter-spacing:-.4px;padding:6px 8px 16px}
+.adm .sb .brand .mk{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;color:#fff;font-size:18px;
+  background:linear-gradient(135deg,var(--blue),var(--blue-3));box-shadow:0 8px 16px -5px rgba(47,107,255,.55)}
+.adm .sb .search{display:flex;align-items:center;gap:9px;background:var(--bg);border:1px solid var(--line);border-radius:12px;
+  padding:10px 12px;color:var(--muted);font-size:13.5px;margin-bottom:6px}
+.adm .sb .search .kbd{margin-left:auto;font-size:10.5px;font-weight:700;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:6px;padding:2px 6px}
+.adm .sb .seclabel{font-size:10.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:16px 10px 7px}
+.adm .sb .nav{display:flex;flex-direction:column;gap:3px}
+.adm .sb a.item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:11px;color:var(--ink-2);font-weight:600;font-size:14px;transition:.15s;position:relative}
+.adm .sb a.item svg{color:var(--muted);flex-shrink:0;transition:.15s}
+.adm .sb a.item:hover{background:var(--bg);color:var(--ink)}
+.adm .sb a.item:hover svg{color:var(--ink-2)}
+.adm .sb a.item.on{background:var(--blue-soft);color:var(--blue-2);font-weight:700}
+.adm .sb a.item.on svg{color:var(--blue)}
+.adm .sb a.item .badge{margin-left:auto;font-size:10.5px;font-weight:800;color:#fff;background:var(--blue);border-radius:20px;padding:1px 7px}
+.adm .sb .promo{margin-top:auto;border-radius:16px;padding:18px 16px;color:#fff;position:relative;overflow:hidden;
+  background:linear-gradient(150deg,#2F6BFF,#1E50E6)}
+.adm .sb .promo:after{content:"";position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.14)}
+.adm .sb .promo h4{font-size:14.5px;font-weight:800;margin-bottom:4px;position:relative}
+.adm .sb .promo p{font-size:12px;opacity:.9;line-height:1.5;margin-bottom:13px;position:relative}
+.adm .sb .promo a{display:inline-flex;align-items:center;gap:6px;background:#fff;color:var(--blue-2);font-weight:800;font-size:12.5px;padding:8px 13px;border-radius:10px;position:relative}
+
+/* ---------- MAIN / TOPBAR ---------- */
+.adm .main{min-width:0;display:flex;flex-direction:column}
+.adm .topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:14px;padding:14px 28px;
+  background:rgba(244,246,251,.82);backdrop-filter:blur(10px) saturate(1.2);border-bottom:1px solid var(--line)}
+.adm .crumb{font-size:13.5px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.adm .crumb .sep{opacity:.5}
+.adm .crumb b{color:var(--ink);font-weight:700}
+.adm .topbar .sp{flex:1}
+.adm .tsearch{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 13px;color:var(--muted);font-size:13.5px;width:240px}
+.adm .tsearch input{border:none;background:none;outline:none;font:inherit;color:var(--ink);width:100%}
+.adm .tbtn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:#fff;display:grid;place-items:center;color:var(--ink-2);cursor:pointer;position:relative;transition:.15s}
+.adm .tbtn:hover{background:#fff;border-color:var(--blue);color:var(--blue)}
+.adm .tbtn .dot{position:absolute;top:9px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--red);border:2px solid #fff}
+.adm .primary{display:inline-flex;align-items:center;gap:8px;background:var(--blue);color:#fff;font-weight:700;font-size:13.5px;
+  padding:11px 17px;border-radius:12px;border:none;cursor:pointer;box-shadow:0 10px 20px -8px rgba(47,107,255,.6);transition:.15s}
+.adm .primary:hover{background:var(--blue-2);transform:translateY(-1px)}
+.adm .avatar{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:14px;
+  background:linear-gradient(135deg,#FFB37B,#FF7BA9);cursor:pointer}
+.adm .logout{border:none;background:none;color:var(--muted);cursor:pointer;display:grid;place-items:center;width:36px;height:36px;border-radius:10px}
+.adm .logout:hover{color:var(--red);background:var(--red-soft)}
+
+/* ---------- CONTENT ---------- */
+.adm .content{padding:24px 28px 56px;max-width:1280px;width:100%}
+.adm .pagehead{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px}
+.adm .pagehead h1{font-size:24px;font-weight:800;letter-spacing:-.6px}
+.adm .pagehead p{color:var(--muted);font-size:14px;margin-top:3px}
+
+/* segmented control (This Month / Reset) */
+.adm .ctrls{display:flex;align-items:center;gap:10px}
+.adm .chip-btn{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:9px 14px;font-size:13px;font-weight:600;color:var(--ink-2);cursor:pointer}
+.adm .chip-btn:hover{border-color:var(--blue);color:var(--blue)}
+
+/* ---------- SUMMARY CARDS ---------- */
+.adm .sumgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:18px}
+.adm .sumc{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+.adm .sumc .top{display:flex;align-items:center;gap:11px;margin-bottom:16px}
+.adm .sumc .ic{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;background:var(--blue-soft);color:var(--blue)}
+.adm .sumc .lbl{font-size:14px;font-weight:700}
+.adm .sumc .lbl small{display:block;font-size:11.5px;font-weight:500;color:var(--muted);margin-top:1px}
+.adm .sumc .dots{margin-left:auto;color:var(--muted);cursor:pointer}
+.adm .sumc .big{font-size:29px;font-weight:800;letter-spacing:-1.2px;display:flex;align-items:baseline;gap:10px}
+.adm .sumc .chg{font-size:11.5px;font-weight:800;padding:3px 9px;border-radius:20px;display:inline-flex;align-items:center;gap:3px}
+.adm .sumc .chg.up{color:var(--green);background:var(--green-soft)}
+.adm .sumc .chg.down{color:var(--red);background:var(--red-soft)}
+.adm .sumc .foot{margin-top:16px;padding-top:13px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;
+  font-size:13px;font-weight:700;color:var(--blue)}
+.adm .sumc .foot svg{transition:.15s}
+.adm .sumc:hover .foot svg{transform:translateX(3px)}
+/* destacada (azul) */
+.adm .sumc.hot{border-color:transparent;color:#fff;background:linear-gradient(145deg,#3B7BFF,#1E50E6);box-shadow:0 20px 44px -18px rgba(47,107,255,.7);position:relative;overflow:hidden}
+.adm .sumc.hot:before{content:"";position:absolute;right:-40px;bottom:-50px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.1)}
+.adm .sumc.hot .ic{background:rgba(255,255,255,.2);color:#fff}
+.adm .sumc.hot .lbl small{color:rgba(255,255,255,.8)}
+.adm .sumc.hot .dots{color:rgba(255,255,255,.7)}
+.adm .sumc.hot .chg.up{background:rgba(255,255,255,.22);color:#fff}
+.adm .sumc.hot .foot{border-color:rgba(255,255,255,.25);color:#fff}
+
+/* ---------- 2-COL ROW (lista + chart) ---------- */
+.adm .drow{display:grid;grid-template-columns:1fr 1.35fr;gap:18px;margin-bottom:18px}
+.adm .panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;box-shadow:var(--shadow);min-width:0}
+.adm .panel .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px}
+.adm .panel .ph h3{font-size:16.5px;font-weight:800;letter-spacing:-.3px}
+.adm .panel .ph .sub{font-size:12.5px;color:var(--muted);margin-top:2px}
+
+/* lista estilo wallet */
+.adm .wlist{display:flex;flex-direction:column;gap:10px}
+.adm .wrow{display:flex;align-items:center;gap:13px;padding:13px;border:1px solid var(--line);border-radius:14px;transition:.15s}
+.adm .wrow:hover{border-color:var(--blue);box-shadow:var(--shadow-sm)}
+.adm .wrow .rk{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-weight:800;font-size:14px;color:#fff;flex-shrink:0;
+  background:linear-gradient(135deg,var(--blue-3),var(--blue))}
+.adm .wrow .rk.g2{background:linear-gradient(135deg,#FFB37B,#FF7BA9)}
+.adm .wrow .rk.g3{background:linear-gradient(135deg,#34D399,#16C784)}
+.adm .wrow .nm{font-weight:700;font-size:14px;line-height:1.2}
+.adm .wrow .nm small{display:block;font-size:11.5px;color:var(--muted);font-weight:500;margin-top:2px}
+.adm .wrow .val{margin-left:auto;text-align:right}
+.adm .wrow .val b{font-size:15px;font-weight:800}
+.adm .wrow .pill{font-size:10.5px;font-weight:800;color:var(--green);background:var(--green-soft);padding:2px 9px;border-radius:20px;display:inline-block;margin-top:3px}
+
+/* chart de barras */
+.adm .chart .amt{font-size:28px;font-weight:800;letter-spacing:-1.2px}
+.adm .chart .toggle{display:flex;background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:4px}
+.adm .chart .toggle span{font-size:12px;font-weight:700;color:var(--muted);padding:6px 13px;border-radius:8px;cursor:pointer}
+.adm .chart .toggle span.on{background:var(--blue);color:#fff}
+.adm .bars{display:flex;align-items:flex-end;gap:12px;height:190px;margin-top:22px;padding-bottom:24px;position:relative}
+.adm .bars .bar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;position:relative}
+.adm .bars .bar > i{display:block;width:100%;max-width:42px;border-radius:9px 9px 4px 4px;background:#EDF1FA;transition:.3s}
+.adm .bars .bar.hot > i{background:linear-gradient(180deg,#5C8BFF,#1E50E6);box-shadow:0 8px 18px -6px rgba(47,107,255,.55)}
+.adm .bars .bar .bl{position:absolute;bottom:-22px;font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap;max-width:60px;overflow:hidden;text-overflow:ellipsis}
+.adm .bars .bar .tip{position:absolute;top:-6px;transform:translateY(-100%);background:#101828;color:#fff;font-size:11px;font-weight:700;padding:5px 9px;border-radius:8px;white-space:nowrap;opacity:0;transition:.15s;pointer-events:none}
+.adm .bars .bar:hover .tip{opacity:1}
+.adm .bars .bar:hover > i{filter:brightness(1.05)}
+
+/* ---------- TABLA (Recent activities) ---------- */
+.adm .tablewrap{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.adm .tablewrap .ph{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 22px}
+.adm .tablewrap .ph h3{font-size:16.5px;font-weight:800}
+.adm table.adt{width:100%;border-collapse:collapse}
+.adm table.adt th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;padding:12px 22px;background:var(--bg);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.adm table.adt td{padding:15px 22px;font-size:13.5px;border-bottom:1px solid var(--line);color:var(--ink-2)}
+.adm table.adt tr:last-child td{border-bottom:none}
+.adm table.adt tr:hover td{background:#FAFBFE}
+.adm table.adt .cust{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--ink)}
+.adm table.adt .cust .av{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:12px;background:linear-gradient(135deg,var(--blue-3),var(--blue))}
+.adm .stat{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:5px 11px;border-radius:20px}
+.adm .stat.ok{color:var(--green);background:var(--green-soft)}
+.adm .stat.pend{color:var(--amber);background:var(--amber-soft)}
+.adm .stat.blue{color:var(--blue-2);background:var(--blue-soft)}
+.adm .stat.fail{color:var(--red);background:var(--red-soft)}
+.adm .empty2{text-align:center;padding:50px 20px;color:var(--muted)}
+.adm .empty2 .ico{width:54px;height:54px;border-radius:16px;background:var(--blue-soft);color:var(--blue);display:grid;place-items:center;margin:0 auto 12px}
+.adm .empty2 h4{font-size:15px;color:var(--ink);margin-bottom:5px;font-weight:700}
+
+/* ---------- demo banner ---------- */
+.adm .demo-banner{background:var(--amber-soft);color:#9a6400;border:1px solid #ffe2ad;border-radius:14px;padding:12px 16px;font-size:13px;font-weight:600;margin-bottom:18px}
+.adm .demo-banner code{background:#fff;border:1px solid #ffe2ad;border-radius:6px;padding:1px 6px;font-size:12px}
+
+/* ===========================================================
+   POLISH para páginas existentes dentro de .adm
+   (productos, pedidos, config…) — refresca el look base claro
+   =========================================================== */
+.adm .card{border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow)}
+.adm .btn{background:var(--blue);box-shadow:0 10px 20px -8px rgba(47,107,255,.5);border-radius:12px}
+.adm .btn:hover{background:var(--blue-2)}
+.adm .btn.soft{background:#fff;color:var(--ink-2);border:1px solid var(--line);box-shadow:none}
+.adm .seg,.adm .tabs{border-radius:13px}
+.adm .seg button.on,.adm .tabs a.active{background:var(--blue-soft);color:var(--blue-2)}
+.adm .page-head h1{font-size:24px;font-weight:800}
+.adm .tag.ok,.adm .tag.blue{font-weight:800}
+
+/* ---------- RESPONSIVE ---------- */
+@media(max-width:1080px){
+  .adm{grid-template-columns:78px 1fr}
+  .adm .sb{padding:18px 12px;align-items:center}
+  .adm .sb .brand b,.adm .sb .search span,.adm .sb .search .kbd,.adm .sb .seclabel,.adm .sb a.item span,.adm .sb a.item .badge,.adm .sb .promo{display:none}
+  .adm .sb .brand{justify-content:center;padding:6px 0 14px}
+  .adm .sb .search{justify-content:center;padding:11px}
+  .adm .sb a.item{justify-content:center;padding:12px}
+  .adm .drow{grid-template-columns:1fr}
+  .adm .sumgrid{grid-template-columns:1fr}
+}
+@media(max-width:760px){
+  .adm .topbar{padding:12px 16px;gap:10px}
+  .adm .tsearch,.adm .crumb .sep,.adm .crumb .root{display:none}
+  .adm .content{padding:18px 16px 50px}
+  .adm table.adt th:nth-child(2),.adm table.adt td:nth-child(2),
+  .adm table.adt th:nth-child(4),.adm table.adt td:nth-child(4){display:none}
+}
+@media(max-width:560px){
+  .adm{grid-template-columns:1fr}
+  .adm .sb{position:fixed;bottom:0;left:0;right:0;top:auto;height:auto;flex-direction:row;border-right:none;border-top:1px solid var(--line);
+    z-index:60;padding:8px;gap:2px;justify-content:space-around;overflow-x:auto}
+  .adm .sb .brand,.adm .sb .search,.adm .sb .seclabel,.adm .sb .promo{display:none}
+  .adm .sb .nav{flex-direction:row;gap:2px}
+  .adm .sb a.item{padding:10px}
+  .adm .content{padding:16px 14px 90px}
+  .adm .primary span{display:none}
+}
+
+/* ===========================================================
+   PÁGINAS INTERNAS · estilo de referencia exacto (todas)
+   Restyle de las clases base usadas por productos, pedidos,
+   clientes, promociones, asesores, configuración…
+   =========================================================== */
+/* tarjetas de ítem (productos / tratamientos) */
+.adm .cardgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media(max-width:1080px){.adm .cardgrid{grid-template-columns:1fr 1fr}}
+@media(max-width:680px){.adm .cardgrid{grid-template-columns:1fr}}
+.adm .treat{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:var(--shadow);transition:.18s}
+.adm .treat:hover{box-shadow:0 16px 36px -18px rgba(16,24,40,.24);border-color:var(--line-2);transform:translateY(-2px)}
+.adm .treat .ic{width:46px;height:46px;border-radius:13px;font-size:20px;display:grid;place-items:center}
+.adm .treat h4{font-size:15.5px;font-weight:800;margin-bottom:4px;letter-spacing:-.2px}
+.adm .treat .desc{font-size:12.5px;color:var(--muted);min-height:34px;line-height:1.5;margin-bottom:10px}
+.adm .treat .pr{font-weight:800;font-size:17px;letter-spacing:-.4px}
+.adm .treat .pr small{color:var(--muted);font-weight:600;font-size:11.5px}
+.adm .treat .icon-act{border:1px solid var(--line);background:#fff;border-radius:9px;width:32px;height:32px}
+.adm .treat .icon-act:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-soft)}
+.adm .off-tag{color:var(--muted);font-weight:600}
+
+/* badges de plan/estado */
+.adm .badge-plan{border-radius:8px;font-weight:800}
+.adm .badge-plan.pro{background:var(--blue-soft);color:var(--blue-2)}
+.adm .badge-plan.starter{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.adm .badge-plan.elite{background:linear-gradient(135deg,var(--blue-3),var(--blue));color:#fff}
+
+/* buscador rápido / inputs sueltos */
+.adm .cobro-monto,.adm .cobro-select{background:transparent;color:var(--ink);font-weight:700}
+
+/* formularios estilo referencia */
+.adm .field label{font-size:12.5px;font-weight:700;color:var(--ink-2)}
+.adm .field input,.adm .field textarea,.adm .field select{background:#fff;border:1px solid var(--line);border-radius:12px;color:var(--ink)}
+.adm .field input:focus,.adm .field textarea:focus,.adm .field select:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px var(--blue-soft)}
+.adm .field .req{color:var(--red)}
+.adm .form-msg.ok{background:var(--green-soft);color:#0a8f5b}
+.adm .form-msg.err{background:var(--red-soft);color:var(--red)}
+
+/* modal / drawer */
+.adm .modal{border-radius:20px;border:1px solid var(--line);box-shadow:0 30px 70px -24px rgba(16,24,40,.35)}
+.adm .modal-head{border-color:var(--line)}
+.adm .modal-head h3{font-weight:800}
+.adm .modal-x{background:var(--bg);border-radius:10px}
+.adm .modal-x:hover{background:var(--red-soft);color:var(--red)}
+.adm .drawer{border-radius:0}
+.adm .drawer-head{border-color:var(--line)}
+
+/* listas / switches / progress / setup */
+.adm .list-row{border-color:var(--line)}
+.adm .list-row .meta b{font-weight:700}
+.adm .icon-act{border-radius:9px;border:1px solid var(--line)}
+.adm .icon-act:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-soft)}
+.adm .icon-act.danger:hover{border-color:var(--red);color:var(--red);background:var(--red-soft)}
+.adm .switch input:checked+.switch-track{background:var(--blue)}
+.adm .progress{background:var(--line)}
+.adm .progress>i{background:linear-gradient(90deg,var(--blue),var(--blue-3))}
+.adm .setup-bar{border-radius:18px;border:1px solid var(--line);box-shadow:var(--shadow)}
+.adm .setup-step{border-radius:12px;border:1px solid var(--line);background:#fff}
+.adm .setup-step.done .chk{background:var(--green)}
+.adm .setup-step.todo .chk{border:2px solid var(--line);color:var(--muted)}
+
+/* segmentos / tabs */
+.adm .seg,.adm .tabs{background:#fff;border:1px solid var(--line);border-radius:13px}
+.adm .seg button.on{background:var(--blue);color:#fff}
+.adm .tabs a.active{background:var(--blue-soft);color:var(--blue-2)}
+.adm .mini-toggle span.on{background:var(--blue-soft);color:var(--blue-2)}
+
+/* tablas base (pedidos, clientes) */
+.adm .card table th{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--bg);padding:12px 12px}
+.adm .card table td{border-color:var(--line);font-size:13.5px;color:var(--ink-2)}
+.adm .card table tr:hover td{background:#FAFBFE}
+.adm .tag{border-radius:20px;font-weight:800}
+.adm .tag.ok{background:var(--green-soft);color:#0a8f5b}
+.adm .tag.blue{background:var(--blue-soft);color:var(--blue-2)}
+.adm .tag.pend{background:var(--amber-soft);color:#9a6400}
+.adm .tag.fail{background:var(--red-soft);color:var(--red)}
+
+/* empty state */
+.adm .empty{padding:50px 20px;color:var(--muted)}
+.adm .empty .ico{font-size:36px;margin-bottom:10px}
+.adm .empty h4{color:var(--ink);font-weight:700}
+
+/* preview card del modal de producto */
+.adm .pcard{border-radius:16px;border:1px solid var(--line);box-shadow:var(--shadow-sm)}
+.adm .pcard .cat{color:var(--blue)}
+.adm .pcard .go{background:var(--blue);color:#fff}
+
+/* kpis / cards legacy del dashboard viejo (por si quedan) */
+.adm .kpi-big{letter-spacing:-1px}
+.adm .chg.up{color:#0a8f5b;background:var(--green-soft)}
+.adm .chg.down{color:var(--red);background:var(--red-soft)}
+
+/* chips de keywords */
+.adm .kwlist{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.adm .kw{font-size:11px;font-weight:700;color:var(--blue-2);background:var(--blue-soft);border:1px solid #d8e3ff;border-radius:20px;padding:3px 10px}
+.adm .treat .kwlist{margin-top:10px}
+.adm .treat .kw{font-size:10.5px;padding:2px 8px}
+
+/* secciones del formulario de producto */
+.adm .form-sec{font-size:11.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--blue-2);
+  margin:22px 0 12px;padding-bottom:9px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+.adm .field-hint{color:var(--muted);font-size:11.5px}
+.adm .modal .kwlist{margin-top:8px}
+
+/* logo escudo en sidebar */
+.adm .sb .brand .mk-img{width:38px;height:38px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 4px 8px rgba(16,24,40,.2))}
+@media(max-width:1080px){.adm .sb .brand .mk-img{width:36px;height:36px}}
+
+/* Botones de icono (moderación reseñas) */
+.adm .btn-ico{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:9px;border:1px solid var(--adm-line,#e6e8ee);background:#fff;color:#5b6472;cursor:pointer;margin-left:6px;transition:.15s;vertical-align:middle}
+.adm .btn-ico:hover{background:#f4f6fa;color:#1f2733}
+.adm .btn-ico.danger:hover{background:#fdecec;color:#d11616;border-color:#f3c2c2}
+.adm .btn-ico:disabled{opacity:.5;cursor:wait}

@@ -1,7 +1,7 @@
 import { getStoreConfigRow, listIntegrations } from "@/lib/queries";
 import { shopifyConfigured } from "@/lib/shopify";
 import { ConfigUI } from "./config-ui";
-import type { CiudadCobertura, Branding, CuentaBancaria } from "@/lib/db/schema";
+import type { CiudadCobertura, Branding, CuentaBancaria, CodFormConfig } from "@/lib/db/schema";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +10,7 @@ export default async function ConfiguracionPage() {
   const ciudades = (row?.ciudadesCobertura as CiudadCobertura[]) || [];
   const cuentas = (row?.cuentasBancarias as CuentaBancaria[]) || [];
   const branding = (row?.branding as Branding) || {};
+  const codForm = (row?.codForm as CodFormConfig) || {};
   return (
     <ConfigUI
       shopifyOn={shopifyOn}
@@ -24,6 +25,10 @@ export default async function ConfiguracionPage() {
         logoUrl: branding.logoUrl || "",
         colorPrimario: branding.colorPrimario || "#FF4D2E",
         colorAcento: branding.colorAcento || "#FFB02E",
+        upsellEnabled: !!codForm.upsellEnabled,
+        upsellTitulo: codForm.upsellTitulo || "",
+        upsellDesc: codForm.upsellDesc || "",
+        upsellPrecioCop: codForm.upsellPrecioCop || 0,
       }}
       integraciones={integ.map((i) => ({ proveedor: i.proveedor, activo: i.activo ?? true, tiene: Boolean(i.configEnc) }))}
     />

@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { getProductBySlug, getStoreConfig } from "@/lib/ai/data";
-import { ProductDetail, type PDProduct } from "@/components/store/product-detail";
+import { getProductBySlug, getStoreConfig, getProducts } from "@/lib/ai/data";
+import { getReviews } from "@/lib/reviews";
+import { ProductDetail, type PDProduct, type RelatedProduct } from "@/components/store/product-detail";
 
 export const dynamic = "force-dynamic";
 
@@ -24,9 +25,19 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const prod: PDProduct = {
     slug: p.slug, name: p.name, categoryName: p.categoryName, categorySlug: p.categorySlug, audience: p.audience,
     origin: p.origin, priceCOP: p.priceCOP, presentations: p.presentations, imageUrl: p.imageUrl, badges: p.badges,
-    tagline: p.tagline, shortDesc: p.shortDesc, benefits: p.benefits, usage: p.usage, pitch: p.pitch, disclaimer: p.disclaimer,
+    tagline: p.tagline, shortDesc: p.shortDesc, benefits: p.benefits, usage: p.usage, pitch: p.pitch,
+    faq: p.faq, ingredients: p.ingredients, disclaimer: p.disclaimer, envioGratis: p.envioGratis,
   };
+  const [relatedAll, reviews] = await Promise.all([
+    getProducts({ categorySlug: p.categorySlug }),
+    getReviews(p.slug),
+  ]);
+  const related: RelatedProduct[] = relatedAll
+    .filter((r) => r.slug !== p.slug)
+    .slice(0, 6)
+    .map((r) => ({ slug: r.slug, name: r.name, priceCOP: r.priceCOP, imageUrl: r.imageUrl, categoryName: r.categoryName }));
+
   const digits = (store.whatsapp || "").replace(/\D/g, "");
   const wa = digits.length >= 10 ? digits : "";
-  return <ProductDetail p={prod} wa={wa} />;
+  return <ProductDetail p={prod} wa={wa} related={related} reviews={reviews} codForm={store.codForm} />;
 }

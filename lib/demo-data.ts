@@ -9,7 +9,7 @@ type RawCat = { id: string; name: string; color: string };
 type RawProd = {
   slug: string; name: string; category: string; audience: string; origin: string;
   priceCOP: number; presentations?: Presentacion[]; image?: string; badges?: string[];
-  tagline?: string; shortDesc?: string; benefits?: string[]; usage?: string; pitch?: string;
+  tagline?: string; shortDesc?: string; benefits?: string[]; usage?: string; pitch?: string; keywords?: string[];
 };
 
 const cats = (catalogo.categories || []) as RawCat[];
@@ -47,6 +47,9 @@ export const demoProducts: ProductView[] = prods.map((p) => {
     usage: p.usage || "",
     pitch: p.pitch || "",
     faq: [],
+    keywords: p.keywords || [],
+    objeciones: {},
+    adIds: [],
     disclaimer: "Producto de bienestar y rendimiento. No cura enfermedades.",
     stock: 999,
     activo: true,

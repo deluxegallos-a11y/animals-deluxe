@@ -5,13 +5,15 @@ import { PageHead, Card } from "@/components/ui";
 import { ImageUpload, SubmitButton } from "@/components/forms";
 import { saveProduct, deleteProduct, toggleProduct, syncProductNow, retryShopifySync } from "../actions";
 import { cop, flag } from "@/lib/ai/format";
+import { deriveKeywords } from "@/lib/ai/keywords";
+import { generateContent } from "@/lib/ai/generate-content";
 import type { Presentacion, Ingrediente, FaqItem } from "@/lib/db/schema";
 
 type P = {
   id: string; slug: string; name: string; categorySlug: string; categoryName: string; categoryColor: string;
   audience: string; origin: string; priceCOP: number; presentations: Presentacion[]; imageUrl: string;
   badges: string[]; tagline: string; shortDesc: string; benefits: string[]; ingredients: Ingrediente[];
-  usage: string; pitch: string; faq: FaqItem[]; disclaimer: string; stock: number; activo: boolean;
+  usage: string; pitch: string; faq: FaqItem[]; keywords: string[]; objeciones: Record<string, string>; adIds: string[]; disclaimer: string; stock: number; activo: boolean; envioGratis?: boolean;
   shopifyProductId: string; shopifySync: "synced" | "pending" | "error"; shopifySyncError: string;
 };
 
@@ -57,7 +59,7 @@ export function ProductsUI({ productos, categorias, shopifyOn }: { productos: P[
 
   const filtered = productos.filter((p) =>
     (!cat || p.categorySlug === cat) &&
-    (!q || (p.name + " " + p.audience + " " + p.categoryName).toLowerCase().includes(q.toLowerCase())),
+    (!q || (p.name + " " + p.audience + " " + p.categoryName + " " + deriveKeywords(p).join(" ")).toLowerCase().includes(q.toLowerCase())),
   );
 
   function openNew() { setEditing(null); setOpen(true); }
@@ -109,7 +111,10 @@ export function ProductsUI({ productos, categorias, shopifyOn }: { productos: P[
             <h4>{p.name} {p.activo ? "" : <span className="off-tag">· inactivo</span>}</h4>
             <div className="desc">{p.tagline || p.shortDesc}</div>
             <div className="pr">{cop(p.priceCOP)} <small>· {p.categoryName}</small></div>
-            <div style={{ marginTop: 8 }}><SyncBadge p={p} shopifyOn={shopifyOn} /></div>
+            <div className="kwlist">
+              {(p.keywords?.length ? p.keywords : deriveKeywords(p)).slice(0, 5).map((k) => <span className="kw" key={k}>{k}</span>)}
+            </div>
+            <div style={{ marginTop: 10 }}><SyncBadge p={p} shopifyOn={shopifyOn} /></div>
           </div>
         ))}
       </div>
@@ -133,7 +138,40 @@ function ProductModal({ editing, categorias, onClose }: { editing: P | null; cat
   const [origin, setOrigin] = React.useState(editing?.origin || "co");
   const [categorySlug, setCategorySlug] = React.useState(editing?.categorySlug || (categorias[0]?.slug || ""));
   const [imageUrl, setImageUrl] = React.useState(editing?.imageUrl || "");
+  const [audience, setAudience] = React.useState(editing?.audience || "");
+  const [benefits, setBenefits] = React.useState(editing ? editing.benefits.join("\n") : "");
+  const [keywords, setKeywords] = React.useState(editing?.keywords?.length ? editing.keywords.join(", ") : "");
+  const [usage, setUsage] = React.useState(editing?.usage || "");
+  const [pitch, setPitch] = React.useState(editing?.pitch || "");
+  const [faqText, setFaqText] = React.useState(editing ? faqToText(editing.faq) : "");
+  const O = editing?.objeciones || {};
+  const [obj, setObj] = React.useState<Record<string, string>>({
+    muy_caro: O.muy_caro || "", lo_pienso: O.lo_pienso || "", no_confio: O.no_confio || "",
+    no_tengo_plata: O.no_tengo_plata || "", ya_lo_uso: O.ya_lo_uso || "",
+  });
+  const [adIds, setAdIds] = React.useState(editing?.adIds?.length ? editing.adIds.join(", ") : "");
   const [msg, setMsg] = React.useState("");
+  const setO = (k: string, v: string) => setObj((p) => ({ ...p, [k]: v }));
+
+  function genAll() {
+    const g = generateContent({
+      name, categorySlug, categoryName: categorias.find((c) => c.slug === categorySlug)?.name,
+      audience, origin, priceCOP: parseInt(price.replace(/\D/g, ""), 10) || 0,
+      benefits: benefits.split("\n").filter(Boolean), tagline, usage,
+    });
+    setKeywords(g.keywords.join(", "));
+    setBenefits(g.benefits.join("\n"));
+    setUsage(g.usage);
+    setPitch(g.pitch);
+    setFaqText(g.faq.map((f) => `${f.q} | ${f.a}`).join("\n"));
+    setObj(g.objeciones);
+  }
+  function genKeywords() {
+    setKeywords(deriveKeywords({
+      name, categorySlug, categoryName: categorias.find((c) => c.slug === categorySlug)?.name,
+      audience, origin, benefits: benefits.split("\n").filter(Boolean),
+    }).join(", "));
+  }
 
   async function onSubmit(formData: FormData) {
     formData.set("imageUrl", imageUrl);
@@ -154,6 +192,10 @@ function ProductModal({ editing, categorias, onClose }: { editing: P | null; cat
           <div className="twocol">
             <form action={onSubmit}>
               <input type="hidden" name="id" defaultValue={editing?.id || ""} />
+              <button type="button" className="btn" style={{ marginBottom: 14, background: "linear-gradient(135deg,#7A3CFF,#2F6BFF)" }} onClick={genAll}>
+                🤖 Autogenerar todo (voz Victor)
+              </button>
+              <div className="form-sec" style={{ marginTop: 0 }}>📋 Datos básicos</div>
               <div className="field">
                 <label>Nombre <span className="req">*</span></label>
                 <input name="name" required value={name} onChange={(e) => setName(e.target.value)} />
@@ -185,8 +227,10 @@ function ProductModal({ editing, categorias, onClose }: { editing: P | null; cat
               </div>
               <div className="field">
                 <label>Audiencia (para qué animal)</label>
-                <input name="audience" defaultValue={editing?.audience || ""} placeholder="Gallos de combate y exhibición" />
+                <input name="audience" value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="Gallos de combate y exhibición" />
               </div>
+
+              <div className="form-sec">🤖 Venta &amp; bot</div>
               <div className="field">
                 <label>Tagline (gancho corto)</label>
                 <input name="tagline" value={tagline} onChange={(e) => setTagline(e.target.value)} />
@@ -196,33 +240,72 @@ function ProductModal({ editing, categorias, onClose }: { editing: P | null; cat
                 <textarea name="shortDesc" rows={2} defaultValue={editing?.shortDesc || ""} />
               </div>
               <div className="field">
+                <label>🤖 Pitch / gancho de venta — lo usa el bot</label>
+                <textarea name="pitch" rows={2} value={pitch} onChange={(e) => setPitch(e.target.value)} placeholder="Frase gancho que usa Victor para vender este producto." />
+                <span className="field-hint">El asesor Victor (UChat) lo usa para presentar y cerrar la venta.</span>
+              </div>
+              <div className="field">
+                <label>Badges (separados por coma)</label>
+                <input name="badges" defaultValue={editing ? editing.badges.join(", ") : ""} placeholder="Original, Best Choice" />
+              </div>
+
+              <div className="form-sec">🔑 Palabras clave (cómo te encuentra el bot)</div>
+              <div className="field">
+                <div className="flex aic" style={{ justifyContent: "space-between", marginBottom: 6 }}>
+                  <label style={{ marginBottom: 0 }}>Keywords (separadas por coma)</label>
+                  <button type="button" className="btn soft" style={{ width: "auto", padding: "6px 12px", fontSize: 12.5 }} onClick={genKeywords}>✨ Generar automáticas</button>
+                </div>
+                <textarea name="keywords" rows={2} value={keywords} onChange={(e) => setKeywords(e.target.value)} placeholder="doping, energia, fiera, careo, americano…" />
+                <span className="field-hint">El bot usa estas palabras para identificar el producto cuando el cliente escribe. Si lo dejas vacío se generan solas.</span>
+                {keywords.trim() ? (
+                  <div className="kwlist">{keywords.split(",").map((k) => k.trim()).filter(Boolean).map((k, i) => <span className="kw" key={k + i}>{k}</span>)}</div>
+                ) : null}
+              </div>
+
+              <div className="form-sec">📦 Características</div>
+              <div className="field">
                 <label>Presentaciones (una por línea: <code>label | precio</code>) <span className="req">*</span></label>
                 <textarea name="presentations" rows={2} defaultValue={editing ? presToText(editing.presentations) : "Unidad | "} placeholder={"30 ml · ~40 dosis | 70000"} />
               </div>
               <div className="field">
                 <label>Beneficios (uno por línea, mín. 3) <span className="req">*</span></label>
-                <textarea name="benefits" rows={3} defaultValue={editing ? editing.benefits.join("\n") : ""} />
+                <textarea name="benefits" rows={3} value={benefits} onChange={(e) => setBenefits(e.target.value)} />
               </div>
               <div className="field">
                 <label>Modo de uso <span className="req">*</span></label>
-                <textarea name="usage" rows={2} defaultValue={editing?.usage || ""} />
-              </div>
-              <div className="field">
-                <label>Pitch de venta (lo lee el bot)</label>
-                <textarea name="pitch" rows={3} defaultValue={editing?.pitch || ""} />
-              </div>
-              <div className="field">
-                <label>Badges (separados por coma)</label>
-                <input name="badges" defaultValue={editing ? editing.badges.join(", ") : ""} placeholder="Original, Best Choice" />
+                <textarea name="usage" rows={3} value={usage} onChange={(e) => setUsage(e.target.value)} />
               </div>
               <div className="field">
                 <label>Ingredientes (<code>nombre | detalle</code> por línea)</label>
                 <textarea name="ingredients" rows={2} defaultValue={editing ? ingToText(editing.ingredients) : ""} />
               </div>
               <div className="field">
-                <label>FAQ (<code>pregunta | respuesta</code> por línea)</label>
-                <textarea name="faq" rows={2} defaultValue={editing ? faqToText(editing.faq) : ""} />
+                <label>FAQ (<code>pregunta | respuesta</code> por línea, mín. 5)</label>
+                <textarea name="faq" rows={5} value={faqText} onChange={(e) => setFaqText(e.target.value)} />
               </div>
+
+              <div className="form-sec">💬 Objeciones (respuestas de Victor)</div>
+              {[
+                { k: "muy_caro", l: "“Está muy caro”" },
+                { k: "lo_pienso", l: "“Lo pienso / después”" },
+                { k: "no_confio", l: "“No confío / ¿es seguro?”" },
+                { k: "no_tengo_plata", l: "“No tengo plata ahora”" },
+                { k: "ya_lo_uso", l: "“Ya lo uso”" },
+              ].map((o) => (
+                <div className="field" key={o.k}>
+                  <label>{o.l}</label>
+                  <textarea name={`obj_${o.k}`} rows={2} value={obj[o.k] || ""} onChange={(e) => setO(o.k, e.target.value)} placeholder="Respuesta de Victor…" />
+                </div>
+              ))}
+
+              <div className="form-sec">📣 Anuncios (WhatsApp Ads)</div>
+              <div className="field">
+                <label>IDs de anuncios que apuntan a este producto</label>
+                <textarea name="ad_ids" rows={2} value={adIds} onChange={(e) => setAdIds(e.target.value)} placeholder="ad_123, ad_456 — separados por coma" />
+                <span className="field-hint">El bot identifica el producto por el ad_id del anuncio (endpoint producto-por-anuncio).</span>
+              </div>
+
+              <div className="form-sec">⚙️ Inventario</div>
               <div className="field-row">
                 <div className="field">
                   <label>Stock</label>
@@ -238,6 +321,13 @@ function ProductModal({ editing, categorias, onClose }: { editing: P | null; cat
                 <span className="switch-label">Activo (visible en tienda y bot)</span>
                 <span className="switch">
                   <input type="checkbox" name="activo" defaultChecked={editing ? editing.activo : true} />
+                  <span className="switch-track"><span className="switch-knob" /></span>
+                </span>
+              </label>
+              <label className="switch-row">
+                <span className="switch-label">🚚 Envío gratis (muestra el sello en la tienda)</span>
+                <span className="switch">
+                  <input type="checkbox" name="envioGratis" defaultChecked={editing ? editing.envioGratis : false} />
                   <span className="switch-track"><span className="switch-knob" /></span>
                 </span>
               </label>

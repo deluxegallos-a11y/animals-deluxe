@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import {
-  products, categories, orders, advisors, promotions, storeConfig, integrations, auditLog,
+  products, categories, orders, advisors, promotions, storeConfig, integrations, auditLog, reviews,
   type Presentacion, type Ingrediente, type FaqItem, type CiudadCobertura, type CuentaBancaria,
 } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth";
@@ -63,6 +63,8 @@ export async function saveProduct(formData: FormData) {
 
   const presentations = parsePresentations(String(formData.get("presentations") || ""));
   if (presentations.length === 0) return { ok: false, error: "Agrega al menos una presentación (label | precio)." };
+  // Si hay UNA sola presentación, su precio sigue al campo "Precio" (evita descuadres web/Shopify).
+  if (presentations.length === 1) presentations[0].priceCOP = priceCop;
   const benefits = lines(String(formData.get("benefits") || ""));
   if (benefits.length < 3) return { ok: false, error: "Agrega al menos 3 beneficios (uno por línea)." };
   const usage = String(formData.get("usage") || "").trim();
@@ -91,9 +93,20 @@ export async function saveProduct(formData: FormData) {
     usage,
     pitch: String(formData.get("pitch") || ""),
     faq: parseFaq(String(formData.get("faq") || "")),
+    keywords: String(formData.get("keywords") || "")
+      .split(/[,\n]/).map((s) => s.trim().toLowerCase()).filter(Boolean).slice(0, 20),
+    objeciones: {
+      muy_caro: String(formData.get("obj_muy_caro") || ""),
+      lo_pienso: String(formData.get("obj_lo_pienso") || ""),
+      no_confio: String(formData.get("obj_no_confio") || ""),
+      no_tengo_plata: String(formData.get("obj_no_tengo_plata") || ""),
+      ya_lo_uso: String(formData.get("obj_ya_lo_uso") || ""),
+    },
+    adIds: String(formData.get("ad_ids") || "").split(/[,\n]/).map((s) => s.trim()).filter(Boolean).slice(0, 30),
     disclaimer: String(formData.get("disclaimer") || ""),
     stock: parseInt(String(formData.get("stock") || "999"), 10) || 999,
     activo: formData.get("activo") === "on" || formData.get("activo") === "true",
+    envioGratis: formData.get("envioGratis") === "on" || formData.get("envioGratis") === "true",
   };
 
   // Marca pendiente de sincronía; syncProductToShopify lo pondrá en 'synced'.
@@ -126,6 +139,22 @@ export async function deleteProduct(id: string) {
   await db.delete(products).where(eq(products.id, id));
   await logAudit("eliminar_producto", "products", { id });
   revalidatePath("/productos");
+}
+
+/* ---------- Reseñas (moderación) ---------- */
+export async function deleteReview(id: string) {
+  await requireUser();
+  if (!db || !id) return;
+  await db.delete(reviews).where(eq(reviews.id, id));
+  await logAudit("eliminar_resena", "reviews", { id });
+  revalidatePath("/resenas");
+}
+
+export async function toggleReview(id: string, estado: "aprobado" | "oculto") {
+  await requireUser();
+  if (!db || !id) return;
+  await db.update(reviews).set({ estado }).where(eq(reviews.id, id));
+  revalidatePath("/resenas");
 }
 
 export async function toggleProduct(id: string, activo: boolean) {
@@ -261,6 +290,12 @@ export async function saveStoreConfig(formData: FormData) {
       logoUrl: String(formData.get("logoUrl") || ""),
       colorPrimario: String(formData.get("colorPrimario") || "#FF4D2E"),
       colorAcento: String(formData.get("colorAcento") || "#FFB02E"),
+    },
+    codForm: {
+      upsellEnabled: String(formData.get("upsellEnabled") || "") === "on",
+      upsellTitulo: String(formData.get("upsellTitulo") || "").trim(),
+      upsellDesc: String(formData.get("upsellDesc") || "").trim(),
+      upsellPrecioCop: parseInt(String(formData.get("upsellPrecioCop") || "0").replace(/\D/g, ""), 10) || 0,
     },
     updatedAt: new Date(),
   };

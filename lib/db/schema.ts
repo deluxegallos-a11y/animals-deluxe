@@ -17,6 +17,13 @@ export type FaqItem = { q: string; a: string };
 export type CiudadCobertura = { ciudad: string; costo_envio: number; contraentrega: boolean };
 export type Branding = { logoUrl?: string; colorPrimario?: string; colorAcento?: string };
 export type CuentaBancaria = { banco: string; tipo: string; numero: string; titular: string };
+/** Config del formulario de contraentrega (upsell/promo opcional, editable en el panel). */
+export type CodFormConfig = {
+  upsellEnabled?: boolean;
+  upsellTitulo?: string;
+  upsellDesc?: string;
+  upsellPrecioCop?: number;
+};
 
 /** Estado de sincronización con Shopify (plataforma = fuente de verdad). */
 export type ShopifySync = "synced" | "pending" | "error";
@@ -53,9 +60,14 @@ export const products = pgTable(
     usage: text("usage").default(""),
     pitch: text("pitch").default(""),
     faq: jsonb("faq").$type<FaqItem[]>().default([]),
+    keywords: jsonb("keywords").$type<string[]>().default([]),
+    objeciones: jsonb("objeciones").$type<Record<string, string>>().default({}),
+    adIds: jsonb("ad_ids").$type<string[]>().default([]),
+    salesPrompt: text("sales_prompt").default(""),
     disclaimer: text("disclaimer").default(""),
     stock: integer("stock").default(999),
     activo: boolean("activo").default(true),
+    envioGratis: boolean("envio_gratis").default(false),
     // --- Espejo Shopify (la plataforma es la fuente de verdad) ---
     shopifyProductId: text("shopify_product_id"),
     shopifySync: text("shopify_sync").$type<"synced" | "pending" | "error">().default("pending"),
@@ -74,6 +86,7 @@ export const customers = pgTable("customers", {
   uchatSubId: text("uchat_sub_id").unique(),
   nombre: text("nombre").default(""),
   telefono: text("telefono").default(""),
+  departamento: text("departamento").default(""),
   ciudad: text("ciudad").default(""),
   direccion: text("direccion").default(""),
   canalOrigen: text("canal_origen").default("whatsapp"), // whatsapp | instagram | web
@@ -182,6 +195,8 @@ export const storeConfig = pgTable("store_config", {
   branding: jsonb("branding").$type<Branding>().default({}),
   // Cuentas para pago anticipado (lo lee el bot en asignar-asesor).
   cuentasBancarias: jsonb("cuentas_bancarias").$type<CuentaBancaria[]>().default([]),
+  // Config del formulario de contraentrega (upsell/promo editable en el panel).
+  codForm: jsonb("cod_form").$type<CodFormConfig>().default({}),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });
 
@@ -231,3 +246,19 @@ export const events = pgTable("events", {
   payload: jsonb("payload"),
   createdAt: now(),
 });
+
+/* 15. reviews (reseñas de clientes por producto) — público agrega, admin borra */
+export const reviews = pgTable(
+  "reviews",
+  {
+    id: id(),
+    productSlug: text("product_slug").notNull(),
+    nombre: text("nombre").notNull(),
+    ciudad: text("ciudad").default(""),
+    rating: integer("rating").default(5), // 1..5
+    texto: text("texto").notNull(),
+    estado: text("estado").default("aprobado"), // aprobado | oculto
+    createdAt: now(),
+  },
+  (t) => ({ bySlug: index("reviews_slug_idx").on(t.productSlug) }),
+);

@@ -8,6 +8,7 @@ import { saveStoreConfig, saveIntegration } from "../actions";
 type Cfg = {
   nombre: string; whatsapp: string; ciudadBase: string; envioDefaultCop: number;
   ciudades: string; cuentas: string; mensajeBienvenida: string; logoUrl: string; colorPrimario: string; colorAcento: string;
+  upsellEnabled: boolean; upsellTitulo: string; upsellDesc: string; upsellPrecioCop: number;
 };
 type Integ = { proveedor: string; activo: boolean; tiene: boolean };
 
@@ -63,6 +64,18 @@ export function ConfigUI({ config, integraciones, shopifyOn }: { config: Cfg; in
                 <div className="field"><label>Color acento</label><input name="colorAcento" type="color" defaultValue={config.colorAcento} style={{ height: 44, padding: 4 }} /></div>
               </div>
               <ImageUpload name="logoUrl" label="Logo" defaultUrl={logoUrl} folder="branding" />
+
+              <div className="field" style={{ borderTop: "1px solid #e6e8ee", paddingTop: 16, marginTop: 8 }}>
+                <label style={{ display: "flex", alignItems: "center", gap: 9, fontWeight: 700 }}>
+                  <input type="checkbox" name="upsellEnabled" defaultChecked={config.upsellEnabled} style={{ width: 17, height: 17 }} />
+                  🛒 Mostrar promo en el formulario de contraentrega
+                </label>
+                <span className="field-hint">Aparece como “➕ agregar tal cosa” dentro del formulario. El cliente la marca y se suma al pedido.</span>
+              </div>
+              <div className="field"><label>Título de la promo</label><input name="upsellTitulo" defaultValue={config.upsellTitulo} placeholder="Ej: Agrega un gotero extra" /></div>
+              <div className="field"><label>Descripción corta</label><input name="upsellDesc" defaultValue={config.upsellDesc} placeholder="Ej: pa que te rinda el doble" /></div>
+              <div className="field"><label>Precio de la promo (COP)</label><input name="upsellPrecioCop" defaultValue={config.upsellPrecioCop || ""} placeholder="20000" /></div>
+
               <SubmitButton>Guardar configuración</SubmitButton>
             </form>
           </Card>

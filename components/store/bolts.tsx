@@ -44,6 +44,72 @@ export function GodRays({ tint }: { tint?: string }) {
   );
 }
 
+/* ---- Rayos por TODA la página (capa global) ---- */
+export function GlobalRays() {
+  const bolts = [
+    { l: "7%", h: "42%", d: "0.4s", dur: "6.5s" },
+    { l: "22%", h: "30%", d: "2.1s", dur: "9s" },
+    { l: "38%", h: "48%", d: "4.4s", dur: "8s" },
+    { l: "54%", h: "26%", d: "1.2s", dur: "10s" },
+    { l: "69%", h: "44%", d: "3.3s", dur: "7.5s" },
+    { l: "84%", h: "32%", d: "5.2s", dur: "9.5s" },
+    { l: "95%", h: "38%", d: "2.7s", dur: "8.5s" },
+  ];
+  return (
+    <div className="grays" aria-hidden>
+      {bolts.map((b, i) => (
+        <svg key={i} className="gray" style={{ left: b.l, height: b.h, animationDelay: b.d, animationDuration: b.dur }} viewBox="0 0 40 200" preserveAspectRatio="xMidYMin meet">
+          <path d="M26 0 L10 72 L23 78 L7 138 L19 144 L3 200" />
+        </svg>
+      ))}
+    </div>
+  );
+}
+
+/* ---- Ring de boxeo metálico detrás del gallo ---- */
+export function BoxingRing() {
+  return (
+    <div className="ring-stage" aria-hidden>
+      <div className="ringfloor" />
+      <div className="ringpost l" /><div className="ringpost r" />
+      <div className="rope r1" /><div className="rope r2" /><div className="rope r3" />
+    </div>
+  );
+}
+
+/* ---- Tarros de producto metálicos flotando en el fondo del hero ---- */
+export function BgTubs() {
+  const tubs = [
+    { l: "4%", t: "20%", w: 132, d: 0, r: -13 },
+    { l: "80%", t: "12%", w: 168, d: 1.3, r: 11 },
+    { l: "16%", t: "60%", w: 104, d: 2.2, r: 9 },
+    { l: "68%", t: "64%", w: 142, d: 0.7, r: -9 },
+    { l: "44%", t: "70%", w: 90, d: 1.8, r: 5 },
+  ];
+  return (
+    <div className="bgtubs" aria-hidden>
+      {tubs.map((t, i) => (
+        <div key={i} className="tubw" style={{ left: t.l, top: t.t, width: t.w, transform: `rotate(${t.r}deg)` }}>
+          <svg className="tub" style={{ animationDelay: `${t.d}s` }} viewBox="0 0 80 120">
+            <defs>
+              <linearGradient id={`tg${i}`} x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stopColor="#dCEBFF" /><stop offset="0.45" stopColor="#5E8FD6" /><stop offset="1" stopColor="#101a2e" />
+              </linearGradient>
+              <linearGradient id={`tl${i}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor="#cfe0ff" /><stop offset="1" stopColor="#7ea2d8" />
+              </linearGradient>
+            </defs>
+            <rect x="12" y="28" width="56" height="82" rx="15" fill={`url(#tg${i})`} />
+            <rect x="9" y="13" width="62" height="20" rx="9" fill={`url(#tl${i})`} />
+            <rect x="12" y="54" width="56" height="32" fill="rgba(255,255,255,.16)" />
+            <rect x="12" y="54" width="56" height="3" fill="rgba(255,255,255,.4)" />
+          </svg>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /* ---- Lluvia de chispas que suben (ambiente de combate) ---- */
 export function Embers({ count = 16 }: { count?: number }) {
   const seeds = React.useMemo(
@@ -78,9 +144,9 @@ export function MegaBolts() {
       <svg width="0" height="0" style={{ position: "absolute" }}>
         <defs>
           <linearGradient id="boltgrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#eaf4ff" />
-            <stop offset="0.5" stopColor="#6FB6FF" />
-            <stop offset="1" stopColor="#3B82F6" />
+            <stop offset="0" stopColor="#ffe4dd" />
+            <stop offset="0.5" stopColor="#FF5A3D" />
+            <stop offset="1" stopColor="#C01414" />
           </linearGradient>
         </defs>
       </svg>

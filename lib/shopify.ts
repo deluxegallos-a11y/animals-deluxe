@@ -24,6 +24,26 @@ export interface ShopifyCreds {
   apiVersion: string; // 2024-10
 }
 
+/* Custom App con grant_type=client_credentials: key+secret → token 24h.
+   Lo cacheamos en memoria y lo renovamos solo cuando está por vencer. */
+let ccCache: { token: string; exp: number } | null = null;
+async function getClientCredentialsToken(domain: string, key: string, secret: string): Promise<string | null> {
+  if (ccCache && ccCache.exp > Date.now() + 60_000) return ccCache.token;
+  try {
+    const r = await fetch(`https://${domain}/admin/oauth/access_token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ client_id: key, client_secret: secret, grant_type: "client_credentials" }),
+    });
+    const j = (await r.json()) as { access_token?: string; expires_in?: number };
+    if (!j.access_token) return null;
+    ccCache = { token: j.access_token, exp: Date.now() + (j.expires_in ?? 86400) * 1000 };
+    return j.access_token;
+  } catch {
+    return null;
+  }
+}
+
 /** Resuelve credenciales: ENV del server primero, luego integración cifrada en DB. */
 export async function getShopifyCreds(): Promise<ShopifyCreds | null> {
   const envDomain = process.env.SHOPIFY_STORE_DOMAIN || "";
@@ -31,6 +51,13 @@ export async function getShopifyCreds(): Promise<ShopifyCreds | null> {
   const envVersion = process.env.SHOPIFY_API_VERSION || DEFAULT_API_VERSION;
   if (envDomain && envToken) {
     return { domain: normalizeDomain(envDomain), token: envToken, apiVersion: envVersion };
+  }
+  // Custom App: con key+secret obtenemos y renovamos el token solos (no expira).
+  const key = process.env.SHOPIFY_API_KEY || "";
+  const secret = process.env.SHOPIFY_API_SECRET || "";
+  if (envDomain && key && secret) {
+    const token = await getClientCredentialsToken(normalizeDomain(envDomain), key, secret);
+    if (token) return { domain: normalizeDomain(envDomain), token, apiVersion: envVersion };
   }
   // Fallback: credenciales guardadas (cifradas) desde el panel.
   if (!db) return null;

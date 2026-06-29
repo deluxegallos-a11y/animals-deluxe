@@ -22,9 +22,13 @@ export type ProductView = {
   usage: string;
   pitch: string;
   faq: FaqItem[];
+  keywords: string[];
+  objeciones: Record<string, string>;
+  adIds: string[];
   disclaimer: string;
   stock: number;
   activo: boolean;
+  envioGratis?: boolean;
 };
 
 export type CategoryView = {

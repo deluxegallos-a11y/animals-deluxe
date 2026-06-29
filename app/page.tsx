@@ -14,11 +14,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
   const products: SProduct[] = productos.map((p) => ({
     slug: p.slug, name: p.name, categoryName: p.categoryName, categorySlug: p.categorySlug,
     priceCOP: p.priceCOP, tagline: p.tagline, shortDesc: p.shortDesc, imageUrl: p.imageUrl,
-    origin: p.origin, badges: p.badges, benefits: p.benefits,
+    origin: p.origin, badges: p.badges, benefits: p.benefits, presentations: p.presentations, envioGratis: p.envioGratis,
   }));
   const scats: SCat[] = cats.map((c) => ({ slug: c.slug, name: c.name, color: c.color }));
   const digits = (store.whatsapp || "").replace(/\D/g, "");
   const wa = digits.length >= 10 ? digits : ""; // oculta CTA si aún es placeholder
 
-  return <Storefront products={products} cats={scats} wa={wa} />;
+  return <Storefront products={products} cats={scats} wa={wa} codForm={store.codForm} />;
 }

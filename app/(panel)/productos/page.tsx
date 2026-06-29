@@ -18,7 +18,7 @@ export default async function ProductosPage() {
         categoryColor: p.categoryColor, audience: p.audience, origin: p.origin, priceCOP: p.priceCOP,
         presentations: p.presentations, imageUrl: p.imageUrl, badges: p.badges, tagline: p.tagline,
         shortDesc: p.shortDesc, benefits: p.benefits, ingredients: p.ingredients, usage: p.usage,
-        pitch: p.pitch, faq: p.faq, disclaimer: p.disclaimer, stock: p.stock, activo: p.activo,
+        pitch: p.pitch, faq: p.faq, keywords: p.keywords, objeciones: p.objeciones, adIds: p.adIds, disclaimer: p.disclaimer, stock: p.stock, activo: p.activo,
         shopifyProductId: p.shopifyProductId, shopifySync: p.shopifySync, shopifySyncError: p.shopifySyncError,
       }))}
       categorias={categorias.map((c) => ({ slug: c.slug, name: c.name }))}

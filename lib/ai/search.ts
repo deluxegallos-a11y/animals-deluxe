@@ -8,6 +8,7 @@
    =========================================================== */
 import type { ProductView } from "@/lib/ai/types";
 import { normalize } from "@/lib/ai/format";
+import { deriveKeywords } from "@/lib/ai/keywords";
 
 const STOP = new Set([
   "de", "la", "el", "los", "las", "un", "una", "para", "por", "con", "que", "del", "al",
@@ -58,6 +59,7 @@ function haystackTokens(p: ProductView): string[] {
     p.benefits.join(" "),
     p.categoryName,
     p.categorySlug,
+    (p.keywords?.length ? p.keywords : deriveKeywords(p)).join(" "),
   ].join(" ");
   return normalize(text).split(/[^a-z0-9]+/).filter((w) => w.length >= 2 && !STOP.has(w));
 }

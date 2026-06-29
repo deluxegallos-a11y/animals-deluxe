@@ -2,8 +2,7 @@ import { z } from "zod";
 import { withBridge, audit, logEvent } from "@/lib/ai/bridge";
 import { getProducts } from "@/lib/ai/data";
 import { searchProducts } from "@/lib/ai/search";
-import { publicProduct, suggestion, emptyProduct } from "@/lib/ai/present";
-import { cop } from "@/lib/ai/format";
+import { publicProduct, suggestion, emptyProduct, richMensaje } from "@/lib/ai/present";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,18 +35,14 @@ export const POST = withBridge(
     const p = r.product;
     await audit("buscar_producto", "products", { slug: p.slug, q: body.q });
 
-    const mensaje =
-      `${p.name} — ${cop(p.priceCOP)} 🔥\n` +
-      `${p.tagline || p.shortDesc}\n` +
-      (p.benefits.length ? `✅ ${p.benefits.slice(0, 3).join(" · ")}\n` : "") +
-      `Es contraentrega: pagas al recibir. ¿Te lo aparto? 🐓`;
-
+    const pub = publicProduct(p);
     return {
       status: r.status,
       match: p.slug,
-      producto: publicProduct(p),
+      producto: pub,
+      producto_contexto: pub.producto_contexto,
       sugerencias,
-      mensaje,
+      mensaje: richMensaje(p),
     };
   },
 );
