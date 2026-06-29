@@ -26,9 +26,10 @@ export const DOG_PRODUCT: Product = {
 };
 
 // Plan extendido (Mejor opción) — máximos resultados a largo plazo.
-// El precio (180000) coincide con el SKU real "more-muscle-dogs" del catálogo.
+// id = "more-muscle-dogs": reutiliza el SKU real del catálogo (180000), así su
+// checkout resuelve directo a la variante de Shopify (no solo WhatsApp).
 export const DOG_PRODUCT_6M: Product = {
-  id: "more-muscle-dogs-6m",
+  id: "more-muscle-dogs",
   name: "More Muscle Dogs Premium",
   subtitle: "Plan 6 meses · Mejor opción",
   theme: "american",

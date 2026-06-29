@@ -19,14 +19,18 @@ export const metadata: Metadata = {
 };
 
 export default async function PerrosPage() {
-  // CONEXIÓN 1 — precio real por slug. El catálogo tiene un único SKU
-  // "more-muscle-dogs" (Plan 6 meses); se inyecta su precio real. El Plan 3
-  // meses no tiene SKU propio aún, así que mantiene su precio de la imagen
-  // (100.000) como fallback hasta que se cree "more-muscle-dogs-3m".
-  const dog = await getProductBySlug("more-muscle-dogs");
+  // CONEXIÓN 1 — precios reales por slug (única fuente de precio de la landing).
+  //  - Plan 3 meses -> SKU "more-muscle-dogs-3m" (100.000)
+  //  - Plan 6 meses -> SKU "more-muscle-dogs"    (180.000)
+  const [dog3m, dog6m] = await Promise.all([
+    getProductBySlug("more-muscle-dogs-3m"),
+    getProductBySlug("more-muscle-dogs"),
+  ]);
 
   return (
-    <PerrosProviders prices={{ sixM: dog?.priceCOP }}>
+    <PerrosProviders
+      prices={{ threeM: dog3m?.priceCOP, sixM: dog6m?.priceCOP }}
+    >
       <main>
         <DogLanding />
       </main>
