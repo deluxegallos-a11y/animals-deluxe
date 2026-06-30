@@ -73,7 +73,7 @@
     },
     {
       "slug": "dragon-mamba", "name": "Dragon Mamba", "category": "energia", "audience": "Gallos de exhibición",
-      "origin": "br", "priceCOP": 90000, "presentations": [{ "label": "10 ml", "priceCOP": 90000 }],
+      "origin": "br", "priceCOP": 150000, "presentations": [{ "label": "10 ml", "priceCOP": 150000 }],
       "image": "dragon-mamba.jpg", "badges": ["Premium", "Importado"],
       "tagline": "El mejor doping importado: vitalidad, resistencia, energía y movilidad.",
       "shortDesc": "Doping especial para gallos de exhibición. No combinar con otros medicamentos.",
