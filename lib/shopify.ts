@@ -264,6 +264,40 @@ export async function updateProduct(productId: string, input: ShopifyProductInpu
   return runProductSet(input, creds, productId);
 }
 
+/* ---- Publicación en el canal Online Store ----
+   Sin esto, los productos creados por la Admin API quedan ACTIVE pero NO
+   disponibles en la tienda online, y el cart permalink del pago anticipado
+   responde 410 ("el enlace ya no existe"). Publicarlos lo arregla. */
+let _onlineStorePubId: string | null = null;
+async function getOnlineStorePublicationId(creds?: ShopifyCreds): Promise<string | null> {
+  if (_onlineStorePubId) return _onlineStorePubId;
+  const data = await shopifyGraphQL<{ publications: { nodes: Array<{ id: string; name: string }> } }>(
+    `{ publications(first: 20) { nodes { id name } } }`,
+    {},
+    creds,
+  );
+  _onlineStorePubId =
+    data.publications.nodes.find((p) => /online store/i.test(p.name))?.id || null;
+  return _onlineStorePubId;
+}
+
+/** Publica un producto en el canal Online Store (idempotente). Necesario para que
+ *  el cart permalink (pago anticipado) reconozca la variante. */
+export async function publishProductOnline(productId: string, creds?: ShopifyCreds): Promise<void> {
+  const pubId = await getOnlineStorePublicationId(creds);
+  if (!pubId) return;
+  const data = await shopifyGraphQL<{
+    publishablePublish: { userErrors: Array<{ field?: string[] | null; message: string }> };
+  }>(
+    `mutation AdPublish($id: ID!, $input: [PublicationInput!]!) {
+      publishablePublish(id: $id, input: $input) { userErrors { field message } }
+    }`,
+    { id: productId, input: [{ publicationId: pubId }] },
+    creds,
+  );
+  throwUserErrors("publishablePublish", data.publishablePublish.userErrors);
+}
+
 /** Archiva un producto en Shopify (no se borra en duro). */
 export async function archiveProduct(productId: string, creds?: ShopifyCreds): Promise<void> {
   const data = await shopifyGraphQL<{ productUpdate: { userErrors: Array<{ field?: string[] | null; message: string }> } }>(

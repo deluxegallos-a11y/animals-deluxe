@@ -13,6 +13,7 @@ import {
 } from "@/lib/db/schema";
 import {
   getShopifyCreds, createProduct, updateProduct, archiveProduct, createOrder,
+  publishProductOnline,
   type ShopifyProductInput, type ShopifyOrderLineItem, ShopifyError,
 } from "@/lib/shopify";
 
@@ -76,6 +77,16 @@ export async function syncProductToShopify(productId: string): Promise<SyncResul
     const result = row.p.shopifyProductId
       ? await updateProduct(row.p.shopifyProductId, input, creds)
       : await createProduct(input, creds);
+
+    // Publica en el canal Online Store para que el cart permalink (pago anticipado)
+    // reconozca la variante. No rompe el sync si falla.
+    if (row.p.activo !== false) {
+      try {
+        await publishProductOnline(result.productId, creds);
+      } catch (e) {
+        console.error("publishProductOnline:", e instanceof Error ? e.message : e);
+      }
+    }
 
     const presentations = mergeVariantIds((row.p.presentations as Presentacion[]) || [], result.variantIdByLabel);
     await db
