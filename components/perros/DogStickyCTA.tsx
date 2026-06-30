@@ -11,7 +11,7 @@ import { DOG_PRODUCT } from "@/components/perros/_lib/dog";
    está vacío, agrega el plan por defecto para que se pueda finalizar. */
 export function DogStickyCTA() {
   const [show, setShow] = useState(false);
-  const { add, count, open } = useCart();
+  const { buyNow, count, openCheckout } = useCart();
 
   useEffect(() => {
     const onScroll = () => setShow(window.scrollY > window.innerHeight * 0.8);
@@ -21,8 +21,8 @@ export function DogStickyCTA() {
   }, []);
 
   const go = () => {
-    if (count === 0) add(DOG_PRODUCT);
-    open();
+    if (count === 0) buyNow(DOG_PRODUCT);
+    else openCheckout();
   };
 
   return (

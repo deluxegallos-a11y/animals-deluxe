@@ -9,20 +9,25 @@ import { Icon } from "@/components/gallos/shared/Icon";
 import { CodForm, type CodItem } from "@/components/store/cod-form";
 
 export function CartDrawer() {
-  const { isOpen, close, lines, subtotal, setQty, remove, checkout, loading } =
-    useCart();
+  const {
+    isOpen,
+    close,
+    lines,
+    subtotal,
+    setQty,
+    remove,
+    checkout,
+    loading,
+    phase,
+    setPhase,
+  } = useCart();
 
-  // Paso del checkout: "cart" = lista; "pay" = elegir método de pago.
-  const [phase, setPhase] = useState<"cart" | "pay">("cart");
   // Formulario contraentrega (el mismo de la página principal) sobre el carrito.
   const [codOpen, setCodOpen] = useState(false);
 
-  // Al cerrar el carrito, volver siempre al primer paso.
+  // Al cerrar el carrito, ocultar el formulario contraentrega.
   useEffect(() => {
-    if (!isOpen) {
-      setPhase("cart");
-      setCodOpen(false);
-    }
+    if (!isOpen) setCodOpen(false);
   }, [isOpen]);
 
   // Mapea las líneas del carrito al formato que consume el CodForm.

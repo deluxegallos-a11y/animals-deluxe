@@ -86,11 +86,11 @@ function FlatImage({
 }
 
 export function DogLanding() {
-  const { add, open, count } = useCart();
-  const buy = (p: Product = DOG_PRODUCT) => add(p);
+  const { buyNow, open, count } = useCart();
+  const buy = (p: Product = DOG_PRODUCT) => buyNow(p);
 
   return (
-    <div className="mx-auto w-full max-w-[760px] bg-background">
+    <div className="mx-auto w-full max-w-[760px] overflow-x-clip bg-background">
       {/* Header de marca: carrito flotante arriba a la derecha */}
       <header className="absolute right-0 top-0 z-10 flex w-full max-w-[760px] items-center justify-end px-4 pt-4 sm:px-5">
         <button

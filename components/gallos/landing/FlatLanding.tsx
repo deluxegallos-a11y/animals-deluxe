@@ -81,7 +81,7 @@ function FlatImage({
 }
 
 export function FlatLanding() {
-  const { add } = useCart();
+  const { buyNow } = useCart();
   const scrollTo = (id: string) =>
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
 
@@ -89,7 +89,7 @@ export function FlatLanding() {
   const cart = (size = 16) => <Icon name="cart" size={size} />;
 
   return (
-    <div className="mx-auto w-full max-w-[760px] bg-background pt-20 md:pt-24">
+    <div className="mx-auto w-full max-w-[760px] overflow-x-clip bg-background pt-20 md:pt-24">
       {/* SECCIÓN 1 — Hero + beneficios + "la diferencia es real" */}
       <FlatImage
         id="top"
@@ -120,7 +120,7 @@ export function FlatLanding() {
         >
           <OverlayButton
             box={{ top: "45.5%", left: "6.3%", width: "40.8%", height: "5.0%" }}
-            onClick={() => add(PRODUCTS[0])}
+            onClick={() => buyNow(PRODUCTS[0])}
             ariaLabel="Comprar American Rooster Fury"
             fontClass="text-[clamp(10px,2.4vw,14px)]"
           >
@@ -128,7 +128,7 @@ export function FlatLanding() {
           </OverlayButton>
           <OverlayButton
             box={{ top: "45.5%", left: "52.9%", width: "40.9%", height: "5.0%" }}
-            onClick={() => add(PRODUCTS[1])}
+            onClick={() => buyNow(PRODUCTS[1])}
             ariaLabel="Comprar Dragon Mamba"
             fontClass="text-[clamp(10px,2.4vw,14px)]"
           >

@@ -11,7 +11,7 @@ import { HORSE_PRODUCT } from "@/components/caballos/_lib/horse";
    está vacío, agrega el producto para que se pueda finalizar. */
 export function HorseStickyCTA() {
   const [show, setShow] = useState(false);
-  const { add, count, open } = useCart();
+  const { buyNow, count, openCheckout } = useCart();
 
   useEffect(() => {
     const onScroll = () => setShow(window.scrollY > window.innerHeight * 0.8);
@@ -21,8 +21,8 @@ export function HorseStickyCTA() {
   }, []);
 
   const go = () => {
-    if (count === 0) add(HORSE_PRODUCT);
-    open();
+    if (count === 0) buyNow(HORSE_PRODUCT);
+    else openCheckout();
   };
 
   return (

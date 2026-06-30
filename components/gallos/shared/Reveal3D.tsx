@@ -19,12 +19,15 @@ export function Reveal3D({
   delay?: number;
 }) {
   return (
-    <div className={className} style={{ perspective: "1200px" }}>
+    <div
+      className={className}
+      style={{ perspective: "1600px", overflowX: "clip" }}
+    >
       <motion.div
-        initial={{ opacity: 0, y: 64, rotateX: 13, scale: 0.96 }}
+        initial={{ opacity: 0, y: 44, rotateX: 8, scale: 0.975 }}
         whileInView={{ opacity: 1, y: 0, rotateX: 0, scale: 1 }}
         viewport={{ once: true, amount: 0.18 }}
-        transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1], delay }}
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay }}
         style={{ transformOrigin: "center top", willChange: "transform, opacity" }}
       >
         {children}

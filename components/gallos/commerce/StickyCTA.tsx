@@ -11,7 +11,7 @@ import { PRODUCTS } from "@/components/gallos/_lib/data";
    está vacío, agrega el producto más vendido para que se pueda finalizar. */
 export function StickyCTA() {
   const [show, setShow] = useState(false);
-  const { add, count, open } = useCart();
+  const { buyNow, count, openCheckout } = useCart();
 
   useEffect(() => {
     const onScroll = () => setShow(window.scrollY > window.innerHeight * 0.8);
@@ -21,8 +21,8 @@ export function StickyCTA() {
   }, []);
 
   const go = () => {
-    if (count === 0) add(PRODUCTS[0]);
-    open();
+    if (count === 0) buyNow(PRODUCTS[0]);
+    else openCheckout();
   };
 
   return (

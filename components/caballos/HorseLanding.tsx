@@ -73,11 +73,11 @@ function FlatImage({
 }
 
 export function HorseLanding() {
-  const { add, open, count } = useCart();
-  const buy = () => add(HORSE_PRODUCT);
+  const { buyNow, open, count } = useCart();
+  const buy = () => buyNow(HORSE_PRODUCT);
 
   return (
-    <div className="mx-auto w-full max-w-[760px] bg-background">
+    <div className="mx-auto w-full max-w-[760px] overflow-x-clip bg-background">
       {/* Header de marca: logo en la esquina + carrito, con aire arriba */}
       <header className="flex items-center justify-between px-4 pt-6 pb-4 sm:px-5">
         <Image
