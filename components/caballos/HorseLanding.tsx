@@ -3,7 +3,7 @@
 import Image from "next/image";
 import type { CSSProperties, ReactNode } from "react";
 import { Icon } from "@/components/gallos/shared/Icon";
-import { useCart } from "@/components/gallos/_lib/useCart";
+import { useCheckout } from "@/components/gallos/_lib/useCheckout";
 import { HORSE_PRODUCT, HORSE_REVIEWS, HORSE_FAQS } from "@/components/caballos/_lib/horse";
 import { StatsBar } from "@/components/gallos/sections/StatsBar";
 import { ReviewsNative } from "@/components/caballos/ReviewsNative";
@@ -73,8 +73,9 @@ function FlatImage({
 }
 
 export function HorseLanding() {
-  const { buyNow, open, count } = useCart();
-  const buy = () => buyNow(HORSE_PRODUCT);
+  const { start } = useCheckout();
+  // Un solo producto: directo al paso de pago (sin elegir cuál).
+  const buy = () => start({ products: [HORSE_PRODUCT] });
 
   return (
     <div className="mx-auto w-full max-w-[760px] overflow-x-clip bg-background">
@@ -90,16 +91,11 @@ export function HorseLanding() {
           className="h-14 w-14 select-none drop-shadow-[0_0_18px_rgba(255,201,40,0.35)] sm:h-16 sm:w-16"
         />
         <button
-          onClick={open}
-          aria-label="Abrir carrito"
+          onClick={buy}
+          aria-label="Comprar"
           className="relative grid h-11 w-11 place-items-center rounded-full border border-white/12 bg-white/[0.04] text-white backdrop-blur-sm transition-colors hover:border-gold/60"
         >
           <Icon name="cart" size={20} />
-          {count > 0 && (
-            <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-gold px-1 text-[11px] font-bold text-[#050505]">
-              {count}
-            </span>
-          )}
         </button>
       </header>
 

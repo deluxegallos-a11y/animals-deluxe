@@ -1,7 +1,10 @@
 "use client";
 
 import { CartProvider } from "@/components/gallos/_lib/useCart";
+import { CheckoutProvider } from "@/components/gallos/_lib/useCheckout";
 import { applyDogPrices } from "@/components/perros/_lib/dog";
+
+const VIOLET = { from: "#a78bfa", to: "#7c3aed", solid: "#a78bfa", ink: "#ffffff" };
 
 /**
  * Aplica los precios reales (de NUESTRO catálogo, slug "more-muscle-dogs") sobre
@@ -18,5 +21,9 @@ export function PerrosProviders({
   children: React.ReactNode;
 }) {
   applyDogPrices(prices);
-  return <CartProvider>{children}</CartProvider>;
+  return (
+    <CartProvider>
+      <CheckoutProvider accent={VIOLET}>{children}</CheckoutProvider>
+    </CartProvider>
+  );
 }

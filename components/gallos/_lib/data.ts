@@ -53,6 +53,22 @@ export const PRODUCTS: Product[] = [
   },
 ];
 
+/** Opciones del paso "¿cuál quieres?" del asistente (botón genérico):
+ *  American, Dragon o "los dos". Usa los precios ya inyectados en PRODUCTS. */
+export function gallosChoices() {
+  const fmt = (n: number) => "$" + n.toLocaleString("es-CO");
+  const [a, d] = PRODUCTS;
+  return [
+    { label: a.name, sub: fmt(a.price), products: [a] },
+    { label: d.name, sub: fmt(d.price), products: [d] },
+    {
+      label: "Quiero los dos",
+      sub: `${fmt(a.price + d.price)} · pack completo`,
+      products: [a, d],
+    },
+  ];
+}
+
 export const BENEFITS: Benefit[] = [
   { icon: "energia", title: "Aumenta la energía" },
   { icon: "resistencia", title: "Mejora la resistencia" },

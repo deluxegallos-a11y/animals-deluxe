@@ -3,8 +3,8 @@
 import Image from "next/image";
 import type { CSSProperties, ReactNode } from "react";
 import { Icon } from "@/components/gallos/shared/Icon";
-import { useCart } from "@/components/gallos/_lib/useCart";
-import { PRODUCTS } from "@/components/gallos/_lib/data";
+import { useCheckout } from "@/components/gallos/_lib/useCheckout";
+import { PRODUCTS, gallosChoices } from "@/components/gallos/_lib/data";
 import { ReviewsNative } from "@/components/gallos/reviews/ReviewsNative";
 import { FaqNative } from "@/components/gallos/faq/FaqNative";
 import { StatsBar } from "@/components/gallos/sections/StatsBar";
@@ -81,9 +81,10 @@ function FlatImage({
 }
 
 export function FlatLanding() {
-  const { buyNow } = useCart();
-  const scrollTo = (id: string) =>
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  const { start } = useCheckout();
+  // Botón genérico -> pregunta cuál (American/Dragon/los dos);
+  // botón de un producto -> directo al pago.
+  const buyChoices = () => start({ choices: gallosChoices() });
 
   const arrow = (size = 18) => <Icon name="arrow-right" size={size} />;
   const cart = (size = 16) => <Icon name="cart" size={size} />;
@@ -101,7 +102,7 @@ export function FlatLanding() {
       >
         <OverlayButton
           box={{ top: "54.0%", left: "17.5%", width: "65.5%", height: "5.5%" }}
-          onClick={() => scrollTo("productos")}
+          onClick={buyChoices}
           ariaLabel="Quiero un gallo campeón"
           fontClass="text-[clamp(13px,3.4vw,19px)]"
         >
@@ -120,7 +121,7 @@ export function FlatLanding() {
         >
           <OverlayButton
             box={{ top: "45.5%", left: "6.3%", width: "40.8%", height: "5.0%" }}
-            onClick={() => buyNow(PRODUCTS[0])}
+            onClick={() => start({ products: [PRODUCTS[0]] })}
             ariaLabel="Comprar American Rooster Fury"
             fontClass="text-[clamp(10px,2.4vw,14px)]"
           >
@@ -128,7 +129,7 @@ export function FlatLanding() {
           </OverlayButton>
           <OverlayButton
             box={{ top: "45.5%", left: "52.9%", width: "40.9%", height: "5.0%" }}
-            onClick={() => buyNow(PRODUCTS[1])}
+            onClick={() => start({ products: [PRODUCTS[1]] })}
             ariaLabel="Comprar Dragon Mamba"
             fontClass="text-[clamp(10px,2.4vw,14px)]"
           >
@@ -153,7 +154,7 @@ export function FlatLanding() {
         >
           <OverlayButton
             box={{ top: "76.4%", left: "12.2%", width: "75.2%", height: "11.9%" }}
-            onClick={() => scrollTo("productos")}
+            onClick={buyChoices}
             ariaLabel="Quiero probarlo"
             fontClass="text-[clamp(14px,3.6vw,20px)]"
           >
@@ -178,7 +179,7 @@ export function FlatLanding() {
         >
           <OverlayButton
             box={{ top: "37.9%", left: "26.7%", width: "46.0%", height: "17.8%" }}
-            onClick={() => scrollTo("productos")}
+            onClick={buyChoices}
             ariaLabel="Comprar ahora"
             fontClass="text-[clamp(12px,2.8vw,16px)]"
           >

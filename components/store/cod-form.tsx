@@ -17,7 +17,7 @@ const DEPARTAMENTOS = ["Amazonas", "Antioquia", "Arauca", "Atlántico", "Bogotá
 const idOf = (i: CodItem) => `${i.slug}::${i.presLabel}`;
 
 /* Formulario contraentrega: acepta varios productos y cantidades editables. */
-export function CodForm({ items: initial, upsellCfg, onClose }: { items: CodItem[]; upsellCfg?: CodFormConfig; onClose: () => void }) {
+export function CodForm({ items: initial, upsellCfg, onClose, onSuccess }: { items: CodItem[]; upsellCfg?: CodFormConfig; onClose: () => void; onSuccess?: (ref: string) => void }) {
   const [items, setItems] = React.useState<CodItem[]>(initial);
   const [f, setF] = React.useState({ nombre: "", telefono: "", departamento: "", ciudad: "", direccion: "" });
   const [busy, setBusy] = React.useState(false);
@@ -44,8 +44,12 @@ export function CodForm({ items: initial, upsellCfg, onClose }: { items: CodItem
       items: items.map((it) => ({ slug: it.slug, presentacion: it.presLabel, cantidad: it.qty })),
     });
     setBusy(false);
-    if (r.ok) setDone({ ref: r.ref });
-    else setErr(r.error);
+    if (r.ok) {
+      // Si el contenedor maneja el éxito (p.ej. el asistente de las landings con
+      // su pantalla de "¡Gracias!"), se lo delegamos; si no, mostramos el done propio.
+      if (onSuccess) onSuccess(r.ref);
+      else setDone({ ref: r.ref });
+    } else setErr(r.error);
   }
 
   return (

@@ -65,6 +65,23 @@ export function applyDogPrices(prices?: { threeM?: number; sixM?: number }) {
     DOG_PRODUCT_6M.price = prices.sixM;
 }
 
+/** Opciones para el paso "¿cuál quieres?" del asistente de compra (botón genérico). */
+export function dogChoices() {
+  const fmt = (n: number) => "$" + n.toLocaleString("es-CO");
+  return [
+    {
+      label: "Plan 3 meses",
+      sub: fmt(DOG_PRODUCT.price),
+      products: [DOG_PRODUCT],
+    },
+    {
+      label: "Plan 6 meses · Mejor opción",
+      sub: fmt(DOG_PRODUCT_6M.price),
+      products: [DOG_PRODUCT_6M],
+    },
+  ];
+}
+
 export const DOG_REVIEWS: Review[] = [
   {
     name: "Laura V.",

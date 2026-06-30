@@ -3,13 +3,14 @@
 import Image from "next/image";
 import type { CSSProperties, ReactNode } from "react";
 import { Icon } from "@/components/gallos/shared/Icon";
-import { useCart } from "@/components/gallos/_lib/useCart";
+import { useCheckout } from "@/components/gallos/_lib/useCheckout";
 import type { Product } from "@/components/gallos/_lib/types";
 import {
   DOG_PRODUCT,
   DOG_PRODUCT_6M,
   DOG_REVIEWS,
   DOG_FAQS,
+  dogChoices,
 } from "@/components/perros/_lib/dog";
 import { ReviewsDogs } from "@/components/perros/ReviewsDogs";
 import { FaqNative } from "@/components/perros/FaqNative";
@@ -86,24 +87,21 @@ function FlatImage({
 }
 
 export function DogLanding() {
-  const { buyNow, open, count } = useCart();
-  const buy = (p: Product = DOG_PRODUCT) => buyNow(p);
+  const { start } = useCheckout();
+  // Botón genérico -> pregunta cuál (3m/6m); botón de un plan -> directo al pago.
+  const buy = (p?: Product) =>
+    p ? start({ products: [p] }) : start({ choices: dogChoices() });
 
   return (
     <div className="mx-auto w-full max-w-[760px] overflow-x-clip bg-background">
-      {/* Header de marca: carrito flotante arriba a la derecha */}
+      {/* Header de marca: botón de compra arriba a la derecha */}
       <header className="absolute right-0 top-0 z-10 flex w-full max-w-[760px] items-center justify-end px-4 pt-4 sm:px-5">
         <button
-          onClick={open}
-          aria-label="Abrir carrito"
+          onClick={() => buy()}
+          aria-label="Comprar"
           className="relative grid h-11 w-11 place-items-center rounded-full border border-black/10 bg-white/80 text-[#2b1769] backdrop-blur-sm transition-colors hover:border-[#7c3aed]/50"
         >
           <Icon name="cart" size={20} />
-          {count > 0 && (
-            <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-[#7c3aed] px-1 text-[11px] font-bold text-white">
-              {count}
-            </span>
-          )}
         </button>
       </header>
 
@@ -161,7 +159,7 @@ export function DogLanding() {
           />
           <BuyButton
             box={{ top: "95.3%", left: "5.4%", width: "89.0%", height: "3.7%" }}
-            onClick={() => buy(DOG_PRODUCT)}
+            onClick={() => buy()}
             fontClass="text-[clamp(13px,3.4vw,19px)]"
           />
         </FlatImage>

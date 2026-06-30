@@ -5,6 +5,7 @@ import { HorseStickyCTA } from "@/components/caballos/HorseStickyCTA";
 import { Footer } from "@/components/gallos/layout/Footer";
 import { WhatsAppFloat } from "@/components/gallos/layout/WhatsAppFloat";
 import { CartDrawer } from "@/components/gallos/commerce/CartDrawer";
+import { CheckoutFlow } from "@/components/gallos/commerce/CheckoutFlow";
 
 // Precio en tiempo real desde NUESTRO catálogo (Shopify/Supabase) cada hora.
 export const revalidate = 3600;
@@ -29,6 +30,7 @@ export default function CaballosPage() {
       <CartDrawer />
       <HorseStickyCTA />
       <WhatsAppFloat />
+      <CheckoutFlow />
     </CaballosProviders>
   );
 }

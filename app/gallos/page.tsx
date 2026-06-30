@@ -1,5 +1,9 @@
 import { getProductBySlug } from "@/lib/ai/data";
 import { CartProvider } from "@/components/gallos/_lib/useCart";
+import { CheckoutProvider } from "@/components/gallos/_lib/useCheckout";
+import { CheckoutFlow } from "@/components/gallos/commerce/CheckoutFlow";
+
+const GOLD = { from: "#ffe9a8", to: "#e0a92e", solid: "#e0a92e", ink: "#1a1206" };
 import { SmoothScroll } from "@/components/gallos/layout/SmoothScroll";
 import { PremiumLoader } from "@/components/gallos/layout/PremiumLoader";
 import { Analytics } from "@/components/gallos/layout/Analytics";
@@ -28,19 +32,22 @@ export default async function GallosPage() {
 
   return (
     <CartProvider priceOverrides={priceOverrides}>
-      <PremiumLoader />
-      <Analytics />
-      <SmoothScroll>
-        <JsonLd />
-        <Navbar />
-        <main>
-          <FlatLanding />
-        </main>
-        <Footer />
-        <CartDrawer />
-        <StickyCTA />
-        <WhatsAppFloat />
-      </SmoothScroll>
+      <CheckoutProvider accent={GOLD}>
+        <PremiumLoader />
+        <Analytics />
+        <SmoothScroll>
+          <JsonLd />
+          <Navbar />
+          <main>
+            <FlatLanding />
+          </main>
+          <Footer />
+          <CartDrawer />
+          <StickyCTA />
+          <WhatsAppFloat />
+        </SmoothScroll>
+        <CheckoutFlow />
+      </CheckoutProvider>
     </CartProvider>
   );
 }
