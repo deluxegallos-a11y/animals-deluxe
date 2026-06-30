@@ -374,3 +374,30 @@ td{padding:11px 10px;font-size:13.5px;border-top:1px solid var(--line)}
 .store-foot{border-top:1px solid var(--line);padding:30px 26px;text-align:center;color:var(--muted);font-size:13px}
 .badge-mini{display:inline-flex;gap:5px;background:#16203A;color:#fff;font-size:10px;font-weight:800;padding:3px 8px;border-radius:7px;text-transform:uppercase;letter-spacing:.4px}
 .demo-banner{background:var(--amber-soft);color:#8a5a00;border:1px solid #ffe2ad;border-radius:12px;padding:10px 16px;font-size:13px;font-weight:600;margin-bottom:18px;text-align:center}
+
+/* ===========================================================
+   Announcement bar — banner marquee superior de las landings
+   (gallos / caballos / perros). Sticky arriba, texto girando.
+   =========================================================== */
+.ann-bar{position:sticky;top:0;z-index:60;width:100%;overflow:hidden;
+  background:linear-gradient(90deg,#0b0710 0%,#2a1450 45%,#0b0710 100%);
+  border-bottom:1px solid rgba(255,255,255,.10);
+  box-shadow:0 6px 22px -10px rgba(0,0,0,.55)}
+.ann-viewport{overflow:hidden;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);
+          mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
+.ann-track{display:flex;width:max-content;will-change:transform;
+  animation:ann-marquee 32s linear infinite}
+.ann-bar:hover .ann-track{animation-play-state:paused}
+.ann-group{display:flex;flex:0 0 auto;align-items:center}
+.ann-item{display:inline-flex;align-items:center;gap:.6rem;
+  padding:.6rem 1.25rem;white-space:nowrap;color:#fff;
+  font-family:var(--sans);font-weight:600;font-size:12.5px;line-height:1;
+  letter-spacing:.05em;text-transform:uppercase}
+.ann-sep{color:#f5c451;font-size:11px;text-shadow:0 0 10px rgba(245,196,81,.55)}
+@keyframes ann-marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){
+  .ann-track{animation:none}
+  .ann-viewport{display:flex;justify-content:center}
+  .ann-group:nth-child(2){display:none}
+}

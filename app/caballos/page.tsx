@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { CaballosProviders } from "@/components/caballos/CaballosProviders";
+import { AnnouncementBar } from "@/components/gallos/shared/AnnouncementBar";
 import { HorseLanding } from "@/components/caballos/HorseLanding";
 import { HorseStickyCTA } from "@/components/caballos/HorseStickyCTA";
 import { Footer } from "@/components/gallos/layout/Footer";
@@ -23,6 +24,7 @@ export default function CaballosPage() {
   // con la imagen. Si en el futuro se cambia la imagen, conectar getProductBySlug.
   return (
     <CaballosProviders>
+      <AnnouncementBar />
       <main>
         <HorseLanding />
       </main>

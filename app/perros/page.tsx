@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getProductBySlug } from "@/lib/ai/data";
 import { PerrosProviders } from "@/components/perros/PerrosProviders";
+import { AnnouncementBar } from "@/components/gallos/shared/AnnouncementBar";
 import { DogLanding } from "@/components/perros/DogLanding";
 import { DogStickyCTA } from "@/components/perros/DogStickyCTA";
 import { Footer } from "@/components/gallos/layout/Footer";
@@ -32,6 +33,7 @@ export default async function PerrosPage() {
     <PerrosProviders
       prices={{ threeM: dog3m?.priceCOP, sixM: dog6m?.priceCOP }}
     >
+      <AnnouncementBar />
       <main>
         <DogLanding />
       </main>
