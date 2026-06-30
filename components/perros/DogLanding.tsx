@@ -93,9 +93,10 @@ export function DogLanding() {
     p ? start({ products: [p] }) : start({ choices: dogChoices() });
 
   return (
-    <div className="mx-auto w-full max-w-[760px] overflow-x-clip bg-background">
-      {/* Header de marca: botón de compra arriba a la derecha */}
-      <header className="absolute right-0 top-0 z-10 flex w-full max-w-[760px] items-center justify-end px-4 pt-4 sm:px-5">
+    <div className="relative mx-auto w-full max-w-[760px] overflow-x-clip bg-background">
+      {/* Header de marca: botón de compra arriba a la derecha.
+          `relative` en el contenedor lo ancla aquí (bajo el banner marquee). */}
+      <header className="absolute right-0 top-0 z-10 flex w-full max-w-[760px] items-center justify-end px-4 pt-5 sm:px-5">
         <button
           onClick={() => buy()}
           aria-label="Comprar"
