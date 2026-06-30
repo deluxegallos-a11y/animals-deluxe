@@ -115,7 +115,7 @@ export function DogLanding() {
         priority
       >
         <BuyButton
-          box={{ top: "61.8%", left: "39.5%", width: "55%", height: "7.6%" }}
+          box={{ top: "62%", left: "39%", width: "54%", height: "6.5%" }}
           onClick={() => buy()}
           fontClass="text-[clamp(13px,3.4vw,19px)]"
         />
@@ -141,24 +141,24 @@ export function DogLanding() {
       <Reveal3D>
         <FlatImage
           src="/assets/dog/d3.png"
-          width={862}
-          height={1824}
+          width={852}
+          height={1846}
           alt="Para todas las razas. Elige tu plan ideal: 3 meses o 6 meses"
         >
           <BuyButton
-            box={{ top: "82.7%", left: "8.8%", width: "36.0%", height: "3.7%" }}
+            box={{ top: "82.5%", left: "7%", width: "37%", height: "4%" }}
             onClick={() => buy(DOG_PRODUCT)}
             label="Comprar"
             fontClass="text-[clamp(12px,3vw,16px)]"
           />
           <BuyButton
-            box={{ top: "82.7%", left: "54.2%", width: "36.0%", height: "3.7%" }}
+            box={{ top: "82.5%", left: "53%", width: "37%", height: "4%" }}
             onClick={() => buy(DOG_PRODUCT_6M)}
             label="Comprar"
             fontClass="text-[clamp(12px,3vw,16px)]"
           />
           <BuyButton
-            box={{ top: "95.3%", left: "5.4%", width: "89.0%", height: "3.7%" }}
+            box={{ top: "93.7%", left: "4%", width: "91%", height: "4.3%" }}
             onClick={() => buy()}
             fontClass="text-[clamp(13px,3.4vw,19px)]"
           />
@@ -190,7 +190,7 @@ export function DogLanding() {
           alt="Tu perro merece lo mejor. Beneficios que se notan — Comprar More Muscle Dogs Premium"
         >
           <BuyButton
-            box={{ top: "82.3%", left: "4.6%", width: "90.6%", height: "6.0%" }}
+            box={{ top: "85.6%", left: "4%", width: "92%", height: "6%" }}
             onClick={() => buy()}
             label="Comprar"
             fontClass="text-[clamp(15px,4.4vw,24px)]"
