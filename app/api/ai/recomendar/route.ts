@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { withBridge, logEvent } from "@/lib/ai/bridge";
 import { getProducts } from "@/lib/ai/data";
-import { searchProducts } from "@/lib/ai/search";
+import { searchProducts, animalOf } from "@/lib/ai/search";
 import { buildContexto, richMensaje } from "@/lib/ai/present";
 import { cop } from "@/lib/ai/format";
 
@@ -13,7 +13,12 @@ export const POST = withBridge(
   async ({ body }) => {
     const catalog = await getProducts();
     const r = searchProducts(body.necesidad, catalog);
-    const top = r.ranked.slice(0, 3).map((x) => x.product);
+    // Nunca mezclar animales: las recomendaciones comparten el animal del mejor match.
+    const firstAnimal = r.ranked[0] ? animalOf(r.ranked[0].product) : null;
+    const top = r.ranked
+      .filter((x) => !firstAnimal || animalOf(x.product) === firstAnimal)
+      .slice(0, 3)
+      .map((x) => x.product);
 
     await logEvent("recomendacion", { necesidad: body.necesidad, productos: top.map((p) => p.slug) });
 

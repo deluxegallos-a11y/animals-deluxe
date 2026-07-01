@@ -393,6 +393,57 @@ export async function createOrder(input: ShopifyOrderInput, creds?: ShopifyCreds
   return { orderId: o.id, orderName: o.name };
 }
 
+const DRAFT_ORDER_CREATE = /* GraphQL */ `
+  mutation AdCreateDraftOrder($input: DraftOrderInput!) {
+    draftOrderCreate(input: $input) {
+      draftOrder { id name }
+      userErrors { field message }
+    }
+  }`;
+
+/**
+ * Crea un DRAFT ORDER (borrador) en Shopify. Es la opción para contraentrega:
+ * queda como borrador (no descuenta inventario ni notifica al cliente) hasta que
+ * el asesor lo confirme/complete. No notifica al cliente (sólo WhatsApp).
+ */
+export async function createDraftOrder(input: ShopifyOrderInput, creds?: ShopifyCreds): Promise<ShopifyOrderResult> {
+  const [firstName, ...rest] = (input.nombre || "Cliente WhatsApp").trim().split(/\s+/);
+  const lastName = rest.join(" ") || ".";
+
+  const lineItems = input.lineItems.map((li) =>
+    li.variantId
+      ? { variantId: li.variantId, quantity: li.quantity }
+      : {
+          title: li.title,
+          quantity: li.quantity,
+          originalUnitPriceWithCurrency: { amount: String(li.priceCOP || 0), currencyCode: "COP" },
+        },
+  );
+
+  const draftInput = {
+    tags: input.tags && input.tags.length ? input.tags : ["COD", "WhatsApp", "Bot"],
+    note: input.note || "Pedido contraentrega tomado por el bot Victor (WhatsApp)",
+    lineItems,
+    shippingAddress: {
+      firstName,
+      lastName,
+      address1: input.direccion || "Por confirmar",
+      city: input.ciudad || "",
+      phone: input.telefono || "",
+      countryCode: "CO",
+    },
+  };
+
+  const data = await shopifyGraphQL<{
+    draftOrderCreate: { draftOrder: { id: string; name: string } | null; userErrors: Array<{ field?: string[] | null; message: string }> };
+  }>(DRAFT_ORDER_CREATE, { input: draftInput }, creds);
+
+  throwUserErrors("draftOrderCreate", data.draftOrderCreate.userErrors);
+  const o = data.draftOrderCreate.draftOrder;
+  if (!o) throw new ShopifyError("draftOrderCreate no devolvió borrador.");
+  return { orderId: o.id, orderName: o.name };
+}
+
 /** Resuelve el variantId de un producto en Shopify por etiqueta de presentación. */
 export async function getVariantId(productId: string, label: string, creds?: ShopifyCreds): Promise<string | null> {
   if (!productId) return null;

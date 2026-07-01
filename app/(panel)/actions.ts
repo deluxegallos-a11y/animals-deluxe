@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import {
-  products, categories, orders, orderItems, customers, advisors, promotions, storeConfig, integrations, auditLog, reviews,
+  products, categories, orders, orderItems, customers, advisors, promotions, storeConfig, integrations, auditLog, reviews, adMap,
   type Presentacion, type Ingrediente, type FaqItem, type CiudadCobertura, type CuentaBancaria,
 } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth";
@@ -249,6 +249,38 @@ export async function despacharPedido(id: string, guia: string, transportadora: 
   revalidatePath("/pedidos");
   revalidatePath("/dashboard");
   return { ok: true, notify };
+}
+
+/* ===========================================================
+   ANUNCIOS (ad_map: ad_id de Meta → producto)
+   =========================================================== */
+export async function saveAdMap(formData: FormData) {
+  await requireUser();
+  if (!db) return { ok: false, error: "demo" };
+  const adId = String(formData.get("adId") || "").trim();
+  const productSlug = String(formData.get("productSlug") || "").trim();
+  if (!adId) return { ok: false, error: "El ad_id es obligatorio." };
+  if (!productSlug) return { ok: false, error: "Elige un producto." };
+  const values = {
+    productSlug,
+    nombreAnuncio: String(formData.get("nombreAnuncio") || "").trim(),
+    activo: formData.get("activo") === "on" || formData.get("activo") === "true",
+  };
+  await db
+    .insert(adMap)
+    .values({ adId, ...values })
+    .onConflictDoUpdate({ target: adMap.adId, set: values });
+  await logAudit("guardar_ad_map", "ad_map", { adId, productSlug });
+  revalidatePath("/anuncios");
+  return { ok: true };
+}
+
+export async function deleteAdMap(adId: string) {
+  await requireUser();
+  if (!db || !adId) return;
+  await db.delete(adMap).where(eq(adMap.adId, adId));
+  await logAudit("eliminar_ad_map", "ad_map", { adId });
+  revalidatePath("/anuncios");
 }
 
 /* ===========================================================

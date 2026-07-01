@@ -80,6 +80,15 @@ export const products = pgTable(
   (t) => ({ catIdx: index("idx_products_category").on(t.categoryId) }),
 );
 
+/* 2b. ad_map: anuncio de Meta (ad_id) → producto. Resuelve el referral CTWA. */
+export const adMap = pgTable("ad_map", {
+  adId: text("ad_id").primaryKey(),           // ad_id de Meta (referral del anuncio)
+  productSlug: text("product_slug").notNull(), // → products.slug
+  nombreAnuncio: text("nombre_anuncio").default(""),
+  activo: boolean("activo").default(true),
+  createdAt: now(),
+});
+
 /* 3. customers (leads) */
 export const customers = pgTable("customers", {
   id: id(),

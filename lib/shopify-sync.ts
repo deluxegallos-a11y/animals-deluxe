@@ -12,7 +12,7 @@ import {
   type Presentacion,
 } from "@/lib/db/schema";
 import {
-  getShopifyCreds, createProduct, updateProduct, archiveProduct, createOrder,
+  getShopifyCreds, createProduct, updateProduct, archiveProduct, createDraftOrder,
   publishProductOnline,
   type ShopifyProductInput, type ShopifyOrderLineItem, ShopifyError,
 } from "@/lib/shopify";
@@ -189,7 +189,9 @@ export async function pushOrderToShopify(input: PushOrderInput): Promise<PushOrd
   }));
 
   try {
-    const result = await createOrder(
+    // Draft order (borrador): no descuenta inventario ni notifica; el asesor lo
+    // confirma/completa. Es el flujo de contraentrega del contrato (§2).
+    const result = await createDraftOrder(
       {
         lineItems,
         nombre: input.nombre,

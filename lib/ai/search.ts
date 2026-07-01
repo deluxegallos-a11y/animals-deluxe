@@ -31,6 +31,32 @@ const INTENTS: { match: RegExp; category: string; kw: string[] }[] = [
   { match: /\b(caballo|equino|yegua|potro|horse)\w*/i, category: "caballos", kw: ["caballo"] },
 ];
 
+/* ---- Animal / audiencia (para NUNCA mezclar animales) ----
+   El animal del producto se deduce de su categoría; el resto del catálogo
+   (energia, vitaminas, respiratorio, etc.) son productos de gallos. */
+export type Animal = "perros" | "caballos" | "pollos" | "gallos";
+
+export function animalOf(p: ProductView): Animal {
+  const c = p.categorySlug;
+  if (c === "perros") return "perros";
+  if (c === "caballos") return "caballos";
+  if (c === "pollos") return "pollos";
+  return "gallos";
+}
+
+/* Detecta el animal mencionado en el query. null si no es claro. */
+const ANIMAL_Q: { animal: Animal; re: RegExp }[] = [
+  { animal: "caballos", re: /\b(caball|equin|yegua|potr|horse)\w*/ },
+  { animal: "perros", re: /\b(perr|canin|cachorr|dog|mascota)\w*/ },
+  { animal: "pollos", re: /\b(pollo|polluel|pollit|levante|engord)\w*/ },
+  { animal: "gallos", re: /\b(gallo|gallin|rooster)\w*/ },
+];
+export function detectAnimal(query: string): Animal | null {
+  const q = normalize(query);
+  for (const a of ANIMAL_Q) if (a.re.test(q)) return a.animal;
+  return null;
+}
+
 function trigrams(s: string): Set<string> {
   const t = `  ${s} `;
   const out = new Set<string>();
@@ -111,6 +137,10 @@ export function searchProducts(query: string, products: ProductView[]): SearchRe
 
   const qTokens = qNorm.split(/[^a-z0-9]+/).filter((w) => w.length >= 2 && !STOP.has(w));
 
+  // Filtro por animal: si el query menciona un animal, SOLO ese animal (no mezclar).
+  const animal = detectAnimal(query);
+  const pool = animal ? products.filter((p) => animalOf(p) === animal) : products;
+
   // intents
   const intentCats = new Set<string>();
   const intentKw: string[] = [];
@@ -118,7 +148,7 @@ export function searchProducts(query: string, products: ProductView[]): SearchRe
     if (it.match.test(qNorm)) { intentCats.add(it.category); intentKw.push(...it.kw); }
   }
 
-  const ranked = products
+  const ranked = pool
     .map((p) => ({ product: p, score: scoreProduct(qTokens, qNorm, p, intentCats, intentKw) }))
     .sort((a, b) => b.score - a.score);
 

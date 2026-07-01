@@ -1,9 +1,29 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { searchProducts } from "@/lib/ai/search";
+import { searchProducts, detectAnimal, animalOf } from "@/lib/ai/search";
 import { demoProducts } from "@/lib/demo-data";
 
 const cat = demoProducts;
+
+test("detectAnimal: potro→caballos, perro→perros, pollo→pollos, gallo→gallos", () => {
+  assert.equal(detectAnimal("crecimiento de potro"), "caballos");
+  assert.equal(detectAnimal("vitaminas para mi perro"), "perros");
+  assert.equal(detectAnimal("levante de pollos"), "pollos");
+  assert.equal(detectAnimal("energia para el gallo"), "gallos");
+  assert.equal(detectAnimal("algo para energia"), null);
+});
+
+test("no mezclar animales: 'crecimiento de potro' NO trae productos de gallos", () => {
+  const r = searchProducts("crecimiento de potro", cat);
+  // todos los resultados rankeados deben ser de caballos
+  for (const x of r.ranked) assert.equal(animalOf(x.product), "caballos", `${x.product.slug} no es de caballos`);
+  if (r.product) assert.equal(animalOf(r.product), "caballos");
+});
+
+test("no mezclar animales: 'músculo para mi perro' solo trae productos de perros", () => {
+  const r = searchProducts("musculo para mi perro", cat);
+  for (const x of r.ranked) assert.equal(animalOf(x.product), "perros");
+});
 
 test("typos: 'enrgy kobra' → energy-cobra", () => {
   const r = searchProducts("enrgy kobra", cat);

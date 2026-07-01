@@ -6,7 +6,7 @@ import { desc, eq, gte, sql, asc } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import {
   products, categories, orders, orderItems, customers, advisors,
-  promotions, conversations, storeConfig, integrations,
+  promotions, conversations, storeConfig, integrations, adMap,
 } from "@/lib/db/schema";
 import { demoProducts, demoCategories } from "@/lib/demo-data";
 import type { ProductView } from "@/lib/ai/types";
@@ -187,4 +187,22 @@ export async function getStoreConfigRow() {
 export async function listIntegrations() {
   if (!db) return [];
   return db.select().from(integrations);
+}
+
+/* ---------- Anuncios (ad_map: ad_id → producto) ---------- */
+export type AdMapRow = { adId: string; productSlug: string; productName: string; nombreAnuncio: string; activo: boolean };
+export async function listAdMap(): Promise<AdMapRow[]> {
+  if (!db) return [];
+  const rows = await db
+    .select({ a: adMap, pName: products.name })
+    .from(adMap)
+    .leftJoin(products, eq(adMap.productSlug, products.slug))
+    .orderBy(desc(adMap.createdAt));
+  return rows.map((r) => ({
+    adId: r.a.adId,
+    productSlug: r.a.productSlug,
+    productName: r.pName || "(producto no encontrado)",
+    nombreAnuncio: r.a.nombreAnuncio || "",
+    activo: r.a.activo ?? true,
+  }));
 }
