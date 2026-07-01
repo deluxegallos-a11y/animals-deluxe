@@ -52,13 +52,28 @@ async function main() {
   const catId = Object.fromEntries(cats.map((c) => [c.slug, c.id]));
 
   // 2) productos
-  let n = 0;
+  // ⚠️ FUENTE DE VERDAD = la PLATAFORMA (DB), no este JSON. Por defecto el seed
+  // SOLO INSERTA productos que faltan y NUNCA pisa los existentes (así jamás
+  // revierte precios/presentaciones editados en el panel). Para forzar un
+  // re-sembrado completo (bootstrap/desarrollo) usa SEED_OVERWRITE=1.
+  const OVERWRITE = process.env.SEED_OVERWRITE === "1";
+  const conflict = OVERWRITE
+    ? sql`do update set
+        name = excluded.name, category_id = excluded.category_id, audience = excluded.audience,
+        origin = excluded.origin, price_cop = excluded.price_cop, presentations = excluded.presentations,
+        image = excluded.image, image_url = excluded.image_url, badges = excluded.badges,
+        tagline = excluded.tagline, short_desc = excluded.short_desc, benefits = excluded.benefits,
+        usage = excluded.usage, pitch = excluded.pitch, updated_at = now()`
+    : sql`do nothing`;
+  if (OVERWRITE) console.log("⚠️  SEED_OVERWRITE=1 → PISARÁ precios/datos de TODOS los productos con los del JSON.");
+
+  let inserted = 0, skipped = 0;
   for (const p of catalogo.products) {
     const presentations = (p.presentations && p.presentations.length)
       ? p.presentations
       : [{ label: "Unidad", priceCOP: p.priceCOP || 0 }];
     const imageUrl = p.image ? `${SITE}/products/${p.image}` : "";
-    await sql`
+    const rows = await sql`
       insert into products (
         slug, name, category_id, audience, origin, price_cop, presentations, image, image_url,
         badges, tagline, short_desc, benefits, usage, pitch, disclaimer, stock, activo
@@ -69,16 +84,14 @@ async function main() {
         ${p.usage || ""}, ${p.pitch || ""},
         ${"Producto de bienestar y rendimiento. No cura enfermedades."}, 999, true
       )
-      on conflict (slug) do update set
-        name = excluded.name, category_id = excluded.category_id, audience = excluded.audience,
-        origin = excluded.origin, price_cop = excluded.price_cop, presentations = excluded.presentations,
-        image = excluded.image, image_url = excluded.image_url, badges = excluded.badges,
-        tagline = excluded.tagline, short_desc = excluded.short_desc, benefits = excluded.benefits,
-        usage = excluded.usage, pitch = excluded.pitch, updated_at = now()
+      on conflict (slug) ${conflict}
+      returning slug
     `;
-    n++;
+    if (rows.length) inserted++; else skipped++;
   }
-  console.log(`✓ ${n} productos sembrados.`);
+  console.log(OVERWRITE
+    ? `✓ ${inserted + skipped} productos sembrados (modo OVERWRITE).`
+    : `✓ ${inserted} productos nuevos insertados · ${skipped} existentes preservados (no se tocaron sus precios).`);
 
   // 3) asesores (round-robin)
   for (const a of [
