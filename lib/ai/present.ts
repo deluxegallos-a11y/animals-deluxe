@@ -25,15 +25,34 @@ export function buildContexto(p: ProductView): string {
   ].filter(Boolean).join("\n");
 }
 
-/** Mensaje WhatsApp-ready en voz Victor (nunca vacío). */
+/** Descripción de venta enriquecida (§4.6). Usa la editada; si no hay, la compone
+ *  con gancho + beneficios ✅ para que NUNCA llegue una ficha pobre al cliente. */
+export function descripcionRica(p: ProductView): string {
+  if (p.descripcion && p.descripcion.trim()) return p.descripcion.trim();
+  const gancho = p.tagline || p.pitch || p.shortDesc || "";
+  const bens = (p.benefits || []).map((b) => `✅ ${b}`).join("\n");
+  return [gancho, bens].filter(Boolean).join("\n");
+}
+
+/** Cierre de precio listo para pegar (precio + envío/gratis + contra entrega). */
+export function cierrePrecio(p: ProductView): string {
+  const envio = p.envioGratis ? "envío GRATIS 🚚" : "+ envío";
+  return `💵 ${cop(p.priceCOP)} · ${envio} · contra entrega, pagás al recibir.`;
+}
+
+/** Mensaje WhatsApp-ready en voz Victor (nunca vacío). Enriquecido con ficha. */
 export function richMensaje(p: ProductView): string {
-  const benLines = (p.benefits || []).slice(0, 3).map((x) => `✅ ${x}`).join("\n");
-  const pres = p.presentations?.[0];
-  const precioStr = `💵 ${cop(p.priceCOP)}${pres ? ` · ${pres.label}` : ""} · contraentrega (pagás al recibir)`;
+  const benLines = (p.benefits || []).slice(0, 5).map((x) => `✅ ${x}`).join("\n");
+  const ficha = [
+    p.presentacion ? `📦 Presentación: ${p.presentacion}` : "",
+    p.dosificacion ? `🥄 Dosis: ${p.dosificacion}` : "",
+    p.edadMinima ? `📅 Desde: ${p.edadMinima}` : "",
+  ].filter(Boolean).join("\n");
   return [
     `${p.name} 🔥 ${p.pitch || p.tagline || ""}`.trim(),
     benLines,
-    precioStr,
+    ficha,
+    cierrePrecio(p),
     `¿Te lo aparto, mi rey? 🐓`,
   ].filter(Boolean).join("\n");
 }
@@ -60,6 +79,14 @@ export function publicProduct(p: ProductView) {
     faq: p.faq,
     keywords: p.keywords || [],
     objeciones: p.objeciones || {},
+    // Ficha enriquecida (§4.6) — el bot arma el mensaje con estos campos.
+    descripcion: descripcionRica(p),
+    edad_minima: p.edadMinima || "",
+    dosificacion: p.dosificacion || "",
+    presentacion: p.presentacion || p.presentations?.[0]?.label || "",
+    envio_gratis: !!p.envioGratis,
+    precio_cop: p.priceCOP,
+    cierre_precio: cierrePrecio(p),
     producto_contexto: buildContexto(p),
     disclaimer: p.disclaimer || "Producto de bienestar y rendimiento. No cura enfermedades.",
     url: `${SITE}/producto/${p.slug}`,
@@ -76,6 +103,7 @@ export function emptyProduct() {
     slug: "", name: "", category: "", categoria: "", audience: "", origin: "", priceCOP: 0,
     presentations: [], image: "", imageUrl: "", badges: [], tagline: "", shortDesc: "",
     benefits: [], ingredients: [], usage: "", pitch: "", faq: [], keywords: [], objeciones: {},
+    descripcion: "", edad_minima: "", dosificacion: "", presentacion: "", envio_gratis: false, precio_cop: 0, cierre_precio: "",
     producto_contexto: "", disclaimer: "", url: "",
   };
 }

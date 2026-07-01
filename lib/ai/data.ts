@@ -53,6 +53,10 @@ function toView(p: ProdRow, cat?: CatRow | null): ProductView {
     stock: p.stock ?? 999,
     activo: p.activo ?? true,
     envioGratis: p.envioGratis ?? false,
+    descripcion: p.descripcion || "",
+    edadMinima: p.edadMinima || "",
+    dosificacion: p.dosificacion || "",
+    presentacion: p.presentacion || "",
   };
 }
 

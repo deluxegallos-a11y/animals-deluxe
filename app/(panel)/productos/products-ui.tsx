@@ -14,6 +14,7 @@ type P = {
   audience: string; origin: string; priceCOP: number; presentations: Presentacion[]; imageUrl: string;
   badges: string[]; tagline: string; shortDesc: string; benefits: string[]; ingredients: Ingrediente[];
   usage: string; pitch: string; faq: FaqItem[]; keywords: string[]; objeciones: Record<string, string>; adIds: string[]; disclaimer: string; stock: number; activo: boolean; envioGratis?: boolean;
+  descripcion?: string; edadMinima?: string; dosificacion?: string; presentacion?: string;
   shopifyProductId: string; shopifySync: "synced" | "pending" | "error"; shopifySyncError: string;
 };
 
@@ -247,6 +248,27 @@ function ProductModal({ editing, categorias, onClose }: { editing: P | null; cat
               <div className="field">
                 <label>Badges (separados por coma)</label>
                 <input name="badges" defaultValue={editing ? editing.badges.join(", ") : ""} placeholder="Original, Best Choice" />
+              </div>
+
+              <div className="form-sec">📝 Ficha enriquecida (lo que manda el bot con la foto)</div>
+              <div className="field">
+                <label>Descripción de venta</label>
+                <textarea name="descripcion" rows={6} defaultValue={editing?.descripcion || ""} placeholder={"Gancho en 1 línea…\n✅ Beneficio 1\n✅ Beneficio 2\n✅ Beneficio 3"} />
+                <span className="field-hint">Si la dejas vacía, el bot arma la descripción con el gancho + los beneficios. No inventes datos médicos.</span>
+              </div>
+              <div className="field-row">
+                <div className="field">
+                  <label>Edad mínima</label>
+                  <input name="edadMinima" defaultValue={editing?.edadMinima || ""} placeholder="8 meses" />
+                </div>
+                <div className="field">
+                  <label>Dosificación</label>
+                  <input name="dosificacion" defaultValue={editing?.dosificacion || ""} placeholder="60 a 80 gr al día" />
+                </div>
+              </div>
+              <div className="field">
+                <label>Presentación</label>
+                <input name="presentacion" defaultValue={editing?.presentacion || ""} placeholder="polvo x 3 kg" />
               </div>
 
               <div className="form-sec">🔑 Palabras clave (cómo te encuentra el bot)</div>

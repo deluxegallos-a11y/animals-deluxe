@@ -68,6 +68,11 @@ export const products = pgTable(
     stock: integer("stock").default(999),
     activo: boolean("activo").default(true),
     envioGratis: boolean("envio_gratis").default(false),
+    // --- Ficha enriquecida (§4.6): contenido de venta editable en el panel ---
+    descripcion: text("descripcion").default(""),
+    edadMinima: text("edad_minima").default(""),
+    dosificacion: text("dosificacion").default(""),
+    presentacion: text("presentacion").default(""),
     // --- Espejo Shopify (la plataforma es la fuente de verdad) ---
     shopifyProductId: text("shopify_product_id"),
     shopifySync: text("shopify_sync").$type<"synced" | "pending" | "error">().default("pending"),

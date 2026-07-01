@@ -29,6 +29,11 @@ export type ProductView = {
   stock: number;
   activo: boolean;
   envioGratis?: boolean;
+  // Ficha enriquecida (§4.6) — contenido de venta editable en el panel.
+  descripcion?: string;
+  edadMinima?: string;
+  dosificacion?: string;
+  presentacion?: string;
 };
 
 export type CategoryView = {

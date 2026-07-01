@@ -108,6 +108,11 @@ export async function saveProduct(formData: FormData) {
     stock: parseInt(String(formData.get("stock") || "999"), 10) || 999,
     activo: formData.get("activo") === "on" || formData.get("activo") === "true",
     envioGratis: formData.get("envioGratis") === "on" || formData.get("envioGratis") === "true",
+    // Ficha enriquecida (§4.6)
+    descripcion: String(formData.get("descripcion") || "").trim(),
+    edadMinima: String(formData.get("edadMinima") || "").trim(),
+    dosificacion: String(formData.get("dosificacion") || "").trim(),
+    presentacion: String(formData.get("presentacion") || "").trim(),
   };
 
   // Marca pendiente de sincronía; syncProductToShopify lo pondrá en 'synced'.

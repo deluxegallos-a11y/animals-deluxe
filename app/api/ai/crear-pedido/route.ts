@@ -12,24 +12,46 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export const POST = withBridge(
+  // Esquema LENIENTE (§2.1): no rechazamos con el genérico "faltan datos" de zod;
+  // validamos los mínimos dentro y devolvemos `campos_faltantes` con nombres.
   z.object({
     items: z
       .array(
         z.object({
-          slug: z.string().min(1),
+          slug: z.string().optional().default(""),
           presentacion: z.string().optional().default(""),
           cantidad: z.number().int().positive().optional().default(1),
         }),
       )
-      .min(1),
-    nombre: z.string().min(1),
-    telefono: z.string().min(1),
-    ciudad: z.string().min(1),
-    direccion: z.string().min(1),
+      .optional()
+      .default([]),
+    nombre: z.string().optional().default(""),
+    telefono: z.string().optional().default(""),
+    ciudad: z.string().optional().default(""),
+    direccion: z.string().optional().default(""),
     cupon: z.string().optional().default(""),
     metodo: z.enum(["contraentrega", "anticipado"]).optional().default("contraentrega"),
   }),
   async ({ customer, body }) => {
+    // §2.1 — CREAR SIEMPRE si están los mínimos. correo/cedula/calle NO bloquean.
+    const items = (body.items || []).filter((it) => it.slug && it.slug.trim());
+    const FALTA: { campo: string; etiqueta: string }[] = [
+      { campo: "nombre", etiqueta: "tu nombre" },
+      { campo: "telefono", etiqueta: "tu teléfono" },
+      { campo: "ciudad", etiqueta: "tu ciudad" },
+      { campo: "direccion", etiqueta: "tu dirección (o la oficina de la transportadora)" },
+    ];
+    const faltantes = FALTA.filter((f) => !String((body as Record<string, unknown>)[f.campo] || "").trim());
+    if (!items.length) faltantes.push({ campo: "producto", etiqueta: "el producto que quieres" });
+    if (faltantes.length) {
+      await logEvent("pedido_no_creado", { motivo: "campos_faltantes", campos: faltantes.map((f) => f.campo), sub_id: customer.uchatSubId || customer.id });
+      return {
+        ok: false,
+        campos_faltantes: faltantes.map((f) => f.campo),
+        mensaje: `Para confirmar tu pedido me falta ${faltantes.map((f) => f.etiqueta).join(", ")}. ¿Me lo pasas? 🐓`,
+      };
+    }
+
     const catalog = await getProducts();
 
     // actualizar datos del cliente
@@ -46,7 +68,7 @@ export const POST = withBridge(
     const order = await createOrder({
       subId: customer.uchatSubId || customer.id,
       customerId: customer.id,
-      items: body.items,
+      items,
       nombre: body.nombre, telefono: body.telefono, ciudad: body.ciudad, direccion: body.direccion,
       cupon: body.cupon || undefined,
       metodo: body.metodo,
