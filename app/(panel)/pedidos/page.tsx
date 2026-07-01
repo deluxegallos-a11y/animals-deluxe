@@ -2,7 +2,7 @@ import { listOrders } from "@/lib/queries";
 import { PageHead, Card } from "@/components/ui";
 import { cop } from "@/lib/ai/format";
 import { getShopifyCreds, shopifyOrderAdminUrl } from "@/lib/shopify";
-import { OrderStatus } from "./order-actions";
+import { OrderStatus, DispatchCell } from "./order-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +16,7 @@ export default async function PedidosPage() {
         {pedidos.length ? (
           <table>
             <thead>
-              <tr><th>Ref</th><th>Shopify</th><th>Cliente</th><th>Ciudad</th><th>Items</th><th>Total</th><th>Asesor</th><th>Estado</th></tr>
+              <tr><th>Ref</th><th>Shopify</th><th>Cliente</th><th>Ciudad</th><th>Items</th><th>Total</th><th>Asesor</th><th>Estado</th><th>Despacho / Guía</th></tr>
             </thead>
             <tbody>
               {pedidos.map((o) => (
@@ -37,6 +37,15 @@ export default async function PedidosPage() {
                   <td><b>{cop(o.total)}</b><div className="t-mut" style={{ fontSize: 11 }}>envío {cop(o.envio)}{o.descuento ? ` · -${cop(o.descuento)}` : ""}</div></td>
                   <td>{o.advisor || "—"}</td>
                   <td><OrderStatus id={o.id} estado={o.estado} /></td>
+                  <td>
+                    <DispatchCell
+                      id={o.id}
+                      guia={o.guia}
+                      transportadora={o.transportadora}
+                      despachadoAt={o.despachadoAt ? o.despachadoAt.toISOString() : null}
+                      notificado={!!o.clienteNotificadoAt}
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>

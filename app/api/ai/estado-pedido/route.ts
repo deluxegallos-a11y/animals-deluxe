@@ -31,11 +31,19 @@ export const POST = withBridge(
     const items = await db.select().from(orderItems).where(eq(orderItems.orderId, o.id));
     const list = items.map((it) => ({ name: it.productName || "", cantidad: it.cantidad ?? 1 }));
     const txt = ESTADO_TXT[o.estado || ""] || o.estado || "";
+    const guia = o.guia || "";
+    const transportadora = o.transportadora || "";
+    // Si ya está despachado y hay guía, dásela al cliente para que rastree.
+    const infoEnvio = o.estado === "despachado" && guia
+      ? ` Ya va en camino${transportadora ? ` por *${transportadora}*` : ""}. Guía: *${guia}*.`
+      : "";
     return {
       estado: o.estado || "",
       total_cop: o.totalCop ?? 0,
+      guia,
+      transportadora,
       items: list,
-      mensaje: `Tu pedido *${ref}* está ${txt}. Total: ${cop(o.totalCop)} (contraentrega). ${list.length ? `Incluye: ${list.map((i) => `${i.cantidad}× ${i.name}`).join(", ")}.` : ""}`,
+      mensaje: `Tu pedido *${ref}* está ${txt}. Total: ${cop(o.totalCop)} (contraentrega).${infoEnvio} ${list.length ? `Incluye: ${list.map((i) => `${i.cantidad}× ${i.name}`).join(", ")}.` : ""}`,
     };
   },
 );

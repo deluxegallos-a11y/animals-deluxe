@@ -115,6 +115,7 @@ export type OrderRow = {
   id: string; ref: string; nombre: string; telefono: string; ciudad: string; direccion: string;
   estado: string; metodoPago: string; total: number; subtotal: number; envio: number; descuento: number;
   createdAt: Date | null; advisor: string; items: { name: string; presentacion: string; cantidad: number; precio: number }[];
+  guia: string; transportadora: string; despachadoAt: Date | null; clienteNotificadoAt: Date | null;
   shopifyOrderId: string; shopifyOrderName: string;
 };
 
@@ -140,6 +141,8 @@ export async function listOrders(): Promise<OrderRow[]> {
       name: it.productName || "", presentacion: it.presentacionLabel || "",
       cantidad: it.cantidad ?? 1, precio: it.precioCop ?? 0,
     })),
+    guia: r.o.guia || "", transportadora: r.o.transportadora || "",
+    despachadoAt: r.o.despachadoAt ?? null, clienteNotificadoAt: r.o.clienteNotificadoAt ?? null,
     shopifyOrderId: r.o.shopifyOrderId || "", shopifyOrderName: r.o.shopifyOrderName || "",
   }));
 }

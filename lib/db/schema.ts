@@ -141,6 +141,11 @@ export const orders = pgTable(
     advisorId: uuid("advisor_id"),
     notas: text("notas").default(""),
     idempotencyKey: text("idempotency_key"),
+    // --- Despacho / postventa (manual por ahora; luego automático vía transportadora) ---
+    guia: text("guia").default(""),                       // número de guía de la transportadora
+    transportadora: text("transportadora").default(""),   // Interrapidísimo | Servientrega | Coordinadora | Envía ...
+    despachadoAt: timestamp("despachado_at", { withTimezone: true }),        // cuándo se marcó despachado
+    clienteNotificadoAt: timestamp("cliente_notificado_at", { withTimezone: true }), // cuándo se avisó al cliente por WhatsApp
     // --- Espejo Shopify (registro/libro de pedidos) ---
     shopifyOrderId: text("shopify_order_id"),
     shopifyOrderName: text("shopify_order_name").default(""),

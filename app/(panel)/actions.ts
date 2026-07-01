@@ -4,12 +4,13 @@ import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import {
-  products, categories, orders, advisors, promotions, storeConfig, integrations, auditLog, reviews,
+  products, categories, orders, orderItems, customers, advisors, promotions, storeConfig, integrations, auditLog, reviews,
   type Presentacion, type Ingrediente, type FaqItem, type CiudadCobertura, type CuentaBancaria,
 } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth";
 import { encrypt } from "@/lib/crypto";
 import { syncProductToShopify, archiveProductInShopify, retryPendingProducts } from "@/lib/shopify-sync";
+import { notificarDespacho, type NotifyResult } from "@/lib/ai/notificaciones";
 
 /* ---------- helpers de parseo ---------- */
 function slugify(s: string): string {
@@ -193,6 +194,61 @@ export async function updateOrderStatus(id: string, estado: string) {
   await logAudit("cambiar_estado_pedido", "orders", { id, estado });
   revalidatePath("/pedidos");
   revalidatePath("/dashboard");
+}
+
+export interface DespachoResult {
+  ok: boolean;
+  error?: string;
+  /** Resultado del aviso por WhatsApp al cliente (fail-soft). */
+  notify?: NotifyResult;
+}
+
+/**
+ * Marca un pedido como DESPACHADO (manual), guarda guía + transportadora y
+ * avisa al cliente por WhatsApp ("tu pedido fue despachado" + guía).
+ * El aviso es fail-soft: si falta el sub_id o UChat no está configurado, el
+ * despacho igual queda guardado y el panel muestra por qué no se envió.
+ */
+export async function despacharPedido(id: string, guia: string, transportadora: string): Promise<DespachoResult> {
+  await requireUser();
+  if (!db || !id) return { ok: false, error: "Sin DB." };
+  const g = String(guia || "").trim();
+  const t = String(transportadora || "").trim();
+  if (!g) return { ok: false, error: "El número de guía es obligatorio para despachar." };
+
+  // Pedido + sub_id de UChat del cliente (para el aviso por WhatsApp).
+  const [row] = await db
+    .select({ o: orders, subId: customers.uchatSubId })
+    .from(orders)
+    .leftJoin(customers, eq(orders.customerId, customers.id))
+    .where(eq(orders.id, id))
+    .limit(1);
+  if (!row) return { ok: false, error: "Pedido no encontrado." };
+
+  const despachadoAt = new Date();
+  await db
+    .update(orders)
+    .set({ estado: "despachado", guia: g, transportadora: t, despachadoAt, updatedAt: despachadoAt })
+    .where(eq(orders.id, id));
+
+  // Resumen de items para el mensaje.
+  const items = await db.select().from(orderItems).where(eq(orderItems.orderId, id));
+
+  const notify = await notificarDespacho(row.subId, {
+    ref: row.o.ref,
+    nombre: row.o.nombre || "",
+    guia: g,
+    transportadora: t,
+    items: items.map((it) => ({ name: it.productName || "", cantidad: it.cantidad ?? 1 })),
+  });
+  if (notify.ok) {
+    await db.update(orders).set({ clienteNotificadoAt: new Date() }).where(eq(orders.id, id));
+  }
+
+  await logAudit("despachar_pedido", "orders", { id, ref: row.o.ref, guia: g, transportadora: t, notify });
+  revalidatePath("/pedidos");
+  revalidatePath("/dashboard");
+  return { ok: true, notify };
 }
 
 /* ===========================================================
