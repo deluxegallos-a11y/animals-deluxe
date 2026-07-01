@@ -21,7 +21,7 @@ const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://animalsdeluxe.com";
 function imageUrl(p: ProdRow): string {
   if (p.imageUrl) return p.imageUrl;
   if (p.image && /^https?:\/\//.test(p.image)) return p.image;
-  if (p.image) return `${SITE}/img/${p.image}`;
+  if (p.image) return `${SITE}/products/${p.image}`;
   return "";
 }
 

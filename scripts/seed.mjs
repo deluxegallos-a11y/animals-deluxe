@@ -57,7 +57,7 @@ async function main() {
     const presentations = (p.presentations && p.presentations.length)
       ? p.presentations
       : [{ label: "Unidad", priceCOP: p.priceCOP || 0 }];
-    const imageUrl = p.image ? `${SITE}/img/${p.image}` : "";
+    const imageUrl = p.image ? `${SITE}/products/${p.image}` : "";
     await sql`
       insert into products (
         slug, name, category_id, audience, origin, price_cop, presentations, image, image_url,

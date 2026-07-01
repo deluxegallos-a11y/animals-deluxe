@@ -38,7 +38,7 @@ export const demoProducts: ProductView[] = prods.map((p) => {
     priceCOP: p.priceCOP || 0,
     presentations: p.presentations?.length ? p.presentations : [{ label: "Unidad", priceCOP: p.priceCOP || 0 }],
     image: p.image || "",
-    imageUrl: p.image ? `${SITE}/img/${p.image}` : "",
+    imageUrl: p.image ? `${SITE}/products/${p.image}` : "",
     badges: p.badges || [],
     tagline: p.tagline || "",
     shortDesc: p.shortDesc || "",
