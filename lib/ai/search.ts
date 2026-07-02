@@ -65,6 +65,33 @@ const ANIMAL_WORDS = new Set([
   "gallo", "gallos", "gallina", "rooster", "ave", "aves",
 ]);
 
+/* ---- Presentación / forma (§4.5b): si piden "inyectable", NO ofrecer gotas ---- */
+const FORMAS: { forma: string; q: RegExp; prod: RegExp }[] = [
+  { forma: "inyectable", q: /\b(inyect|ampoll|jeringa|intramuscular)\w*/, prod: /\b(inyect|ampoll|intramuscular)\w*/ },
+  { forma: "gotas", q: /\b(gota|gotero|goteo)\w*/, prod: /\b(gota|gotero)\w*/ },
+  { forma: "polvo", q: /\b(polvo|polvos)\w*/, prod: /\b(polvo)\w*/ },
+  { forma: "pastillas", q: /\b(pastilla|tableta|capsul|caps|comprimid|pildora)\w*/, prod: /\b(pastilla|tableta|capsul|caps|comprimid)\w*/ },
+  { forma: "shampoo", q: /\b(shampoo|champu)\w*/, prod: /\b(shampoo|champu)\w*/ },
+  { forma: "topico", q: /\b(ungu|unguent|pomada|crema|roll|topic|frota)\w*/, prod: /\b(ungu|unguent|pomada|crema|roll|topic|frota)\w*/ },
+];
+export function detectForma(query: string): string | null {
+  const q = normalize(query);
+  for (const f of FORMAS) if (f.q.test(q)) return f.forma;
+  return null;
+}
+function formaText(p: ProductView): string {
+  return normalize([
+    p.presentacion,
+    (p.presentations || []).map((x) => x.label).join(" "),
+    p.tagline, p.shortDesc, p.name, p.descripcion || "",
+  ].filter(Boolean).join(" "));
+}
+/** ¿El producto es de esa presentación? (según su texto: presentación, tagline, nombre…). */
+export function productMatchesForma(p: ProductView, forma: string): boolean {
+  const f = FORMAS.find((x) => x.forma === forma);
+  return f ? f.prod.test(formaText(p)) : true;
+}
+
 /* ¿El query describe un problema médico/síntoma/lesión? (no lo tratan los
    suplementos → mejor pasar a un asesor que fabricar una recomendación). */
 const MEDICAL_RE = /\b(ojo|ojos|vista|ceguer|herida|herid|fractur|hueso|quebr|cojea|cojer|renqu|sangr|infecci|infectad|tumor|cancer|bulto|pelota|masa|quiste|hinchad|inflamad|absces|vomit|diarre|moquillo|parvo|garrapat|sarna|hongo|fiebre|dolor|convuls|paraliz|picadur|mordedur|quemadur|ampoll|ulcer|desnutr|anemi)\w*/;
@@ -169,7 +196,10 @@ export function searchProducts(query: string, products: ProductView[]): SearchRe
 
   // Filtro por animal: si el query menciona un animal, SOLO ese animal (no mezclar).
   const animal = detectAnimal(query);
-  const pool = animal ? products.filter((p) => animalOf(p) === animal) : products;
+  let pool = animal ? products.filter((p) => animalOf(p) === animal) : products;
+  // Filtro por presentación (§4.5b): si piden "inyectable", NO ofrecer gotas/otras formas.
+  const forma = detectForma(query);
+  if (forma) pool = pool.filter((p) => productMatchesForma(p, forma));
 
   // intents
   const intentCats = new Set<string>();

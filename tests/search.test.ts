@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { searchProducts, detectAnimal, animalOf, needScore, looksMedical } from "@/lib/ai/search";
+import { searchProducts, detectAnimal, animalOf, needScore, looksMedical, detectForma, productMatchesForma } from "@/lib/ai/search";
 import { demoProducts } from "@/lib/demo-data";
 
 const cat = demoProducts;
@@ -13,6 +13,18 @@ test("no fabricar: 'pelota en el ojo' NO puntúa como necesidad en un suplemento
 test("needScore: query sin necesidad concreta ('algo para mi perro') devuelve -1 (no bloquear)", () => {
   const dog = cat.find((p) => p.slug === "more-muscle-dogs");
   if (dog) assert.equal(needScore("algo para mi perro", dog), -1);
+});
+
+test("presentación: 'inyectable' filtra a inyectables; NO devuelve gotas", () => {
+  assert.equal(detectForma("algo inyectable para el gallo"), "inyectable");
+  const arf = cat.find((p) => p.slug === "american-rooster-fury");
+  if (arf) assert.equal(productMatchesForma(arf, "inyectable"), true, "American Rooster Fury es inyectable");
+  // un producto de gotas NO debe pasar el filtro inyectable
+  const cobra = cat.find((p) => p.slug === "energy-cobra");
+  if (cobra) assert.equal(productMatchesForma(cobra, "inyectable"), false);
+  // el resultado de búsqueda de 'inyectable' solo trae inyectables
+  const r = searchProducts("doping inyectable", cat);
+  for (const x of r.ranked) assert.equal(productMatchesForma(x.product, "inyectable"), true);
 });
 
 test("looksMedical: síntomas sí, necesidades comerciales no", () => {
