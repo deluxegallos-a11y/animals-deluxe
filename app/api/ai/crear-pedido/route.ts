@@ -7,64 +7,96 @@ import { getProducts } from "@/lib/ai/data";
 import { createOrder } from "@/lib/ai/orders";
 import { pushOrderToShopify } from "@/lib/shopify-sync";
 import { cop } from "@/lib/ai/format";
+import { searchProducts } from "@/lib/ai/search";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const str = (x: unknown) => (x == null ? "" : String(x)).trim();
+const qty = (x: unknown) => {
+  const n = parseInt(String(x ?? "").replace(/[^0-9]/g, ""), 10);
+  return n > 0 ? n : 1;
+};
+
 export const POST = withBridge(
-  // Esquema LENIENTE (§2.1): no rechazamos con el genérico "faltan datos" de zod;
-  // validamos los mínimos dentro y devolvemos `campos_faltantes` con nombres.
-  z.object({
-    items: z
-      .array(
-        z.object({
-          slug: z.string().optional().default(""),
-          presentacion: z.string().optional().default(""),
-          cantidad: z.number().int().positive().optional().default(1),
-        }),
-      )
-      .optional()
-      .default([]),
-    nombre: z.string().optional().default(""),
-    telefono: z.string().optional().default(""),
-    ciudad: z.string().optional().default(""),
-    direccion: z.string().optional().default(""),
-    cedula: z.union([z.string(), z.number()]).transform((v) => String(v)).optional().default(""),
-    correo: z.string().optional().default(""),
-    cupon: z.string().optional().default(""),
-    metodo: z.enum(["contraentrega", "anticipado"]).optional().default("contraentrega"),
-  }),
+  // Body PERMISIVO (§2.1): NUNCA rechazamos por formato ("faltan datos"). Normalizamos
+  // y resolvemos todo dentro; si falta un mínimo real, devolvemos campos_faltantes.
+  z.object({}).passthrough(),
   async ({ customer, body }) => {
-    // §2.1 — CREAR SIEMPRE si están los mínimos. correo/cedula/calle NO bloquean.
-    const items = (body.items || []).filter((it) => it.slug && it.slug.trim());
-    const FALTA: { campo: string; etiqueta: string }[] = [
-      { campo: "nombre", etiqueta: "tu nombre" },
-      { campo: "telefono", etiqueta: "tu teléfono" },
-      { campo: "ciudad", etiqueta: "tu ciudad" },
-      { campo: "direccion", etiqueta: "tu dirección (o la oficina de la transportadora)" },
-      { campo: "cedula", etiqueta: "tu número de cédula (la transportadora la exige para entregar)" },
-    ];
-    const faltantes = FALTA.filter((f) => !String((body as Record<string, unknown>)[f.campo] || "").trim());
-    if (!items.length) faltantes.push({ campo: "producto", etiqueta: "el producto que quieres" });
-    if (faltantes.length) {
-      await logEvent("pedido_no_creado", { motivo: "campos_faltantes", campos: faltantes.map((f) => f.campo), sub_id: customer.uchatSubId || customer.id });
-      return {
-        ok: false,
-        campos_faltantes: faltantes.map((f) => f.campo),
-        mensaje: `Para confirmar tu pedido me falta ${faltantes.map((f) => f.etiqueta).join(", ")}. ¿Me lo pasas? 🐓`,
-      };
+    const b = body as Record<string, unknown>;
+    const catalog = await getProducts();
+
+    // --- Campos (acepta nombres alternativos que puede mandar el bot) ---
+    const nombre = str(b.nombre ?? b.cliente ?? b.nombre_cliente ?? b.nombreCliente);
+    const telefono = str(b.telefono ?? b.celular ?? b.movil ?? b.whatsapp ?? b.tel ?? b.numero);
+    const ciudad = str(b.ciudad ?? b.municipio ?? b.pueblo);
+    const oficina = str(b.oficina ?? b.agencia ?? b.punto_recogida ?? b.transportadora_oficina);
+    let direccion = str(b.direccion ?? b.direccion_entrega ?? b.dir);
+    if (!direccion && oficina) direccion = oficina;
+    else if (direccion && oficina && !direccion.toLowerCase().includes(oficina.toLowerCase())) direccion = `${direccion} · ${oficina}`;
+    const cedula = str(b.cedula ?? b.cc ?? b.documento ?? b.identificacion ?? b.nid);
+    const correo = str(b.correo ?? b.email);
+    const cupon = str(b.cupon ?? b.codigo ?? b.cupon_codigo);
+    const metodo: "contraentrega" | "anticipado" = str(b.metodo).toLowerCase().startsWith("antic") ? "anticipado" : "contraentrega";
+
+    // --- Resolver productos: acepta items[] (con slug O nombre) o producto suelto + cantidad ---
+    type Raw = { name: string; cantidad: number; presentacion?: string };
+    const raws: Raw[] = [];
+    if (Array.isArray(b.items)) {
+      for (const it of b.items as Record<string, unknown>[]) {
+        const name = str(it?.slug ?? it?.nombre ?? it?.name ?? it?.producto ?? it?.producto_nombre);
+        if (name) raws.push({ name, cantidad: qty(it?.cantidad ?? it?.qty), presentacion: str(it?.presentacion) || undefined });
+      }
+    }
+    // producto "suelto" (fuera de items) — muy común desde el bot
+    const prodSuelto = str(b.producto ?? b.producto_nombre ?? b.nombre_producto ?? b.item);
+    if (!raws.length && prodSuelto) raws.push({ name: prodSuelto, cantidad: qty(b.cantidad ?? b.unidades) });
+
+    // resolver cada nombre → slug REAL del catálogo (por slug exacto o búsqueda tolerante)
+    const items: { slug: string; presentacion?: string; cantidad: number }[] = [];
+    const noEncontrados: string[] = [];
+    for (const r of raws) {
+      const bySlug = catalog.find((p) => p.slug === r.name.toLowerCase());
+      let slug = bySlug?.slug;
+      if (!slug) {
+        const res = searchProducts(r.name, catalog);
+        if (res.product) slug = res.product.slug;
+      }
+      if (slug) items.push({ slug, presentacion: r.presentacion, cantidad: r.cantidad });
+      else noEncontrados.push(r.name);
     }
 
-    const catalog = await getProducts();
+    // --- Mínimos → campos_faltantes con NOMBRE (nunca genérico) ---
+    const faltantes: string[] = [];
+    if (!nombre) faltantes.push("nombre");
+    if (!telefono) faltantes.push("telefono");
+    if (!ciudad) faltantes.push("ciudad");
+    if (!direccion) faltantes.push("direccion");
+    if (!cedula) faltantes.push("cedula");
+    if (!items.length) faltantes.push("producto");
+    if (faltantes.length) {
+      await logEvent("pedido_no_creado", {
+        motivo: "campos_faltantes", campos: faltantes, no_encontrados: noEncontrados,
+        recibido: Object.keys(b), sub_id: customer.uchatSubId || customer.id,
+      });
+      const et: Record<string, string> = {
+        nombre: "tu nombre", telefono: "tu teléfono", ciudad: "tu ciudad",
+        direccion: "tu dirección (o la oficina de la transportadora)",
+        cedula: "tu número de cédula (la transportadora la exige para entregar)",
+        producto: noEncontrados.length ? `el producto (no encontré "${noEncontrados[0]}")` : "el producto que quieres",
+      };
+      return {
+        ok: false,
+        campos_faltantes: faltantes,
+        mensaje: `Para confirmar tu pedido me falta ${faltantes.map((f) => et[f]).join(", ")}. ¿Me lo pasas? 🐓`,
+      };
+    }
 
     // actualizar datos del cliente
     if (db && !customer.id.startsWith("demo-")) {
       await db
         .update(customers)
-        .set({
-          nombre: body.nombre, telefono: body.telefono, ciudad: body.ciudad,
-          direccion: body.direccion, estado: "cliente", ultimoContacto: new Date(),
-        })
+        .set({ nombre, telefono, ciudad, direccion, estado: "cliente", ultimoContacto: new Date() })
         .where(eq(customers.id, customer.id));
     }
 
@@ -72,22 +104,19 @@ export const POST = withBridge(
       subId: customer.uchatSubId || customer.id,
       customerId: customer.id,
       items,
-      nombre: body.nombre, telefono: body.telefono, ciudad: body.ciudad, direccion: body.direccion,
-      cedula: body.cedula || "",
-      cupon: body.cupon || undefined,
-      metodo: body.metodo,
+      nombre, telefono, ciudad, direccion, cedula,
+      cupon: cupon || undefined,
+      metodo,
       catalog,
     });
 
-    // Registrar la orden en Shopify (libro de pedidos / inventario). NO notifica
-    // al cliente. Si Shopify falla o no está configurado, el pedido COD ya quedó
-    // guardado en Supabase y el flujo del bot continúa con la ref interna.
+    // Registra la orden en Shopify (libro de pedidos). Fail-soft: si falla, el pedido
+    // COD ya quedó en Supabase y el flujo del bot continúa con la ref interna.
     let ref = order.ref;
     if (!order.reused && !order.pedido_id.startsWith("demo-")) {
       const shop = await pushOrderToShopify({
         orderId: order.pedido_id,
-        nombre: body.nombre, telefono: body.telefono, ciudad: body.ciudad, direccion: body.direccion,
-        cedula: body.cedula || "",
+        nombre, telefono, ciudad, direccion, cedula,
         items: order.items.map((it) => ({
           slug: it.slug, name: it.name, presentacionLabel: it.presentacionLabel,
           precioCop: it.precioCop, cantidad: it.cantidad, shopifyVariantId: it.shopifyVariantId,
@@ -102,25 +131,29 @@ export const POST = withBridge(
 
     if (!order.reused) {
       await audit("crear_pedido", "orders", { ref: order.ref, total: order.total_cop });
-      await logEvent("pedido_creado", { ref: order.ref, total: order.total_cop, metodo: body.metodo });
+      await logEvent("pedido_creado", { ref: order.ref, total: order.total_cop, metodo });
     }
 
+    const listaProductos = order.items.map((it) => `${it.cantidad}× ${it.name}`).join(", ");
     const mensaje =
-      `¡Pedido confirmado! 🎉 Ref *${ref}*\n` +
+      `✅ ¡Listo${nombre ? " " + nombre.split(" ")[0] : ""}! Tu pedido quedó confirmado 🎉 Ref *${ref}*\n` +
+      `${listaProductos}\n` +
       `Subtotal: ${cop(order.subtotal_cop)}` +
       (order.descuento_cop ? ` · Descuento: -${cop(order.descuento_cop)}` : "") +
       ` · Envío: ${order.envio_cop ? cop(order.envio_cop) : "GRATIS"}\n` +
       `*Total a pagar al recibir: ${cop(order.total_cop)}* 🚚\n` +
-      (order.asesor.nombre ? `Tu asesor ${order.asesor.nombre} coordina la entrega. ¡Gracias por confiar en Animals Deluxe! 🐓` : "¡Gracias por tu compra! 🐓");
+      `Te despachamos a ${ciudad} contra entrega. ¡Gracias por confiar en Animals Deluxe! 🐓`;
 
     return {
       pedido_id: order.pedido_id,
       ref,
       total_cop: order.total_cop,
+      flete: order.envio_cop,
       envio_cop: order.envio_cop,
       descuento_cop: order.descuento_cop,
       estado: order.estado,
       asesor: order.asesor,
+      no_encontrados: noEncontrados,
       mensaje,
     };
   },
