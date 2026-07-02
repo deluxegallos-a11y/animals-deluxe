@@ -65,6 +65,13 @@ const ANIMAL_WORDS = new Set([
   "gallo", "gallos", "gallina", "rooster", "ave", "aves",
 ]);
 
+/* ¿El query describe un problema médico/síntoma/lesión? (no lo tratan los
+   suplementos → mejor pasar a un asesor que fabricar una recomendación). */
+const MEDICAL_RE = /\b(ojo|ojos|vista|ceguer|herida|herid|fractur|hueso|quebr|cojea|cojer|renqu|sangr|infecci|infectad|tumor|cancer|bulto|pelota|masa|quiste|hinchad|inflamad|absces|vomit|diarre|moquillo|parvo|garrapat|sarna|hongo|fiebre|dolor|convuls|paraliz|picadur|mordedur|quemadur|ampoll|ulcer|desnutr|anemi)\w*/;
+export function looksMedical(query: string): boolean {
+  return MEDICAL_RE.test(normalize(query));
+}
+
 /**
  * Puntaje de RELEVANCIA por la necesidad (ignora el impulso de animal/categoría).
  * Sirve para NO fabricar recomendaciones: si el query pide algo que el producto

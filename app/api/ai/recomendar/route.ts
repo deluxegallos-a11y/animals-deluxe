@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { withBridge, logEvent } from "@/lib/ai/bridge";
 import { getProducts } from "@/lib/ai/data";
-import { searchProducts, animalOf, needScore } from "@/lib/ai/search";
+import { searchProducts, animalOf, needScore, looksMedical } from "@/lib/ai/search";
 import { buildContexto, richMensaje } from "@/lib/ai/present";
 import { cop } from "@/lib/ai/format";
 
@@ -20,12 +20,12 @@ export const POST = withBridge(
       .slice(0, 3)
       .map((x) => x.product);
 
-    // NO FABRICAR (§4.5): si nada aplica de verdad a la necesidad, ser honesto y pasar a asesor.
-    // needScore ignora el impulso por animal/categoría: si el query pide algo que el producto
-    // no trata (ej. "perro con pelota en el ojo"), el mejor candidato puntúa ~0.
+    // NO FABRICAR (§4.5): solo bloqueamos cuando el query es un PROBLEMA MÉDICO/síntoma
+    // (ojo, herida, fractura, bulto…) que ningún producto trata de verdad. Las necesidades
+    // comerciales normales (crecimiento, energía, músculo, vitaminas…) sí recomiendan.
     const nScore = candidatos.length ? Math.max(...candidatos.map((p) => needScore(body.necesidad, p))) : 0;
-    const aplica = candidatos.length && (nScore < 0 || nScore >= 2.5);
-    if (r.status === "not_found" || !aplica) {
+    const problemaMedicoSinMatch = looksMedical(body.necesidad) && !(nScore < 0 || nScore >= 2.5);
+    if (r.status === "not_found" || !candidatos.length || problemaMedicoSinMatch) {
       await logEvent("recomendacion_sin_match", { necesidad: body.necesidad, animal: firstAnimal, nScore });
       return {
         productos: [],
