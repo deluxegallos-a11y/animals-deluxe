@@ -154,6 +154,7 @@ export interface PushOrderInput {
   telefono: string;
   ciudad: string;
   direccion: string;
+  cedula?: string;
   items: PushOrderItem[];
   note?: string;
 }
@@ -188,6 +189,10 @@ export async function pushOrderToShopify(input: PushOrderInput): Promise<PushOrd
     quantity: it.cantidad,
   }));
 
+  const cedula = (input.cedula || "").trim();
+  // La cédula va en la nota (visible en Shopify) — Interrapidísimo la exige para entregar.
+  const note = [input.note, cedula ? `Cédula destinatario: ${cedula}` : ""].filter(Boolean).join("\n");
+
   try {
     // Draft order (borrador): no descuenta inventario ni notifica; el asesor lo
     // confirma/completa. Es el flujo de contraentrega del contrato (§2).
@@ -198,7 +203,8 @@ export async function pushOrderToShopify(input: PushOrderInput): Promise<PushOrd
         telefono: input.telefono,
         ciudad: input.ciudad,
         direccion: input.direccion,
-        note: input.note,
+        cedula,
+        note,
         tags: ["COD", "WhatsApp", "Bot"],
       },
       creds,

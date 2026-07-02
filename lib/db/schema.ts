@@ -151,6 +151,7 @@ export const orders = pgTable(
     direccion: text("direccion").default(""),
     telefono: text("telefono").default(""),
     nombre: text("nombre").default(""),
+    cedula: text("cedula").default(""), // obligatoria: Interrapidísimo no entrega sin cédula del destinatario
     couponId: uuid("coupon_id"),
     advisorId: uuid("advisor_id"),
     notas: text("notas").default(""),

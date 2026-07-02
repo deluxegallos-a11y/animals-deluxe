@@ -324,6 +324,7 @@ export interface ShopifyOrderInput {
   telefono: string;
   ciudad: string;
   direccion: string;
+  cedula?: string;
   note?: string;
   tags?: string[];
 }
@@ -423,6 +424,8 @@ export async function createDraftOrder(input: ShopifyOrderInput, creds?: Shopify
   const draftInput = {
     tags: input.tags && input.tags.length ? input.tags : ["COD", "WhatsApp", "Bot"],
     note: input.note || "Pedido contraentrega tomado por el bot Victor (WhatsApp)",
+    // Cédula del destinatario como atributo (Interrapidísimo la exige para entregar).
+    ...(input.cedula ? { customAttributes: [{ key: "Cédula", value: input.cedula }] } : {}),
     lineItems,
     shippingAddress: {
       firstName,

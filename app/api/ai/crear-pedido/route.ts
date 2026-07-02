@@ -29,6 +29,8 @@ export const POST = withBridge(
     telefono: z.string().optional().default(""),
     ciudad: z.string().optional().default(""),
     direccion: z.string().optional().default(""),
+    cedula: z.union([z.string(), z.number()]).transform((v) => String(v)).optional().default(""),
+    correo: z.string().optional().default(""),
     cupon: z.string().optional().default(""),
     metodo: z.enum(["contraentrega", "anticipado"]).optional().default("contraentrega"),
   }),
@@ -40,6 +42,7 @@ export const POST = withBridge(
       { campo: "telefono", etiqueta: "tu teléfono" },
       { campo: "ciudad", etiqueta: "tu ciudad" },
       { campo: "direccion", etiqueta: "tu dirección (o la oficina de la transportadora)" },
+      { campo: "cedula", etiqueta: "tu número de cédula (la transportadora la exige para entregar)" },
     ];
     const faltantes = FALTA.filter((f) => !String((body as Record<string, unknown>)[f.campo] || "").trim());
     if (!items.length) faltantes.push({ campo: "producto", etiqueta: "el producto que quieres" });
@@ -70,6 +73,7 @@ export const POST = withBridge(
       customerId: customer.id,
       items,
       nombre: body.nombre, telefono: body.telefono, ciudad: body.ciudad, direccion: body.direccion,
+      cedula: body.cedula || "",
       cupon: body.cupon || undefined,
       metodo: body.metodo,
       catalog,
@@ -83,6 +87,7 @@ export const POST = withBridge(
       const shop = await pushOrderToShopify({
         orderId: order.pedido_id,
         nombre: body.nombre, telefono: body.telefono, ciudad: body.ciudad, direccion: body.direccion,
+        cedula: body.cedula || "",
         items: order.items.map((it) => ({
           slug: it.slug, name: it.name, presentacionLabel: it.presentacionLabel,
           precioCop: it.precioCop, cantidad: it.cantidad, shopifyVariantId: it.shopifyVariantId,

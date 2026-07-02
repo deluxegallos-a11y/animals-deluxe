@@ -31,7 +31,7 @@ export default async function PedidosPage() {
                       ) : <b>{o.shopifyOrderName}</b>
                     ) : <span className="t-mut" style={{ fontSize: 11 }}>—</span>}
                   </td>
-                  <td>{o.nombre}<div className="t-mut" style={{ fontSize: 11 }}>{o.telefono}</div></td>
+                  <td>{o.nombre}<div className="t-mut" style={{ fontSize: 11 }}>{o.telefono}{o.cedula ? ` · CC ${o.cedula}` : ""}</div></td>
                   <td>{o.ciudad}<div className="t-mut" style={{ fontSize: 11 }}>{o.direccion}</div></td>
                   <td style={{ fontSize: 12 }}>{o.items.map((it) => `${it.cantidad}× ${it.name}`).join(", ") || "—"}</td>
                   <td><b>{cop(o.total)}</b><div className="t-mut" style={{ fontSize: 11 }}>envío {cop(o.envio)}{o.descuento ? ` · -${cop(o.descuento)}` : ""}</div></td>

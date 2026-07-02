@@ -114,7 +114,7 @@ export async function listCategoriesAdmin() {
 
 /* ---------- Pedidos ---------- */
 export type OrderRow = {
-  id: string; ref: string; nombre: string; telefono: string; ciudad: string; direccion: string;
+  id: string; ref: string; nombre: string; telefono: string; cedula: string; ciudad: string; direccion: string;
   estado: string; metodoPago: string; total: number; subtotal: number; envio: number; descuento: number;
   createdAt: Date | null; advisor: string; items: { name: string; presentacion: string; cantidad: number; precio: number }[];
   guia: string; transportadora: string; despachadoAt: Date | null; clienteNotificadoAt: Date | null;
@@ -134,7 +134,7 @@ export async function listOrders(): Promise<OrderRow[]> {
     ? await db.select().from(orderItems).where(sql`order_id = any(${ids})`)
     : [];
   return rows.map((r) => ({
-    id: r.o.id, ref: r.o.ref, nombre: r.o.nombre || "", telefono: r.o.telefono || "",
+    id: r.o.id, ref: r.o.ref, nombre: r.o.nombre || "", telefono: r.o.telefono || "", cedula: r.o.cedula || "",
     ciudad: r.o.ciudad || "", direccion: r.o.direccion || "",
     estado: r.o.estado || "", metodoPago: r.o.metodoPago || "contraentrega",
     total: r.o.totalCop ?? 0, subtotal: r.o.subtotalCop ?? 0, envio: r.o.envioCop ?? 0, descuento: r.o.descuentoCop ?? 0,

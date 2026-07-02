@@ -78,6 +78,7 @@ export interface CreateOrderInput {
   telefono: string;
   ciudad: string;
   direccion: string;
+  cedula?: string;
   cupon?: string;
   metodo?: "contraentrega" | "anticipado";
   catalog: ProductView[];
@@ -156,6 +157,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreatedOrder
       subtotalCop: totals.subtotal, descuentoCop: totals.descuento,
       envioCop: totals.envio, totalCop: totals.total,
       ciudad: input.ciudad, direccion: input.direccion, telefono: input.telefono, nombre: input.nombre,
+      cedula: input.cedula || "",
       couponId: coupon?.id ?? null,
       advisorId: "id" in asesor ? (asesor as { id: string }).id : null,
       idempotencyKey: idem,
