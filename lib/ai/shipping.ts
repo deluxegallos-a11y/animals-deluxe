@@ -30,12 +30,10 @@ export const ZONES: Record<Zona, ZoneRate> = {
   vereda: { kiloInicial: 88000, kiloAdicional: 15200, label: "Veredas" },
 };
 
-/* Recargos. */
-const CONTRAENTREGA_PCT = 0.05; // +5% sobre el valor del producto (pago en casa)
-const SOBREFLETE_PCT = 0.02; // +2% sobre el valor declarado
-const MIN_DECLARADO_HASTA_2KG = 45000;
-const MIN_DECLARADO_2_A_5KG = 60000;
-const PESO_POR_UNIDAD_KG = 1; // 1 producto liviano ≈ 1 kg
+/* FLETE FIJO: $24.900 para TODO el país (una sola vez por pedido), adicional al
+   valor del producto. Excepción: pedidos con envío incluido (envioGratis) → $0. */
+export const FLETE_FIJO = 24900;
+const PESO_POR_UNIDAD_KG = 1; // 1 producto liviano ≈ 1 kg (solo informativo)
 export const TIEMPO_ENTREGA = "24 a 72 horas";
 
 /* Productos con envío gratis. Slugs reales del catálogo. Además, cualquier
@@ -120,40 +118,24 @@ export interface ShippingResult {
   };
 }
 
-/** Calcula el flete con la tabla de zonas desde Medellín. Determinista. */
+/** Flete FIJO $24.900 para todo el país (una vez por pedido). $0 si envío incluido.
+ *  Determinista: misma ciudad/pedido → misma cifra siempre. */
 export function computeShipping(input: ShippingInput): ShippingResult {
-  const zona = resolveZona(input.ciudad);
-  const rate = ZONES[zona];
-
-  const pesoKg =
-    input.pesoKg != null
-      ? input.pesoKg
-      : Math.max(1, input.unidades ?? 1) * PESO_POR_UNIDAD_KG;
+  const zona = resolveZona(input.ciudad); // solo informativo (cobertura nacional)
+  const pesoKg = input.pesoKg != null ? input.pesoKg : Math.max(1, input.unidades ?? 1) * PESO_POR_UNIDAD_KG;
   const kilos = Math.max(1, Math.ceil(pesoKg));
 
-  const base = rate.kiloInicial + Math.max(0, kilos - 1) * rate.kiloAdicional;
-
-  const subtotal = Math.max(0, Math.round(input.subtotalCop || 0));
-  const minDeclarado = kilos <= 2 ? MIN_DECLARADO_HASTA_2KG : MIN_DECLARADO_2_A_5KG;
-  const declarado = Math.max(subtotal, minDeclarado);
-  const sobreflete = Math.round(declarado * SOBREFLETE_PCT);
-
-  const recargoContraentrega =
-    (input.metodo ?? "contraentrega") === "contraentrega"
-      ? Math.round(subtotal * CONTRAENTREGA_PCT)
-      : 0;
-
   const envioGratis = !!input.envioGratis;
-  const costo = envioGratis ? 0 : base + sobreflete + recargoContraentrega;
+  const costo = envioGratis ? 0 : FLETE_FIJO;
 
   return {
     zona,
-    zona_label: rate.label,
-    cubre: true, // cubrimos todo el país (incl. difícil acceso / veredas con su tarifa)
+    zona_label: ZONES[zona].label,
+    cubre: true, // cubrimos todo el país
     envio_gratis: envioGratis,
     costo_envio: costo,
     tiempo: TIEMPO_ENTREGA,
-    desglose: { kilos, base, sobreflete, recargo_contraentrega: recargoContraentrega },
+    desglose: { kilos, base: costo, sobreflete: 0, recargo_contraentrega: 0 },
   };
 }
 
