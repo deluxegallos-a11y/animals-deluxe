@@ -36,13 +36,18 @@ export const POST = withBridge(
     await audit("buscar_producto", "products", { slug: p.slug, q: body.q });
 
     const pub = publicProduct(p);
+    // Coherencia mensaje↔status (§4.5): si hay producto, el mensaje NUNCA dice "no encontré".
+    // En ambiguous, preguntamos entre las opciones cercanas; en found, presentamos.
+    const mensaje = r.status === "ambiguous" && sugerencias.length
+      ? `Tengo un par de opciones parecidas: *${p.name}*${sugerencias[0] ? ` o *${sugerencias[0].name}*` : ""}. ¿Cuál te muestro? 🐓`
+      : richMensaje(p);
     return {
       status: r.status,
       match: p.slug,
       producto: pub,
       producto_contexto: pub.producto_contexto,
       sugerencias,
-      mensaje: richMensaje(p),
+      mensaje,
     };
   },
 );

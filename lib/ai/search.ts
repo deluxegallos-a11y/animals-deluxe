@@ -57,6 +57,28 @@ export function detectAnimal(query: string): Animal | null {
   return null;
 }
 
+/* Palabras de animal (para medir si el match es por la NECESIDAD y no solo por el animal). */
+const ANIMAL_WORDS = new Set([
+  "caballo", "caballos", "equino", "equinos", "yegua", "potro", "potra", "horse",
+  "perro", "perros", "perra", "canino", "cachorro", "dog", "mascota",
+  "pollo", "pollos", "polluelo", "pollito", "levante", "engorde", "engordar", "cria",
+  "gallo", "gallos", "gallina", "rooster", "ave", "aves",
+]);
+
+/**
+ * Puntaje de RELEVANCIA por la necesidad (ignora el impulso de animal/categoría).
+ * Sirve para NO fabricar recomendaciones: si el query pide algo que el producto
+ * no trata (ej. "perro con pelota en el ojo" vs suplemento muscular), da ~0.
+ */
+export function needScore(query: string, p: ProductView): number {
+  const qNorm = normalize(query);
+  const qTokens = qNorm
+    .split(/[^a-z0-9]+/)
+    .filter((w) => w.length >= 2 && !STOP.has(w) && !ANIMAL_WORDS.has(w));
+  if (!qTokens.length) return -1; // query sin necesidad concreta (ej. "algo para mi perro") → no bloquear
+  return scoreProduct(qTokens, qNorm, p, new Set<string>(), []);
+}
+
 function trigrams(s: string): Set<string> {
   const t = `  ${s} `;
   const out = new Set<string>();

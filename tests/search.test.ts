@@ -1,9 +1,19 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { searchProducts, detectAnimal, animalOf } from "@/lib/ai/search";
+import { searchProducts, detectAnimal, animalOf, needScore } from "@/lib/ai/search";
 import { demoProducts } from "@/lib/demo-data";
 
 const cat = demoProducts;
+
+test("no fabricar: 'pelota en el ojo' NO puntúa como necesidad en un suplemento muscular", () => {
+  const dog = cat.find((p) => p.slug === "more-muscle-dogs");
+  if (dog) assert.ok(needScore("perro con pelota en el ojo", dog) < 2.5, "no debe aplicar a salud ocular");
+});
+
+test("needScore: query sin necesidad concreta ('algo para mi perro') devuelve -1 (no bloquear)", () => {
+  const dog = cat.find((p) => p.slug === "more-muscle-dogs");
+  if (dog) assert.equal(needScore("algo para mi perro", dog), -1);
+});
 
 test("detectAnimal: potro→caballos, perro→perros, pollo→pollos, gallo→gallos", () => {
   assert.equal(detectAnimal("crecimiento de potro"), "caballos");
