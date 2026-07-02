@@ -104,11 +104,19 @@ export function looksMedical(query: string): boolean {
  * Sirve para NO fabricar recomendaciones: si el query pide algo que el producto
  * no trata (ej. "perro con pelota en el ojo" vs suplemento muscular), da ~0.
  */
+/* Palabras de presentación/forma (se excluyen del needScore: "gotas" no es la necesidad). */
+const FORM_WORDS = new Set([
+  "inyectable", "inyectado", "inyeccion", "ampolla", "jeringa", "intramuscular",
+  "gotas", "gota", "gotero", "polvo", "polvos", "pastilla", "pastillas", "tableta",
+  "tabletas", "capsula", "capsulas", "caps", "comprimido", "shampoo", "champu",
+  "unguento", "pomada", "crema", "roll", "topico", "frota", "liquido", "jarabe",
+]);
+
 export function needScore(query: string, p: ProductView): number {
   const qNorm = normalize(query);
   const qTokens = qNorm
     .split(/[^a-z0-9]+/)
-    .filter((w) => w.length >= 2 && !STOP.has(w) && !ANIMAL_WORDS.has(w));
+    .filter((w) => w.length >= 2 && !STOP.has(w) && !ANIMAL_WORDS.has(w) && !FORM_WORDS.has(w));
   if (!qTokens.length) return -1; // query sin necesidad concreta (ej. "algo para mi perro") → no bloquear
   return scoreProduct(qTokens, qNorm, p, new Set<string>(), []);
 }

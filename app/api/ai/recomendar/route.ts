@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { withBridge, logEvent } from "@/lib/ai/bridge";
 import { getProducts } from "@/lib/ai/data";
-import { searchProducts, animalOf, needScore, looksMedical } from "@/lib/ai/search";
+import { searchProducts, animalOf, needScore, looksMedical, detectForma } from "@/lib/ai/search";
 import { buildContexto, richMensaje } from "@/lib/ai/present";
 import { cop } from "@/lib/ai/format";
 
@@ -30,7 +30,9 @@ export const POST = withBridge(
     // comerciales normales (crecimiento, energía, músculo, vitaminas…) sí recomiendan.
     const nScore = candidatos.length ? Math.max(...candidatos.map((p) => needScore(body.necesidad, p))) : 0;
     const problemaMedicoSinMatch = looksMedical(body.necesidad) && !(nScore < 0 || nScore >= 2.5);
-    if (r.status === "not_found" || !candidatos.length || problemaMedicoSinMatch) {
+    // Si piden una FORMA (inyectable/gotas…) pero ningún candidato matchea el PROPÓSITO en esa forma → honesto.
+    const formaSinPropósito = !!detectForma(body.necesidad) && candidatos.length > 0 && nScore >= 0 && nScore < 2.5;
+    if (r.status === "not_found" || !candidatos.length || problemaMedicoSinMatch || formaSinPropósito) {
       await logEvent("recomendacion_sin_match", { necesidad: body.necesidad, animal: firstAnimal, nScore });
       return {
         productos: [],
