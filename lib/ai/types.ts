@@ -34,6 +34,7 @@ export type ProductView = {
   edadMinima?: string;
   dosificacion?: string;
   presentacion?: string;
+  paraQue?: string;
 };
 
 export type CategoryView = {

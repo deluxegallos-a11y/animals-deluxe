@@ -73,6 +73,8 @@ export const products = pgTable(
     edadMinima: text("edad_minima").default(""),
     dosificacion: text("dosificacion").default(""),
     presentacion: text("presentacion").default(""),
+    // Para qué sirve (propósito real): guía la recomendación por propósito, no por nombre (§4.5).
+    paraQue: text("para_que").default(""),
     // --- Espejo Shopify (la plataforma es la fuente de verdad) ---
     shopifyProductId: text("shopify_product_id"),
     shopifySync: text("shopify_sync").$type<"synced" | "pending" | "error">().default("pending"),

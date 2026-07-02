@@ -15,8 +15,13 @@ export const POST = withBridge(
     const r = searchProducts(body.necesidad, catalog);
     // Nunca mezclar animales: las recomendaciones comparten el animal del mejor match.
     const firstAnimal = r.ranked[0] ? animalOf(r.ranked[0].product) : null;
+    // Piso de relevancia (§4.5): recomienda por PROPÓSITO, no padees con productos flojos/no
+    // relacionados. Solo entran candidatos con puntaje cercano al mejor (y >= 3).
+    const topScore = r.ranked[0]?.score ?? 0;
+    const floor = Math.max(3, topScore * 0.45);
     const candidatos = r.ranked
       .filter((x) => !firstAnimal || animalOf(x.product) === firstAnimal)
+      .filter((x) => x.score >= floor)
       .slice(0, 3)
       .map((x) => x.product);
 

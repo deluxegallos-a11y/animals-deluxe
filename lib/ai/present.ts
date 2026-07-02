@@ -81,6 +81,7 @@ export function publicProduct(p: ProductView) {
     objeciones: p.objeciones || {},
     // Ficha enriquecida (§4.6) — el bot arma el mensaje con estos campos.
     descripcion: descripcionRica(p),
+    para_que: p.paraQue || "",
     edad_minima: p.edadMinima || "",
     dosificacion: p.dosificacion || "",
     presentacion: p.presentacion || p.presentations?.[0]?.label || "",
@@ -103,7 +104,7 @@ export function emptyProduct() {
     slug: "", name: "", category: "", categoria: "", audience: "", origin: "", priceCOP: 0,
     presentations: [], image: "", imageUrl: "", badges: [], tagline: "", shortDesc: "",
     benefits: [], ingredients: [], usage: "", pitch: "", faq: [], keywords: [], objeciones: {},
-    descripcion: "", edad_minima: "", dosificacion: "", presentacion: "", envio_gratis: false, precio_cop: 0, cierre_precio: "",
+    descripcion: "", para_que: "", edad_minima: "", dosificacion: "", presentacion: "", envio_gratis: false, precio_cop: 0, cierre_precio: "",
     producto_contexto: "", disclaimer: "", url: "",
   };
 }

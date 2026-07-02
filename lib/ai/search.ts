@@ -112,6 +112,7 @@ function haystackTokens(p: ProductView): string[] {
     p.shortDesc,
     p.pitch,
     p.benefits.join(" "),
+    p.paraQue || "",
     p.categoryName,
     p.categorySlug,
     (p.keywords?.length ? p.keywords : deriveKeywords(p)).join(" "),

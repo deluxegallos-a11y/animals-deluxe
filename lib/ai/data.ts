@@ -57,6 +57,7 @@ function toView(p: ProdRow, cat?: CatRow | null): ProductView {
     edadMinima: p.edadMinima || "",
     dosificacion: p.dosificacion || "",
     presentacion: p.presentacion || "",
+    paraQue: p.paraQue || "",
   };
 }
 

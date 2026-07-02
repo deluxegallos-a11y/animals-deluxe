@@ -14,7 +14,7 @@ type P = {
   audience: string; origin: string; priceCOP: number; presentations: Presentacion[]; imageUrl: string;
   badges: string[]; tagline: string; shortDesc: string; benefits: string[]; ingredients: Ingrediente[];
   usage: string; pitch: string; faq: FaqItem[]; keywords: string[]; objeciones: Record<string, string>; adIds: string[]; disclaimer: string; stock: number; activo: boolean; envioGratis?: boolean;
-  descripcion?: string; edadMinima?: string; dosificacion?: string; presentacion?: string;
+  descripcion?: string; edadMinima?: string; dosificacion?: string; presentacion?: string; paraQue?: string;
   shopifyProductId: string; shopifySync: "synced" | "pending" | "error"; shopifySyncError: string;
 };
 
@@ -251,6 +251,11 @@ function ProductModal({ editing, categorias, onClose }: { editing: P | null; cat
               </div>
 
               <div className="form-sec">📝 Ficha enriquecida (lo que manda el bot con la foto)</div>
+              <div className="field">
+                <label>¿Para qué sirve? (propósito real — guía la recomendación)</label>
+                <input name="paraQue" defaultValue={editing?.paraQue || ""} placeholder="Ej. energía y vitalidad · desparasitante · viruela/bubas (tópico)" />
+                <span className="field-hint">El bot recomienda por este propósito, no por el nombre. Sé concreto (para qué es y para qué NO).</span>
+              </div>
               <div className="field">
                 <label>Descripción de venta</label>
                 <textarea name="descripcion" rows={6} defaultValue={editing?.descripcion || ""} placeholder={"Gancho en 1 línea…\n✅ Beneficio 1\n✅ Beneficio 2\n✅ Beneficio 3"} />

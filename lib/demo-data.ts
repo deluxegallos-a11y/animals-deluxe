@@ -10,7 +10,7 @@ type RawProd = {
   slug: string; name: string; category: string; audience: string; origin: string;
   priceCOP: number; presentations?: Presentacion[]; image?: string; badges?: string[];
   tagline?: string; shortDesc?: string; benefits?: string[]; usage?: string; pitch?: string; keywords?: string[];
-  envioGratis?: boolean; descripcion?: string; edadMinima?: string; dosificacion?: string; presentacion?: string;
+  envioGratis?: boolean; descripcion?: string; edadMinima?: string; dosificacion?: string; presentacion?: string; paraQue?: string;
 };
 
 const cats = (catalogo.categories || []) as RawCat[];
@@ -59,6 +59,7 @@ export const demoProducts: ProductView[] = prods.map((p) => {
     edadMinima: p.edadMinima || "",
     dosificacion: p.dosificacion || "",
     presentacion: p.presentacion || "",
+    paraQue: p.paraQue || "",
   };
 });
 

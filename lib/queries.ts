@@ -100,7 +100,7 @@ export async function listProducts(): Promise<ProductAdminRow[]> {
     disclaimer: r.p.disclaimer || "", stock: r.p.stock ?? 999, activo: r.p.activo ?? true,
     envioGratis: r.p.envioGratis ?? false,
     descripcion: r.p.descripcion || "", edadMinima: r.p.edadMinima || "",
-    dosificacion: r.p.dosificacion || "", presentacion: r.p.presentacion || "",
+    dosificacion: r.p.dosificacion || "", presentacion: r.p.presentacion || "", paraQue: r.p.paraQue || "",
     shopifyProductId: r.p.shopifyProductId || "",
     shopifySync: (r.p.shopifySync as "synced" | "pending" | "error") || "pending",
     shopifySyncError: r.p.shopifySyncError || "",

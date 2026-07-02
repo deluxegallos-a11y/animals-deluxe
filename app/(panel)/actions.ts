@@ -113,6 +113,7 @@ export async function saveProduct(formData: FormData) {
     edadMinima: String(formData.get("edadMinima") || "").trim(),
     dosificacion: String(formData.get("dosificacion") || "").trim(),
     presentacion: String(formData.get("presentacion") || "").trim(),
+    paraQue: String(formData.get("paraQue") || "").trim(),
   };
 
   // Marca pendiente de sincronía; syncProductToShopify lo pondrá en 'synced'.
