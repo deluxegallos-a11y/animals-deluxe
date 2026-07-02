@@ -191,20 +191,28 @@ export async function listIntegrations() {
   return db.select().from(integrations);
 }
 
-/* ---------- Anuncios (ad_map: ad_id → producto) ---------- */
-export type AdMapRow = { adId: string; productSlug: string; productName: string; nombreAnuncio: string; activo: boolean };
-export async function listAdMap(): Promise<AdMapRow[]> {
+/* ---------- Anuncios (ad_map: ad_id → producto(s)) — agrupado por ad_id ---------- */
+export type AdMapGroup = {
+  adId: string;
+  nombreAnuncio: string;
+  activo: boolean;
+  productos: { slug: string; name: string }[];
+};
+export async function listAdMap(): Promise<AdMapGroup[]> {
   if (!db) return [];
   const rows = await db
     .select({ a: adMap, pName: products.name })
     .from(adMap)
     .leftJoin(products, eq(adMap.productSlug, products.slug))
-    .orderBy(desc(adMap.createdAt));
-  return rows.map((r) => ({
-    adId: r.a.adId,
-    productSlug: r.a.productSlug,
-    productName: r.pName || "(producto no encontrado)",
-    nombreAnuncio: r.a.nombreAnuncio || "",
-    activo: r.a.activo ?? true,
-  }));
+    .orderBy(asc(adMap.adId), asc(adMap.orden));
+  const byAd = new Map<string, AdMapGroup>();
+  for (const r of rows) {
+    let g = byAd.get(r.a.adId);
+    if (!g) {
+      g = { adId: r.a.adId, nombreAnuncio: r.a.nombreAnuncio || "", activo: r.a.activo ?? true, productos: [] };
+      byAd.set(r.a.adId, g);
+    }
+    g.productos.push({ slug: r.a.productSlug, name: r.pName || `${r.a.productSlug} (no está en el catálogo)` });
+  }
+  return [...byAd.values()];
 }

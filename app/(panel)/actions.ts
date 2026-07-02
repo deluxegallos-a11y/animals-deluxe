@@ -264,19 +264,16 @@ export async function saveAdMap(formData: FormData) {
   await requireUser();
   if (!db) return { ok: false, error: "demo" };
   const adId = String(formData.get("adId") || "").trim();
-  const productSlug = String(formData.get("productSlug") || "").trim();
+  // Un anuncio puede tener 1 o VARIOS productos (multi-select).
+  const slugs = formData.getAll("productSlug").map((s) => String(s).trim()).filter(Boolean);
+  const nombreAnuncio = String(formData.get("nombreAnuncio") || "").trim();
+  const activo = formData.get("activo") === "on" || formData.get("activo") === "true";
   if (!adId) return { ok: false, error: "El ad_id es obligatorio." };
-  if (!productSlug) return { ok: false, error: "Elige un producto." };
-  const values = {
-    productSlug,
-    nombreAnuncio: String(formData.get("nombreAnuncio") || "").trim(),
-    activo: formData.get("activo") === "on" || formData.get("activo") === "true",
-  };
-  await db
-    .insert(adMap)
-    .values({ adId, ...values })
-    .onConflictDoUpdate({ target: adMap.adId, set: values });
-  await logAudit("guardar_ad_map", "ad_map", { adId, productSlug });
+  if (!slugs.length) return { ok: false, error: "Elige al menos un producto." };
+  // Reemplaza las filas de este ad_id (una fila por producto, con su orden).
+  await db.delete(adMap).where(eq(adMap.adId, adId));
+  await db.insert(adMap).values(slugs.map((slug, i) => ({ adId, productSlug: slug, nombreAnuncio, orden: i, activo })));
+  await logAudit("guardar_ad_map", "ad_map", { adId, slugs });
   revalidatePath("/anuncios");
   return { ok: true };
 }
@@ -284,7 +281,7 @@ export async function saveAdMap(formData: FormData) {
 export async function deleteAdMap(adId: string) {
   await requireUser();
   if (!db || !adId) return;
-  await db.delete(adMap).where(eq(adMap.adId, adId));
+  await db.delete(adMap).where(eq(adMap.adId, adId)); // borra todas las filas del anuncio
   await logAudit("eliminar_ad_map", "ad_map", { adId });
   revalidatePath("/anuncios");
 }

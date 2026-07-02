@@ -4,7 +4,7 @@
    RLS + extensiones en supabase/migration.sql.
    =========================================================== */
 import {
-  pgTable, uuid, text, integer, boolean, timestamp, jsonb, index,
+  pgTable, uuid, text, integer, boolean, timestamp, jsonb, index, primaryKey,
 } from "drizzle-orm/pg-core";
 
 const id = () => uuid("id").primaryKey().defaultRandom();
@@ -87,14 +87,16 @@ export const products = pgTable(
   (t) => ({ catIdx: index("idx_products_category").on(t.categoryId) }),
 );
 
-/* 2b. ad_map: anuncio de Meta (ad_id) → producto. Resuelve el referral CTWA. */
+/* 2b. ad_map: anuncio de Meta (ad_id) → producto(s). Un ad puede tener VARIOS
+   productos (una fila por producto). PK compuesta (ad_id, product_slug). */
 export const adMap = pgTable("ad_map", {
-  adId: text("ad_id").primaryKey(),           // ad_id de Meta (referral del anuncio)
+  adId: text("ad_id").notNull(),               // ad_id de Meta (referral del anuncio)
   productSlug: text("product_slug").notNull(), // → products.slug
   nombreAnuncio: text("nombre_anuncio").default(""),
+  orden: integer("orden").default(0),          // orden de presentación cuando el ad tiene varios
   activo: boolean("activo").default(true),
   createdAt: now(),
-});
+}, (t) => ({ pk: primaryKey({ columns: [t.adId, t.productSlug] }) }));
 
 /* 3. customers (leads) */
 export const customers = pgTable("customers", {
