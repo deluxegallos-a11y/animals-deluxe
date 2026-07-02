@@ -2,7 +2,7 @@
    Lecturas para el PANEL admin. Drizzle server-side.
    En MODO DEMO (sin DB) devuelve mocks razonables a partir del catálogo.
    =========================================================== */
-import { desc, eq, gte, sql, asc } from "drizzle-orm";
+import { desc, eq, gte, sql, asc, inArray } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import {
   products, categories, orders, orderItems, customers, advisors,
@@ -131,7 +131,7 @@ export async function listOrders(): Promise<OrderRow[]> {
     .limit(200);
   const ids = rows.map((r) => r.o.id);
   const items = ids.length
-    ? await db.select().from(orderItems).where(sql`order_id = any(${ids})`)
+    ? await db.select().from(orderItems).where(inArray(orderItems.orderId, ids))
     : [];
   return rows.map((r) => ({
     id: r.o.id, ref: r.o.ref, nombre: r.o.nombre || "", telefono: r.o.telefono || "", cedula: r.o.cedula || "",

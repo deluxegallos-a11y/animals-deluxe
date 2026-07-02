@@ -102,11 +102,14 @@ export function withBridge<S extends z.ZodTypeAny>(
   handler: (ctx: Ctx<z.infer<S>>) => Promise<Record<string, unknown>>,
 ) {
   return async function POST(req: NextRequest) {
+    const ruta = (() => { try { return new URL(req.url).pathname; } catch { return ""; } })();
     // 1) token (tiempo constante)
     const token = req.headers.get("x-bridge-token") || "";
     const expected = process.env.BRIDGE_TOKEN || "";
     // En modo demo (sin BRIDGE_TOKEN configurado) se permite para poder probar local.
     if (expected && !safeEqual(token, expected)) {
+      // Diagnóstico: llamada con token inválido/ausente (no logueamos el token).
+      await logEvent("bridge_auth_fail", { ruta, tokenPresente: !!token, tokenLen: token.length });
       return fail(401, "invalid_bridge_token", "");
     }
 
@@ -115,6 +118,7 @@ export function withBridge<S extends z.ZodTypeAny>(
     try {
       raw = await req.json();
     } catch {
+      await logEvent("bridge_invalid_json", { ruta });
       return fail(400, "invalid_json", "");
     }
 
@@ -122,6 +126,10 @@ export function withBridge<S extends z.ZodTypeAny>(
     const merged = baseSchema.and(schema);
     const parsed = merged.safeParse(raw);
     if (!parsed.success) {
+      // Diagnóstico: qué llaves llegaron y qué campos fallaron (para ver el shape del bot).
+      const keys = raw && typeof raw === "object" ? Object.keys(raw as object) : [];
+      const errores = parsed.error.issues.slice(0, 6).map((i) => `${i.path.join(".")}: ${i.message}`);
+      await logEvent("bridge_invalid_body", { ruta, keys, errores });
       return fail(400, "invalid_body", "Faltan datos en la solicitud.");
     }
     const body = parsed.data as z.infer<S> & { sub_id: string };
