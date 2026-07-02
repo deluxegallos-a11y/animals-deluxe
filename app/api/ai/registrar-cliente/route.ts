@@ -8,30 +8,37 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export const POST = withBridge(
+  // Opción B: lead PARCIAL. Acepta lo que llegue (aunque sea solo el número) y lo
+  // va completando. Nunca rechaza; siempre devuelve ok:true si guardó.
   z.object({
-    nombre: z.string().min(1),
-    telefono: z.string().min(1),
+    nombre: z.string().optional().default(""),
+    telefono: z.union([z.string(), z.number()]).transform((v) => String(v)).optional().default(""),
     ciudad: z.string().optional().default(""),
     direccion: z.string().optional().default(""),
-  }),
+    cedula: z.union([z.string(), z.number()]).transform((v) => String(v)).optional().default(""),
+  }).passthrough(),
   async ({ customer, body }) => {
+    const nombre = (body.nombre || "").trim();
+    const telefono = (body.telefono || "").trim();
+    let guardado = false;
     if (db && !customer.id.startsWith("demo-")) {
-      await db
-        .update(customers)
-        .set({
-          nombre: body.nombre,
-          telefono: body.telefono,
-          ciudad: body.ciudad || customer.ciudad,
-          direccion: body.direccion || customer.direccion,
-          estado: "interesado",
-          ultimoContacto: new Date(),
-        })
-        .where(eq(customers.id, customer.id));
-      await audit("registrar_cliente", "customers", { id: customer.id, nombre: body.nombre });
+      // Solo escribe los campos que llegaron (no pisa con vacío lo ya guardado).
+      const set: Record<string, unknown> = { estado: "interesado", ultimoContacto: new Date() };
+      if (nombre) set.nombre = nombre;
+      if (telefono) set.telefono = telefono;
+      if (body.ciudad) set.ciudad = body.ciudad;
+      if (body.direccion) set.direccion = body.direccion;
+      await db.update(customers).set(set).where(eq(customers.id, customer.id));
+      await audit("registrar_cliente", "customers", { id: customer.id, nombre, telefono });
+      guardado = true;
     }
     return {
+      ok: true,
+      guardado,
       customer_id: customer.id,
-      mensaje: `¡Listo ${body.nombre}! 🙌 Ya tengo tus datos. Cuando quieras armamos el pedido (es contraentrega, pagas al recibir).`,
+      mensaje: nombre
+        ? `¡Listo ${nombre}! 🙌 Ya tengo tus datos. Cuando quieras armamos el pedido (contraentrega, pagas al recibir).`
+        : `¡Listo! 🙌 Ya te tengo registrado. Cuando quieras armamos el pedido (contraentrega, pagas al recibir).`,
     };
   },
 );

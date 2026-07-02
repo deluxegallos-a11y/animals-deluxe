@@ -45,7 +45,8 @@ export const POST = withBridge(
     await logEvent("producto_por_anuncio", { ad_id: adId, match: productos.map((p) => p.slug) });
 
     if (!productos.length) {
-      // NO error: el bot cae al flujo por nombre (buscar-producto).
+      // ad_id no mapeado (o sin ad_id): SILENCIO por esta vía (mensaje:"") para que el
+      // bot no diga "no encontré" y siga el flujo normal por nombre (buscar-producto).
       return {
         status: "not_found" as const,
         match: "",
@@ -53,10 +54,8 @@ export const POST = withBridge(
         productos: [],
         producto: emptyProduct(),
         producto_contexto: "",
-        sugerencias: catalog.slice(0, 3).map(suggestion),
-        mensaje: adId
-          ? "No tengo ese anuncio mapeado, pero contame qué buscás pa tu campeón 🐓 y te muestro."
-          : "¡Hola, mi rey! Contame qué buscás pa tu campeón y te muestro 🐓.",
+        sugerencias: [],
+        mensaje: "",
       };
     }
 
