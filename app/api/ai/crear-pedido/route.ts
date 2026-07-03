@@ -119,9 +119,9 @@ export const POST = withBridge(
       catalog,
     });
 
-    // Registra la orden en Shopify (libro de pedidos). Fail-soft: si falla, el pedido
-    // COD ya quedó en Supabase y el flujo del bot continúa con la ref interna.
-    let ref = order.ref;
+    // La ref que ve el cliente SIEMPRE es la interna AD-XXXX (con esa consulta
+    // estado-pedido, y es idempotente). El nombre de Shopify queda guardado aparte.
+    const ref = order.ref;
     if (!order.reused && !order.pedido_id.startsWith("demo-")) {
       const shop = await pushOrderToShopify({
         orderId: order.pedido_id,
@@ -132,7 +132,6 @@ export const POST = withBridge(
         })),
         note: `Pedido contraentrega tomado por el bot (WhatsApp). Ref interna: ${order.ref}`,
       });
-      if (shop.ok && shop.shopifyOrderName) ref = shop.shopifyOrderName;
       await logEvent(shop.ok ? "pedido_shopify_ok" : "pedido_shopify_error", {
         ref: order.ref, shopify: shop.shopifyOrderName, error: shop.error, skipped: shop.skipped,
       });
