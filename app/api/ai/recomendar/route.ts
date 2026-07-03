@@ -52,7 +52,7 @@ export const POST = withBridge(
     const mensaje =
       `Para "${body.necesidad}" te recomiendo: ` +
       productos.map((p) => `${p.name} (${cop(p.priceCOP)})`).join(", ") +
-      `. El que más vende es ${productos[0].name}. ¿Te lo aparto? 🐓`;
+      `. El que más vende es ${productos[0].name}. ¿Cuál te interesa? 🐓`;
     return { productos, status: "found" as const, requiere_asesor: false, mensaje };
   },
 );

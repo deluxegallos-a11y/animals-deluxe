@@ -53,7 +53,7 @@ export function richMensaje(p: ProductView): string {
     benLines,
     ficha,
     cierrePrecio(p),
-    `¿Te lo aparto, mi rey? 🐓`,
+    `¿Para qué ciudad sería el envío? 🐓`,
   ].filter(Boolean).join("\n");
 }
 
