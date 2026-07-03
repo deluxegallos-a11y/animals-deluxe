@@ -78,8 +78,8 @@ export default async function PedidosPage() {
                   <td>{dato(a.body, "telefono", "celular", "whatsapp", "phone")}</td>
                   <td>{dato(a.body, "cedula", "cc", "documento")}</td>
                   <td>{dato(a.body, "ciudad", "municipio")}<div className="t-mut" style={{ fontSize: 11 }}>{dato(a.body, "direccion", "oficina")}</div></td>
-                  <td style={{ fontSize: 12, maxWidth: 200 }}>{typeof a.body.items === "string" ? a.body.items : dato(a.body, "producto", "item") !== "—" ? dato(a.body, "producto", "item") : JSON.stringify(a.body.items || "")}</td>
-                  <td style={{ fontSize: 11, color: "#b3261e", maxWidth: 220 }}>{a.motivo || a.resultado || (a.rawText ? "JSON roto: " + a.rawText.slice(0, 80) : "—")}</td>
+                  <td style={{ fontSize: 12, maxWidth: 200 }}>{typeof a.body.items === "string" ? a.body.items : dato(a.body, "producto", "item") !== "—" ? dato(a.body, "producto", "item") : (a.body.items ? JSON.stringify(a.body.items) : "—")}</td>
+                  <td style={{ fontSize: 11, color: "#b3261e", maxWidth: 260 }}>{a.motivo || a.resultado || "—"}{!Object.keys(a.body).length && a.rawText ? <div className="t-mut" style={{ fontSize: 10, color: "#666" }}>crudo: {a.rawText.slice(0, 120)}</div> : null}</td>
                 </tr>
               ))}
             </tbody>
