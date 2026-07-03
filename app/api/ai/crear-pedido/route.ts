@@ -24,6 +24,8 @@ export const POST = withBridge(
   z.object({}).passthrough(),
   async ({ customer, body }) => {
     const b = body as Record<string, unknown>;
+    // LOG del request crudo (para depurar exactamente qué manda UChat).
+    await logEvent("crear_pedido_req", { sub_id: customer.uchatSubId || customer.id, body: b });
     const catalog = await getProducts();
 
     // --- Campos (acepta nombres alternativos que puede mandar el bot) ---
@@ -42,8 +44,15 @@ export const POST = withBridge(
     // --- Resolver productos: acepta items[] (con slug O nombre) o producto suelto + cantidad ---
     type Raw = { name: string; cantidad: number; presentacion?: string };
     const raws: Raw[] = [];
-    if (Array.isArray(b.items)) {
-      for (const it of b.items as Record<string, unknown>[]) {
+    // items puede llegar como ARRAY o como STRING con JSON dentro (falla típica de UChat),
+    // o como un solo objeto. Toleramos las 3 formas.
+    let itemsArr: unknown = b.items;
+    if (typeof itemsArr === "string" && itemsArr.trim()) {
+      try { itemsArr = JSON.parse(itemsArr); } catch { itemsArr = []; }
+    }
+    if (itemsArr && !Array.isArray(itemsArr) && typeof itemsArr === "object") itemsArr = [itemsArr];
+    if (Array.isArray(itemsArr)) {
+      for (const it of itemsArr as Record<string, unknown>[]) {
         const name = str(it?.slug ?? it?.nombre ?? it?.name ?? it?.producto ?? it?.producto_nombre);
         if (name) raws.push({ name, cantidad: qty(it?.cantidad ?? it?.qty), presentacion: str(it?.presentacion) || undefined });
       }
