@@ -6,7 +6,7 @@ import { desc, eq, gte, sql, asc, inArray } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import {
   products, categories, orders, orderItems, customers, advisors,
-  promotions, conversations, storeConfig, integrations, adMap,
+  promotions, conversations, storeConfig, integrations, adMap, orderAttempts,
 } from "@/lib/db/schema";
 import { demoProducts, demoCategories } from "@/lib/demo-data";
 import type { ProductView } from "@/lib/ai/types";
@@ -189,6 +189,23 @@ export async function getStoreConfigRow() {
 export async function listIntegrations() {
   if (!db) return [];
   return db.select().from(integrations);
+}
+
+/* ---------- Intentos de pedido fallidos (rescate de ventas) ---------- */
+export type AttemptRow = { id: string; createdAt: Date | null; subId: string; resultado: string; motivo: string; body: Record<string, unknown>; rawText: string };
+export async function listFailedAttempts(): Promise<AttemptRow[]> {
+  if (!db) return [];
+  const rows = await db
+    .select()
+    .from(orderAttempts)
+    .where(sql`coalesce(resultado,'') <> 'created'`)
+    .orderBy(desc(orderAttempts.createdAt))
+    .limit(100);
+  return rows.map((r) => ({
+    id: r.id, createdAt: r.createdAt, subId: r.subId || "",
+    resultado: r.resultado || "", motivo: r.motivo || "",
+    body: (r.rawBody as Record<string, unknown>) || {}, rawText: r.rawText || "",
+  }));
 }
 
 /* ---------- Anuncios (ad_map: ad_id → producto(s)) — agrupado por ad_id ---------- */

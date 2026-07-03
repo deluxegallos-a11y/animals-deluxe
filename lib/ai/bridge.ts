@@ -12,7 +12,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db/client";
-import { customers, auditLog, events } from "@/lib/db/schema";
+import { customers, auditLog, events, orderAttempts } from "@/lib/db/schema";
 import { safeEqual } from "@/lib/crypto";
 import { isRateLimited } from "@/lib/ratelimit";
 
@@ -68,6 +68,40 @@ export async function logEvent(tipo: string, payload: unknown) {
   }
 }
 
+/** Registra un intento de crear-pedido en order_attempts (para NO perder ventas).
+ *  Devuelve el id de la fila para actualizarla luego con el resultado. */
+export async function logOrderAttempt(
+  data: { subId?: string; rawBody?: unknown; rawText?: string; resultado?: string; motivo?: string; ref?: string },
+): Promise<string | null> {
+  if (!db) return null;
+  try {
+    const [row] = await db
+      .insert(orderAttempts)
+      .values({
+        subId: data.subId || "",
+        rawBody: (data.rawBody as object) ?? null,
+        rawText: (data.rawText || "").slice(0, 4000),
+        resultado: data.resultado || "",
+        motivo: (data.motivo || "").slice(0, 500),
+        ref: data.ref || "",
+      })
+      .returning({ id: orderAttempts.id });
+    return row?.id || null;
+  } catch {
+    return null;
+  }
+}
+
+/** Actualiza el resultado de un intento ya guardado. */
+export async function updateOrderAttempt(id: string | null, patch: { resultado?: string; motivo?: string; ref?: string }): Promise<void> {
+  if (!db || !id) return;
+  try {
+    await db.update(orderAttempts).set({
+      resultado: patch.resultado, motivo: (patch.motivo || "").slice(0, 500), ref: patch.ref,
+    }).where(eq(orderAttempts.id, id));
+  } catch { /* noop */ }
+}
+
 /* ---- respuestas ---- */
 function ok(data: Record<string, unknown>) {
   return NextResponse.json(noNulls({ ok: true, ...data }));
@@ -103,33 +137,45 @@ export function withBridge<S extends z.ZodTypeAny>(
 ) {
   return async function POST(req: NextRequest) {
     const ruta = (() => { try { return new URL(req.url).pathname; } catch { return ""; } })();
+    const esCrearPedido = ruta.endsWith("/crear-pedido");
     // 1) token (tiempo constante)
     const token = req.headers.get("x-bridge-token") || "";
     const expected = process.env.BRIDGE_TOKEN || "";
     // En modo demo (sin BRIDGE_TOKEN configurado) se permite para poder probar local.
     if (expected && !safeEqual(token, expected)) {
-      // Diagnóstico: llamada con token inválido/ausente (no logueamos el token).
       await logEvent("bridge_auth_fail", { ruta, tokenPresente: !!token, tokenLen: token.length });
+      if (esCrearPedido) await logOrderAttempt({ resultado: "error", motivo: "token_invalido" });
       return fail(401, "invalid_bridge_token", "");
     }
 
-    // 2) body JSON
+    // 2) body: leemos el TEXTO CRUDO primero (así un JSON roto queda recuperable).
+    const rawText = await req.text().catch(() => "");
     let raw: unknown;
     try {
-      raw = await req.json();
+      raw = JSON.parse(rawText);
     } catch {
-      await logEvent("bridge_invalid_json", { ruta });
-      return fail(400, "invalid_json", "");
+      // Reparación tolerante: UChat a veces mete saltos de línea/control sin escapar.
+      try {
+        raw = JSON.parse(rawText.replace(/[\u0000-\u001F]+/g, " "));
+      } catch {
+        // No se pudo parsear ni reparar: guardamos el crudo para recuperar la venta.
+        await logEvent("bridge_invalid_json", { ruta, rawText: rawText.slice(0, 2000) });
+        if (esCrearPedido) await logOrderAttempt({ rawText, resultado: "error", motivo: "json_invalido" });
+        return fail(400, "invalid_json", "");
+      }
     }
 
     // 3) validación (base + propia del endpoint)
     const merged = baseSchema.and(schema);
     const parsed = merged.safeParse(raw);
     if (!parsed.success) {
-      // Diagnóstico: qué llaves llegaron y qué campos fallaron (para ver el shape del bot).
       const keys = raw && typeof raw === "object" ? Object.keys(raw as object) : [];
       const errores = parsed.error.issues.slice(0, 6).map((i) => `${i.path.join(".")}: ${i.message}`);
       await logEvent("bridge_invalid_body", { ruta, keys, errores });
+      if (esCrearPedido) {
+        const sid = raw && typeof raw === "object" ? String((raw as Record<string, unknown>).sub_id || "") : "";
+        await logOrderAttempt({ subId: sid, rawBody: raw, rawText, resultado: "rejected", motivo: "body_invalido: " + errores.join("; ") });
+      }
       return fail(400, "invalid_body", "Faltan datos en la solicitud.");
     }
     const body = parsed.data as z.infer<S> & { sub_id: string };
@@ -146,10 +192,13 @@ export function withBridge<S extends z.ZodTypeAny>(
     const contacto = (() => {
       const r = (raw ?? {}) as Record<string, unknown>;
       const s = (x: unknown) => (x == null ? "" : String(x)).trim();
+      // nombre real primero; si no hay, el del perfil de WhatsApp (nombre_wa) como provisional.
+      const nombre = s(r.nombre ?? r.cliente ?? r.nombre_cliente ?? r.user_name ?? r.full_name ?? r.first_name) || s(r.nombre_wa ?? r.wa_name ?? r.profile_name);
       return {
-        nombre: s(r.nombre ?? r.cliente ?? r.nombre_cliente ?? r.user_name ?? r.full_name ?? r.first_name),
+        nombre,
         telefono: s(r.telefono ?? r.celular ?? r.whatsapp ?? r.phone ?? r.tel),
         ciudad: s(r.ciudad ?? r.municipio),
+        direccion: s(r.direccion ?? r.direccion_entrega),
       };
     })();
 
@@ -165,12 +214,13 @@ export function withBridge<S extends z.ZodTypeAny>(
         if (contacto.nombre) set.nombre = contacto.nombre;
         if (contacto.telefono) set.telefono = contacto.telefono;
         if (contacto.ciudad) set.ciudad = contacto.ciudad;
+        if (contacto.direccion) set.direccion = contacto.direccion;
         await db.update(customers).set(set).where(eq(customers.id, found.id));
         customer = { ...found, ...set } as Customer;
       } else {
         const [created] = await db
           .insert(customers)
-          .values({ uchatSubId: body.sub_id, canalOrigen: "whatsapp", estado: "nuevo", nombre: contacto.nombre, telefono: contacto.telefono, ciudad: contacto.ciudad })
+          .values({ uchatSubId: body.sub_id, canalOrigen: "whatsapp", estado: "nuevo", nombre: contacto.nombre, telefono: contacto.telefono, ciudad: contacto.ciudad, direccion: contacto.direccion })
           .returning();
         customer = created;
       }

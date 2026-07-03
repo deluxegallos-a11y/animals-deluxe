@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { eq } from "drizzle-orm";
-import { withBridge, audit, logEvent } from "@/lib/ai/bridge";
+import { withBridge, audit, logEvent, logOrderAttempt, updateOrderAttempt } from "@/lib/ai/bridge";
 import { db } from "@/lib/db/client";
 import { customers } from "@/lib/db/schema";
 import { getProducts } from "@/lib/ai/data";
@@ -18,14 +18,35 @@ const qty = (x: unknown) => {
   return n > 0 ? n : 1;
 };
 
+/** Parsea items en TEXTO PLANO: "American Rooster Fury x2", "2 Energy Cobra",
+ *  "Dragon Mamba, 3", o varios separados por salto de línea / ; / + . */
+function parsePlainItems(text: string): { name: string; cantidad: number }[] {
+  const out: { name: string; cantidad: number }[] = [];
+  for (const part of String(text).split(/[\n;]+|\s\+\s/).map((s) => s.trim()).filter(Boolean)) {
+    let cantidad = 1;
+    let name = part;
+    const mX = part.match(/\bx\s*(\d+)\b/i) || part.match(/(\d+)\s*(?:und|unid|unidades|productos?|tarros?|frascos?)\b/i);
+    const mFin = part.match(/[,\s-]+(\d+)\s*$/);
+    const mIni = part.match(/^\s*(\d+)\s+(.+)/);
+    if (mX) { cantidad = parseInt(mX[1], 10); name = part.replace(mX[0], " "); }
+    else if (mIni) { cantidad = parseInt(mIni[1], 10); name = mIni[2]; }
+    else if (mFin) { cantidad = parseInt(mFin[1], 10); name = part.slice(0, mFin.index); }
+    name = name.replace(/[,x·\-\s]+$/i, "").replace(/^[,x·\-\s]+/i, "").trim();
+    if (name) out.push({ name, cantidad: cantidad > 0 ? cantidad : 1 });
+  }
+  return out;
+}
+
 export const POST = withBridge(
   // Body PERMISIVO (§2.1): NUNCA rechazamos por formato ("faltan datos"). Normalizamos
   // y resolvemos todo dentro; si falta un mínimo real, devolvemos campos_faltantes.
   z.object({}).passthrough(),
   async ({ customer, body }) => {
     const b = body as Record<string, unknown>;
-    // LOG del request crudo (para depurar exactamente qué manda UChat).
-    await logEvent("crear_pedido_req", { sub_id: customer.uchatSubId || customer.id, body: b });
+    const subId = customer.uchatSubId || customer.id;
+    // LOG del request crudo + registro del intento (para NO perder ninguna venta).
+    await logEvent("crear_pedido_req", { sub_id: subId, body: b });
+    const attemptId = await logOrderAttempt({ subId, rawBody: b, resultado: "recibido" });
     const catalog = await getProducts();
 
     // --- Campos (acepta nombres alternativos que puede mandar el bot) ---
@@ -48,7 +69,9 @@ export const POST = withBridge(
     // o como un solo objeto. Toleramos las 3 formas.
     let itemsArr: unknown = b.items;
     if (typeof itemsArr === "string" && itemsArr.trim()) {
-      try { itemsArr = JSON.parse(itemsArr); } catch { itemsArr = []; }
+      // 1) string con JSON dentro; 2) si no, TEXTO PLANO ("American Rooster Fury x2").
+      const s: string = itemsArr;
+      try { itemsArr = JSON.parse(s); } catch { itemsArr = parsePlainItems(s); }
     }
     if (itemsArr && !Array.isArray(itemsArr) && typeof itemsArr === "object") itemsArr = [itemsArr];
     if (Array.isArray(itemsArr)) {
@@ -57,9 +80,13 @@ export const POST = withBridge(
         if (name) raws.push({ name, cantidad: qty(it?.cantidad ?? it?.qty), presentacion: str(it?.presentacion) || undefined });
       }
     }
-    // producto "suelto" (fuera de items) — muy común desde el bot
+    // producto "suelto" (fuera de items) — muy común desde el bot; también en texto plano.
     const prodSuelto = str(b.producto ?? b.producto_nombre ?? b.nombre_producto ?? b.item);
-    if (!raws.length && prodSuelto) raws.push({ name: prodSuelto, cantidad: qty(b.cantidad ?? b.unidades) });
+    if (!raws.length && prodSuelto) {
+      const parsed = parsePlainItems(prodSuelto);
+      if (parsed.length === 1 && (b.cantidad || b.unidades)) parsed[0].cantidad = qty(b.cantidad ?? b.unidades);
+      for (const x of parsed) raws.push({ name: x.name, cantidad: x.cantidad });
+    }
 
     // resolver cada nombre → slug REAL del catálogo (por slug exacto o búsqueda tolerante)
     const items: { slug: string; presentacion?: string; cantidad: number }[] = [];
@@ -86,8 +113,9 @@ export const POST = withBridge(
     if (faltantes.length) {
       await logEvent("pedido_no_creado", {
         motivo: "campos_faltantes", campos: faltantes, no_encontrados: noEncontrados,
-        recibido: Object.keys(b), sub_id: customer.uchatSubId || customer.id,
+        recibido: Object.keys(b), sub_id: subId,
       });
+      await updateOrderAttempt(attemptId, { resultado: "rejected", motivo: `faltan: ${faltantes.join(", ")}${noEncontrados.length ? ` · no encontré: ${noEncontrados.join(", ")}` : ""}` });
       const et: Record<string, string> = {
         nombre: "tu nombre", telefono: "tu teléfono", ciudad: "tu ciudad",
         direccion: "tu dirección (o la oficina de la transportadora)",
@@ -141,6 +169,7 @@ export const POST = withBridge(
       await audit("crear_pedido", "orders", { ref: order.ref, total: order.total_cop });
       await logEvent("pedido_creado", { ref: order.ref, total: order.total_cop, metodo });
     }
+    await updateOrderAttempt(attemptId, { resultado: "created", ref: order.ref });
 
     const listaProductos = order.items.map((it) => `${it.cantidad}× ${it.name}`).join(", ");
     const mensaje =

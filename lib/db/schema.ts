@@ -87,6 +87,18 @@ export const products = pgTable(
   (t) => ({ catIdx: index("idx_products_category").on(t.categoryId) }),
 );
 
+/* 2c. order_attempts: TODO intento de crear-pedido (body crudo) para no perder ventas. */
+export const orderAttempts = pgTable("order_attempts", {
+  id: id(),
+  createdAt: now(),
+  subId: text("sub_id").default(""),
+  rawBody: jsonb("raw_body"),
+  rawText: text("raw_text").default(""),
+  resultado: text("resultado").default(""), // created | rejected | error
+  motivo: text("motivo").default(""),
+  ref: text("ref").default(""),
+});
+
 /* 2b. ad_map: anuncio de Meta (ad_id) → producto(s). Un ad puede tener VARIOS
    productos (una fila por producto). PK compuesta (ad_id, product_slug). */
 export const adMap = pgTable("ad_map", {
