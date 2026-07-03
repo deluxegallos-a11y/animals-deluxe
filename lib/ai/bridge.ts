@@ -102,6 +102,21 @@ export async function updateOrderAttempt(id: string | null, patch: { resultado?:
   } catch { /* noop */ }
 }
 
+/** Extrae pares "clave":valor de un texto que NO es JSON válido (comillas faltantes en
+ *  el valor, etc.). Rescata payloads rotos del bot: "items":Combo x 4 tapas, "nombre":Germán… */
+export function looseExtract(text: string): Record<string, string> | null {
+  const obj: Record<string, string> = {};
+  const re = /"([a-zA-Z0-9_]+)"\s*:\s*("(?:[^"\\]|\\.)*"|[^,}\n\r]+)/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text))) {
+    let v = m[2].trim();
+    if (v.startsWith('"')) { try { v = JSON.parse(v) as string; } catch { v = v.slice(1).replace(/"$/, ""); } }
+    else v = v.replace(/[,}\s]+$/, "");
+    obj[m[1]] = v;
+  }
+  return Object.keys(obj).length ? obj : null;
+}
+
 /* ---- respuestas ---- */
 function ok(data: Record<string, unknown>) {
   return NextResponse.json(noNulls({ ok: true, ...data }));
@@ -158,10 +173,16 @@ export function withBridge<S extends z.ZodTypeAny>(
       try {
         raw = JSON.parse(rawText.replace(/[\u0000-\u001F]+/g, " "));
       } catch {
-        // No se pudo parsear ni reparar: guardamos el crudo para recuperar la venta.
-        await logEvent("bridge_invalid_json", { ruta, rawText: rawText.slice(0, 2000) });
-        if (esCrearPedido) await logOrderAttempt({ rawText, resultado: "error", motivo: "json_invalido" });
-        return fail(400, "invalid_json", "");
+        // Reparación 2: extracción por regex — rescata JSON con COMILLAS FALTANTES
+        // (p.ej. "items":Combo x 4 tapas ← bug típico de UChat que perdía la venta).
+        const loose = looseExtract(rawText);
+        if (loose && loose.sub_id) {
+          raw = loose;
+        } else {
+          await logEvent("bridge_invalid_json", { ruta, rawText: rawText.slice(0, 2000) });
+          if (esCrearPedido) await logOrderAttempt({ rawText, resultado: "error", motivo: "json_invalido" });
+          return fail(400, "invalid_json", "");
+        }
       }
     }
 
