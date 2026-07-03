@@ -140,6 +140,19 @@ export function withBridge<S extends z.ZodTypeAny>(
       return fail(429, "rate_limited", "Estamos recibiendo muchas solicitudes, intenta en un momento.");
     }
 
+    // Datos de contacto que el bot PUEDE mandar en CUALQUIER request (nombre/teléfono
+    // del contacto de WhatsApp). Si vienen, poblamos el lead automáticamente → así los
+    // clientes dejan de aparecer vacíos aunque no se llame registrar_cliente.
+    const contacto = (() => {
+      const r = (raw ?? {}) as Record<string, unknown>;
+      const s = (x: unknown) => (x == null ? "" : String(x)).trim();
+      return {
+        nombre: s(r.nombre ?? r.cliente ?? r.nombre_cliente ?? r.user_name ?? r.full_name ?? r.first_name),
+        telefono: s(r.telefono ?? r.celular ?? r.whatsapp ?? r.phone ?? r.tel),
+        ciudad: s(r.ciudad ?? r.municipio),
+      };
+    })();
+
     // 5) resolver/crear cliente (lead). En modo demo, cliente sintético.
     let customer: Customer;
     if (!db) {
@@ -148,11 +161,16 @@ export function withBridge<S extends z.ZodTypeAny>(
       const [found] = await db.select().from(customers).where(eq(customers.uchatSubId, body.sub_id)).limit(1);
       if (found) {
         customer = found;
-        await db.update(customers).set({ ultimoContacto: new Date() }).where(eq(customers.id, found.id));
+        const set: Record<string, unknown> = { ultimoContacto: new Date() };
+        if (contacto.nombre) set.nombre = contacto.nombre;
+        if (contacto.telefono) set.telefono = contacto.telefono;
+        if (contacto.ciudad) set.ciudad = contacto.ciudad;
+        await db.update(customers).set(set).where(eq(customers.id, found.id));
+        customer = { ...found, ...set } as Customer;
       } else {
         const [created] = await db
           .insert(customers)
-          .values({ uchatSubId: body.sub_id, canalOrigen: "whatsapp", estado: "nuevo" })
+          .values({ uchatSubId: body.sub_id, canalOrigen: "whatsapp", estado: "nuevo", nombre: contacto.nombre, telefono: contacto.telefono, ciudad: contacto.ciudad })
           .returning();
         customer = created;
       }
