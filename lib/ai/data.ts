@@ -160,8 +160,8 @@ export async function cotizarEnvio(ciudad: string, opts: CotizarOpts = {}): Prom
   const cfg = await getStoreConfig();
   const metodo = opts.metodo ?? "contraentrega";
 
-  // FLETE FIJO nacional ($24.900, o $0 si envío incluido). Se ignoran los overrides
-  // por ciudad del store_config: la cifra es la misma para todo el país.
+  // FLETE POR VALOR ($20.000 + 7% del valor de los productos, o $0 si envío incluido).
+  // Se ignoran los overrides por ciudad del store_config: misma fórmula para todo el país.
   const s = computeShipping({
     ciudad: ciudad || cfg.ciudadBase,
     subtotalCop: opts.subtotalCop ?? 0,

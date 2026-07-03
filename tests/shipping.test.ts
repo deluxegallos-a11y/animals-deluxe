@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   computeShipping,
+  calcularFlete,
   resolveZona,
   pedidoEnvioGratis,
 } from "@/lib/ai/shipping";
@@ -18,22 +19,23 @@ test("resolveZona tolera ciudad con departamento", () => {
   assert.equal(resolveZona("Cali, Valle"), "nacional_metro");
 });
 
-test("flete FIJO $24.900 para cualquier ciudad", () => {
-  for (const ciudad of ["Medellín", "Bogotá", "Morales", "Pueblito Lejano", "Cali, Valle"]) {
-    const s = computeShipping({ ciudad, subtotalCop: 70000, unidades: 1, metodo: "contraentrega" });
-    assert.equal(s.costo_envio, 24900, `flete de ${ciudad} debe ser 24900`);
-    assert.equal(s.envio_gratis, false);
+test("calcularFlete = 20.000 + 7% (tabla del dueño)", () => {
+  assert.equal(calcularFlete(50000), 23500);
+  assert.equal(calcularFlete(70000), 24900);
+  assert.equal(calcularFlete(150000), 30500);
+  assert.equal(calcularFlete(180000), 32600);
+});
+
+test("flete por valor: mismo para cualquier ciudad (depende del producto, no de la zona)", () => {
+  for (const ciudad of ["Medellín", "Bogotá", "Morales", "Pueblito Lejano"]) {
+    const s = computeShipping({ ciudad, subtotalCop: 70000, unidades: 1 });
+    assert.equal(s.costo_envio, 24900, `${ciudad} con $70.000 debe dar 24900`);
   }
+  const alto = computeShipping({ ciudad: "Bogotá", subtotalCop: 180000, unidades: 2 });
+  assert.equal(alto.costo_envio, 32600);
 });
 
-test("flete FIJO no cambia por cantidad ni método (se cobra una vez)", () => {
-  const uno = computeShipping({ ciudad: "Bogotá", subtotalCop: 70000, unidades: 1, metodo: "contraentrega" });
-  const varios = computeShipping({ ciudad: "Bogotá", subtotalCop: 300000, unidades: 4, metodo: "anticipado" });
-  assert.equal(uno.costo_envio, 24900);
-  assert.equal(varios.costo_envio, 24900);
-});
-
-test("envío gratis fuerza costo 0", () => {
+test("envío incluido fuerza costo 0", () => {
   const s = computeShipping({ ciudad: "Bogotá", subtotalCop: 200000, unidades: 1, envioGratis: true });
   assert.equal(s.costo_envio, 0);
   assert.equal(s.envio_gratis, true);

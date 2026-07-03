@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { withBridge } from "@/lib/ai/bridge";
 import { cotizarEnvio, getProducts } from "@/lib/ai/data";
-import { pedidoEnvioGratis } from "@/lib/ai/shipping";
+import { FREE_SHIPPING_SLUGS } from "@/lib/ai/shipping";
 import { cop } from "@/lib/ai/format";
 
 export const runtime = "nodejs";
@@ -33,9 +33,10 @@ export const POST = withBridge(
         const precio = p?.presentations[0]?.priceCOP ?? p?.priceCOP ?? 0;
         return { slug: it.slug, cantidad: it.cantidad, precio, envioGratis: p?.envioGratis };
       });
-      subtotalCop = resolved.reduce((s, r) => s + r.precio * r.cantidad, 0);
+      // Base del 7% = solo los productos que SÍ pagan envío (excluye envío-incluido).
+      subtotalCop = resolved.reduce((s, r) => s + ((r.envioGratis || FREE_SHIPPING_SLUGS.has(r.slug)) ? 0 : r.precio * r.cantidad), 0);
       unidades = resolved.reduce((s, r) => s + r.cantidad, 0);
-      envioGratis = pedidoEnvioGratis(resolved);
+      envioGratis = subtotalCop <= 0; // todos los items son envío-incluido
     }
 
     const c = await cotizarEnvio(body.ciudad, {

@@ -30,9 +30,12 @@ export const ZONES: Record<Zona, ZoneRate> = {
   vereda: { kiloInicial: 88000, kiloAdicional: 15200, label: "Veredas" },
 };
 
-/* FLETE FIJO: $24.900 para TODO el país (una sola vez por pedido), adicional al
-   valor del producto. Excepción: pedidos con envío incluido (envioGratis) → $0. */
-export const FLETE_FIJO = 24900;
+/* FLETE POR VALOR (contraentrega Interrapidísimo): $20.000 + 7% del valor total
+   de los productos (recaudo COD). Una sola vez por pedido, sobre el TOTAL (no por ítem).
+   Ej.: 70.000→24.900 · 150.000→30.500 · 180.000→32.600. Excepción: envío incluido → $0. */
+export function calcularFlete(totalProductos: number): number {
+  return Math.round(20000 + Math.max(0, totalProductos || 0) * 0.07);
+}
 const PESO_POR_UNIDAD_KG = 1; // 1 producto liviano ≈ 1 kg (solo informativo)
 export const TIEMPO_ENTREGA = "24 a 72 horas";
 
@@ -118,24 +121,27 @@ export interface ShippingResult {
   };
 }
 
-/** Flete FIJO $24.900 para todo el país (una vez por pedido). $0 si envío incluido.
- *  Determinista: misma ciudad/pedido → misma cifra siempre. */
+/** Flete = $20.000 + 7% del valor de los productos que pagan envío (calcularFlete).
+ *  $0 si todo el pedido es envío-incluido. Determinista: mismo valor → misma cifra. */
 export function computeShipping(input: ShippingInput): ShippingResult {
   const zona = resolveZona(input.ciudad); // solo informativo (cobertura nacional)
   const pesoKg = input.pesoKg != null ? input.pesoKg : Math.max(1, input.unidades ?? 1) * PESO_POR_UNIDAD_KG;
   const kilos = Math.max(1, Math.ceil(pesoKg));
 
+  // subtotalCop = valor de los productos que SÍ pagan envío (los de envío-incluido
+  // se excluyen; en mezcla, el 7% aplica solo sobre esta base). envioGratis = todo incluido.
   const envioGratis = !!input.envioGratis;
-  const costo = envioGratis ? 0 : FLETE_FIJO;
+  const base = Math.max(0, input.subtotalCop || 0);
+  const costo = envioGratis ? 0 : calcularFlete(base);
 
   return {
     zona,
     zona_label: ZONES[zona].label,
     cubre: true, // cubrimos todo el país
-    envio_gratis: envioGratis,
+    envio_gratis: costo === 0,
     costo_envio: costo,
     tiempo: TIEMPO_ENTREGA,
-    desglose: { kilos, base: costo, sobreflete: 0, recargo_contraentrega: 0 },
+    desglose: { kilos, base: 20000, sobreflete: costo ? costo - 20000 : 0, recargo_contraentrega: 0 },
   };
 }
 

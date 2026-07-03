@@ -10,7 +10,7 @@ import type { ProductView } from "@/lib/ai/types";
 import { domainError } from "@/lib/ai/bridge";
 import { shortCode } from "@/lib/ai/format";
 import { assignAdvisor, cotizarEnvio, validateCoupon } from "@/lib/ai/data";
-import { pedidoEnvioGratis } from "@/lib/ai/shipping";
+import { FREE_SHIPPING_SLUGS } from "@/lib/ai/shipping";
 
 export type ItemInput = { slug: string; presentacion?: string; cantidad?: number };
 export type ResolvedItem = {
@@ -96,17 +96,15 @@ export interface CreatedOrder {
 export async function createOrder(input: CreateOrderInput): Promise<CreatedOrder> {
   const metodo = input.metodo || "contraentrega";
   const resolved = resolveItems(input.items, input.catalog);
-  // Flete con la tabla de zonas desde Medellín (valor real → sobreflete + recargo + gratis).
-  const subtotalProductos = resolved.reduce((s, r) => s + r.subtotalCop, 0);
   const unidades = resolved.reduce((s, r) => s + r.cantidad, 0);
-  const envioGratis = pedidoEnvioGratis(
-    resolved.map((r) => ({
-      slug: r.slug,
-      envioGratis: input.catalog.find((p) => p.slug === r.slug)?.envioGratis,
-    })),
-  );
+  // Flete = $20.000 + 7% del valor de los productos que SÍ pagan envío (los de
+  // envío-incluido no suman a la base; si TODOS son gratis → flete 0).
+  const esGratis = (slug: string) => !!input.catalog.find((p) => p.slug === slug)?.envioGratis
+    || FREE_SHIPPING_SLUGS.has(slug);
+  const subtotalNoGratis = resolved.reduce((s, r) => s + (esGratis(r.slug) ? 0 : r.subtotalCop), 0);
+  const envioGratis = subtotalNoGratis <= 0;
   const cobertura = await cotizarEnvio(input.ciudad, {
-    subtotalCop: subtotalProductos,
+    subtotalCop: subtotalNoGratis,
     unidades,
     metodo,
     envioGratis,
