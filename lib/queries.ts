@@ -40,7 +40,7 @@ export async function getDashboard(): Promise<DashboardKpis> {
   const [ing] = await db
     .select({ s: sql<number>`coalesce(sum(total_cop),0)::int` })
     .from(orders)
-    .where(sql`estado in ('confirmado','despachado','entregado','pagado')`);
+    .where(sql`estado in ('aprobado','guia','despachado','entregado','confirmado','pagado')`);
   const [leads] = await db.select({ n: sql<number>`count(*)::int` }).from(customers).where(gte(customers.createdAt, startWeek));
 
   const top = await db
@@ -115,7 +115,7 @@ export async function listCategoriesAdmin() {
 /* ---------- Pedidos ---------- */
 export type OrderRow = {
   id: string; ref: string; nombre: string; telefono: string; cedula: string; ciudad: string; direccion: string;
-  estado: string; metodoPago: string; total: number; subtotal: number; envio: number; descuento: number;
+  estado: string; canal: string; metodoPago: string; total: number; subtotal: number; envio: number; descuento: number;
   createdAt: Date | null; advisor: string; items: { name: string; presentacion: string; cantidad: number; precio: number }[];
   guia: string; transportadora: string; despachadoAt: Date | null; clienteNotificadoAt: Date | null;
   shopifyOrderId: string; shopifyOrderName: string;
@@ -136,7 +136,7 @@ export async function listOrders(): Promise<OrderRow[]> {
   return rows.map((r) => ({
     id: r.o.id, ref: r.o.ref, nombre: r.o.nombre || "", telefono: r.o.telefono || "", cedula: r.o.cedula || "",
     ciudad: r.o.ciudad || "", direccion: r.o.direccion || "",
-    estado: r.o.estado || "", metodoPago: r.o.metodoPago || "contraentrega",
+    estado: r.o.estado || "remision", canal: r.o.canal || "whatsapp", metodoPago: r.o.metodoPago || "contraentrega",
     total: r.o.totalCop ?? 0, subtotal: r.o.subtotalCop ?? 0, envio: r.o.envioCop ?? 0, descuento: r.o.descuentoCop ?? 0,
     createdAt: r.o.createdAt, advisor: r.a?.nombre || "",
     items: items.filter((it) => it.orderId === r.o.id).map((it) => ({

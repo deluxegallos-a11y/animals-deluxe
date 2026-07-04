@@ -156,8 +156,9 @@ export const orders = pgTable(
     id: id(),
     ref: text("ref").notNull().unique(),
     customerId: uuid("customer_id"),
-    estado: text("estado").default("pendiente_confirmacion"),
-    // pendiente_confirmacion | confirmado | despachado | entregado | pagado | cancelado
+    estado: text("estado").default("remision"),
+    // FLUJO: remision → aprobado → guia → despachado → entregado (+ cancelado)
+    canal: text("canal").default("whatsapp"), // whatsapp | messenger | web
     metodoPago: text("metodo_pago").default("contraentrega"), // contraentrega | anticipado
     subtotalCop: integer("subtotal_cop").default(0),
     descuentoCop: integer("descuento_cop").default(0),

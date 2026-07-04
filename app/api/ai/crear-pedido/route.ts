@@ -61,6 +61,9 @@ export const POST = withBridge(
     const correo = str(b.correo ?? b.email);
     const cupon = str(b.cupon ?? b.codigo ?? b.cupon_codigo);
     const metodo: "contraentrega" | "anticipado" = str(b.metodo).toLowerCase().startsWith("antic") ? "anticipado" : "contraentrega";
+    // Canal de origen (para separar en el panel). El bot puede mandarlo; default whatsapp.
+    const canalRaw = str(b.canal ?? b.channel ?? b.origen).toLowerCase();
+    const canal = /messen|facebook|\bfb\b|insta/.test(canalRaw) ? "messenger" : canalRaw === "web" ? "web" : "whatsapp";
 
     // --- Resolver productos: acepta items[] (con slug O nombre) o producto suelto + cantidad ---
     type Raw = { name: string; cantidad: number; presentacion?: string };
@@ -144,6 +147,7 @@ export const POST = withBridge(
       nombre, telefono, ciudad, direccion, cedula,
       cupon: cupon || undefined,
       metodo,
+      canal,
       catalog,
     });
 

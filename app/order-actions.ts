@@ -151,7 +151,7 @@ export async function crearPedidoWeb(raw: unknown): Promise<PedidoWebResult> {
     const order = await createOrder({
       subId: "web:" + b.telefono, customerId, items: validItems,
       nombre: b.nombre, telefono: b.telefono, ciudad: b.ciudad, direccion: b.direccion,
-      metodo: "contraentrega", catalog,
+      metodo: "contraentrega", canal: "web", catalog,
     });
 
     // Shopify (libro de pedidos) — opcional, no rompe si no está configurado.

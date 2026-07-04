@@ -9,8 +9,11 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const ESTADO_TXT: Record<string, string> = {
-  pendiente_confirmacion: "pendiente de confirmación",
+  remision: "en preparación 📝",
+  pendiente_confirmacion: "en preparación 📝",
+  aprobado: "confirmado ✅",
   confirmado: "confirmado ✅",
+  guia: "alistando tu envío 📦",
   despachado: "despachado 🚚",
   entregado: "entregado 📦",
   pagado: "pagado 💵",

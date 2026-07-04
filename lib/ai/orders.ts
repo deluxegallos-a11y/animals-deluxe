@@ -81,6 +81,7 @@ export interface CreateOrderInput {
   cedula?: string;
   cupon?: string;
   metodo?: "contraentrega" | "anticipado";
+  canal?: string; // whatsapp | messenger | web
   catalog: ProductView[];
 }
 
@@ -119,7 +120,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreatedOrder
     return {
       pedido_id: "demo-order", ref: shortCode("AD"),
       subtotal_cop: totals.subtotal, descuento_cop: totals.descuento,
-      envio_cop: totals.envio, total_cop: totals.total, estado: "pendiente_confirmacion",
+      envio_cop: totals.envio, total_cop: totals.total, estado: "remision",
       asesor: { nombre: "Asesor Animals Deluxe", whatsapp: process.env.NEXT_PUBLIC_WHATSAPP || "" },
       reused: false,
       items: resolved,
@@ -138,7 +139,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreatedOrder
       pedido_id: existing.id, ref: existing.ref,
       subtotal_cop: existing.subtotalCop ?? 0, descuento_cop: existing.descuentoCop ?? 0,
       envio_cop: existing.envioCop ?? 0, total_cop: existing.totalCop ?? 0,
-      estado: existing.estado || "pendiente_confirmacion",
+      estado: existing.estado || "remision",
       asesor: { nombre: "", whatsapp: "" }, reused: true,
       items: resolved,
     };
@@ -150,7 +151,8 @@ export async function createOrder(input: CreateOrderInput): Promise<CreatedOrder
     .values({
       ref: shortCode("AD"),
       customerId: input.customerId.startsWith("demo-") ? null : input.customerId,
-      estado: "pendiente_confirmacion",
+      estado: "remision",
+      canal: input.canal || "whatsapp",
       metodoPago: metodo,
       subtotalCop: totals.subtotal, descuentoCop: totals.descuento,
       envioCop: totals.envio, totalCop: totals.total,
@@ -173,7 +175,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreatedOrder
   return {
     pedido_id: created.id, ref: created.ref,
     subtotal_cop: totals.subtotal, descuento_cop: totals.descuento,
-    envio_cop: totals.envio, total_cop: totals.total, estado: created.estado || "pendiente_confirmacion",
+    envio_cop: totals.envio, total_cop: totals.total, estado: created.estado || "remision",
     asesor: { nombre: asesor.nombre, whatsapp: asesor.whatsapp || "" }, reused: false,
     items: resolved,
   };
