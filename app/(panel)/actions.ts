@@ -455,19 +455,36 @@ const digits = (s: string) => (s || "").replace(/[^0-9]/g, "");
 
 export async function crearClienteManual(data: {
   nombre?: string; telefono?: string; ciudad?: string; canal?: string; etapa?: string; notas?: string;
+  comprados?: string[]; interes?: string[];
 }): Promise<{ ok: boolean; error?: string }> {
   await requireUser();
   if (!db) return { ok: false, error: "Sin base de datos" };
   const nombre = (data.nombre || "").trim();
   const telefono = (data.telefono || "").trim();
   if (!nombre && !telefono) return { ok: false, error: "Pon al menos nombre o teléfono" };
+  const comprados = (data.comprados || []).filter(Boolean).slice(0, 40);
+  const interes = (data.interes || []).filter(Boolean).slice(0, 40);
   await db.insert(customers).values({
     uchatSubId: "manual:" + (digits(telefono) || Date.now().toString()),
     nombre, telefono, ciudad: (data.ciudad || "").trim(),
-    canalOrigen: data.canal || "manual", estado: "nuevo",
-    etapaManual: data.etapa || "", notas: (data.notas || "").trim(), ultimoContacto: new Date(),
+    canalOrigen: data.canal || "manual", estado: comprados.length ? "cliente" : "nuevo",
+    etapaManual: data.etapa || "", notas: (data.notas || "").trim(),
+    productosCompradosManual: comprados, productosInteres: interes, ultimoContacto: new Date(),
   }).onConflictDoNothing();
-  await logAudit("crear_cliente_manual", "customers", { nombre, telefono });
+  await logAudit("crear_cliente_manual", "customers", { nombre, telefono, comprados: comprados.length });
+  revalidatePath("/clientes");
+  return { ok: true };
+}
+
+/** Edita a mano los productos que un cliente compró / le gustan (desde el detalle). */
+export async function setProductosCliente(id: string, comprados: string[], interes: string[]): Promise<{ ok: boolean }> {
+  await requireUser();
+  if (!db || !id) return { ok: false };
+  await db.update(customers).set({
+    productosCompradosManual: (comprados || []).filter(Boolean).slice(0, 40),
+    productosInteres: (interes || []).filter(Boolean).slice(0, 40),
+  }).where(eq(customers.id, id));
+  await logAudit("editar_productos_cliente", "customers", { id, comprados: comprados?.length || 0, interes: interes?.length || 0 });
   revalidatePath("/clientes");
   return { ok: true };
 }

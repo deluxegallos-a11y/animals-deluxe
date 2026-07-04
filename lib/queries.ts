@@ -161,8 +161,11 @@ export type CrmRow = {
   id: string; nombre: string; telefono: string; ciudad: string; canal: string;
   etapa: CrmStage; etapaManual: string; notas: string; tags: string[];
   numPedidos: number; totalGastado: number; ultimaCompra: Date | null;
-  productosComprados: { slug: string; name: string }[];
+  productosComprados: { slug: string; name: string }[]; // unión (pedidos + manual)
   productosInteres: { slug: string; name: string }[];
+  compradosPedidos: { slug: string; name: string }[]; // solo de pedidos (no editable)
+  compradosManualSlugs: string[]; // editable a mano
+  interesSlugs: string[]; // editable a mano
   interacciones: number; createdAt: Date | null; ultimoContacto: Date | null;
 };
 
@@ -211,16 +214,21 @@ export async function listCRM(): Promise<CrmRow[]> {
   return custs.map((c) => {
     const a = aggMap.get(c.id);
     const numPedidos = a?.n || 0;
-    const comprados = [...(boughtMap.get(c.id) || [])];
+    const compradosOrders = [...(boughtMap.get(c.id) || [])];
+    const compradosManual = Array.isArray(c.productosCompradosManual) ? (c.productosCompradosManual as string[]) : [];
+    const comprados = Array.from(new Set([...compradosOrders, ...compradosManual]));
     const interes = Array.isArray(c.productosInteres) ? (c.productosInteres as string[]) : [];
     const dias = c.ultimoContacto ? (now - new Date(c.ultimoContacto).getTime()) / 86400_000 : 999;
-    const etapa = deriveStage(numPedidos, interes.length, c.interacciones || 0, dias, c.etapaManual || "");
+    // compras manuales también cuentan para la etapa "comprador"
+    const pedidosEfect = numPedidos || (compradosManual.length ? 1 : 0);
+    const etapa = deriveStage(pedidosEfect, interes.length, c.interacciones || 0, dias, c.etapaManual || "");
     return {
       id: c.id, nombre: c.nombre || "", telefono: c.telefono || "", ciudad: c.ciudad || "",
       canal: c.canalOrigen || "whatsapp", etapa, etapaManual: c.etapaManual || "",
       notas: c.notas || "", tags: Array.isArray(c.tags) ? (c.tags as string[]) : [],
       numPedidos, totalGastado: a?.total || 0, ultimaCompra: a?.last ? new Date(a.last) : null,
       productosComprados: resolve(comprados), productosInteres: resolve(interes),
+      compradosPedidos: resolve(compradosOrders), compradosManualSlugs: compradosManual, interesSlugs: interes,
       interacciones: c.interacciones || 0, createdAt: c.createdAt, ultimoContacto: c.ultimoContacto,
     };
   });

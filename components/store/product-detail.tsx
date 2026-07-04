@@ -343,7 +343,8 @@ export function ProductDetail({ p, wa, related = [], reviews = [], codForm = {} 
 
 function PDPBody({ p, wa, related, reviews, codForm }: { p: PDProduct; wa: string; related: RelatedProduct[]; reviews: Review[]; codForm: CodFormConfig }) {
   const m = catMeta(p.categorySlug);
-  const msg = `Hola Animals Deluxe 🐓, quiero pedir *${p.name}* (${cop(p.priceCOP)}). ¿Me ayudan?`;
+  // Arrastra el nombre del producto para que el bot (Victor) lo detecte y siga la conversación.
+  const msg = `Hola Animals Deluxe 🐓, quiero más información de *${p.name}*.`;
   const waLink = wa ? `https://wa.me/${wa}?text=${encodeURIComponent(msg)}` : "";
   const { add } = useCart();
   const [presIdx, setPresIdx] = React.useState(0);

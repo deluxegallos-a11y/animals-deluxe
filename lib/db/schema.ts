@@ -125,7 +125,8 @@ export const customers = pgTable("customers", {
   // --- CRM ---
   etapaManual: text("etapa_manual").default(""), // override manual de la etapa calculada
   ultimoProductoVisto: text("ultimo_producto_visto").default(""),
-  productosInteres: jsonb("productos_interes").default([]), // slugs de productos que vio
+  productosInteres: jsonb("productos_interes").default([]), // slugs de productos que vio / le gustan
+  productosCompradosManual: jsonb("productos_comprados_manual").default([]), // compras registradas a mano
   tags: jsonb("tags").default([]),
   interacciones: integer("interacciones").default(0),
   totalGastado: integer("total_gastado").default(0),

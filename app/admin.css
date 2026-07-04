@@ -490,3 +490,44 @@
 .adm ::-webkit-scrollbar{ width:11px; height:11px }
 .adm ::-webkit-scrollbar-thumb{ background:rgba(16,24,40,.18); border-radius:20px; border:3px solid transparent; background-clip:content-box }
 .adm ::-webkit-scrollbar-thumb:hover{ background:rgba(16,24,40,.32); background-clip:content-box }
+
+/* ============ CRM — tarjetas Pinterest + animaciones ============ */
+@keyframes crmIn{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes crmPop{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:none}}
+.adm .pb-row{animation:crmIn .4s both}
+.adm .crm-stage{animation:crmPop .4s both}
+.adm .crm-cards{columns:4 250px;column-gap:14px}
+.adm .crm-card{break-inside:avoid;margin-bottom:14px;background:linear-gradient(180deg,#fff,#fbfcfe);border:1px solid rgba(16,24,40,.075);border-radius:18px;padding:15px 16px;box-shadow:var(--shadow-sm),inset 0 1px 0 rgba(255,255,255,.7);cursor:pointer;animation:crmIn .45s both;transition:transform .18s cubic-bezier(.2,.9,.3,1),box-shadow .18s ease}
+.adm .crm-card:hover{transform:translateY(-4px);box-shadow:0 2px 8px -2px rgba(16,24,40,.12),0 24px 50px -24px rgba(47,107,255,.4),inset 0 1px 0 rgba(255,255,255,.8)}
+.adm .crm-card.sel{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-soft)}
+.adm .crm-card .top{display:flex;align-items:center;gap:11px}
+.adm .crm-av{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:17px;flex:0 0 auto;box-shadow:inset 0 1px 0 rgba(255,255,255,.4),inset 0 -6px 12px -6px rgba(0,0,0,.22),0 6px 14px -6px rgba(0,0,0,.3)}
+.adm .crm-card .nm2{font-weight:800;font-size:15px;color:var(--ink);letter-spacing:-.2px;line-height:1.15}
+.adm .crm-card .mt2{font-size:11.5px;color:var(--muted)}
+.adm .crm-card .stat{display:flex;gap:14px;margin-top:11px;padding-top:11px;border-top:1px solid var(--line)}
+.adm .crm-card .stat b{font-size:16px;font-weight:800;color:var(--ink);display:block;letter-spacing:-.3px}
+.adm .crm-card .stat span{font-size:10.5px;color:var(--muted)}
+.adm .crm-sect{margin-top:11px}
+.adm .crm-sect .lb{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);margin-bottom:5px}
+/* view toggle */
+.adm .crm-view{display:inline-flex;gap:3px;background:var(--bg);padding:4px;border-radius:11px;border:1px solid var(--line)}
+.adm .crm-view button{padding:6px 11px;border:0;background:transparent;border-radius:8px;font-weight:700;font-size:12.5px;color:var(--ink-2);cursor:pointer}
+.adm .crm-view button.on{background:#fff;color:var(--ink);box-shadow:var(--shadow-sm)}
+/* product picker */
+.adm .pp-box{border:1px solid var(--line-2);border-radius:12px;padding:8px;background:var(--card)}
+.adm .pp-chips{display:flex;flex-wrap:wrap;gap:6px}
+.adm .pp-chip{display:inline-flex;align-items:center;gap:5px;background:var(--blue-soft);color:var(--blue-2);border-radius:20px;padding:4px 10px;font-size:12px;font-weight:700;animation:crmPop .2s both}
+.adm .pp-chip b{cursor:pointer;opacity:.6}.adm .pp-chip b:hover{opacity:1}
+.adm .pp-drop{max-height:180px;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:6px;background:#fff;box-shadow:var(--shadow)}
+.adm .pp-opt{padding:8px 11px;font-size:13px;cursor:pointer;color:var(--ink-2)}
+.adm .pp-opt:hover{background:var(--blue-soft);color:var(--blue-2)}
+
+/* ============ Accesibilidad + skeleton loaders ============ */
+@media (prefers-reduced-motion: reduce){
+  .adm *, .adm *::before, .adm *::after{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
+}
+@keyframes shimmer{ 0%{background-position:-500px 0} 100%{background-position:500px 0} }
+.adm .sk{ border-radius:12px; background:linear-gradient(90deg,#eef1f6 25%,#f7f9fc 50%,#eef1f6 75%); background-size:1000px 100%; animation:shimmer 1.3s infinite linear; }
+.adm .sk-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(158px,1fr)); gap:13px; margin-bottom:18px }
+.adm .sk-cards{ columns:4 250px; column-gap:14px }
+.adm .sk-card{ break-inside:avoid; margin-bottom:14px; height:150px }
