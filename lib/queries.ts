@@ -195,19 +195,15 @@ export async function listCRM(): Promise<CrmRow[]> {
     .groupBy(orders.customerId);
   const aggMap = new Map(aggs.map((a) => [a.cid as string, a]));
 
-  // Productos comprados por cliente
-  const bought = await db
-    .select({ cid: orders.customerId, slug: orderItems.productSlug })
+  // Productos comprados por cliente — agregado en Postgres (una fila por cliente).
+  const boughtAgg = await db
+    .select({ cid: orders.customerId, slugs: sql<string[]>`array_agg(distinct ${orderItems.productSlug})` })
     .from(orderItems)
     .innerJoin(orders, eq(orderItems.orderId, orders.id))
-    .where(sql`orders.customer_id is not null`);
-  const boughtMap = new Map<string, Set<string>>();
-  for (const b of bought) {
-    if (!b.cid) continue;
-    const set = boughtMap.get(b.cid) || new Set<string>();
-    if (b.slug) set.add(b.slug);
-    boughtMap.set(b.cid, set);
-  }
+    .where(sql`${orders.customerId} is not null and coalesce(${orders.estado},'') <> 'cancelado'`)
+    .groupBy(orders.customerId);
+  const boughtMap = new Map<string, string[]>();
+  for (const b of boughtAgg) if (b.cid) boughtMap.set(b.cid, (b.slugs || []).filter(Boolean));
 
   const now = Date.now();
   const resolve = (slugs: string[]) => slugs.filter(Boolean).map((s) => ({ slug: s, name: nameOf.get(s) || s }));

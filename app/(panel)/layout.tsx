@@ -5,6 +5,8 @@ import { demoMode } from "@/lib/auth";
 
 export default function PanelLayout({ children }: { children: React.ReactNode }) {
   return (
+    <>
+    <script dangerouslySetInnerHTML={{ __html: `try{if(localStorage.getItem('adm-theme')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}` }} />
     <div className="adm">
       <AdminSidebar />
       <div className="main">
@@ -19,5 +21,6 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
         </div>
       </div>
     </div>
+    </>
   );
 }

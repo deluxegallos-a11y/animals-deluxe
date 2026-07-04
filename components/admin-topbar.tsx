@@ -4,6 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Search, Bell, Store, LogOut } from "lucide-react";
 import { logout } from "@/app/(auth)/actions";
+import { ThemeToggle, CommandPalette } from "@/components/admin-tools";
+
+function openPalette() { window.dispatchEvent(new Event("adm-open-cmdk")); }
 
 const TITLES: Record<string, string> = {
   "/dashboard": "Dashboard",
@@ -28,14 +31,17 @@ export function AdminTopbar() {
         <b>{title}</b>
       </div>
       <div className="sp" />
-      <div className="tsearch">
+      <button className="tsearch" onClick={openPalette} aria-label="Buscar / ir a" style={{ cursor: "pointer" }}>
         <Search size={16} />
-        <input placeholder={`Buscar en ${title.toLowerCase()}…`} aria-label="Buscar" />
-      </div>
+        <span style={{ flex: 1, textAlign: "left" }}>Ir a…</span>
+        <span className="kbd">⌘K</span>
+      </button>
+      <ThemeToggle />
       <button className="tbtn" title="Notificaciones"><Bell size={18} /><span className="dot" /></button>
       <Link href="/" target="_blank" className="primary"><Store size={16} /> <span>Ver tienda</span></Link>
       <div className="avatar" title="Animals Deluxe">AD</div>
       <form action={logout}><button type="submit" className="logout" title="Salir"><LogOut size={17} /></button></form>
+      <CommandPalette />
     </header>
   );
 }

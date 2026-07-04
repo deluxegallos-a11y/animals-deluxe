@@ -531,3 +531,49 @@
 .adm .sk-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(158px,1fr)); gap:13px; margin-bottom:18px }
 .adm .sk-cards{ columns:4 250px; column-gap:14px }
 .adm .sk-card{ break-inside:avoid; margin-bottom:14px; height:150px }
+
+/* ============ Command palette ⌘K ============ */
+.adm .topbar .tsearch .kbd{margin-left:auto;font-size:10.5px;font-weight:800;color:var(--muted);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:2px 6px}
+.cmdk-ov{position:fixed;inset:0;background:rgba(16,24,40,.5);backdrop-filter:blur(4px);z-index:100;display:flex;justify-content:center;align-items:flex-start;padding-top:14vh;animation:pbfade .12s ease}
+.cmdk{width:min(560px,92vw);background:var(--card,#fff);border:1px solid var(--line,#eee);border-radius:18px;box-shadow:0 40px 90px -20px rgba(16,24,40,.55);overflow:hidden;animation:crmPop .16s ease}
+.cmdk-in{display:flex;align-items:center;gap:11px;padding:16px 18px;border-bottom:1px solid var(--line);color:var(--muted)}
+.cmdk-in input{flex:1;border:0;outline:0;background:none;font:inherit;font-size:15.5px;color:var(--ink)}
+.cmdk-esc{font-size:10.5px;font-weight:800;color:var(--muted);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:2px 7px}
+.cmdk-list{max-height:340px;overflow:auto;padding:8px}
+.cmdk-it{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:11px;font-size:14px;font-weight:600;color:var(--ink-2);cursor:pointer}
+.cmdk-it .ic{font-size:16px}
+.cmdk-it.on{background:var(--blue-soft);color:var(--blue-2)}
+.cmdk-empty{padding:22px;text-align:center;color:var(--muted);font-size:13.5px}
+
+/* ============ 🌙 DARK MODE ============ */
+[data-theme="dark"] .adm{
+  --bg:#0B0F17; --card:#151A23; --ink:#EDF1F8; --ink-2:#B7C0CE; --muted:#7E8798; --line:#232B39; --line-2:#2E3849;
+  --blue-soft:#15233F; --green-soft:#12291F; --amber-soft:#2A2113; --red-soft:#2A1614;
+  background:
+    radial-gradient(1200px 600px at 100% -10%, rgba(47,107,255,.12), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(122,60,255,.10), transparent 55%),
+    #0B0F17;
+  color:var(--ink);
+}
+[data-theme="dark"] .adm .card,[data-theme="dark"] .adm .sumc,[data-theme="dark"] .adm .tablewrap,
+[data-theme="dark"] .adm .pb-kpi,[data-theme="dark"] .adm .crm-stage,[data-theme="dark"] .adm .pb-row,
+[data-theme="dark"] .adm .pb-modal,[data-theme="dark"] .adm .crm-drawer,[data-theme="dark"] .adm .crm-card,
+[data-theme="dark"] .adm .cmdk{
+  background:linear-gradient(180deg,#1A212C,#151A23);border-color:#242D3B;
+  box-shadow:var(--shadow-sm),inset 0 1px 0 rgba(255,255,255,.03);
+}
+[data-theme="dark"] .adm .sb{ background:linear-gradient(180deg,rgba(19,24,33,.92),rgba(19,24,33,.8));border-right-color:#232B39 }
+[data-theme="dark"] .adm .topbar{ background:rgba(11,15,23,.82);border-bottom-color:#232B39 }
+[data-theme="dark"] .adm .sb .search,[data-theme="dark"] .adm .tsearch,[data-theme="dark"] .adm .tbtn,
+[data-theme="dark"] .adm .crm-input,[data-theme="dark"] .adm .pb-search,[data-theme="dark"] .adm .pp-box,
+[data-theme="dark"] .adm .pb-chip,[data-theme="dark"] .adm .chip-btn,[data-theme="dark"] .adm .btn.soft,
+[data-theme="dark"] .adm select,[data-theme="dark"] .adm input,[data-theme="dark"] .adm textarea,[data-theme="dark"] .adm .pp-drop{
+  background:#10151D !important;border-color:#2A3446 !important;color:var(--ink);
+}
+[data-theme="dark"] .adm .card table th{ background:#10151D;color:var(--muted) }
+[data-theme="dark"] .adm .card table tr:hover td{ background:rgba(255,255,255,.03) }
+[data-theme="dark"] .adm .sk{ background:linear-gradient(90deg,#161C26 25%,#20293a 50%,#161C26 75%);background-size:1000px 100% }
+[data-theme="dark"] .adm .page-head h1{ background:linear-gradient(135deg,#EDF1F8,#9AA6B8);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent }
+[data-theme="dark"] .adm .pb-kpi .num,[data-theme="dark"] .adm .crm-stage .n,[data-theme="dark"] .adm .kpi-big{ background:linear-gradient(135deg,#EDF1F8,#AEB9C9);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent }
+[data-theme="dark"] .adm .crm-tagp{ background:#10151D;border-color:#2A3446;color:var(--ink-2) }
+[data-theme="dark"] .adm .empty{ color:var(--muted) }
