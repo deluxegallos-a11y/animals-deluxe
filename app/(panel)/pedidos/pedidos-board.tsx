@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { updateOrderStatus, despacharPedido, type DespachoResult } from "../actions";
+import { updateOrderStatus, bulkUpdateStatus, despacharPedido } from "../actions";
 
 export type BoardOrder = {
   id: string; ref: string; nombre: string; telefono: string; cedula: string; ciudad: string; direccion: string;
@@ -14,27 +14,24 @@ export type BoardOrder = {
 
 const COP = (n: number) => "$" + Number(n || 0).toLocaleString("es-CO");
 
-/* --- canal --- */
-const CANALES: Record<string, { label: string; emoji: string; color: string }> = {
-  whatsapp: { label: "WhatsApp", emoji: "🟢", color: "#25D366" },
-  messenger: { label: "Messenger", emoji: "🔵", color: "#0084FF" },
-  web: { label: "Página web", emoji: "🌐", color: "#7A3CFF" },
+const CHAN: Record<string, { label: string; color: string; ic: string }> = {
+  whatsapp: { label: "WhatsApp", color: "#16C784", ic: "📱" },
+  messenger: { label: "Messenger", color: "#0084FF", ic: "💬" },
+  web: { label: "Página web", color: "#7A3CFF", ic: "🌐" },
 };
-const canalInfo = (c: string) => CANALES[c] || { label: c || "—", emoji: "•", color: "#888" };
+const chan = (c: string) => CHAN[c] || { label: c || "—", color: "#8A93A5", ic: "•" };
 
-/* --- flujo de estados --- */
-const FLUJO = ["remision", "aprobado", "guia", "despachado", "entregado"];
-const ESTADO_META: Record<string, { label: string; color: string; bg: string }> = {
-  remision: { label: "Remisión", color: "#8a6d00", bg: "#fff4d6" },
-  aprobado: { label: "Aprobado", color: "#0a5", bg: "#d9f7e6" },
-  guia: { label: "Guía", color: "#2f6bff", bg: "#dde8ff" },
-  despachado: { label: "Despachado", color: "#7A3CFF", bg: "#ece0ff" },
-  entregado: { label: "Entregado", color: "#0a7d33", bg: "#d6f5df" },
-  cancelado: { label: "Cancelado", color: "#b3261e", bg: "#ffe0dd" },
+const EST: Record<string, { label: string; color: string; bg: string }> = {
+  remision: { label: "Remisión", color: "#B54708", bg: "#FFF4E5" },
+  aprobado: { label: "Aprobado", color: "#067647", bg: "#E6F9F1" },
+  guia: { label: "En guía", color: "#1E50E6", bg: "#EAF0FF" },
+  despachado: { label: "Despachado", color: "#6941C6", bg: "#F4EBFF" },
+  entregado: { label: "Entregado", color: "#067647", bg: "#E6F9F1" },
+  cancelado: { label: "Cancelado", color: "#B42318", bg: "#FEECEB" },
 };
-const estadoMeta = (e: string) => ESTADO_META[e] || { label: e, color: "#555", bg: "#eee" };
+const est = (e: string) => EST[e] || { label: e || "—", color: "#475467", bg: "#F2F4F7" };
 
-/* --- mensaje para copiar/pegar en el grupo de WhatsApp --- */
+/* mensaje para pegar en el grupo de WhatsApp */
 function mensajeGuia(o: BoardOrder): string {
   const prod = o.items.map((i) => `${i.cantidad}× ${i.name}`).join(", ");
   return [
@@ -44,172 +41,253 @@ function mensajeGuia(o: BoardOrder): string {
     `📱 ${o.telefono}`,
     `📍 ${o.ciudad} — ${o.direccion}`,
     `🛒 ${prod}`,
-    `💵 Total a recaudar: ${COP(o.total)}  (envío ${o.envio ? COP(o.envio) : "incluido"})`,
-    `🚚 Transportadora: Interrapidísimo`,
+    `💵 Total a recaudar: ${COP(o.total)} (envío ${o.envio ? COP(o.envio) : "incluido"})`,
+    `🚚 Interrapidísimo`,
   ].join("\n");
 }
 
-function sameDay(iso: string | null, ref: Date): boolean {
+function faltantes(o: BoardOrder): string[] {
+  const f: string[] = [];
+  if (!o.nombre?.trim()) f.push("nombre");
+  if (!o.telefono?.trim()) f.push("teléfono");
+  if (!o.cedula?.trim()) f.push("cédula");
+  if (!o.ciudad?.trim()) f.push("ciudad");
+  if (!o.direccion?.trim()) f.push("dirección");
+  if (!o.items.length) f.push("productos");
+  return f;
+}
+
+function sameDay(iso: string | null, ref: Date) {
   if (!iso) return false;
   const d = new Date(iso);
   return d.getFullYear() === ref.getFullYear() && d.getMonth() === ref.getMonth() && d.getDate() === ref.getDate();
 }
+async function copy(text: string) { try { await navigator.clipboard.writeText(text); return true; } catch { return false; } }
 
 export function PedidosBoard({ orders }: { orders: BoardOrder[] }) {
   const [dia, setDia] = React.useState<"hoy" | "ayer" | "todos">("hoy");
   const [canal, setCanal] = React.useState<"todos" | "whatsapp" | "messenger" | "web">("todos");
-  const [copiado, setCopiado] = React.useState<string>("");
+  const [q, setQ] = React.useState("");
+  const [sel, setSel] = React.useState<Set<string>>(new Set());
+  const [openId, setOpenId] = React.useState<string | null>(null);
+  const [bulkBusy, setBulkBusy] = React.useState(false);
+  const [toast, setToast] = React.useState("");
 
-  const hoy = new Date();
-  const ayer = new Date(); ayer.setDate(ayer.getDate() - 1);
+  const hoy = new Date(); const ayer = new Date(); ayer.setDate(ayer.getDate() - 1);
+  const inDia = (o: BoardOrder) => dia === "todos" || sameDay(o.createdAt, dia === "hoy" ? hoy : ayer);
 
-  const filtrados = orders.filter((o) => {
-    const okDia = dia === "todos" || (dia === "hoy" ? sameDay(o.createdAt, hoy) : sameDay(o.createdAt, ayer));
-    const okCanal = canal === "todos" || o.canal === canal;
-    return okDia && okCanal;
+  const delDia = orders.filter(inDia);
+  const filtrados = delDia.filter((o) => {
+    if (canal !== "todos" && o.canal !== canal) return false;
+    if (q.trim()) { const s = q.toLowerCase(); return [o.nombre, o.ref, o.telefono, o.ciudad, o.cedula].some((v) => (v || "").toLowerCase().includes(s)); }
+    return true;
   });
 
-  // KPIs sobre el filtro de día
-  const delDia = orders.filter((o) => dia === "todos" || (dia === "hoy" ? sameDay(o.createdAt, hoy) : sameDay(o.createdAt, ayer)));
-  const kpiCanal = (c: string) => delDia.filter((o) => o.canal === c).length;
-  const kpiEstado = (e: string) => delDia.filter((o) => o.estado === e).length;
+  const kCanal = (c: string) => delDia.filter((o) => o.canal === c).length;
+  const kEst = (e: string) => delDia.filter((o) => o.estado === e).length;
   const recaudo = filtrados.reduce((s, o) => s + o.total, 0);
 
-  async function copiar(o: BoardOrder) {
-    try { await navigator.clipboard.writeText(mensajeGuia(o)); setCopiado(o.id); setTimeout(() => setCopiado(""), 2000); }
-    catch { setCopiado("err-" + o.id); setTimeout(() => setCopiado(""), 2000); }
+  const open = orders.find((o) => o.id === openId) || null;
+  const selList = filtrados.filter((o) => sel.has(o.id));
+
+  function toggle(id: string) { setSel((p) => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; }); }
+  function toggleAll() { setSel((p) => (p.size === filtrados.length ? new Set() : new Set(filtrados.map((o) => o.id)))); }
+  function flash(m: string) { setToast(m); setTimeout(() => setToast(""), 2200); }
+
+  async function bulk(estado: string) {
+    setBulkBusy(true); const r = await bulkUpdateStatus([...sel], estado); setBulkBusy(false);
+    setSel(new Set()); flash(`${r.count} pedido(s) → ${est(estado).label}`);
+  }
+  async function bulkCopy() {
+    const txt = selList.map(mensajeGuia).join("\n\n━━━━━━━━━━\n\n");
+    flash((await copy(txt)) ? `📋 ${selList.length} guía(s) copiada(s)` : "No se pudo copiar");
   }
 
   return (
     <div>
-      {/* ---- Filtros ---- */}
-      <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center", marginBottom: 14 }}>
-        <div className="seg" style={{ display: "inline-flex", gap: 4, background: "#f1f1f4", padding: 4, borderRadius: 12 }}>
+      {/* KPIs */}
+      <div className="pb-kpis">
+        <Kpi ic="🧾" num={String(delDia.length)} lbl={dia === "hoy" ? "Pedidos hoy" : dia === "ayer" ? "Pedidos ayer" : "Pedidos totales"} sub={`Recaudo: ${COP(recaudo)}`} color="#101828" />
+        <Kpi ic="📱" num={String(kCanal("whatsapp"))} lbl="WhatsApp" color="#16C784" />
+        <Kpi ic="💬" num={String(kCanal("messenger"))} lbl="Messenger" color="#0084FF" />
+        <Kpi ic="🌐" num={String(kCanal("web"))} lbl="Página web" color="#7A3CFF" />
+        <Kpi ic="📦" num={`${kEst("remision")}·${kEst("guia")}`} lbl="Remisión · En guía" sub={`Aprobados: ${kEst("aprobado")}`} color="#F79009" />
+      </div>
+
+      {/* Toolbar */}
+      <div className="pb-toolbar">
+        <div className="pb-seg">
           {(["hoy", "ayer", "todos"] as const).map((d) => (
-            <button key={d} onClick={() => setDia(d)} className={dia === d ? "on" : ""}
-              style={{ padding: "7px 14px", borderRadius: 9, border: "none", cursor: "pointer", fontWeight: 700, fontSize: 13, background: dia === d ? "#fff" : "transparent", boxShadow: dia === d ? "0 1px 4px rgba(0,0,0,.1)" : "none", textTransform: "capitalize" }}>
-              {d === "hoy" ? "Hoy" : d === "ayer" ? "Ayer" : "Todos"}
-            </button>
+            <button key={d} className={dia === d ? "on" : ""} onClick={() => { setDia(d); setSel(new Set()); }}>{d === "hoy" ? "Hoy" : d === "ayer" ? "Ayer" : "Todos"}</button>
           ))}
         </div>
-        <div style={{ display: "inline-flex", gap: 6 }}>
+        <div className="pb-chips">
           {(["todos", "whatsapp", "messenger", "web"] as const).map((c) => {
-            const info = c === "todos" ? { label: "Todos los canales", emoji: "📋", color: "#555" } : canalInfo(c);
-            const active = canal === c;
-            return (
-              <button key={c} onClick={() => setCanal(c)}
-                style={{ padding: "7px 12px", borderRadius: 20, border: `1.5px solid ${active ? info.color : "#e2e2e6"}`, cursor: "pointer", fontWeight: 700, fontSize: 12.5, background: active ? info.color + "18" : "#fff", color: active ? info.color : "#555" }}>
-                {info.emoji} {c === "todos" ? "Todos" : info.label}
-              </button>
-            );
+            const info = c === "todos" ? { label: "Todos", color: "#475467", ic: "📋" } : chan(c);
+            const on = canal === c;
+            return <button key={c} className={"pb-chip" + (on ? " on" : "")} style={on ? { background: info.color } : { color: info.color }} onClick={() => setCanal(c)}>{info.ic} {info.label}</button>;
           })}
         </div>
+        <input className="pb-search" placeholder="🔍 Buscar por nombre, ref, teléfono…" value={q} onChange={(e) => setQ(e.target.value)} />
       </div>
 
-      {/* ---- KPIs ---- */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, marginBottom: 16 }}>
-        <Kpi label={dia === "hoy" ? "Pedidos hoy" : dia === "ayer" ? "Pedidos ayer" : "Pedidos"} value={String(delDia.length)} sub={`Recaudo filtrado: ${COP(recaudo)}`} accent="#111" />
-        <Kpi label="🟢 WhatsApp" value={String(kpiCanal("whatsapp"))} accent="#25D366" />
-        <Kpi label="🔵 Messenger" value={String(kpiCanal("messenger"))} accent="#0084FF" />
-        <Kpi label="🌐 Web" value={String(kpiCanal("web"))} accent="#7A3CFF" />
-        <Kpi label="📝 Remisión / 📦 Guía" value={`${kpiEstado("remision")} / ${kpiEstado("guia")}`} sub={`Aprobados: ${kpiEstado("aprobado")}`} accent="#e0a92e" />
-      </div>
-
-      {/* ---- Tabla ---- */}
-      {filtrados.length ? (
-        <div style={{ overflowX: "auto" }}>
-          <table>
-            <thead>
-              <tr><th>Hora</th><th>Canal</th><th>Ref</th><th>Cliente</th><th>Ciudad</th><th>Productos</th><th>Total</th><th>Estado</th><th>Acción</th></tr>
-            </thead>
-            <tbody>
-              {filtrados.map((o) => {
-                const cinfo = canalInfo(o.canal);
-                const em = estadoMeta(o.estado);
-                return (
-                  <tr key={o.id}>
-                    <td style={{ fontSize: 12, whiteSpace: "nowrap" }}>{o.createdAt ? new Date(o.createdAt).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }) : "—"}<div className="t-mut" style={{ fontSize: 10 }}>{o.createdAt ? new Date(o.createdAt).toLocaleDateString("es-CO", { day: "2-digit", month: "2-digit" }) : ""}</div></td>
-                    <td><span style={{ fontSize: 11.5, fontWeight: 700, color: cinfo.color }}>{cinfo.emoji} {cinfo.label}</span></td>
-                    <td><b style={{ fontSize: 12.5 }}>{o.ref}</b>{o.shopifyOrderName ? <div className="t-mut" style={{ fontSize: 10 }}>{o.shopifyOrderName}</div> : null}</td>
-                    <td style={{ minWidth: 150 }}>{o.nombre || "—"}<div className="t-mut" style={{ fontSize: 11 }}>{o.telefono}{o.cedula ? ` · CC ${o.cedula}` : ""}</div></td>
-                    <td style={{ fontSize: 12 }}>{o.ciudad}<div className="t-mut" style={{ fontSize: 10.5 }}>{o.direccion}</div></td>
-                    <td style={{ fontSize: 12, maxWidth: 180 }}>{o.items.map((i) => `${i.cantidad}× ${i.name}`).join(", ") || "—"}</td>
-                    <td><b>{COP(o.total)}</b><div className="t-mut" style={{ fontSize: 10.5 }}>envío {o.envio ? COP(o.envio) : "incl."}</div></td>
-                    <td><span style={{ display: "inline-block", padding: "3px 9px", borderRadius: 20, fontSize: 11.5, fontWeight: 800, color: em.color, background: em.bg }}>{em.label}</span></td>
-                    <td><AccionCell o={o} copiado={copiado} onCopiar={() => copiar(o)} /></td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+      {/* Barra de acciones masivas */}
+      {sel.size > 0 && (
+        <div className="pb-bulk">
+          <span className="cnt">{sel.size} seleccionado{sel.size > 1 ? "s" : ""}</span>
+          <span className="sp" />
+          <button className="ghost" disabled={bulkBusy} onClick={() => bulk("aprobado")}>✓ Aprobar</button>
+          <button style={{ background: "var(--blue)" }} disabled={bulkBusy} onClick={() => bulk("guia")}>📦 Generar guías (pasar a guía)</button>
+          <button className="ghost" onClick={bulkCopy}>📋 Copiar guías</button>
+          <button className="ghost" onClick={() => setSel(new Set())}>✕</button>
         </div>
-      ) : (
-        <div className="empty"><div className="ico">🧾</div><h4>Sin pedidos {dia === "hoy" ? "hoy" : dia === "ayer" ? "ayer" : ""}{canal !== "todos" ? ` por ${canalInfo(canal).label}` : ""}</h4><p>Cuando entren pedidos por el bot o la web, aparecen aquí.</p></div>
       )}
+
+      {/* Lista */}
+      {filtrados.length ? (
+        <>
+          <div className="pb-headrow">
+            <span><input type="checkbox" className="pb-check" checked={sel.size === filtrados.length && filtrados.length > 0} onChange={toggleAll} /></span>
+            <span>Canal</span><span>Cliente</span><span>Estado</span><span>Hora</span><span style={{ textAlign: "right" }}>Total</span><span />
+          </div>
+          <div className="pb-list">
+            {filtrados.map((o) => {
+              const c = chan(o.canal); const e = est(o.estado); const falta = faltantes(o).length;
+              return (
+                <div key={o.id} className={"pb-row" + (sel.has(o.id) ? " sel" : "")} onClick={() => setOpenId(o.id)}>
+                  <span onClick={(ev) => ev.stopPropagation()}><input type="checkbox" className="pb-check" checked={sel.has(o.id)} onChange={() => toggle(o.id)} /></span>
+                  <span className="pb-chan"><span className="dot" style={{ background: c.color }}>{c.ic}</span>{c.label}</span>
+                  <span className="pb-cli">
+                    <div className="nm">{o.nombre || "— sin nombre —"} {falta ? <span title={`Faltan: ${faltantes(o).join(", ")}`} style={{ color: "#F79009" }}>⚠</span> : null}</div>
+                    <div className="meta">{o.ref} · {o.telefono || "sin tel"} · {o.ciudad || "sin ciudad"}</div>
+                  </span>
+                  <span><span className="pb-pill" style={{ color: e.color, background: e.bg }}>{e.label}</span></span>
+                  <span className="pb-time">{o.createdAt ? new Date(o.createdAt).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }) : "—"}<div className="d">{o.createdAt ? new Date(o.createdAt).toLocaleDateString("es-CO", { day: "2-digit", month: "2-digit" }) : ""}</div></span>
+                  <span className="pb-total">{COP(o.total)}<div className="e">envío {o.envio ? COP(o.envio) : "incl."}</div></span>
+                  <span className="pb-chev">›</span>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      ) : (
+        <div className="empty"><div className="ico">🧾</div><h4>Sin pedidos {dia === "hoy" ? "hoy" : dia === "ayer" ? "ayer" : ""}{canal !== "todos" ? ` por ${chan(canal).label}` : ""}</h4><p>Cuando entren pedidos por el bot o la web, aparecen aquí.</p></div>
+      )}
+
+      {toast && <div style={{ position: "fixed", bottom: 22, left: "50%", transform: "translateX(-50%)", background: "#101828", color: "#fff", padding: "11px 20px", borderRadius: 12, fontWeight: 700, fontSize: 13.5, zIndex: 80, boxShadow: "var(--shadow)" }}>{toast}</div>}
+
+      {open && <DetailModal o={open} onClose={() => setOpenId(null)} onToast={flash} />}
     </div>
   );
 }
 
-function Kpi({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent: string }) {
+function Kpi({ ic, num, lbl, sub, color }: { ic: string; num: string; lbl: string; sub?: string; color: string }) {
   return (
-    <div style={{ background: "#fff", border: "1px solid #ececf0", borderRadius: 14, padding: "12px 14px", boxShadow: "0 1px 3px rgba(0,0,0,.04)" }}>
-      <div style={{ fontSize: 12, color: "#777", fontWeight: 600 }}>{label}</div>
-      <div style={{ fontSize: 24, fontWeight: 800, color: accent, lineHeight: 1.1, marginTop: 2 }}>{value}</div>
-      {sub ? <div style={{ fontSize: 11, color: "#999", marginTop: 2 }}>{sub}</div> : null}
+    <div className="pb-kpi" style={{ ["--accent" as string]: color } as React.CSSProperties}>
+      <div className="ic">{ic}</div>
+      <div className="num">{num}</div>
+      <div className="lbl">{lbl}</div>
+      {sub ? <div className="sub">{sub}</div> : null}
     </div>
   );
 }
 
-function AccionCell({ o, copiado, onCopiar }: { o: BoardOrder; copiado: string; onCopiar: () => void }) {
+function DetailModal({ o, onClose, onToast }: { o: BoardOrder; onClose: () => void; onToast: (m: string) => void }) {
   const [busy, setBusy] = React.useState(false);
-  const [msg, setMsg] = React.useState("");
+  const [showMsg, setShowMsg] = React.useState(false);
+  const [guia, setGuia] = React.useState(o.guia || "");
+  const e = est(o.estado); const c = chan(o.canal);
+  const falta = faltantes(o); const completo = falta.length === 0;
 
-  async function avanzar(next: string) {
-    setBusy(true); await updateOrderStatus(o.id, next); setBusy(false);
+  async function move(estado: string) { setBusy(true); await updateOrderStatus(o.id, estado); setBusy(false); onToast(`Pedido → ${est(estado).label}`); onClose(); }
+  async function copiar() { onToast((await copy(mensajeGuia(o))) ? "📋 Datos copiados" : "No se pudo copiar"); }
+  async function despachar() {
+    if (!guia.trim()) { setShowMsg(true); return; }
+    setBusy(true); const r = await despacharPedido(o.id, guia.trim(), o.transportadora || "Interrapidísimo"); setBusy(false);
+    onToast(r.ok ? (r.notify?.ok ? "Despachado · cliente avisado ✅" : "Despachado ✅") : (r.error || "Error")); onClose();
   }
 
-  const btn = (bg: string): React.CSSProperties => ({ padding: "6px 11px", borderRadius: 9, border: "none", cursor: "pointer", fontWeight: 700, fontSize: 12, color: "#fff", background: bg, opacity: busy ? 0.6 : 1 });
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 5, minWidth: 190 }}>
-      {o.estado === "remision" && (
-        <button style={btn("#0a9d4a")} disabled={busy} onClick={() => avanzar("aprobado")}>✓ Aprobar</button>
-      )}
-      {o.estado === "aprobado" && (
-        <button style={btn("#2f6bff")} disabled={busy} onClick={() => avanzar("guia")}>📦 Pasar a guía</button>
-      )}
-      {(o.estado === "guia" || o.estado === "despachado") && (
-        <>
-          <button style={btn("#111")} onClick={onCopiar}>{copiado === o.id ? "✓ Copiado" : copiado === "err-" + o.id ? "✗ error" : "📋 Copiar datos WhatsApp"}</button>
-          {o.estado === "guia" && <DespachoInline o={o} />}
-        </>
-      )}
-      {o.estado === "entregado" && <span className="t-mut" style={{ fontSize: 12 }}>✅ Entregado</span>}
-      {o.estado !== "cancelado" && o.estado !== "entregado" && (
-        <button style={{ ...btn("#fff"), color: "#b3261e", border: "1px solid #f0c8c4", background: "#fff" }} disabled={busy} onClick={() => { if (confirm("¿Cancelar este pedido?")) avanzar("cancelado"); }}>Cancelar</button>
-      )}
-      {msg ? <span style={{ fontSize: 11, color: "#0a7d33" }}>{msg}</span> : null}
-    </div>
+  const ck = (label: string, val: string, ok: boolean) => (
+    <div className={"pb-ck " + (ok ? "ok" : "no")}><span className="b">{ok ? "✓" : "!"}</span><span className="v"><b>{label}:</b> {val || "falta"}</span></div>
   );
-}
 
-/* Despacho rápido: guía + transportadora + avisar al cliente (marca despachado). */
-function DespachoInline({ o }: { o: BoardOrder }) {
-  const [open, setOpen] = React.useState(false);
-  const [guia, setGuia] = React.useState(o.guia || "");
-  const [transp, setTransp] = React.useState(o.transportadora || "Interrapidísimo");
-  const [busy, setBusy] = React.useState(false);
-  const [res, setRes] = React.useState<DespachoResult | null>(null);
-  if (!open) return <button style={{ padding: "5px 10px", borderRadius: 8, border: "1px solid #ddd", background: "#fff", cursor: "pointer", fontSize: 11.5, fontWeight: 600 }} onClick={() => setOpen(true)}>🚚 Despachar + avisar</button>;
   return (
-    <div style={{ display: "grid", gap: 4, background: "#fafafa", padding: 6, borderRadius: 8 }}>
-      <input placeholder="N.º guía" value={guia} onChange={(e) => setGuia(e.target.value)} style={{ fontSize: 12, padding: "5px 7px", border: "1px solid #ddd", borderRadius: 6 }} />
-      <input placeholder="Transportadora" value={transp} onChange={(e) => setTransp(e.target.value)} style={{ fontSize: 12, padding: "5px 7px", border: "1px solid #ddd", borderRadius: 6 }} />
-      <button disabled={busy || !guia.trim()} onClick={async () => { setBusy(true); const r = await despacharPedido(o.id, guia.trim(), transp.trim()); setBusy(false); setRes(r); }}
-        style={{ padding: "6px", borderRadius: 7, border: "none", background: "#0a9d4a", color: "#fff", fontWeight: 700, fontSize: 12, cursor: "pointer", opacity: busy ? 0.6 : 1 }}>
-        {busy ? "Enviando…" : "Marcar despachado y avisar"}
-      </button>
-      {res ? <span style={{ fontSize: 10.5, color: res.ok ? "#0a7d33" : "#b3261e" }}>{res.ok ? (res.notify?.ok ? "Despachado · cliente avisado ✅" : "Despachado ✅ (aviso pendiente)") : res.error}</span> : null}
+    <div className="pb-ov" onClick={onClose}>
+      <div className="pb-modal" onClick={(ev) => ev.stopPropagation()}>
+        <div className="pb-mhead" style={{ background: `linear-gradient(135deg, ${e.color}, ${e.color}cc)` }}>
+          <button className="close" onClick={onClose}>×</button>
+          <div className="ref">{o.ref}</div>
+          <div className="tags">
+            <span className="tag">{c.ic} {c.label}</span>
+            <span className="tag" style={{ background: "rgba(255,255,255,.32)" }}>{e.label}</span>
+            <span className="tag">{o.createdAt ? new Date(o.createdAt).toLocaleString("es-CO", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}</span>
+          </div>
+        </div>
+
+        <div className="pb-mbody">
+          {/* Revisión de datos */}
+          <div className="pb-checklist" style={{ borderColor: completo ? "var(--green)" : "var(--amber)" }}>
+            <div className="h" style={{ color: completo ? "var(--green)" : "var(--amber)" }}>{completo ? "✅ Datos completos — listo para remisión" : `⚠️ Faltan datos: ${falta.join(", ")}`}</div>
+            <div className="grid">
+              {ck("Nombre", o.nombre, !!o.nombre?.trim())}
+              {ck("Teléfono", o.telefono, !!o.telefono?.trim())}
+              {ck("Cédula", o.cedula, !!o.cedula?.trim())}
+              {ck("Ciudad", o.ciudad, !!o.ciudad?.trim())}
+              {ck("Dirección", o.direccion, !!o.direccion?.trim())}
+              {ck("Productos", `${o.items.length}`, o.items.length > 0)}
+            </div>
+          </div>
+
+          {/* Datos de entrega */}
+          <div className="pb-sec">
+            <div className="st">📍 Entrega</div>
+            <div className="pb-kv"><span className="k">Ciudad</span><span className="val">{o.ciudad || "—"}</span></div>
+            <div className="pb-kv"><span className="k">Dirección</span><span className="val">{o.direccion || "—"}</span></div>
+            <div className="pb-kv"><span className="k">Teléfono</span><span className="val">{o.telefono || "—"}</span></div>
+            <div className="pb-kv"><span className="k">Cédula</span><span className="val">{o.cedula || "—"}</span></div>
+          </div>
+
+          {/* Productos */}
+          <div className="pb-sec">
+            <div className="st">🛒 Productos</div>
+            {o.items.length ? o.items.map((i, k) => (
+              <div className="pb-prod" key={k}><span><b>{i.cantidad}×</b> {i.name}</span></div>
+            )) : <div className="pb-kv"><span className="k">Sin productos</span></div>}
+            <div className="pb-tot"><span>Envío</span><span>{o.envio ? COP(o.envio) : "Incluido"}</span></div>
+            <div className="pb-tot big"><span>Total contra entrega</span><span>{COP(o.total)}</span></div>
+          </div>
+        </div>
+
+        {/* Mensaje para copiar (guía) */}
+        {(o.estado === "guia" || o.estado === "despachado" || showMsg) && (
+          <div className="pb-msg">{mensajeGuia(o)}</div>
+        )}
+
+        {/* Acciones según estado */}
+        <div className="pb-mfoot">
+          {o.estado === "remision" && (
+            <button className="pb-btn gp" disabled={busy || !completo} onClick={() => move("aprobado")} title={completo ? "" : "Completa los datos primero"}>{completo ? "✓ Aprobar pedido" : "Completa los datos para aprobar"}</button>
+          )}
+          {o.estado === "aprobado" && (
+            <button className="pb-btn bl" disabled={busy} onClick={() => move("guia")}>📦 Pasar a guía</button>
+          )}
+          {(o.estado === "guia" || o.estado === "despachado") && (
+            <>
+              <button className="pb-btn dk" onClick={copiar}>📋 Copiar datos WhatsApp</button>
+              {o.estado === "guia" && (
+                <div style={{ display: "flex", gap: 8, flex: 1, minWidth: 200 }}>
+                  <input className="pb-search" style={{ margin: 0, minWidth: 0, flex: 1 }} placeholder="N.º guía (opcional)" value={guia} onChange={(ev) => setGuia(ev.target.value)} />
+                  <button className="pb-btn gp" style={{ flex: "0 0 auto", minWidth: 0, padding: "12px 16px" }} disabled={busy} onClick={despachar}>🚚 Despachar</button>
+                </div>
+              )}
+            </>
+          )}
+          {o.estado === "entregado" && <div style={{ flex: 1, textAlign: "center", color: "var(--green)", fontWeight: 800, padding: 8 }}>✅ Entregado</div>}
+          {o.estado !== "cancelado" && o.estado !== "entregado" && (
+            <button className="pb-btn out" disabled={busy} onClick={() => { if (confirm("¿Cancelar este pedido?")) move("cancelado"); }}>Cancelar</button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

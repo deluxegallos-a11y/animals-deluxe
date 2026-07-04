@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import {
   products, categories, orders, orderItems, customers, advisors, promotions, storeConfig, integrations, auditLog, reviews, adMap,
@@ -200,6 +200,18 @@ export async function updateOrderStatus(id: string, estado: string) {
   await logAudit("cambiar_estado_pedido", "orders", { id, estado });
   revalidatePath("/pedidos");
   revalidatePath("/dashboard");
+}
+
+/** Cambia el estado de VARIOS pedidos a la vez (acción masiva del panel). */
+export async function bulkUpdateStatus(ids: string[], estado: string): Promise<{ ok: boolean; count: number }> {
+  await requireUser();
+  const clean = (ids || []).filter(Boolean);
+  if (!db || !clean.length) return { ok: false, count: 0 };
+  await db.update(orders).set({ estado, updatedAt: new Date() }).where(inArray(orders.id, clean));
+  await logAudit("cambiar_estado_masivo", "orders", { ids: clean, estado });
+  revalidatePath("/pedidos");
+  revalidatePath("/dashboard");
+  return { ok: true, count: clean.length };
 }
 
 export interface DespachoResult {
