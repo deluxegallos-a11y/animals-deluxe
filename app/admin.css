@@ -577,3 +577,14 @@
 [data-theme="dark"] .adm .pb-kpi .num,[data-theme="dark"] .adm .crm-stage .n,[data-theme="dark"] .adm .kpi-big{ background:linear-gradient(135deg,#EDF1F8,#AEB9C9);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent }
 [data-theme="dark"] .adm .crm-tagp{ background:#10151D;border-color:#2A3446;color:var(--ink-2) }
 [data-theme="dark"] .adm .empty{ color:var(--muted) }
+
+/* ============ Productos — masonry Pinterest + animación ============ */
+.adm .prodgrid{columns:3 290px;column-gap:18px}
+@media (max-width:900px){.adm .prodgrid{columns:2 240px}}
+@media (max-width:560px){.adm .prodgrid{columns:1}}
+.adm .prodgrid .treat{break-inside:avoid;margin-bottom:18px;animation:crmIn .5s both;transition:transform .18s cubic-bezier(.2,.9,.3,1),box-shadow .18s ease,border-color .18s ease}
+.adm .prodgrid .treat:hover{transform:translateY(-5px);box-shadow:0 2px 8px -2px rgba(16,24,40,.12),0 26px 54px -26px rgba(47,107,255,.42),inset 0 1px 0 rgba(255,255,255,.8);border-color:var(--blue-3)}
+
+/* Entrada suave universal en todas las páginas (tarjetas + encabezado) */
+.adm .content > .card, .adm .content > .pagehead, .adm .content > .page-head{ animation:crmIn .4s both }
+.adm .content > .card{ animation-delay:.05s }
