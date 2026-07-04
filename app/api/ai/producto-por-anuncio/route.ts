@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { eq, and, asc } from "drizzle-orm";
-import { withBridge, audit, logEvent } from "@/lib/ai/bridge";
+import { withBridge, audit, logEvent, recordInterest } from "@/lib/ai/bridge";
 import { db } from "@/lib/db/client";
 import { adMap } from "@/lib/db/schema";
 import { getProducts } from "@/lib/ai/data";
@@ -18,7 +18,7 @@ export const POST = withBridge(
   z.object({
     ad_id: z.union([z.string(), z.number()]).transform((v) => String(v)).optional().default(""),
   }),
-  async ({ body }) => {
+  async ({ body, customer }) => {
     const adId = body.ad_id.trim();
     const catalog = await getProducts();
 
@@ -43,6 +43,7 @@ export const POST = withBridge(
       .filter((p): p is NonNullable<typeof p> => !!p);
 
     await logEvent("producto_por_anuncio", { ad_id: adId, match: productos.map((p) => p.slug) });
+    if (productos.length) await recordInterest(customer.id, productos.map((p) => p.slug)); // CRM
 
     if (!productos.length) {
       // ad_id no mapeado (o sin ad_id): SILENCIO por esta vía (mensaje:"") para que el

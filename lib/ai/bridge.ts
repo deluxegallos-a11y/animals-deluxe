@@ -9,7 +9,7 @@
    - Helpers audit_log + events
    =========================================================== */
 import { NextRequest, NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db/client";
 import { customers, auditLog, events, orderAttempts } from "@/lib/db/schema";
@@ -99,6 +99,23 @@ export async function updateOrderAttempt(id: string | null, patch: { resultado?:
     await db.update(orderAttempts).set({
       resultado: patch.resultado, motivo: (patch.motivo || "").slice(0, 500), ref: patch.ref,
     }).where(eq(orderAttempts.id, id));
+  } catch { /* noop */ }
+}
+
+/** CRM: registra que un cliente vio uno o varios productos (para la etapa "interesado"
+ *  y la segmentación por producto de interés). Fail-soft. */
+export async function recordInterest(customerId: string, slugs: string[]): Promise<void> {
+  if (!db || !customerId || customerId.startsWith("demo-") || !slugs.length) return;
+  try {
+    const [c] = await db.select({ prev: customers.productosInteres, estado: customers.estado }).from(customers).where(eq(customers.id, customerId)).limit(1);
+    const prev = Array.isArray(c?.prev) ? (c!.prev as string[]) : [];
+    const merged = Array.from(new Set([...slugs.filter(Boolean), ...prev])).slice(0, 25);
+    await db.update(customers).set({
+      productosInteres: merged,
+      ultimoProductoVisto: slugs[0] || "",
+      // si era solo "nuevo", ahora mostró interés
+      estado: c?.estado === "cliente" ? "cliente" : "interesado",
+    }).where(eq(customers.id, customerId));
   } catch { /* noop */ }
 }
 
@@ -231,7 +248,7 @@ export function withBridge<S extends z.ZodTypeAny>(
       const [found] = await db.select().from(customers).where(eq(customers.uchatSubId, body.sub_id)).limit(1);
       if (found) {
         customer = found;
-        const set: Record<string, unknown> = { ultimoContacto: new Date() };
+        const set: Record<string, unknown> = { ultimoContacto: new Date(), interacciones: sql`coalesce(${customers.interacciones},0) + 1` };
         if (contacto.nombre) set.nombre = contacto.nombre;
         if (contacto.telefono) set.telefono = contacto.telefono;
         if (contacto.ciudad) set.ciudad = contacto.ciudad;

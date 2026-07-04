@@ -155,6 +155,77 @@ export async function listCustomers() {
   return db.select().from(customers).orderBy(desc(customers.createdAt)).limit(300);
 }
 
+/* ---------- CRM: clientes con etapa calculada + productos ---------- */
+export type CrmStage = "nuevo" | "pidio_info" | "interesado" | "comprador" | "recompra" | "perdido";
+export type CrmRow = {
+  id: string; nombre: string; telefono: string; ciudad: string; canal: string;
+  etapa: CrmStage; etapaManual: string; notas: string; tags: string[];
+  numPedidos: number; totalGastado: number; ultimaCompra: Date | null;
+  productosComprados: { slug: string; name: string }[];
+  productosInteres: { slug: string; name: string }[];
+  interacciones: number; createdAt: Date | null; ultimoContacto: Date | null;
+};
+
+export function deriveStage(numPedidos: number, interes: number, interacciones: number, diasSinContacto: number, manual: string): CrmStage {
+  if (manual) return manual as CrmStage;
+  if (numPedidos >= 2) return "recompra";
+  if (numPedidos === 1) return "comprador";
+  if (diasSinContacto > 30) return "perdido";
+  if (interes > 0) return "interesado";
+  if (interacciones > 0) return "pidio_info";
+  return "nuevo";
+}
+
+export async function listCRM(): Promise<CrmRow[]> {
+  if (!db) return [];
+  const [custs, prods] = await Promise.all([
+    db.select().from(customers).orderBy(desc(customers.ultimoContacto)).limit(2000),
+    db.select({ slug: products.slug, name: products.name }).from(products),
+  ]);
+  const nameOf = new Map(prods.map((p) => [p.slug, p.name]));
+
+  // Agregados de pedidos (no cancelados) por cliente
+  const aggs = await db
+    .select({ cid: orders.customerId, n: sql<number>`count(*)::int`, total: sql<number>`coalesce(sum(total_cop),0)::int`, last: sql<Date>`max(created_at)` })
+    .from(orders)
+    .where(sql`customer_id is not null and coalesce(estado,'') <> 'cancelado'`)
+    .groupBy(orders.customerId);
+  const aggMap = new Map(aggs.map((a) => [a.cid as string, a]));
+
+  // Productos comprados por cliente
+  const bought = await db
+    .select({ cid: orders.customerId, slug: orderItems.productSlug })
+    .from(orderItems)
+    .innerJoin(orders, eq(orderItems.orderId, orders.id))
+    .where(sql`orders.customer_id is not null`);
+  const boughtMap = new Map<string, Set<string>>();
+  for (const b of bought) {
+    if (!b.cid) continue;
+    const set = boughtMap.get(b.cid) || new Set<string>();
+    if (b.slug) set.add(b.slug);
+    boughtMap.set(b.cid, set);
+  }
+
+  const now = Date.now();
+  const resolve = (slugs: string[]) => slugs.filter(Boolean).map((s) => ({ slug: s, name: nameOf.get(s) || s }));
+  return custs.map((c) => {
+    const a = aggMap.get(c.id);
+    const numPedidos = a?.n || 0;
+    const comprados = [...(boughtMap.get(c.id) || [])];
+    const interes = Array.isArray(c.productosInteres) ? (c.productosInteres as string[]) : [];
+    const dias = c.ultimoContacto ? (now - new Date(c.ultimoContacto).getTime()) / 86400_000 : 999;
+    const etapa = deriveStage(numPedidos, interes.length, c.interacciones || 0, dias, c.etapaManual || "");
+    return {
+      id: c.id, nombre: c.nombre || "", telefono: c.telefono || "", ciudad: c.ciudad || "",
+      canal: c.canalOrigen || "whatsapp", etapa, etapaManual: c.etapaManual || "",
+      notas: c.notas || "", tags: Array.isArray(c.tags) ? (c.tags as string[]) : [],
+      numPedidos, totalGastado: a?.total || 0, ultimaCompra: a?.last ? new Date(a.last) : null,
+      productosComprados: resolve(comprados), productosInteres: resolve(interes),
+      interacciones: c.interacciones || 0, createdAt: c.createdAt, ultimoContacto: c.ultimoContacto,
+    };
+  });
+}
+
 /* ---------- Conversaciones ---------- */
 export async function listConversations() {
   if (!db) return [];

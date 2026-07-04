@@ -119,9 +119,17 @@ export const customers = pgTable("customers", {
   departamento: text("departamento").default(""),
   ciudad: text("ciudad").default(""),
   direccion: text("direccion").default(""),
-  canalOrigen: text("canal_origen").default("whatsapp"), // whatsapp | instagram | web
+  canalOrigen: text("canal_origen").default("whatsapp"), // whatsapp | messenger | web
   estado: text("estado").default("nuevo"), // nuevo | interesado | cliente
   notas: text("notas").default(""),
+  // --- CRM ---
+  etapaManual: text("etapa_manual").default(""), // override manual de la etapa calculada
+  ultimoProductoVisto: text("ultimo_producto_visto").default(""),
+  productosInteres: jsonb("productos_interes").default([]), // slugs de productos que vio
+  tags: jsonb("tags").default([]),
+  interacciones: integer("interacciones").default(0),
+  totalGastado: integer("total_gastado").default(0),
+  numPedidos: integer("num_pedidos").default(0),
   ultimoContacto: timestamp("ultimo_contacto", { withTimezone: true }).defaultNow(),
   createdAt: now(),
 });

@@ -1,16 +1,17 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import {
-  products, categories, orders, orderItems, customers, advisors, promotions, storeConfig, integrations, auditLog, reviews, adMap,
+  products, categories, orders, orderItems, customers, advisors, promotions, coupons, storeConfig, integrations, auditLog, reviews, adMap,
   type Presentacion, type Ingrediente, type FaqItem, type CiudadCobertura, type CuentaBancaria,
 } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth";
 import { encrypt } from "@/lib/crypto";
 import { syncProductToShopify, archiveProductInShopify, retryPendingProducts } from "@/lib/shopify-sync";
 import { notificarDespacho, type NotifyResult } from "@/lib/ai/notificaciones";
+import { uchatSendText } from "@/lib/uchat";
 
 /* ---------- helpers de parseo ---------- */
 function slugify(s: string): string {
@@ -444,4 +445,126 @@ export async function saveIntegration(formData: FormData) {
   await logAudit("guardar_integracion", "integrations", { proveedor });
   revalidatePath("/configuracion");
   return { ok: true };
+}
+
+/* ============================================================
+   CRM — clientes: alta manual, importación masiva, etapa,
+   notas/tags, cupón por segmento y envío WhatsApp por segmento.
+   ============================================================ */
+const digits = (s: string) => (s || "").replace(/[^0-9]/g, "");
+
+export async function crearClienteManual(data: {
+  nombre?: string; telefono?: string; ciudad?: string; canal?: string; etapa?: string; notas?: string;
+}): Promise<{ ok: boolean; error?: string }> {
+  await requireUser();
+  if (!db) return { ok: false, error: "Sin base de datos" };
+  const nombre = (data.nombre || "").trim();
+  const telefono = (data.telefono || "").trim();
+  if (!nombre && !telefono) return { ok: false, error: "Pon al menos nombre o teléfono" };
+  await db.insert(customers).values({
+    uchatSubId: "manual:" + (digits(telefono) || Date.now().toString()),
+    nombre, telefono, ciudad: (data.ciudad || "").trim(),
+    canalOrigen: data.canal || "manual", estado: "nuevo",
+    etapaManual: data.etapa || "", notas: (data.notas || "").trim(), ultimoContacto: new Date(),
+  }).onConflictDoNothing();
+  await logAudit("crear_cliente_manual", "customers", { nombre, telefono });
+  revalidatePath("/clientes");
+  return { ok: true };
+}
+
+/** Importación masiva. Acepta líneas "nombre, telefono, ciudad" o con encabezado. */
+export async function importarClientes(texto: string): Promise<{ ok: boolean; creados: number; error?: string }> {
+  await requireUser();
+  if (!db) return { ok: false, creados: 0, error: "Sin base de datos" };
+  const raw = (texto || "").split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  if (!raw.length) return { ok: false, creados: 0, error: "Pega al menos una línea" };
+  // ¿encabezado? detecta columnas
+  let cols = ["nombre", "telefono", "ciudad"];
+  const first = raw[0].toLowerCase();
+  const hasHeader = /nombre|tel|celular|ciudad|nom|phone/.test(first) && !/[0-9]{6,}/.test(first);
+  if (hasHeader) { cols = raw.shift()!.split(/[,;\t]/).map((c) => c.trim().toLowerCase()); }
+  const idx = (names: string[]) => cols.findIndex((c) => names.some((n) => c.includes(n)));
+  const iN = idx(["nombre", "nom", "name"]);
+  const iT = idx(["tel", "celular", "phone", "whats"]);
+  const iC = idx(["ciudad", "city", "municipio"]);
+  let creados = 0;
+  for (const line of raw) {
+    const parts = line.split(/[,;\t]/).map((p) => p.trim());
+    const nombre = (iN >= 0 ? parts[iN] : parts[0]) || "";
+    const telefono = (iT >= 0 ? parts[iT] : parts[1]) || "";
+    const ciudad = (iC >= 0 ? parts[iC] : parts[2]) || "";
+    if (!nombre && !telefono) continue;
+    try {
+      await db.insert(customers).values({
+        uchatSubId: "import:" + (digits(telefono) || `${Date.now()}-${creados}`),
+        nombre, telefono, ciudad, canalOrigen: "import", estado: "nuevo", ultimoContacto: new Date(),
+      }).onConflictDoNothing();
+      creados++;
+    } catch { /* fila inválida, continúa */ }
+  }
+  await logAudit("importar_clientes", "customers", { creados });
+  revalidatePath("/clientes");
+  return { ok: true, creados };
+}
+
+export async function cambiarEtapaCliente(id: string, etapa: string): Promise<{ ok: boolean }> {
+  await requireUser();
+  if (!db || !id) return { ok: false };
+  // "" = quitar override (vuelve a la etapa automática)
+  await db.update(customers).set({ etapaManual: etapa || "" }).where(eq(customers.id, id));
+  await logAudit("cambiar_etapa_cliente", "customers", { id, etapa });
+  revalidatePath("/clientes");
+  return { ok: true };
+}
+
+export async function guardarNotasCliente(id: string, notas: string, tags: string[]): Promise<{ ok: boolean }> {
+  await requireUser();
+  if (!db || !id) return { ok: false };
+  await db.update(customers).set({ notas: notas || "", tags: (tags || []).filter(Boolean).slice(0, 20) }).where(eq(customers.id, id));
+  revalidatePath("/clientes");
+  return { ok: true };
+}
+
+/** Crea un cupón de descuento (para un segmento del CRM). */
+export async function crearCuponSegmento(data: {
+  codigo: string; tipo: "porcentaje" | "fijo"; valor: number; usosMax?: number; diasVence?: number;
+}): Promise<{ ok: boolean; codigo?: string; error?: string }> {
+  await requireUser();
+  if (!db) return { ok: false, error: "Sin base de datos" };
+  const codigo = (data.codigo || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (!codigo) return { ok: false, error: "Código inválido" };
+  const valor = Math.max(0, Math.floor(data.valor || 0));
+  if (!valor) return { ok: false, error: "El valor debe ser mayor a 0" };
+  const vence = data.diasVence ? new Date(Date.now() + data.diasVence * 86400_000) : null;
+  try {
+    await db.insert(coupons).values({
+      codigo, tipo: data.tipo, valor, activo: true,
+      usosMax: data.usosMax || null, vence,
+    });
+  } catch {
+    return { ok: false, error: "Ese código ya existe" };
+  }
+  await logAudit("crear_cupon_segmento", "coupons", { codigo, tipo: data.tipo, valor });
+  revalidatePath("/clientes");
+  return { ok: true, codigo };
+}
+
+/** Envía un mensaje por WhatsApp (bot UChat) a un segmento de clientes. Fail-soft. */
+export async function enviarWhatsAppSegmento(ids: string[], mensaje: string): Promise<{ ok: boolean; enviados: number; fallidos: number; error?: string }> {
+  await requireUser();
+  if (!db) return { ok: false, enviados: 0, fallidos: 0, error: "Sin base de datos" };
+  const clean = (ids || []).filter(Boolean);
+  const texto = (mensaje || "").trim();
+  if (!clean.length || !texto) return { ok: false, enviados: 0, fallidos: 0, error: "Faltan destinatarios o mensaje" };
+  const rows = await db.select({ sub: customers.uchatSubId }).from(customers).where(inArray(customers.id, clean));
+  let enviados = 0, fallidos = 0;
+  for (const r of rows) {
+    const sub = r.sub || "";
+    // solo suscriptores reales del bot (no importados/manuales)
+    if (!sub || sub.startsWith("manual:") || sub.startsWith("import:") || sub.startsWith("web:")) { fallidos++; continue; }
+    const res = await uchatSendText(sub, texto);
+    if (res.ok) enviados++; else fallidos++;
+  }
+  await logAudit("whatsapp_segmento", "customers", { destinatarios: clean.length, enviados, fallidos });
+  return { ok: true, enviados, fallidos };
 }

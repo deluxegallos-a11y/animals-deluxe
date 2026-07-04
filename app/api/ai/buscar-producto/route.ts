@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { withBridge, audit, logEvent } from "@/lib/ai/bridge";
+import { withBridge, audit, logEvent, recordInterest } from "@/lib/ai/bridge";
 import { getProducts } from "@/lib/ai/data";
 import { searchProducts } from "@/lib/ai/search";
 import { publicProduct, suggestion, emptyProduct, richMensaje } from "@/lib/ai/present";
@@ -9,9 +9,10 @@ export const dynamic = "force-dynamic";
 
 export const POST = withBridge(
   z.object({ q: z.string().optional().default("") }),
-  async ({ body }) => {
+  async ({ body, customer }) => {
     const catalog = await getProducts();
     const r = searchProducts(body.q, catalog);
+    if (r.product) await recordInterest(customer.id, [r.product.slug]); // CRM: registró interés
 
     const sugerencias = r.ranked
       .filter((x) => x.product.slug !== r.product?.slug)
