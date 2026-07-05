@@ -8,6 +8,7 @@ import {
   TrendingUp, Package, Search, Filter, CheckCircle2, Trophy,
 } from "lucide-react";
 import { cop } from "@/lib/ai/format";
+import type { Analytics } from "@/lib/queries";
 
 type Dash = {
   pedidosHoy: number; pedidosSemana: number; ingresosCop: number; leadsNuevos: number;
@@ -37,7 +38,7 @@ const card: Variants = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0
 const stagger: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.07 } } };
 const ini = (s: string) => (s || "?").trim().charAt(0).toUpperCase();
 
-export function DashboardView({ d }: { d: Dash }) {
+export function DashboardView({ d, a }: { d: Dash; a: Analytics }) {
   const maxQ = Math.max(1, ...d.topProductos.map((t) => t.cantidad));
   const topBars = d.topProductos.slice(0, 7);
 
@@ -86,6 +87,9 @@ export function DashboardView({ d }: { d: Dash }) {
           <Link href="/clientes" className="foot">Ver clientes <ArrowRight size={16} /></Link>
         </motion.div>
       </motion.div>
+
+      {/* ---- Analítica: tráfico vs ventas por fuente ---- */}
+      <Analitica a={a} />
 
       {/* ---- lista top productos + chart ---- */}
       <motion.div className="drow" initial="hidden" animate="show" variants={stagger}>
@@ -162,6 +166,80 @@ export function DashboardView({ d }: { d: Dash }) {
           </table>
         ) : <div className="empty2"><div className="ico"><ShoppingBag size={22} /></div><h4>Sin pedidos aún</h4><p>Cuando el bot cree pedidos aparecerán aquí.</p></div>}
       </motion.div>
+    </div>
+  );
+}
+
+/* ============ Analítica: tráfico vs ventas por fuente ============ */
+function Analitica({ a }: { a: Analytics }) {
+  const totalVis = a.porFuente.reduce((s, f) => s + f.visitas, 0);
+  const sinVentaWeb = a.pedidosWeb === 0 && a.visitas30d > 0;
+  const canalColor: Record<string, string> = { whatsapp: "#16C784", messenger: "#0084FF", web: "#7A3CFF", asesor: "#F79009" };
+  return (
+    <div className="ana-wrap" style={{ margin: "6px 0 22px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "0 0 12px" }}>
+        <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, letterSpacing: "-.3px" }}>📊 Tráfico vs ventas por fuente</h3>
+        <span style={{ fontSize: 12, color: "#8A93A5" }}>últimos 30 días · hoy {a.visitasHoy} visitas</span>
+      </div>
+
+      {/* KPIs */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 13, marginBottom: 14 }}>
+        <AnaKpi ic="👀" num={a.visitas30d.toLocaleString("es-CO")} lbl="Visitas (30d)" sub={`${a.visitas7d} en 7 días`} color="#2F6BFF" />
+        <AnaKpi ic="🌐" num={String(a.pedidosWeb)} lbl="Pedidos por WEB" sub="tienda + landings" color={a.pedidosWeb ? "#16C784" : "#F04438"} />
+        <AnaKpi ic="📱" num={String(a.pedidosWhatsapp)} lbl="Pedidos por WhatsApp" color="#16C784" />
+        <AnaKpi ic="📈" num={`${totalVis ? Math.round((a.pedidosWeb / totalVis) * 1000) / 10 : 0}%`} lbl="Conversión web" sub={`${a.pedidosWeb}/${totalVis} visitas`} color="#7A3CFF" />
+      </div>
+
+      {sinVentaWeb && (
+        <div style={{ background: "#FEECEB", border: "1px solid #F04438", color: "#B42318", borderRadius: 12, padding: "12px 15px", fontSize: 13.5, marginBottom: 14, fontWeight: 600 }}>
+          ⚠️ Tienes <b>{a.visitas30d.toLocaleString("es-CO")} visitas</b> a la web pero <b>0 pedidos por la web</b> en 30 días. La publicidad trae tráfico pero no convierte: revisa el checkout web / precios / botón de compra, o si la gente prefiere cerrar por WhatsApp.
+        </div>
+      )}
+
+      {/* Tabla por fuente */}
+      <div className="panel" style={{ padding: 0, overflow: "hidden" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead><tr>
+            <th style={thS}>Fuente</th><th style={{ ...thS, textAlign: "right" }}>Visitas</th><th style={{ ...thS, textAlign: "right" }}>Pedidos</th><th style={{ ...thS, textAlign: "right" }}>Conversión</th><th style={{ ...thS, width: "34%" }}>Tráfico</th>
+          </tr></thead>
+          <tbody>
+            {a.porFuente.map((f) => {
+              const pct = totalVis ? (f.visitas / totalVis) * 100 : 0;
+              return (
+                <tr key={f.fuente}>
+                  <td style={tdS}><b>{f.label}</b></td>
+                  <td style={{ ...tdS, textAlign: "right" }}>{f.visitas.toLocaleString("es-CO")}</td>
+                  <td style={{ ...tdS, textAlign: "right", fontWeight: 800, color: f.pedidos ? "#16C784" : "#98A2B3" }}>{f.pedidos}</td>
+                  <td style={{ ...tdS, textAlign: "right", color: f.conversion ? "#101828" : "#98A2B3", fontWeight: 700 }}>{f.conversion}%</td>
+                  <td style={tdS}><div style={{ height: 8, background: "#EEF1F6", borderRadius: 20 }}><div style={{ width: `${pct}%`, height: "100%", background: "linear-gradient(90deg,#5C8BFF,#2F6BFF)", borderRadius: 20 }} /></div></td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Ventas por canal */}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+        {a.ventasPorCanal.map((c) => (
+          <span key={c.canal} style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "#fff", border: "1px solid #E6E8EE", borderRadius: 20, padding: "7px 13px", fontSize: 12.5, fontWeight: 700 }}>
+            <span style={{ width: 9, height: 9, borderRadius: "50%", background: canalColor[c.canal] || "#8A93A5" }} /> {c.canal}: <b>{c.n}</b> ({cop(c.total)})
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+const thS: React.CSSProperties = { textAlign: "left", fontSize: 11, textTransform: "uppercase", letterSpacing: ".4px", color: "#8A93A5", fontWeight: 700, padding: "11px 14px", background: "#F4F6FB", borderBottom: "1px solid #E6E8EE" };
+const tdS: React.CSSProperties = { padding: "11px 14px", borderBottom: "1px solid #F0F2F7", fontSize: 13.5, color: "#344054" };
+function AnaKpi({ ic, num, lbl, sub, color }: { ic: string; num: string; lbl: string; sub?: string; color: string }) {
+  return (
+    <div style={{ background: "#fff", border: "1px solid #E6E8EE", borderRadius: 14, padding: "14px 16px", position: "relative", overflow: "hidden" }}>
+      <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 4, background: color }} />
+      <div style={{ fontSize: 16 }}>{ic}</div>
+      <div style={{ fontSize: 25, fontWeight: 800, color: "#101828", letterSpacing: "-.5px", marginTop: 3 }}>{num}</div>
+      <div style={{ fontSize: 12, color: "#667085", fontWeight: 600 }}>{lbl}</div>
+      {sub ? <div style={{ fontSize: 10.5, color: "#98A2B3", marginTop: 2 }}>{sub}</div> : null}
     </div>
   );
 }

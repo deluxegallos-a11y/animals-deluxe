@@ -99,6 +99,18 @@ export const orderAttempts = pgTable("order_attempts", {
   ref: text("ref").default(""),
 });
 
+/* 2e. visits: analítica de tráfico (visitas a la web y landings). */
+export const visits = pgTable("visits", {
+  id: id(),
+  path: text("path").default(""),
+  fuente: text("fuente").default("otro"), // tienda | gallos | perros | caballos | producto | otro
+  referrer: text("referrer").default(""),
+  utmSource: text("utm_source").default(""),
+  utmCampaign: text("utm_campaign").default(""),
+  sessionId: text("session_id").default(""),
+  createdAt: now(),
+});
+
 /* 2d. Despacho / MiPaquete: credencial, empresa, direcciones, DANE, guías, tracking. */
 export const mpCredenciales = pgTable("mp_credenciales", {
   id: text("id").primaryKey().default("active"),
@@ -276,6 +288,7 @@ export const orders = pgTable(
     estado: text("estado").default("remision"),
     // FLUJO: remision → aprobado (orden de venta) → guia → despachado → entregado (+ cancelado)
     canal: text("canal").default("whatsapp"), // whatsapp | messenger | web | asesor
+    fuente: text("fuente").default(""), // tienda | gallos | perros | caballos (página de origen del pedido web)
     facturaNumero: integer("factura_numero"), // # de factura estable (asignado al facturar)
     metodoPago: text("metodo_pago").default("contraentrega"), // contraentrega | anticipado
     subtotalCop: integer("subtotal_cop").default(0),

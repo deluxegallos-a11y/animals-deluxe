@@ -6,7 +6,7 @@ import { desc, eq, gte, sql, asc, inArray } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import {
   products, categories, orders, orderItems, customers, advisors,
-  promotions, conversations, storeConfig, integrations, adMap, orderAttempts, mpShipments, configEmpresa, mpAddresses,
+  promotions, conversations, storeConfig, integrations, adMap, orderAttempts, mpShipments, configEmpresa, mpAddresses, visits,
 } from "@/lib/db/schema";
 import { demoProducts, demoCategories } from "@/lib/demo-data";
 import type { ProductView } from "@/lib/ai/types";
@@ -63,6 +63,51 @@ export async function getDashboard(): Promise<DashboardKpis> {
     leadsNuevos: leads?.n ?? 0,
     topProductos: top.map((t) => ({ name: t.name || "—", cantidad: t.cantidad ?? 0 })),
     ultimosPedidos: ult.map((o) => ({ ref: o.ref, nombre: o.nombre || "—", total: o.total ?? 0, estado: o.estado || "" })),
+  };
+}
+
+/* ---------- Analítica: tráfico (visitas) vs ventas por fuente ---------- */
+export type FuenteRow = { fuente: string; label: string; visitas: number; pedidos: number; conversion: number };
+export type Analytics = {
+  visitas30d: number; visitasHoy: number; visitas7d: number;
+  pedidosWeb: number; pedidosWhatsapp: number; pedidosTotal: number;
+  porFuente: FuenteRow[];
+  ventasPorCanal: { canal: string; n: number; total: number }[];
+};
+const FUENTES: { key: string; label: string }[] = [
+  { key: "tienda", label: "Tienda web (/)" }, { key: "gallos", label: "Landing Gallos" },
+  { key: "perros", label: "Landing Perros" }, { key: "caballos", label: "Landing Caballos" },
+];
+export async function getAnalytics(): Promise<Analytics> {
+  const empty: Analytics = { visitas30d: 0, visitasHoy: 0, visitas7d: 0, pedidosWeb: 0, pedidosWhatsapp: 0, pedidosTotal: 0, porFuente: FUENTES.map((f) => ({ fuente: f.key, label: f.label, visitas: 0, pedidos: 0, conversion: 0 })), ventasPorCanal: [] };
+  if (!db) return empty;
+  const d30 = new Date(Date.now() - 30 * 86400_000);
+  const d7 = new Date(Date.now() - 7 * 86400_000);
+  const d0 = new Date(); d0.setHours(0, 0, 0, 0);
+
+  const [visF, [vHoy], [v7], pedCanal, pedWebF] = await Promise.all([
+    db.select({ f: visits.fuente, n: sql<number>`count(*)::int` }).from(visits).where(gte(visits.createdAt, d30)).groupBy(visits.fuente),
+    db.select({ n: sql<number>`count(*)::int` }).from(visits).where(gte(visits.createdAt, d0)),
+    db.select({ n: sql<number>`count(*)::int` }).from(visits).where(gte(visits.createdAt, d7)),
+    db.select({ canal: orders.canal, n: sql<number>`count(*)::int`, total: sql<number>`coalesce(sum(total_cop),0)::int` }).from(orders).where(gte(orders.createdAt, d30)).groupBy(orders.canal),
+    db.select({ f: orders.fuente, n: sql<number>`count(*)::int` }).from(orders).where(sql`canal = 'web' and created_at > ${d30}`).groupBy(orders.fuente),
+  ]);
+  const visMap = new Map(visF.map((r) => [r.f || "otro", r.n]));
+  const pedWebMap = new Map(pedWebF.map((r) => [(r.f || "tienda"), r.n])); // web sin fuente → tienda
+  const porFuente: FuenteRow[] = FUENTES.map((f) => {
+    const visitas = visMap.get(f.key) || 0;
+    const pedidos = pedWebMap.get(f.key) || 0;
+    return { fuente: f.key, label: f.label, visitas, pedidos, conversion: visitas ? Math.round((pedidos / visitas) * 1000) / 10 : 0 };
+  });
+  const visitas30d = visF.reduce((s, r) => s + r.n, 0);
+  const pedidosWeb = pedCanal.filter((r) => r.canal === "web").reduce((s, r) => s + r.n, 0);
+  const pedidosWhatsapp = pedCanal.filter((r) => r.canal === "whatsapp").reduce((s, r) => s + r.n, 0);
+  const pedidosTotal = pedCanal.reduce((s, r) => s + r.n, 0);
+  return {
+    visitas30d, visitasHoy: vHoy?.n ?? 0, visitas7d: v7?.n ?? 0,
+    pedidosWeb, pedidosWhatsapp, pedidosTotal,
+    porFuente,
+    ventasPorCanal: pedCanal.map((r) => ({ canal: r.canal || "otro", n: r.n, total: r.total })),
   };
 }
 
