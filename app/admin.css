@@ -334,17 +334,18 @@
 .adm .pb-search{margin-left:auto;padding:9px 14px;border:1px solid var(--line-2);border-radius:11px;font-size:13px;min-width:210px;background:var(--card);color:var(--ink);outline:none}
 .adm .pb-search:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-soft)}
 
-.adm .pb-headrow{display:grid;grid-template-columns:34px 132px 1fr 118px 96px 128px 22px;gap:12px;padding:2px 16px 8px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
-.adm .pb-list{display:flex;flex-direction:column;gap:8px}
-.adm .pb-row{display:grid;grid-template-columns:34px 132px 1fr 118px 96px 128px 22px;align-items:center;gap:12px;padding:12px 16px;background:var(--card);border:1px solid var(--line);border-radius:14px;cursor:pointer;transition:.14s}
-.adm .pb-row:hover{border-color:var(--blue-3);box-shadow:var(--shadow);transform:translateY(-1px)}
+.adm .pb-headrow{display:grid;grid-template-columns:34px 128px 1fr 128px 92px 122px 66px;gap:12px;padding:2px 16px 10px;font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.adm .pb-list{display:flex;flex-direction:column;gap:7px}
+.adm .pb-row{display:grid;grid-template-columns:34px 128px 1fr 128px 92px 122px 66px;align-items:center;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:14px;cursor:pointer;transition:border-color .15s ease, box-shadow .15s ease}
+.adm .pb-row:hover{border-color:var(--blue-3);box-shadow:0 2px 8px rgba(16,24,40,.06)}
 .adm .pb-row.sel{border-color:var(--blue);background:var(--blue-soft)}
 .adm .pb-check{width:18px;height:18px;cursor:pointer;accent-color:var(--blue)}
 .adm .pb-chan{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:var(--ink-2)}
 .adm .pb-chan .dot{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:13px;color:#fff;flex:0 0 auto}
 .adm .pb-cli{min-width:0}
-.adm .pb-cli .nm{font-weight:700;color:var(--ink);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.adm .pb-cli .meta{font-weight:500;color:var(--muted);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adm .pb-cli .nm{font-weight:700;color:var(--ink);font-size:14px;display:flex;align-items:center;gap:6px;min-width:0}
+.adm .pb-cli .nm .nmt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.adm .pb-cli .meta{font-weight:500;color:var(--ink-2);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
 .adm .pb-pill{display:inline-block;padding:4px 11px;border-radius:20px;font-size:11px;font-weight:800;white-space:nowrap}
 .adm .pb-time{font-size:12px;color:var(--ink-2);text-align:right;line-height:1.25}
 .adm .pb-time .d{font-size:10px;color:var(--muted)}
@@ -494,7 +495,6 @@
 /* ============ CRM — tarjetas Pinterest + animaciones ============ */
 @keyframes crmIn{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
 @keyframes crmPop{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:none}}
-.adm .pb-row{animation:crmIn .4s both}
 .adm .crm-stage{animation:crmPop .4s both}
 .adm .crm-cards{columns:4 250px;column-gap:14px}
 .adm .crm-card{break-inside:avoid;margin-bottom:14px;background:linear-gradient(180deg,#fff,#fbfcfe);border:1px solid rgba(16,24,40,.075);border-radius:18px;padding:15px 16px;box-shadow:var(--shadow-sm),inset 0 1px 0 rgba(255,255,255,.7);cursor:pointer;animation:crmIn .45s both;transition:transform .18s cubic-bezier(.2,.9,.3,1),box-shadow .18s ease}
@@ -961,7 +961,7 @@
 @media (prefers-reduced-motion: reduce) { .pbflow-tab, .pbctrl-search, .pbctrl-new { transition: none; } }
 
 /* ---- Indicadores de estado en la fila + botón copiar ---- */
-.pb-tag { display: inline-flex; align-items: center; font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 999px; margin-left: 7px; letter-spacing: .2px; vertical-align: middle; }
+.pb-tag { display: inline-flex; align-items: center; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 999px; letter-spacing: .2px; vertical-align: middle; flex: 0 0 auto; white-space: nowrap; }
 .pb-tag.ok { background: #ECFDF3; color: #067647; }
 .pb-tag.ship { background: #F4EBFF; color: #6941C6; }
 .pb-copybtn { border: 1px solid #E4E7EC; background: #fff; width: 30px; height: 30px; border-radius: 9px; font-size: 14px; cursor: pointer; display: inline-grid; place-items: center; padding: 0; transition: background .15s ease, border-color .15s ease; }

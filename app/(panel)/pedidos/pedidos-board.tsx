@@ -198,7 +198,8 @@ export function PedidosBoard({ orders, catalog }: { orders: BoardOrder[]; catalo
                   <span className="pb-chan"><span className="dot" style={{ background: c.color }}>{c.ic}</span>{c.label}</span>
                   <span className="pb-cli">
                     <div className="nm">
-                      {o.nombre || "— sin nombre —"} {falta ? <span title={`Faltan: ${faltantes(o).join(", ")}`} style={{ color: "#F79009" }}>⚠</span> : null}
+                      <span className="nmt">{o.nombre || "— sin nombre —"}</span>
+                      {falta ? <span title={`Faltan: ${faltantes(o).join(", ")}`} style={{ color: "#F79009", flex: "0 0 auto" }}>⚠</span> : null}
                       {o.copiadoAt ? <span className="pb-tag ok" title={`Copiado a WhatsApp ${new Date(o.copiadoAt).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}`}>✓ copiado</span> : null}
                       {o.despachadoAt ? <span className="pb-tag ship">🚚 despachado</span> : null}
                     </div>
@@ -207,7 +208,7 @@ export function PedidosBoard({ orders, catalog }: { orders: BoardOrder[]; catalo
                   <span><span className="pb-pill" style={{ color: e.color, background: e.bg }}>{e.label}</span></span>
                   <span className="pb-time">{o.createdAt ? new Date(o.createdAt).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }) : "—"}<div className="d">{o.createdAt ? new Date(o.createdAt).toLocaleDateString("es-CO", { day: "2-digit", month: "2-digit" }) : ""}</div></span>
                   <span className="pb-total">{COP(o.total)}<div className="e">envío {o.envio ? COP(o.envio) : "incl."}</div></span>
-                  <span className="pb-chev" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span className="pb-chev" style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
                     <button className="pb-copybtn" onClick={async (ev) => { ev.stopPropagation(); const ok = await copy(mensajeGuia(o)); if (ok) await marcarCopiado([o.id]); flash(ok ? "📋 Copiado a WhatsApp" : "No se pudo copiar"); }} title="Copiar datos para WhatsApp">📋</button>
                     ›
                   </span>
