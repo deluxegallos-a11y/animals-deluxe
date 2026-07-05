@@ -178,6 +178,9 @@ export async function mpCrearGuia(p: MpCrearGuiaPayload): Promise<{ ok: boolean;
     deliveryCompany: p.deliveryCompanyId,
     locate: { originDaneCode: p.origin.locationCode, destinyDaneCode: p.destiny.locationCode, originCountryCode: CO, destinyCountryCode: CO },
     paymentType: p.paymentType,
+    // COD (102): valueCollection = lo que recauda el mensajero. Es el campo que MiPaquete exige
+    // para el contra entrega (sin él daba 537 "shipping cannot be paid").
+    valueCollection: p.paymentType === 102 ? p.collectionValue : 0,
     productInformation: { declaredValue: p.pkg.declaredValue, forbiddenProduct: false, height: p.pkg.height, large: p.pkg.length, width: p.pkg.width, weight: p.pkg.weight, productReference: p.pkg.reference, quantity: p.pkg.quantity },
     receiver: { name: p.destiny.name, surname: ".", cellPhone: p.destiny.phone, prefix: "+57", destinationAddress: p.destiny.address, email: p.destiny.email || "cliente@animalsdeluxe.com", nit: p.destiny.idNumber || ".", nitType: "CC" },
     requestPickup: "false",
