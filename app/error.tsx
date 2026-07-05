@@ -6,14 +6,19 @@ import { useEffect } from "react";
  *  (típico tras un deploy nuevo con un tab viejo abierto), recarga solo para
  *  traer los chunks nuevos. Para cualquier otro error, ofrece reintentar. */
 export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
-  const isChunk = error?.name === "ChunkLoadError" || /Loading chunk|Loading CSS chunk|dynamically imported module|import\(\) failed/i.test(error?.message || "");
+  const isChunk = error?.name === "ChunkLoadError" || /Loading chunk|Loading CSS chunk|dynamically imported module|import\(\) failed|Failed to fetch/i.test(error?.message || "");
   useEffect(() => {
     if (isChunk) {
-      const k = "ad-chunk-reload";
-      // evita bucle de recargas: máx 1 recarga automática
-      if (!sessionStorage.getItem(k)) { sessionStorage.setItem(k, "1"); window.location.reload(); }
-    } else {
-      try { sessionStorage.removeItem("ad-chunk-reload"); } catch { /* noop */ }
+      // Guarda por TIEMPO: recarga si no lo hicimos en los últimos 12s.
+      // Así se recupera aunque varias secciones tengan chunks viejos (tras muchos deploys),
+      // sin caer en bucle de recargas.
+      const k = "ad-chunk-reload-ts";
+      let last = 0;
+      try { last = Number(sessionStorage.getItem(k) || 0); } catch { /* noop */ }
+      if (Date.now() - last > 12000) {
+        try { sessionStorage.setItem(k, String(Date.now())); } catch { /* noop */ }
+        window.location.reload();
+      }
     }
   }, [isChunk]);
 

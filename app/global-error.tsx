@@ -5,11 +5,16 @@ import { useEffect } from "react";
 /** Error boundary de ÚLTIMO recurso (reemplaza el layout raíz). Igual que error.tsx
  *  pero envuelve <html>/<body>. Auto-recarga ante ChunkLoadError post-deploy. */
 export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
-  const isChunk = error?.name === "ChunkLoadError" || /Loading chunk|Loading CSS chunk|dynamically imported module|import\(\) failed/i.test(error?.message || "");
+  const isChunk = error?.name === "ChunkLoadError" || /Loading chunk|Loading CSS chunk|dynamically imported module|import\(\) failed|Failed to fetch/i.test(error?.message || "");
   useEffect(() => {
     if (isChunk) {
-      const k = "ad-chunk-reload";
-      if (!sessionStorage.getItem(k)) { sessionStorage.setItem(k, "1"); window.location.reload(); }
+      const k = "ad-chunk-reload-ts";
+      let last = 0;
+      try { last = Number(sessionStorage.getItem(k) || 0); } catch { /* noop */ }
+      if (Date.now() - last > 12000) {
+        try { sessionStorage.setItem(k, String(Date.now())); } catch { /* noop */ }
+        window.location.reload();
+      }
     }
   }, [isChunk]);
 
