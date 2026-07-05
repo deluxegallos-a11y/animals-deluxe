@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { withBridge, audit, logEvent, logOrderAttempt, updateOrderAttempt } from "@/lib/ai/bridge";
+import { sendMetaPurchase } from "@/lib/meta-capi";
 import { db } from "@/lib/db/client";
 import { customers } from "@/lib/db/schema";
 import { getProducts } from "@/lib/ai/data";
@@ -172,6 +173,12 @@ export const POST = withBridge(
     if (!order.reused) {
       await audit("crear_pedido", "orders", { ref: order.ref, total: order.total_cop });
       await logEvent("pedido_creado", { ref: order.ref, total: order.total_cop, metodo });
+      // Evento Purchase a Meta CAPI (fail-soft; entrena el pixel con ventas del bot).
+      const meta = await sendMetaPurchase({
+        ref: order.ref, valueCop: order.total_cop, phone: telefono, nombre, ciudad,
+        contentIds: order.items.map((it) => it.slug), actionSource: "business_messaging",
+      });
+      if (!meta.skipped) await logEvent(meta.ok ? "meta_purchase_ok" : "meta_purchase_error", { ref: order.ref, error: meta.error });
     }
     await updateOrderAttempt(attemptId, { resultado: "created", ref: order.ref });
 

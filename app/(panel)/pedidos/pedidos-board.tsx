@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { updateOrderStatus, bulkUpdateStatus, despacharPedido } from "../actions";
+import { updateOrderStatus, bulkUpdateStatus, despacharPedido, crearPedidoManual } from "../actions";
 
 export type BoardOrder = {
   id: string; ref: string; nombre: string; telefono: string; cedula: string; ciudad: string; direccion: string;
@@ -11,6 +11,7 @@ export type BoardOrder = {
   guia: string; transportadora: string; despachadoAt: string | null; clienteNotificado: boolean;
   shopifyOrderName: string;
 };
+export type CatProd = { slug: string; name: string; presentaciones: { label: string; precio: number }[] };
 
 const COP = (n: number) => "$" + Number(n || 0).toLocaleString("es-CO");
 
@@ -18,6 +19,7 @@ const CHAN: Record<string, { label: string; color: string; ic: string }> = {
   whatsapp: { label: "WhatsApp", color: "#16C784", ic: "📱" },
   messenger: { label: "Messenger", color: "#0084FF", ic: "💬" },
   web: { label: "Página web", color: "#7A3CFF", ic: "🌐" },
+  asesor: { label: "Asesor (manual)", color: "#F79009", ic: "✍️" },
 };
 const chan = (c: string) => CHAN[c] || { label: c || "—", color: "#8A93A5", ic: "•" };
 
@@ -64,12 +66,13 @@ function sameDay(iso: string | null, ref: Date) {
 }
 async function copy(text: string) { try { await navigator.clipboard.writeText(text); return true; } catch { return false; } }
 
-export function PedidosBoard({ orders }: { orders: BoardOrder[] }) {
+export function PedidosBoard({ orders, catalog }: { orders: BoardOrder[]; catalog: CatProd[] }) {
   const [dia, setDia] = React.useState<"hoy" | "ayer" | "todos">("hoy");
-  const [canal, setCanal] = React.useState<"todos" | "whatsapp" | "messenger" | "web">("todos");
+  const [canal, setCanal] = React.useState<"todos" | "whatsapp" | "messenger" | "web" | "asesor">("todos");
   const [q, setQ] = React.useState("");
   const [sel, setSel] = React.useState<Set<string>>(new Set());
   const [openId, setOpenId] = React.useState<string | null>(null);
+  const [manualOpen, setManualOpen] = React.useState(false);
   const [bulkBusy, setBulkBusy] = React.useState(false);
   const [toast, setToast] = React.useState("");
 
@@ -122,13 +125,14 @@ export function PedidosBoard({ orders }: { orders: BoardOrder[] }) {
           ))}
         </div>
         <div className="pb-chips">
-          {(["todos", "whatsapp", "messenger", "web"] as const).map((c) => {
+          {(["todos", "whatsapp", "messenger", "web", "asesor"] as const).map((c) => {
             const info = c === "todos" ? { label: "Todos", color: "#475467", ic: "📋" } : chan(c);
             const on = canal === c;
             return <button key={c} className={"pb-chip" + (on ? " on" : "")} style={on ? { background: info.color } : { color: info.color }} onClick={() => setCanal(c)}>{info.ic} {info.label}</button>;
           })}
         </div>
         <input className="pb-search" placeholder="🔍 Buscar por nombre, ref, teléfono…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <button className="pb-btn gp" style={{ flex: "0 0 auto", minWidth: 0, padding: "10px 16px" }} onClick={() => setManualOpen(true)}>➕ Crear pedido manual</button>
       </div>
 
       {/* Barra de acciones masivas */}
@@ -177,6 +181,89 @@ export function PedidosBoard({ orders }: { orders: BoardOrder[] }) {
       {toast && <div style={{ position: "fixed", bottom: 22, left: "50%", transform: "translateX(-50%)", background: "#101828", color: "#fff", padding: "11px 20px", borderRadius: 12, fontWeight: 700, fontSize: 13.5, zIndex: 80, boxShadow: "var(--shadow)" }}>{toast}</div>}
 
       {open && <DetailModal o={open} onClose={() => setOpenId(null)} onToast={flash} />}
+      {manualOpen && <ManualOrderModal catalog={catalog} onClose={() => setManualOpen(false)} onToast={flash} />}
+    </div>
+  );
+}
+
+/* ---- Crear pedido manual (asesor humano) ---- */
+function ManualOrderModal({ catalog, onClose, onToast }: { catalog: CatProd[]; onClose: () => void; onToast: (m: string) => void }) {
+  const [f, setF] = React.useState({ nombre: "", cedula: "", telefono: "", ciudad: "", departamento: "", direccion: "", slug: "", presentacion: "", cantidad: "1", subId: "" });
+  const [pq, setPq] = React.useState("");
+  const [showList, setShowList] = React.useState(false);
+  const [busy, setBusy] = React.useState(false);
+  const [errs, setErrs] = React.useState<string[]>([]);
+  const [dup, setDup] = React.useState<{ ref: string } | null>(null);
+
+  const prod = catalog.find((p) => p.slug === f.slug);
+  const opts = catalog.filter((p) => p.name.toLowerCase().includes(pq.toLowerCase())).slice(0, 8);
+  const up = (k: string, v: string) => { setF((s) => ({ ...s, [k]: v })); setErrs((e) => e.filter((x) => x !== k)); };
+  const fld = (k: string): React.CSSProperties => ({ borderColor: errs.includes(k) ? "#F04438" : undefined, boxShadow: errs.includes(k) ? "0 0 0 3px #FEECEB" : undefined });
+
+  async function guardar(force: boolean) {
+    setBusy(true);
+    const r = await crearPedidoManual({
+      nombre: f.nombre, cedula: f.cedula, telefono: f.telefono, ciudad: f.ciudad, departamento: f.departamento,
+      direccion: f.direccion, slug: f.slug, presentacion: f.presentacion, cantidad: parseInt(f.cantidad) || 1, subId: f.subId,
+    }, force);
+    setBusy(false);
+    if (r.ok) { onToast(`✅ Pedido ${r.ref} creado${r.duplicate ? " (reusado)" : ""}`); onClose(); return; }
+    if (r.duplicate && r.ref) { setDup({ ref: r.ref }); return; }
+    if (r.campos) { setErrs(r.campos); onToast("Completa los campos en rojo"); return; }
+    onToast(r.error || "Error");
+  }
+
+  return (
+    <div className="pb-ov" onClick={onClose}>
+      <div className="pb-modal" style={{ maxWidth: 540 }} onClick={(e) => e.stopPropagation()}>
+        <div className="pb-mhead" style={{ background: "linear-gradient(135deg,#F79009,#B54708)" }}>
+          <button className="close" onClick={onClose}>×</button>
+          <div className="ref" style={{ fontSize: 19 }}>➕ Crear pedido manual</div>
+          <div className="tags"><span className="tag">✍️ Asesor · lo sube un humano</span></div>
+        </div>
+        <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <input className="crm-input" style={fld("nombre")} placeholder="Nombre completo *" value={f.nombre} onChange={(e) => up("nombre", e.target.value)} />
+            <input className="crm-input" style={fld("cedula")} placeholder="Cédula *" value={f.cedula} onChange={(e) => up("cedula", e.target.value)} />
+            <input className="crm-input" style={fld("telefono")} placeholder="Celular *" value={f.telefono} onChange={(e) => up("telefono", e.target.value)} />
+            <input className="crm-input" placeholder="Departamento" value={f.departamento} onChange={(e) => up("departamento", e.target.value)} />
+            <input className="crm-input" style={fld("ciudad")} placeholder="Ciudad *" value={f.ciudad} onChange={(e) => up("ciudad", e.target.value)} />
+            <input className="crm-input" style={{ ...fld("direccion") }} placeholder="Dirección / oficina *" value={f.direccion} onChange={(e) => up("direccion", e.target.value)} />
+          </div>
+
+          {/* Producto (buscador del catálogo real) */}
+          <div style={{ position: "relative" }}>
+            <input className="crm-input" style={fld("slug")} placeholder="Producto * (busca en el catálogo)" value={f.slug ? (prod?.name || "") : pq}
+              onFocus={() => setShowList(true)}
+              onChange={(e) => { setPq(e.target.value); up("slug", ""); setShowList(true); }} />
+            {showList && !f.slug && pq && opts.length ? (
+              <div className="pp-drop" style={{ position: "absolute", left: 0, right: 0, zIndex: 3 }}>
+                {opts.map((p) => <div key={p.slug} className="pp-opt" onClick={() => { up("slug", p.slug); setF((s) => ({ ...s, presentacion: p.presentaciones[0]?.label || "" })); setShowList(false); setPq(""); }}>{p.name}</div>)}
+              </div>
+            ) : null}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 10 }}>
+            <select className="crm-input" value={f.presentacion} onChange={(e) => up("presentacion", e.target.value)} disabled={!prod}>
+              {prod ? prod.presentaciones.map((x) => <option key={x.label} value={x.label}>{x.label} — {COP(x.precio)}</option>) : <option>Elige un producto</option>}
+            </select>
+            <input className="crm-input" type="number" min={1} placeholder="Cantidad" value={f.cantidad} onChange={(e) => up("cantidad", e.target.value)} />
+          </div>
+          <input className="crm-input" placeholder="(opcional) sub_id / WhatsApp del cliente — para enlazar su conversación" value={f.subId} onChange={(e) => up("subId", e.target.value)} />
+
+          {dup ? (
+            <div style={{ background: "#FFF4E5", border: "1px solid #F79009", borderRadius: 12, padding: 12, fontSize: 13 }}>
+              ⚠️ Ya existe un pedido similar <b>{dup.ref}</b> creado hace poco. ¿Crear de todas formas?
+              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                <button className="pb-btn gp" style={{ padding: "8px 14px" }} disabled={busy} onClick={() => guardar(true)}>Sí, crear igual</button>
+                <button className="pb-btn out" style={{ padding: "8px 14px" }} onClick={() => setDup(null)}>Cancelar</button>
+              </div>
+            </div>
+          ) : (
+            <button className="pb-btn gp" disabled={busy} onClick={() => guardar(false)}>{busy ? "Creando…" : "Crear pedido"}</button>
+          )}
+          <div style={{ fontSize: 11.5, color: "var(--muted)" }}>Se crea con flete por valor ($20.000 + 7%), ref AD-XXXX, y dispara el evento de compra a Meta. Aparece marcado como <b>✍️ Asesor</b>.</div>
+        </div>
+      </div>
     </div>
   );
 }

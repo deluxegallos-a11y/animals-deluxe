@@ -1,6 +1,6 @@
-import { listOrders, listFailedAttempts } from "@/lib/queries";
+import { listOrders, listFailedAttempts, listProducts } from "@/lib/queries";
 import { PageHead, Card } from "@/components/ui";
-import { PedidosBoard, type BoardOrder } from "./pedidos-board";
+import { PedidosBoard, type BoardOrder, type CatProd } from "./pedidos-board";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +10,11 @@ function dato(b: Record<string, unknown>, ...keys: string[]): string {
 }
 
 export default async function PedidosPage() {
-  const [pedidos, intentos] = await Promise.all([listOrders(), listFailedAttempts()]);
+  const [pedidos, intentos, prods] = await Promise.all([listOrders(), listFailedAttempts(), listProducts()]);
+  const catalog: CatProd[] = prods.filter((p) => p.activo).map((p) => ({
+    slug: p.slug, name: p.name,
+    presentaciones: (p.presentations || []).map((x) => ({ label: x.label, precio: x.priceCOP })),
+  }));
   const board: BoardOrder[] = pedidos.map((o) => ({
     id: o.id, ref: o.ref, nombre: o.nombre, telefono: o.telefono, cedula: o.cedula,
     ciudad: o.ciudad, direccion: o.direccion, estado: o.estado, canal: o.canal,
@@ -25,7 +29,7 @@ export default async function PedidosPage() {
     <>
       <PageHead title="Pedidos" subtitle={`${pedidos.length} pedidos · flujo remisión → aprobado → guía`} />
       <Card>
-        <PedidosBoard orders={board} />
+        <PedidosBoard orders={board} catalog={catalog} />
       </Card>
 
       {intentos.length ? (

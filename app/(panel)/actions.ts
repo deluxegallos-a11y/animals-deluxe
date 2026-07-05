@@ -12,6 +12,9 @@ import { encrypt } from "@/lib/crypto";
 import { syncProductToShopify, archiveProductInShopify, retryPendingProducts } from "@/lib/shopify-sync";
 import { notificarDespacho, type NotifyResult } from "@/lib/ai/notificaciones";
 import { uchatSendText } from "@/lib/uchat";
+import { getProducts } from "@/lib/ai/data";
+import { createOrder } from "@/lib/ai/orders";
+import { sendMetaPurchase } from "@/lib/meta-capi";
 
 /* ---------- helpers de parseo ---------- */
 function slugify(s: string): string {
@@ -584,4 +587,84 @@ export async function enviarWhatsAppSegmento(ids: string[], mensaje: string): Pr
   }
   await logAudit("whatsapp_segmento", "customers", { destinatarios: clean.length, enviados, fallidos });
   return { ok: true, enviados, fallidos };
+}
+
+/* ============================================================
+   Pedido MANUAL desde el panel (asesor humano). Reutiliza la
+   MISMA lógica del bot (createOrder: flete por valor, ref AD-XXXX,
+   idempotencia) + dispara Purchase a Meta CAPI. canal="asesor".
+   ============================================================ */
+export interface PedidoManualInput {
+  nombre: string; cedula: string; telefono: string; ciudad: string; departamento?: string;
+  direccion: string; slug: string; presentacion?: string; cantidad?: number;
+  subId?: string;
+}
+export async function crearPedidoManual(
+  data: PedidoManualInput, force?: boolean,
+): Promise<{ ok: boolean; ref?: string; total?: number; duplicate?: boolean; error?: string; campos?: string[] }> {
+  await requireUser();
+  if (!db) return { ok: false, error: "Sin base de datos" };
+
+  // Validación de obligatorios
+  const req: Record<string, string> = {
+    nombre: data.nombre, cedula: data.cedula, telefono: data.telefono,
+    ciudad: data.ciudad, direccion: data.direccion, slug: data.slug,
+  };
+  const campos = Object.entries(req).filter(([, v]) => !String(v || "").trim()).map(([k]) => k);
+  if (campos.length) return { ok: false, error: "Faltan campos obligatorios", campos };
+
+  const catalog = await getProducts();
+  const prod = catalog.find((p) => p.slug === data.slug);
+  if (!prod) return { ok: false, error: "Producto no válido", campos: ["slug"] };
+
+  const telClean = data.telefono.replace(/\D/g, "");
+  const cantidad = Math.max(1, parseInt(String(data.cantidad || 1), 10) || 1);
+
+  // Idempotencia: pedido reciente (<10 min) con mismo teléfono + producto → avisar
+  if (!force) {
+    const since = new Date(Date.now() - 10 * 60 * 1000);
+    const recent = await db
+      .select({ ref: orders.ref })
+      .from(orders)
+      .innerJoin(orderItems, eq(orderItems.orderId, orders.id))
+      .where(sql`${orders.telefono} = ${data.telefono} and ${orderItems.productSlug} = ${data.slug} and ${orders.createdAt} > ${since}`)
+      .limit(1);
+    if (recent[0]) return { ok: false, duplicate: true, ref: recent[0].ref, error: `Ya existe un pedido similar (${recent[0].ref}) creado hace menos de 10 min.` };
+  }
+
+  // Cliente: enlazar por sub_id, luego por teléfono, o crear (canal asesor)
+  let customerId = "";
+  const sub = (data.subId || "").trim();
+  if (sub) { const [c] = await db.select().from(customers).where(eq(customers.uchatSubId, sub)).limit(1); if (c) customerId = c.id; }
+  if (!customerId) { const [c] = await db.select().from(customers).where(eq(customers.telefono, data.telefono)).limit(1); if (c) customerId = c.id; }
+  if (!customerId) {
+    const uid = sub || "asesor:" + telClean;
+    const [c] = await db.insert(customers).values({
+      uchatSubId: uid, nombre: data.nombre, telefono: data.telefono, ciudad: data.ciudad,
+      departamento: data.departamento || "", direccion: data.direccion,
+      canalOrigen: "asesor", estado: "cliente", ultimoContacto: new Date(),
+    }).onConflictDoNothing().returning();
+    customerId = c?.id || "";
+    if (!customerId) { const [c2] = await db.select().from(customers).where(eq(customers.uchatSubId, uid)).limit(1); customerId = c2?.id || ""; }
+  }
+
+  // subId: en "force" único para saltar la idempotencia interna de createOrder
+  const subId = force ? `asesor:${telClean}:${Date.now()}` : `asesor:${telClean}`;
+  const order = await createOrder({
+    subId, customerId: customerId || "demo-manual", // demo- => createOrder guarda customer_id null
+    items: [{ slug: data.slug, presentacion: data.presentacion || undefined, cantidad }],
+    nombre: data.nombre, telefono: data.telefono, ciudad: data.ciudad, direccion: data.direccion,
+    cedula: data.cedula, metodo: "contraentrega", canal: "asesor", catalog,
+  });
+
+  if (!order.reused) {
+    const meta = await sendMetaPurchase({
+      ref: order.ref, valueCop: order.total_cop, phone: data.telefono, nombre: data.nombre,
+      ciudad: data.ciudad, contentIds: [data.slug], actionSource: "phone_call",
+    });
+    await logAudit("crear_pedido_manual", "orders", { ref: order.ref, total: order.total_cop, meta: meta.ok, meta_skip: meta.skipped });
+  }
+  revalidatePath("/pedidos");
+  revalidatePath("/dashboard");
+  return { ok: true, ref: order.ref, total: order.total_cop, duplicate: order.reused };
 }
