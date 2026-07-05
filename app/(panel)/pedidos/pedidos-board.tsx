@@ -39,15 +39,17 @@ const est = (e: string) => EST[e] || { label: e || "—", color: "#475467", bg: 
 /* mensaje para pegar en el grupo de WhatsApp */
 function mensajeGuia(o: BoardOrder): string {
   const prod = o.items.map((i) => `${i.cantidad}× ${i.name}`).join(", ");
+  const anticipado = o.metodoPago === "anticipado";
   return [
-    `📦 *PEDIDO ${o.ref}* (contra entrega)`,
-    `👤 ${o.nombre}`,
+    `📦 *PEDIDO ${o.ref}* (${anticipado ? "pago anticipado" : "contra entrega"})`,
+    `👤 ${o.nombre || "—"}`,
     `🪪 CC ${o.cedula || "—"}`,
-    `📱 ${o.telefono}`,
-    `📍 ${o.ciudad} — ${o.direccion}`,
-    `🛒 ${prod}`,
-    `💵 Total a recaudar: ${COP(o.total)} (envío ${o.envio ? COP(o.envio) : "incluido"})`,
-    `🚚 Interrapidísimo`,
+    `📱 ${o.telefono || "—"}`,
+    `📍 ${o.ciudad || "—"} — ${o.direccion || "—"}`,
+    `🛒 ${prod || "—"}`,
+    anticipado
+      ? `💳 YA PAGÓ (anticipado) · valor ${COP(o.total)}`
+      : `💵 A RECAUDAR: ${COP(o.total)} (envío ${o.envio ? COP(o.envio) : "incluido"})`,
   ].join("\n");
 }
 
@@ -200,7 +202,10 @@ export function PedidosBoard({ orders, catalog }: { orders: BoardOrder[]; catalo
                   <span><span className="pb-pill" style={{ color: e.color, background: e.bg }}>{e.label}</span></span>
                   <span className="pb-time">{o.createdAt ? new Date(o.createdAt).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }) : "—"}<div className="d">{o.createdAt ? new Date(o.createdAt).toLocaleDateString("es-CO", { day: "2-digit", month: "2-digit" }) : ""}</div></span>
                   <span className="pb-total">{COP(o.total)}<div className="e">envío {o.envio ? COP(o.envio) : "incl."}</div></span>
-                  <span className="pb-chev">›</span>
+                  <span className="pb-chev" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span onClick={async (ev) => { ev.stopPropagation(); flash((await copy(mensajeGuia(o))) ? "📋 Datos copiados" : "No se pudo copiar"); }} title="Copiar datos para WhatsApp" style={{ cursor: "pointer", fontSize: 16, userSelect: "none" }}>📋</span>
+                    ›
+                  </span>
                 </div>
               );
             })}
@@ -474,6 +479,11 @@ function DetailModal({ o, onClose, onToast, onGuia }: { o: BoardOrder; onClose: 
         <div className="pb-mfoot" style={{ borderBottom: "1px solid var(--line)", paddingBottom: 12 }}>
           <button className="pb-btn dk" style={{ flex: 1 }} onClick={() => abrirImpresion("factura", [o.ref])}>🖨️ Imprimir factura</button>
           <button className="pb-btn dk" style={{ flex: 1 }} onClick={() => abrirImpresion("guia", [o.ref])}>📄 Imprimir guía</button>
+        </div>
+
+        {/* Copiar datos para WhatsApp — SIEMPRE disponible (acción principal) */}
+        <div className="pb-mfoot">
+          <button className="pb-btn gp" style={{ flex: 1, fontSize: 15 }} onClick={copiar}>📋 Copiar datos para WhatsApp</button>
         </div>
 
         {/* Acciones según estado */}
