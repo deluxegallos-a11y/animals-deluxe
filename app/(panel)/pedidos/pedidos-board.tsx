@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { updateOrderStatus, bulkUpdateStatus, despacharPedido, crearPedidoManual } from "../actions";
-import { crearGuia, crearGuiasBulk, pasarAOrdenDeVenta } from "./mp-actions";
+import { crearGuia, crearGuiasBulk, pasarAOrdenDeVenta, cotizarPedido, type Transportadora } from "./mp-actions";
 
 export type BoardOrder = {
   id: string; ref: string; nombre: string; telefono: string; cedula: string; ciudad: string; direccion: string;
@@ -76,21 +76,30 @@ export function PedidosBoard({ orders, catalog }: { orders: BoardOrder[]; catalo
   const [sel, setSel] = React.useState<Set<string>>(new Set());
   const [openId, setOpenId] = React.useState<string | null>(null);
   const [manualOpen, setManualOpen] = React.useState(false);
+  const [guiaFor, setGuiaFor] = React.useState<string | null>(null);
+  const [estadoF, setEstadoF] = React.useState<string>("todos");
   const [bulkBusy, setBulkBusy] = React.useState(false);
   const [toast, setToast] = React.useState("");
 
   const hoy = new Date(); const ayer = new Date(); ayer.setDate(ayer.getDate() - 1);
   const inDia = (o: BoardOrder) => dia === "todos" || sameDay(o.createdAt, dia === "hoy" ? hoy : ayer);
 
+  const conGuia = (o: BoardOrder) => !!o.envioGuia || o.envioStatus === "guia_generada";
   const delDia = orders.filter(inDia);
   const filtrados = delDia.filter((o) => {
     if (canal !== "todos" && o.canal !== canal) return false;
+    if (estadoF !== "todos") {
+      if (estadoF === "guia_generada") { if (!conGuia(o)) return false; }
+      else if (estadoF === "sin_guia") { if (conGuia(o) || o.estado === "cancelado") return false; }
+      else if (o.estado !== estadoF) return false;
+    }
     if (q.trim()) { const s = q.toLowerCase(); return [o.nombre, o.ref, o.telefono, o.ciudad, o.cedula].some((v) => (v || "").toLowerCase().includes(s)); }
     return true;
   });
 
   const kCanal = (c: string) => delDia.filter((o) => o.canal === c).length;
   const kEst = (e: string) => delDia.filter((o) => o.estado === e).length;
+  const kGuia = delDia.filter(conGuia).length;
   const recaudo = filtrados.reduce((s, o) => s + o.total, 0);
 
   const open = orders.find((o) => o.id === openId) || null;
@@ -142,6 +151,20 @@ export function PedidosBoard({ orders, catalog }: { orders: BoardOrder[]; catalo
         <button className="pb-btn gp" style={{ flex: "0 0 auto", minWidth: 0, padding: "10px 16px" }} onClick={() => setManualOpen(true)}>➕ Crear pedido manual</button>
       </div>
 
+      {/* Barrita de estados (incluye "Guía generada") */}
+      <div className="pb-chips" style={{ marginBottom: 14 }}>
+        {[
+          { k: "todos", label: `Todos (${delDia.length})`, color: "#475467" },
+          { k: "sin_guia", label: "Sin guía", color: "#B54708" },
+          { k: "aprobado", label: `Orden de venta (${kEst("aprobado")})`, color: "#067647" },
+          { k: "guia_generada", label: `🚚 Guía generada (${kGuia})`, color: "#1E50E6" },
+          { k: "despachado", label: `Despachado (${kEst("despachado")})`, color: "#6941C6" },
+        ].map((e) => {
+          const on = estadoF === e.k;
+          return <button key={e.k} className={"pb-chip" + (on ? " on" : "")} style={on ? { background: e.color } : { color: e.color }} onClick={() => setEstadoF(e.k)}>{e.label}</button>;
+        })}
+      </div>
+
       {/* Barra de acciones masivas */}
       {sel.size > 0 && (
         <div className="pb-bulk">
@@ -172,7 +195,7 @@ export function PedidosBoard({ orders, catalog }: { orders: BoardOrder[]; catalo
                   <span className="pb-chan"><span className="dot" style={{ background: c.color }}>{c.ic}</span>{c.label}</span>
                   <span className="pb-cli">
                     <div className="nm">{o.nombre || "— sin nombre —"} {falta ? <span title={`Faltan: ${faltantes(o).join(", ")}`} style={{ color: "#F79009" }}>⚠</span> : null}</div>
-                    <div className="meta">{o.ref} · {o.telefono || "sin tel"} · {o.ciudad || "sin ciudad"}</div>
+                    <div className="meta">{o.ref} · {o.telefono || "sin tel"} · {o.ciudad || "sin ciudad"}{o.envioGuia ? <span style={{ color: "#1E50E6", fontWeight: 700 }}> · 🚚 {o.envioGuia}</span> : null}</div>
                   </span>
                   <span><span className="pb-pill" style={{ color: e.color, background: e.bg }}>{e.label}</span></span>
                   <span className="pb-time">{o.createdAt ? new Date(o.createdAt).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }) : "—"}<div className="d">{o.createdAt ? new Date(o.createdAt).toLocaleDateString("es-CO", { day: "2-digit", month: "2-digit" }) : ""}</div></span>
@@ -189,13 +212,80 @@ export function PedidosBoard({ orders, catalog }: { orders: BoardOrder[]; catalo
 
       {toast && <div style={{ position: "fixed", bottom: 22, left: "50%", transform: "translateX(-50%)", background: "#101828", color: "#fff", padding: "11px 20px", borderRadius: 12, fontWeight: 700, fontSize: 13.5, zIndex: 80, boxShadow: "var(--shadow)" }}>{toast}</div>}
 
-      {open && <DetailModal o={open} onClose={() => setOpenId(null)} onToast={flash} />}
+      {open && <DetailModal o={open} onClose={() => setOpenId(null)} onToast={flash} onGuia={(id) => { setOpenId(null); setGuiaFor(id); }} />}
       {manualOpen && <ManualOrderModal catalog={catalog} onClose={() => setManualOpen(false)} onToast={flash} />}
+      {guiaFor && <GuiaModal order={orders.find((o) => o.id === guiaFor)!} onClose={() => setGuiaFor(null)} onToast={flash} />}
     </div>
   );
 }
 
 /* ---- Crear pedido manual (asesor humano) ---- */
+/* ---- Generar guía: cotiza MiPaquete y elige transportadora ---- */
+function GuiaModal({ order, onClose, onToast }: { order: BoardOrder; onClose: () => void; onToast: (m: string) => void }) {
+  const [loading, setLoading] = React.useState(true);
+  const [transp, setTransp] = React.useState<Transportadora[]>([]);
+  const [sel, setSel] = React.useState("");
+  const [source, setSource] = React.useState("");
+  const [sinDane, setSinDane] = React.useState(false);
+  const [busy, setBusy] = React.useState(false);
+  const [err, setErr] = React.useState("");
+
+  React.useEffect(() => {
+    let alive = true;
+    (async () => {
+      const r = await cotizarPedido(order.id);
+      if (!alive) return;
+      setLoading(false);
+      if (!r.ok) { setErr(r.error || "Error al cotizar"); return; }
+      setSource(r.source || ""); setSinDane(!!r.sinDane);
+      const list = r.transportadoras || [];
+      setTransp(list); if (list[0]) setSel(list[0].id);
+    })();
+    return () => { alive = false; };
+  }, [order.id]);
+
+  async function generar() {
+    setBusy(true);
+    const r = await crearGuia(order.id, false, sel);
+    setBusy(false);
+    if (r.ok) { onToast(r.pending ? "Guía en pendiente 📦" : `Guía ${r.guideNumber || "generada"} ✅`); onClose(); }
+    else onToast(r.error || "Error");
+  }
+
+  return (
+    <div className="pb-ov" onClick={onClose}>
+      <div className="pb-modal" style={{ maxWidth: 500 }} onClick={(e) => e.stopPropagation()}>
+        <div className="pb-mhead" style={{ background: "linear-gradient(135deg,#2f6bff,#1e50e6)" }}>
+          <button className="close" onClick={onClose}>×</button>
+          <div className="ref" style={{ fontSize: 18 }}>🚚 Generar guía · {order.ref}</div>
+          <div className="tags"><span className="tag">{order.nombre || "—"} · {order.ciudad || "—"}</span></div>
+        </div>
+        <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ fontSize: 13, fontWeight: 800, color: "var(--ink-2)" }}>¿Con qué transportadora?</div>
+          {loading ? <div style={{ padding: 24, textAlign: "center", color: "var(--muted)" }}>Cotizando con MiPaquete…</div>
+            : err ? <div style={{ color: "#b3261e", fontSize: 13 }}>{err}</div>
+              : (
+                <>
+                  {sinDane ? <div style={{ background: "#FFF4E5", border: "1px solid #F79009", color: "#B54708", borderRadius: 10, padding: "8px 12px", fontSize: 12 }}>No tengo el DANE de “{order.ciudad}” — la guía sale con costo estimado local.</div> : null}
+                  {source === "local" && !sinDane ? <div style={{ fontSize: 11.5, color: "var(--muted)" }}>Costos estimados (sin conexión MiPaquete).</div> : null}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                    {transp.map((t, i) => (
+                      <label key={t.id + i} style={{ display: "flex", alignItems: "center", gap: 11, padding: "12px 14px", borderRadius: 12, border: `1.5px solid ${sel === t.id ? "#2f6bff" : "var(--line-2)"}`, background: sel === t.id ? "#e8f0ff" : "#fff", cursor: "pointer" }}>
+                        <input type="radio" name="transp" checked={sel === t.id} onChange={() => setSel(t.id)} style={{ accentColor: "#2f6bff" }} />
+                        <span style={{ flex: 1, fontWeight: 700, fontSize: 14 }}>{t.company || "Transportadora"}{i === 0 ? <span style={{ fontSize: 10.5, color: "#067647", marginLeft: 6 }}>más barato</span> : null}</span>
+                        <span style={{ textAlign: "right" }}><b style={{ fontSize: 15 }}>{COP(t.total)}</b>{t.comision ? <div style={{ fontSize: 10.5, color: "var(--muted)" }}>flete {COP(t.flete)} + recaudo {COP(t.comision)}</div> : <div style={{ fontSize: 10.5, color: "var(--muted)" }}>flete</div>}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <button className="pb-btn bl" disabled={busy || !sel} onClick={generar}>{busy ? "Generando guía…" : "🚚 Generar guía"}</button>
+                </>
+              )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ManualOrderModal({ catalog, onClose, onToast }: { catalog: CatProd[]; onClose: () => void; onToast: (m: string) => void }) {
   const [f, setF] = React.useState({ nombre: "", cedula: "", telefono: "", ciudad: "", departamento: "", direccion: "", slug: "", presentacion: "", cantidad: "1", subId: "" });
   const [pq, setPq] = React.useState("");
@@ -288,7 +378,7 @@ function Kpi({ ic, num, lbl, sub, color }: { ic: string; num: string; lbl: strin
   );
 }
 
-function DetailModal({ o, onClose, onToast }: { o: BoardOrder; onClose: () => void; onToast: (m: string) => void }) {
+function DetailModal({ o, onClose, onToast, onGuia }: { o: BoardOrder; onClose: () => void; onToast: (m: string) => void; onGuia: (id: string) => void }) {
   const [busy, setBusy] = React.useState(false);
   const [showMsg, setShowMsg] = React.useState(false);
   const [guia, setGuia] = React.useState(o.guia || "");
@@ -297,7 +387,7 @@ function DetailModal({ o, onClose, onToast }: { o: BoardOrder; onClose: () => vo
 
   async function move(estado: string) { setBusy(true); await updateOrderStatus(o.id, estado); setBusy(false); onToast(`Pedido → ${est(estado).label}`); onClose(); }
   async function ordenVenta() { setBusy(true); await pasarAOrdenDeVenta(o.id); setBusy(false); onToast("→ Orden de venta ✅"); onClose(); }
-  async function guiaMp() { setBusy(true); const r = await crearGuia(o.id); setBusy(false); onToast(r.ok ? (r.pending ? "Guía en pendiente (falta token MiPaquete) 📦" : `Guía ${r.guideNumber || "generada"} ✅`) : (r.error || "Error")); onClose(); }
+  const guiaMp = () => onGuia(o.id);
   async function copiar() { onToast((await copy(mensajeGuia(o))) ? "📋 Datos copiados" : "No se pudo copiar"); }
   async function despachar() {
     if (!guia.trim()) { setShowMsg(true); return; }

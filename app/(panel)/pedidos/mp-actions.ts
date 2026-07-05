@@ -22,6 +22,26 @@ async function bodegaOrigen() {
   return b || (await db.select().from(mpAddresses).limit(1))[0] || null;
 }
 
+export interface Transportadora { company: string; id: string; flete: number; comision: number; total: number }
+/** Cotiza un pedido con MiPaquete → lista de transportadoras para que el asesor elija. */
+export async function cotizarPedido(orderId: string): Promise<{ ok: boolean; source?: string; ciudad?: string; sinDane?: boolean; transportadoras?: Transportadora[]; error?: string }> {
+  await requireUser();
+  if (!db || !orderId) return { ok: false, error: "Sin datos" };
+  const [o] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
+  if (!o) return { ok: false, error: "Pedido no encontrado" };
+  const items = await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
+  const qty = items.reduce((s, it) => s + (it.cantidad ?? 1), 0) || 1;
+  const bod = await bodegaOrigen();
+  const dane = await mpBuscarDane(o.ciudad || "");
+  const paymentType = o.metodoPago === "anticipado" ? 101 : 102;
+  const declaredValue = o.subtotalCop ?? o.totalCop ?? 0;
+  const cot = await mpCotizar({ originDane: bod?.locationCode || "05001000", destinyDane: dane?.code || "", weight: qty, declaredValue, paymentType });
+  return {
+    ok: true, source: cot.source, ciudad: o.ciudad || "", sinDane: !dane,
+    transportadoras: cot.cotizaciones.map((c) => ({ company: c.deliveryCompany, id: c.deliveryCompanyId, flete: c.shippingCost, comision: c.collectionCommission, total: c.totalCost })),
+  };
+}
+
 /** Asigna número de factura estable a un pedido (si no tiene). */
 export async function asignarFactura(orderId: string): Promise<{ ok: boolean; numero?: number }> {
   await requireUser();
@@ -47,7 +67,7 @@ export async function pasarAOrdenDeVenta(orderId: string): Promise<{ ok: boolean
 }
 
 /** Crea la guía de un pedido (MiPaquete si hay token, si no queda pendiente con costos estimados). */
-export async function crearGuia(orderId: string, force?: boolean): Promise<GuiaResult> {
+export async function crearGuia(orderId: string, force?: boolean, deliveryCompanyId?: string): Promise<GuiaResult> {
   await requireUser();
   if (!db || !orderId) return { ok: false, error: "Sin datos" };
 
@@ -72,7 +92,8 @@ export async function crearGuia(orderId: string, force?: boolean): Promise<GuiaR
     originDane: bod?.locationCode || "05001000", destinyDane: dane?.code || "",
     weight: qty, declaredValue, paymentType,
   });
-  const c = cot.cotizaciones[0];
+  // transportadora elegida por el asesor, o la más barata por defecto
+  const c = (deliveryCompanyId ? cot.cotizaciones.find((x) => x.deliveryCompanyId === deliveryCompanyId) : null) || cot.cotizaciones[0];
   const amountToTransfer = paymentType === 102 ? Math.max(0, collectionValue - c.totalCost) : 0;
 
   // Crear guía real (o pending sin token)
