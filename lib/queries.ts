@@ -13,45 +13,55 @@ import type { ProductView } from "@/lib/ai/types";
 
 /* ---------- Dashboard ---------- */
 export type DashboardKpis = {
-  pedidosHoy: number;
-  pedidosSemana: number;
-  ingresosCop: number;
+  pedidosHoy: number;         // pedidos de hoy (sin cancelados)
+  pedidosSemana: number;      // últimos 7 días (sin cancelados)
+  ventasHoyCop: number;       // $ de los pedidos de hoy (sin cancelados)
+  ingresosCop: number;        // $ entregados/pagados (plata ya en caja)
+  aRecaudarCop: number;       // $ de contra entrega en camino (aún no entregado)
   leadsNuevos: number;
+  porEstado: { estado: string; label: string; n: number; monto: number }[]; // pipeline
   topProductos: { name: string; cantidad: number }[];
-  ultimosPedidos: { ref: string; nombre: string; total: number; estado: string }[];
+  ultimosPedidos: { ref: string; nombre: string; total: number; estado: string; createdAt: string | null; canal: string }[];
 };
 
 export async function getDashboard(): Promise<DashboardKpis> {
+  const EST_LABEL: Record<string, string> = { remision: "Remisión", aprobado: "Orden de venta", guia: "Con guía", despachado: "Despachado", entregado: "Entregado", cancelado: "Cancelado" };
+  const EST_ORDER = ["remision", "aprobado", "guia", "despachado", "entregado"];
   if (!db) {
     return {
-      pedidosHoy: 0,
-      pedidosSemana: 0,
-      ingresosCop: 0,
-      leadsNuevos: 0,
+      pedidosHoy: 0, pedidosSemana: 0, ventasHoyCop: 0, ingresosCop: 0, aRecaudarCop: 0, leadsNuevos: 0,
+      porEstado: EST_ORDER.map((e) => ({ estado: e, label: EST_LABEL[e], n: 0, monto: 0 })),
       topProductos: demoProducts.slice(0, 5).map((p) => ({ name: p.name, cantidad: 0 })),
       ultimosPedidos: [],
     };
   }
   const startDay = new Date(); startDay.setHours(0, 0, 0, 0);
   const startWeek = new Date(Date.now() - 7 * 86400_000);
+  const noCancel = sql`coalesce(estado,'') <> 'cancelado'`;
 
-  // Todas en PARALELO (antes eran 6 awaits en fila → ~3s).
-  const [[hoy], [sem], [ing], [leads], top, ult] = await Promise.all([
-    db.select({ n: sql<number>`count(*)::int` }).from(orders).where(gte(orders.createdAt, startDay)),
-    db.select({ n: sql<number>`count(*)::int` }).from(orders).where(gte(orders.createdAt, startWeek)),
-    db.select({ s: sql<number>`coalesce(sum(total_cop),0)::int` }).from(orders).where(sql`estado in ('aprobado','guia','despachado','entregado','confirmado','pagado')`),
+  // Todas en PARALELO.
+  const [[hoy], [sem], [ing], [rec], [leads], estados, top, ult] = await Promise.all([
+    db.select({ n: sql<number>`count(*)::int`, s: sql<number>`coalesce(sum(total_cop),0)::int` }).from(orders).where(and(gte(orders.createdAt, startDay), noCancel)),
+    db.select({ n: sql<number>`count(*)::int` }).from(orders).where(and(gte(orders.createdAt, startWeek), noCancel)),
+    db.select({ s: sql<number>`coalesce(sum(total_cop),0)::int` }).from(orders).where(sql`estado in ('entregado','pagado','confirmado')`),
+    db.select({ s: sql<number>`coalesce(sum(total_cop),0)::int` }).from(orders).where(sql`estado in ('aprobado','guia','despachado') and coalesce(metodo_pago,'contraentrega') <> 'anticipado'`),
     db.select({ n: sql<number>`count(*)::int` }).from(customers).where(gte(customers.createdAt, startWeek)),
-    db.select({ name: orderItems.productName, cantidad: sql<number>`sum(cantidad)::int` }).from(orderItems).groupBy(orderItems.productName).orderBy(sql`sum(cantidad) desc`).limit(5),
-    db.select({ ref: orders.ref, nombre: orders.nombre, total: orders.totalCop, estado: orders.estado }).from(orders).orderBy(desc(orders.createdAt)).limit(6),
+    db.select({ estado: orders.estado, n: sql<number>`count(*)::int`, monto: sql<number>`coalesce(sum(total_cop),0)::int` }).from(orders).where(noCancel).groupBy(orders.estado),
+    db.select({ name: orderItems.productName, cantidad: sql<number>`sum(cantidad)::int` }).from(orderItems).groupBy(orderItems.productName).orderBy(sql`sum(cantidad) desc`).limit(7),
+    db.select({ ref: orders.ref, nombre: orders.nombre, total: orders.totalCop, estado: orders.estado, createdAt: orders.createdAt, canal: orders.canal }).from(orders).orderBy(desc(orders.createdAt)).limit(8),
   ]);
 
+  const estMap = new Map(estados.map((e) => [e.estado || "", e]));
   return {
     pedidosHoy: hoy?.n ?? 0,
     pedidosSemana: sem?.n ?? 0,
+    ventasHoyCop: hoy?.s ?? 0,
     ingresosCop: ing?.s ?? 0,
+    aRecaudarCop: rec?.s ?? 0,
     leadsNuevos: leads?.n ?? 0,
+    porEstado: EST_ORDER.map((e) => ({ estado: e, label: EST_LABEL[e], n: estMap.get(e)?.n ?? 0, monto: estMap.get(e)?.monto ?? 0 })),
     topProductos: top.map((t) => ({ name: t.name || "—", cantidad: t.cantidad ?? 0 })),
-    ultimosPedidos: ult.map((o) => ({ ref: o.ref, nombre: o.nombre || "—", total: o.total ?? 0, estado: o.estado || "" })),
+    ultimosPedidos: ult.map((o) => ({ ref: o.ref, nombre: o.nombre || "—", total: o.total ?? 0, estado: o.estado || "", createdAt: o.createdAt ? o.createdAt.toISOString() : null, canal: o.canal || "whatsapp" })),
   };
 }
 

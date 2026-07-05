@@ -11,14 +11,19 @@ import { cop } from "@/lib/ai/format";
 import type { Analytics } from "@/lib/queries";
 
 type Dash = {
-  pedidosHoy: number; pedidosSemana: number; ingresosCop: number; leadsNuevos: number;
+  pedidosHoy: number; pedidosSemana: number; ventasHoyCop: number; ingresosCop: number; aRecaudarCop: number; leadsNuevos: number;
+  porEstado: { estado: string; label: string; n: number; monto: number }[];
   topProductos: { name: string; cantidad: number }[];
-  ultimosPedidos: { ref: string; nombre: string; total: number; estado: string }[];
+  ultimosPedidos: { ref: string; nombre: string; total: number; estado: string; createdAt: string | null; canal: string }[];
 };
+const CANAL_IC: Record<string, string> = { whatsapp: "📱", messenger: "💬", web: "🌐", asesor: "🎧" };
+const EST_COLOR: Record<string, string> = { remision: "#B54708", aprobado: "#067647", guia: "#1E50E6", despachado: "#6941C6", entregado: "#067647" };
 
 const ESTADO: Record<string, { cls: string; txt: string }> = {
+  remision: { cls: "pend", txt: "Remisión" }, aprobado: { cls: "blue", txt: "Orden de venta" },
+  guia: { cls: "blue", txt: "Con guía" }, despachado: { cls: "blue", txt: "Despachado" },
   pagado: { cls: "ok", txt: "Pagado" }, entregado: { cls: "ok", txt: "Entregado" },
-  confirmado: { cls: "blue", txt: "Confirmado" }, despachado: { cls: "blue", txt: "Despachado" },
+  confirmado: { cls: "blue", txt: "Confirmado" },
   pendiente_confirmacion: { cls: "pend", txt: "Pendiente" }, cancelado: { cls: "fail", txt: "Cancelado" },
 };
 
@@ -55,37 +60,60 @@ export function DashboardView({ d, a }: { d: Dash; a: Analytics }) {
         </div>
       </div>
 
-      {/* ---- 3 tarjetas resumen ---- */}
-      <motion.div className="sumgrid" initial="hidden" animate="show" variants={stagger}>
+      {/* ---- 4 KPIs claros ---- */}
+      <motion.div className="sumgrid" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(210px,1fr))" }} initial="hidden" animate="show" variants={stagger}>
+        <motion.div className="sumc" variants={card} whileHover={{ y: -4 }}>
+          <div className="top">
+            <span className="ic" style={{ background: "#EAF0FF", color: "#1E50E6" }}><ShoppingBag size={20} /></span>
+            <div className="lbl">Pedidos de hoy<small>{d.pedidosSemana} en los últimos 7 días</small></div>
+          </div>
+          <div className="big"><Count to={d.pedidosHoy} /></div>
+          <div className="foot" style={{ color: "#475467" }}>{cop(d.ventasHoyCop)} en ventas hoy</div>
+        </motion.div>
+
         <motion.div className="sumc hot" variants={card} whileHover={{ y: -4 }}>
           <div className="top">
             <span className="ic"><DollarSign size={20} /></span>
-            <div className="lbl">Ingresos confirmados<small>Contraentrega + anticipado</small></div>
-            <MoreHorizontal className="dots" size={18} />
+            <div className="lbl">En caja (entregados)<small>Plata ya cobrada</small></div>
           </div>
           <div className="big"><Count to={d.ingresosCop} fmt={(n) => cop(Math.round(n))} /></div>
-          <Link href="/pedidos" className="foot">Ver detalle <ArrowRight size={16} /></Link>
+          <Link href="/pedidos" className="foot">Ver pedidos <ArrowRight size={16} /></Link>
         </motion.div>
 
         <motion.div className="sumc" variants={card} whileHover={{ y: -4 }}>
           <div className="top">
-            <span className="ic"><ShoppingBag size={20} /></span>
-            <div className="lbl">Pedidos hoy<small>{d.pedidosSemana} esta semana</small></div>
-            <MoreHorizontal className="dots" size={18} />
+            <span className="ic" style={{ background: "#FFF4E5", color: "#B54708" }}><Package size={20} /></span>
+            <div className="lbl">Por recaudar<small>Contra entrega en camino</small></div>
           </div>
-          <div className="big"><Count to={d.pedidosHoy} /> <span className="chg up"><TrendingUp size={12} /> hoy</span></div>
-          <Link href="/pedidos" className="foot">Gestionar pedidos <ArrowRight size={16} /></Link>
+          <div className="big"><Count to={d.aRecaudarCop} fmt={(n) => cop(Math.round(n))} /></div>
+          <div className="foot" style={{ color: "#475467" }}>se cobra al entregar</div>
         </motion.div>
 
         <motion.div className="sumc" variants={card} whileHover={{ y: -4 }}>
           <div className="top">
-            <span className="ic"><Users size={20} /></span>
+            <span className="ic" style={{ background: "#F4EBFF", color: "#6941C6" }}><Users size={20} /></span>
             <div className="lbl">Leads nuevos<small>Últimos 7 días</small></div>
-            <MoreHorizontal className="dots" size={18} />
           </div>
           <div className="big"><Count to={d.leadsNuevos} /></div>
           <Link href="/clientes" className="foot">Ver clientes <ArrowRight size={16} /></Link>
         </motion.div>
+      </motion.div>
+
+      {/* ---- Pipeline por estados ---- */}
+      <motion.div className="panel" style={{ marginTop: 18 }} initial="hidden" animate="show" variants={card}>
+        <div className="ph"><div><h3>Flujo de pedidos</h3><div className="sub">Dónde está cada pedido ahora mismo</div></div></div>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 4 }}>
+          {d.porEstado.map((s, i) => (
+            <React.Fragment key={s.estado}>
+              <Link href="/pedidos" style={{ flex: "1 1 150px", minWidth: 130, textDecoration: "none", border: "1px solid var(--line, #E4E7EC)", borderRadius: 14, padding: "13px 15px", background: "#fff", display: "block", borderLeft: `4px solid ${EST_COLOR[s.estado] || "#475467"}` }}>
+                <div style={{ fontSize: 12.5, color: "#667085", fontWeight: 700 }}>{s.label}</div>
+                <div style={{ fontSize: 26, fontWeight: 800, color: "#101828", lineHeight: 1.1, margin: "3px 0" }}>{s.n}</div>
+                <div style={{ fontSize: 12, color: EST_COLOR[s.estado] || "#475467", fontWeight: 600 }}>{cop(s.monto)}</div>
+              </Link>
+              {i < d.porEstado.length - 1 ? <div style={{ alignSelf: "center", color: "#D0D5DD", fontSize: 18, fontWeight: 700 }}>→</div> : null}
+            </React.Fragment>
+          ))}
+        </div>
       </motion.div>
 
       {/* ---- Analítica: tráfico vs ventas por fuente ---- */}
@@ -148,14 +176,16 @@ export function DashboardView({ d, a }: { d: Dash; a: Analytics }) {
         </div>
         {d.ultimosPedidos.length ? (
           <table className="adt">
-            <thead><tr><th>Cliente</th><th>Referencia</th><th>Total</th><th>Estado</th><th></th></tr></thead>
+            <thead><tr><th>Cliente</th><th>Canal</th><th>Ref.</th><th>Hora</th><th>Total</th><th>Estado</th><th></th></tr></thead>
             <tbody>
               {d.ultimosPedidos.map((o) => {
                 const e = ESTADO[o.estado] || { cls: "pend", txt: o.estado.replace(/_/g, " ") };
                 return (
                   <tr key={o.ref}>
                     <td><div className="cust"><span className="av">{ini(o.nombre)}</span>{o.nombre}</div></td>
+                    <td>{CANAL_IC[o.canal] || "📱"}</td>
                     <td>{o.ref}</td>
+                    <td style={{ fontSize: 12, color: "#667085" }}>{o.createdAt ? new Date(o.createdAt).toLocaleString("es-CO", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—"}</td>
                     <td><b>{cop(o.total)}</b></td>
                     <td><span className={`stat ${e.cls}`}>{e.cls === "ok" ? <CheckCircle2 size={13} /> : null}{e.txt}</span></td>
                     <td style={{ textAlign: "right" }}><Link href="/pedidos" className="tbtn" style={{ display: "inline-grid", width: 32, height: 32 }}><MoreHorizontal size={16} /></Link></td>
