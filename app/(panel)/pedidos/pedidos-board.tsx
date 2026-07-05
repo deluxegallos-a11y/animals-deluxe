@@ -178,6 +178,7 @@ export function PedidosBoard({ orders, catalog }: { orders: BoardOrder[]; catalo
           <button style={{ background: "var(--blue)" }} disabled={bulkBusy} onClick={bulkGuias}>🚚 Crear guías MiPaquete</button>
           <button className="ghost" onClick={() => abrirImpresion("factura", selList.map((o) => o.ref))}>🖨️ Facturas</button>
           <button className="ghost" onClick={() => abrirImpresion("guia", selList.map((o) => o.ref))}>📄 Guías</button>
+          <button className="ghost" onClick={() => window.open(`/pedidos/imprimir?tipo=sticker&refs=${selList.map((o) => o.ref).join(",")}`, "_blank")}>🏷️ Stickers 4×4</button>
           <button className="ghost" onClick={bulkCopy}>📋 WhatsApp</button>
           <button className="ghost" onClick={() => setSel(new Set())}>✕</button>
         </div>

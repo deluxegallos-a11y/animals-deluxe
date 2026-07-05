@@ -5,16 +5,48 @@ export const dynamic = "force-dynamic";
 const COP = (n: number) => "$" + Number(n || 0).toLocaleString("es-CO");
 const fecha = (d: Date | null) => (d ? new Date(d).toLocaleDateString("es-CO", { day: "2-digit", month: "long", year: "numeric" }) : new Date().toLocaleDateString("es-CO"));
 
-export default async function ImprimirPage({ searchParams }: { searchParams: Promise<{ tipo?: string; refs?: string }> }) {
-  const { tipo = "factura", refs = "" } = await searchParams;
+export default async function ImprimirPage({ searchParams }: { searchParams: Promise<{ tipo?: string; refs?: string; sticker?: string }> }) {
+  const { tipo = "factura", refs = "", sticker = "" } = await searchParams;
   const wanted = refs.split(",").map((s) => s.trim().toUpperCase()).filter(Boolean);
   const [all, cfg, bod] = await Promise.all([listOrders(), getConfigEmpresa(), getBodegaDefault()]);
   const pedidos = wanted.length ? all.filter((o) => wanted.includes(o.ref.toUpperCase())) : [];
 
   const marca = cfg?.nombreMarca || "Animals Deluxe";
-  const showFactura = tipo === "factura" || tipo === "ambos";
-  const showGuia = tipo === "guia" || tipo === "ambos";
-  const titulo = `${tipo === "guia" ? "Guías" : tipo === "ambos" ? "Facturas + Guías" : "Facturas"} · ${pedidos.length} documento(s)`;
+  const esSticker = tipo === "sticker" || sticker === "1";
+  const showFactura = !esSticker && (tipo === "factura" || tipo === "ambos");
+  const showGuia = !esSticker && (tipo === "guia" || tipo === "ambos");
+  const titulo = `${esSticker ? "Stickers 4×4" : tipo === "guia" ? "Guías" : tipo === "ambos" ? "Facturas + Guías" : "Facturas"} · ${pedidos.length} documento(s)`;
+
+  // ---- Modo STICKER 4×4 (impresora térmica) ----
+  if (esSticker) {
+    return (
+      <div className="print-root sticker-root">
+        <AutoPrint titulo={titulo} />
+        <style>{`@media print { @page { size: 4in 4in; margin: 0; } }`}</style>
+        {!pedidos.length ? <div style={{ padding: 20 }}>No se encontraron pedidos para: {refs || "(sin refs)"}.</div> : null}
+        {pedidos.map((o) => (
+          <div key={o.id} className="stk">
+            <div className="stk-top">
+              <span className="stk-transp">{o.transportadora || "COORDINADORA"}</span>
+              <span className="stk-cod">{o.metodoPago === "anticipado" ? "PAGADO" : "CONTRA ENTREGA"}</span>
+            </div>
+            {o.envioGuia ? <div className="stk-guia">GUÍA {o.envioGuia}</div> : null}
+            <div className="stk-dest">
+              <div className="stk-nm">{o.nombre || "—"}</div>
+              <div className="stk-ciu">{o.ciudad || "—"}</div>
+              <div className="stk-dir">{o.direccion || "—"}</div>
+              <div className="stk-tel">Tel {o.telefono || "—"} · CC {o.cedula || "—"}</div>
+            </div>
+            <div className="stk-bot">
+              <div className="stk-rec"><span>{o.metodoPago === "anticipado" ? "PAGO" : "RECAUDAR"}</span><b>{o.metodoPago === "anticipado" ? "—" : COP(o.total)}</b></div>
+              <div className="stk-ref">*{o.ref}*</div>
+            </div>
+            <div className="stk-rem">De: {bod?.name || marca} · {cfg?.whatsapp || ""}</div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="print-root">

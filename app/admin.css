@@ -886,3 +886,30 @@
 .od-btn.danger:hover { background: #FEECEB; }
 .od-btn.sm { width: auto; padding: 7px 14px; font-size: 12.5px; margin: 0; }
 .od-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #101828; color: #fff; padding: 12px 22px; border-radius: 12px; font-weight: 700; font-size: 14px; z-index: 90; box-shadow: 0 12px 28px rgba(16,24,40,.28); }
+
+/* ============ STICKER 4×4 (impresora térmica) ============ */
+.sticker-root { background: #eceef3; padding: 20px; display: flex; flex-wrap: wrap; gap: 16px; }
+.stk {
+  width: 4in; height: 4in; box-sizing: border-box; background: #fff; color: #000;
+  padding: 0.22in; display: flex; flex-direction: column; border: 1px solid #000;
+  font-family: 'Plus Jakarta Sans', Arial, sans-serif;
+}
+.stk-top { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 5px; }
+.stk-transp { font-size: 17px; font-weight: 800; letter-spacing: -.3px; }
+.stk-cod { font-size: 10px; font-weight: 800; border: 1.5px solid #000; padding: 2px 6px; border-radius: 4px; }
+.stk-guia { font-size: 20px; font-weight: 800; letter-spacing: 1px; margin-top: 6px; }
+.stk-dest { flex: 1; padding-top: 8px; }
+.stk-nm { font-size: 21px; font-weight: 800; line-height: 1.1; }
+.stk-ciu { font-size: 18px; font-weight: 700; margin-top: 2px; text-transform: uppercase; }
+.stk-dir { font-size: 14px; font-weight: 600; margin-top: 3px; line-height: 1.25; }
+.stk-tel { font-size: 12.5px; font-weight: 600; margin-top: 5px; }
+.stk-bot { display: flex; justify-content: space-between; align-items: flex-end; border-top: 2px solid #000; padding-top: 6px; }
+.stk-rec { display: flex; flex-direction: column; }
+.stk-rec span { font-size: 10px; font-weight: 700; }
+.stk-rec b { font-size: 22px; font-weight: 800; line-height: 1; }
+.stk-ref { font-family: 'Courier New', monospace; font-size: 15px; font-weight: 700; letter-spacing: 1px; }
+.stk-rem { font-size: 10px; font-weight: 600; margin-top: 5px; color: #333; }
+@media print {
+  .sticker-root { background: #fff; padding: 0; gap: 0; display: block; }
+  .stk { border: none; page-break-after: always; width: 4in; height: 4in; }
+}
