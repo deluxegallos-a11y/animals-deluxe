@@ -6,7 +6,7 @@ import { desc, eq, gte, sql, asc, inArray } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import {
   products, categories, orders, orderItems, customers, advisors,
-  promotions, conversations, storeConfig, integrations, adMap, orderAttempts,
+  promotions, conversations, storeConfig, integrations, adMap, orderAttempts, mpShipments, configEmpresa, mpAddresses,
 } from "@/lib/db/schema";
 import { demoProducts, demoCategories } from "@/lib/demo-data";
 import type { ProductView } from "@/lib/ai/types";
@@ -119,6 +119,9 @@ export type OrderRow = {
   createdAt: Date | null; advisor: string; items: { name: string; presentacion: string; cantidad: number; precio: number }[];
   guia: string; transportadora: string; despachadoAt: Date | null; clienteNotificadoAt: Date | null;
   shopifyOrderId: string; shopifyOrderName: string;
+  facturaNumero: number | null;
+  // Despacho / MiPaquete
+  envioGuia: string; envioStatus: string; envioPdf: string; envioImpreso: boolean; envioFlete: number;
 };
 
 export async function listOrders(): Promise<OrderRow[]> {
@@ -133,6 +136,8 @@ export async function listOrders(): Promise<OrderRow[]> {
   const items = ids.length
     ? await db.select().from(orderItems).where(inArray(orderItems.orderId, ids))
     : [];
+  const shipments = ids.length ? await db.select().from(mpShipments).where(inArray(mpShipments.orderId, ids)) : [];
+  const shipByOrder = new Map(shipments.map((s) => [s.orderId as string, s]));
   return rows.map((r) => ({
     id: r.o.id, ref: r.o.ref, nombre: r.o.nombre || "", telefono: r.o.telefono || "", cedula: r.o.cedula || "",
     ciudad: r.o.ciudad || "", direccion: r.o.direccion || "",
@@ -146,7 +151,25 @@ export async function listOrders(): Promise<OrderRow[]> {
     guia: r.o.guia || "", transportadora: r.o.transportadora || "",
     despachadoAt: r.o.despachadoAt ?? null, clienteNotificadoAt: r.o.clienteNotificadoAt ?? null,
     shopifyOrderId: r.o.shopifyOrderId || "", shopifyOrderName: r.o.shopifyOrderName || "",
+    facturaNumero: r.o.facturaNumero ?? null,
+    envioGuia: shipByOrder.get(r.o.id)?.guideNumber || "",
+    envioStatus: shipByOrder.get(r.o.id)?.status || "",
+    envioPdf: shipByOrder.get(r.o.id)?.pdfGuideUrl || "",
+    envioImpreso: !!shipByOrder.get(r.o.id)?.impreso,
+    envioFlete: shipByOrder.get(r.o.id)?.totalCost ?? 0,
   }));
+}
+
+/* ---------- Despacho: config de empresa (factura) + bodega ---------- */
+export async function getConfigEmpresa() {
+  if (!db) return null;
+  const [c] = await db.select().from(configEmpresa).limit(1);
+  return c || null;
+}
+export async function getBodegaDefault() {
+  if (!db) return null;
+  const [b] = await db.select().from(mpAddresses).where(eq(mpAddresses.isDefault, true)).limit(1);
+  return b || (await db.select().from(mpAddresses).limit(1))[0] || null;
 }
 
 /* ---------- Clientes (leads) ---------- */

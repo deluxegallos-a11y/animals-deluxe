@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { updateOrderStatus, bulkUpdateStatus, despacharPedido, crearPedidoManual } from "../actions";
+import { crearGuia, crearGuiasBulk, pasarAOrdenDeVenta } from "./mp-actions";
 
 export type BoardOrder = {
   id: string; ref: string; nombre: string; telefono: string; cedula: string; ciudad: string; direccion: string;
@@ -10,7 +11,9 @@ export type BoardOrder = {
   createdAt: string | null; advisor: string;
   guia: string; transportadora: string; despachadoAt: string | null; clienteNotificado: boolean;
   shopifyOrderName: string;
+  facturaNumero: number | null; envioGuia: string; envioStatus: string; envioImpreso: boolean;
 };
+const abrirImpresion = (tipo: string, refs: string[]) => { if (refs.length) window.open(`/pedidos/imprimir?tipo=${tipo}&refs=${refs.join(",")}`, "_blank"); };
 export type CatProd = { slug: string; name: string; presentaciones: { label: string; precio: number }[] };
 
 const COP = (n: number) => "$" + Number(n || 0).toLocaleString("es-CO");
@@ -24,8 +27,8 @@ const CHAN: Record<string, { label: string; color: string; ic: string }> = {
 const chan = (c: string) => CHAN[c] || { label: c || "—", color: "#8A93A5", ic: "•" };
 
 const EST: Record<string, { label: string; color: string; bg: string }> = {
-  remision: { label: "Remisión", color: "#B54708", bg: "#FFF4E5" },
-  aprobado: { label: "Aprobado", color: "#067647", bg: "#E6F9F1" },
+  remision: { label: "Remisión de venta", color: "#B54708", bg: "#FFF4E5" },
+  aprobado: { label: "Orden de venta", color: "#067647", bg: "#E6F9F1" },
   guia: { label: "En guía", color: "#1E50E6", bg: "#EAF0FF" },
   despachado: { label: "Despachado", color: "#6941C6", bg: "#F4EBFF" },
   entregado: { label: "Entregado", color: "#067647", bg: "#E6F9F1" },
@@ -105,6 +108,10 @@ export function PedidosBoard({ orders, catalog }: { orders: BoardOrder[]; catalo
     const txt = selList.map(mensajeGuia).join("\n\n━━━━━━━━━━\n\n");
     flash((await copy(txt)) ? `📋 ${selList.length} guía(s) copiada(s)` : "No se pudo copiar");
   }
+  async function bulkGuias() {
+    setBulkBusy(true); const r = await crearGuiasBulk([...sel]); setBulkBusy(false);
+    setSel(new Set()); flash(`🚚 Guías: ${r.creadas} creadas · ${r.pendientes} pendientes (sin token) · ${r.errores} error`);
+  }
 
   return (
     <div>
@@ -140,9 +147,11 @@ export function PedidosBoard({ orders, catalog }: { orders: BoardOrder[]; catalo
         <div className="pb-bulk">
           <span className="cnt">{sel.size} seleccionado{sel.size > 1 ? "s" : ""}</span>
           <span className="sp" />
-          <button className="ghost" disabled={bulkBusy} onClick={() => bulk("aprobado")}>✓ Aprobar</button>
-          <button style={{ background: "var(--blue)" }} disabled={bulkBusy} onClick={() => bulk("guia")}>📦 Generar guías (pasar a guía)</button>
-          <button className="ghost" onClick={bulkCopy}>📋 Copiar guías</button>
+          <button className="ghost" disabled={bulkBusy} onClick={() => bulk("aprobado")}>✓ Orden de venta</button>
+          <button style={{ background: "var(--blue)" }} disabled={bulkBusy} onClick={bulkGuias}>🚚 Crear guías MiPaquete</button>
+          <button className="ghost" onClick={() => abrirImpresion("factura", selList.map((o) => o.ref))}>🖨️ Facturas</button>
+          <button className="ghost" onClick={() => abrirImpresion("guia", selList.map((o) => o.ref))}>📄 Guías</button>
+          <button className="ghost" onClick={bulkCopy}>📋 WhatsApp</button>
           <button className="ghost" onClick={() => setSel(new Set())}>✕</button>
         </div>
       )}
@@ -287,6 +296,8 @@ function DetailModal({ o, onClose, onToast }: { o: BoardOrder; onClose: () => vo
   const falta = faltantes(o); const completo = falta.length === 0;
 
   async function move(estado: string) { setBusy(true); await updateOrderStatus(o.id, estado); setBusy(false); onToast(`Pedido → ${est(estado).label}`); onClose(); }
+  async function ordenVenta() { setBusy(true); await pasarAOrdenDeVenta(o.id); setBusy(false); onToast("→ Orden de venta ✅"); onClose(); }
+  async function guiaMp() { setBusy(true); const r = await crearGuia(o.id); setBusy(false); onToast(r.ok ? (r.pending ? "Guía en pendiente (falta token MiPaquete) 📦" : `Guía ${r.guideNumber || "generada"} ✅`) : (r.error || "Error")); onClose(); }
   async function copiar() { onToast((await copy(mensajeGuia(o))) ? "📋 Datos copiados" : "No se pudo copiar"); }
   async function despachar() {
     if (!guia.trim()) { setShowMsg(true); return; }
@@ -350,17 +361,32 @@ function DetailModal({ o, onClose, onToast }: { o: BoardOrder; onClose: () => vo
           <div className="pb-msg">{mensajeGuia(o)}</div>
         )}
 
+        {/* Estado de guía / factura */}
+        {(o.envioGuia || o.envioStatus || o.facturaNumero) && (
+          <div style={{ margin: "0 24px", fontSize: 12, color: "var(--ink-2)", display: "flex", gap: 12, flexWrap: "wrap" }}>
+            {o.facturaNumero ? <span>🧾 Factura #{o.facturaNumero}</span> : null}
+            {o.envioGuia ? <span>🚚 Guía {o.envioGuia}</span> : o.envioStatus === "pendiente" ? <span style={{ color: "var(--amber)" }}>📦 Guía pendiente (falta token MiPaquete)</span> : null}
+          </div>
+        )}
+
+        {/* Impresión (siempre) */}
+        <div className="pb-mfoot" style={{ borderBottom: "1px solid var(--line)", paddingBottom: 12 }}>
+          <button className="pb-btn dk" style={{ flex: 1 }} onClick={() => abrirImpresion("factura", [o.ref])}>🖨️ Imprimir factura</button>
+          <button className="pb-btn dk" style={{ flex: 1 }} onClick={() => abrirImpresion("guia", [o.ref])}>📄 Imprimir guía</button>
+        </div>
+
         {/* Acciones según estado */}
         <div className="pb-mfoot">
           {o.estado === "remision" && (
-            <button className="pb-btn gp" disabled={busy || !completo} onClick={() => move("aprobado")} title={completo ? "" : "Completa los datos primero"}>{completo ? "✓ Aprobar pedido" : "Completa los datos para aprobar"}</button>
+            <button className="pb-btn gp" disabled={busy || !completo} onClick={ordenVenta} title={completo ? "" : "Completa los datos primero"}>{completo ? "✓ Pasar a orden de venta" : "Completa los datos primero"}</button>
           )}
           {o.estado === "aprobado" && (
-            <button className="pb-btn bl" disabled={busy} onClick={() => move("guia")}>📦 Pasar a guía</button>
+            <button className="pb-btn bl" disabled={busy} onClick={guiaMp}>🚚 Crear guía MiPaquete</button>
           )}
           {(o.estado === "guia" || o.estado === "despachado") && (
             <>
-              <button className="pb-btn dk" onClick={copiar}>📋 Copiar datos WhatsApp</button>
+              <button className="pb-btn dk" onClick={copiar}>📋 Copiar WhatsApp</button>
+              {!o.envioGuia && o.estado === "guia" ? <button className="pb-btn bl" disabled={busy} onClick={guiaMp}>🚚 Generar guía</button> : null}
               {o.estado === "guia" && (
                 <div style={{ display: "flex", gap: 8, flex: 1, minWidth: 200 }}>
                   <input className="pb-search" style={{ margin: 0, minWidth: 0, flex: 1 }} placeholder="N.º guía (opcional)" value={guia} onChange={(ev) => setGuia(ev.target.value)} />

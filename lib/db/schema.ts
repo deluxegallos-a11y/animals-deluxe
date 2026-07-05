@@ -99,6 +99,114 @@ export const orderAttempts = pgTable("order_attempts", {
   ref: text("ref").default(""),
 });
 
+/* 2d. Despacho / MiPaquete: credencial, empresa, direcciones, DANE, guías, tracking. */
+export const mpCredenciales = pgTable("mp_credenciales", {
+  id: text("id").primaryKey().default("active"),
+  apikey: text("apikey").default(""),
+  baseUrl: text("base_url").default("https://api-v2.mipaquete.com"),
+  generatedAt: timestamp("generated_at", { withTimezone: true }),
+  refreshedCount: integer("refreshed_count").default(0),
+  lastError: text("last_error").default(""),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+});
+export const configEmpresa = pgTable("config_empresa", {
+  id: text("id").primaryKey().default("default"),
+  nombreMarca: text("nombre_marca").default("Animals Deluxe"),
+  logoUrl: text("logo_url").default(""),
+  nit: text("nit").default(""),
+  razonSocial: text("razon_social").default(""),
+  direccionFiscal: text("direccion_fiscal").default(""),
+  ciudadFiscal: text("ciudad_fiscal").default(""),
+  telefono: text("telefono").default(""),
+  email: text("email").default(""),
+  whatsapp: text("whatsapp").default(""),
+  sitioWeb: text("sitio_web").default(""),
+  prefijoFactura: text("prefijo_factura").default("AD"),
+  siguienteFactura: integer("siguiente_factura").default(1),
+  pieFactura: text("pie_factura").default(""),
+});
+export const mpAddresses = pgTable("mp_addresses", {
+  id: id(),
+  mpId: text("mp_id").default(""),
+  name: text("name").default(""),
+  address: text("address").default(""),
+  locationCode: text("location_code").default(""),
+  locationName: text("location_name").default(""),
+  departmentName: text("department_name").default(""),
+  countryCode: text("country_code").default("CO"),
+  telefono: text("telefono").default(""),
+  isDefault: boolean("is_default").default(false),
+  createdAt: now(),
+});
+export const mpLocationsCache = pgTable("mp_locations_cache", {
+  locationCode: text("location_code").primaryKey(),
+  locationName: text("location_name").default(""),
+  departmentName: text("department_name").default(""),
+  countryCode: text("country_code").default("CO"),
+  raw: jsonb("raw"),
+  cachedAt: timestamp("cached_at", { withTimezone: true }).defaultNow(),
+});
+export const mpShipments = pgTable("mp_shipments", {
+  id: id(),
+  orderId: uuid("order_id"),
+  orderRef: text("order_ref").default(""),
+  mpCode: text("mp_code").default(""),
+  guideNumber: text("guide_number").default(""),
+  pickupNumber: text("pickup_number").default(""),
+  status: text("status").default("pendiente"), // pendiente | cotizado | guia_generada | despachado | entregado | novedad | cancelado
+  deliveryCompany: text("delivery_company").default(""),
+  deliveryCompanyId: text("delivery_company_id").default(""),
+  senderName: text("sender_name").default(""),
+  senderPhone: text("sender_phone").default(""),
+  senderIdNumber: text("sender_id_number").default(""),
+  senderAddress: text("sender_address").default(""),
+  originDane: text("origin_dane").default(""),
+  originCity: text("origin_city").default(""),
+  receiverName: text("receiver_name").default(""),
+  receiverPhone: text("receiver_phone").default(""),
+  receiverIdNumber: text("receiver_id_number").default(""),
+  receiverAddress: text("receiver_address").default(""),
+  destinyDane: text("destiny_dane").default(""),
+  destinyCity: text("destiny_city").default(""),
+  description: text("description").default(""),
+  productReference: text("product_reference").default(""),
+  quantity: integer("quantity").default(1),
+  weight: integer("weight").default(1),
+  width: integer("width").default(20),
+  height: integer("height").default(20),
+  length: integer("length").default(20),
+  declaredValue: integer("declared_value").default(0),
+  paymentType: integer("payment_type").default(102), // 101 anticipado / 102 COD
+  collectionValue: integer("collection_value").default(0),
+  saleValue: integer("sale_value").default(0),
+  shippingCost: integer("shipping_cost").default(0),
+  collectionCommission: integer("collection_commission").default(0),
+  totalCost: integer("total_cost").default(0),
+  amountToTransfer: integer("amount_to_transfer").default(0),
+  pdfGuideUrl: text("pdf_guide_url").default(""),
+  pdfRelationUrl: text("pdf_relation_url").default(""),
+  channel: text("channel").default("Animals Deluxe Plataforma"),
+  comments: text("comments").default(""),
+  idempotencyKey: text("idempotency_key"),
+  impreso: boolean("impreso").default(false),
+  impresoEn: timestamp("impreso_en", { withTimezone: true }),
+  impresoPor: text("impreso_por").default(""),
+  cotizacionSeleccionada: jsonb("cotizacion_seleccionada"),
+  rawResponse: jsonb("raw_response"),
+  createdAt: now(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+  createdBy: text("created_by").default(""),
+});
+export const mpTrackingEvents = pgTable("mp_tracking_events", {
+  id: id(),
+  shipmentId: uuid("shipment_id"),
+  mpCode: text("mp_code").default(""),
+  state: text("state").default(""),
+  eventDate: timestamp("event_date", { withTimezone: true }),
+  receivedAt: timestamp("received_at", { withTimezone: true }).defaultNow(),
+  rawPayload: jsonb("raw_payload"),
+});
+
 /* 2b. ad_map: anuncio de Meta (ad_id) → producto(s). Un ad puede tener VARIOS
    productos (una fila por producto). PK compuesta (ad_id, product_slug). */
 export const adMap = pgTable("ad_map", {
@@ -166,8 +274,9 @@ export const orders = pgTable(
     ref: text("ref").notNull().unique(),
     customerId: uuid("customer_id"),
     estado: text("estado").default("remision"),
-    // FLUJO: remision → aprobado → guia → despachado → entregado (+ cancelado)
-    canal: text("canal").default("whatsapp"), // whatsapp | messenger | web
+    // FLUJO: remision → aprobado (orden de venta) → guia → despachado → entregado (+ cancelado)
+    canal: text("canal").default("whatsapp"), // whatsapp | messenger | web | asesor
+    facturaNumero: integer("factura_numero"), // # de factura estable (asignado al facturar)
     metodoPago: text("metodo_pago").default("contraentrega"), // contraentrega | anticipado
     subtotalCop: integer("subtotal_cop").default(0),
     descuentoCop: integer("descuento_cop").default(0),
