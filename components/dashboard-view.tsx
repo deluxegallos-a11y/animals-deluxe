@@ -183,12 +183,25 @@ function Analitica({ a }: { a: Analytics }) {
       </div>
 
       {/* KPIs */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 13, marginBottom: 14 }}>
-        <AnaKpi ic="👀" num={a.visitas30d.toLocaleString("es-CO")} lbl="Visitas (30d)" sub={`${a.visitas7d} en 7 días`} color="#2F6BFF" />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(155px,1fr))", gap: 13, marginBottom: 14 }}>
+        <AnaKpi ic="👀" num={a.visitas30d.toLocaleString("es-CO")} lbl="Visitas / pageviews (30d)" sub={`hoy ${a.visitasHoy} · 7d ${a.visitas7d}`} color="#2F6BFF" />
+        <AnaKpi ic="👥" num={a.visitantes30d.toLocaleString("es-CO")} lbl="Visitantes únicos (30d)" sub={`hoy ${a.visitantesHoy}`} color="#5C8BFF" />
         <AnaKpi ic="🌐" num={String(a.pedidosWeb)} lbl="Pedidos por WEB" sub="tienda + landings" color={a.pedidosWeb ? "#16C784" : "#F04438"} />
         <AnaKpi ic="📱" num={String(a.pedidosWhatsapp)} lbl="Pedidos por WhatsApp" color="#16C784" />
-        <AnaKpi ic="📈" num={`${totalVis ? Math.round((a.pedidosWeb / totalVis) * 1000) / 10 : 0}%`} lbl="Conversión web" sub={`${a.pedidosWeb}/${totalVis} visitas`} color="#7A3CFF" />
+        <AnaKpi ic="📈" num={`${a.visitantes30d ? Math.round((a.pedidosWeb / a.visitantes30d) * 1000) / 10 : 0}%`} lbl="Conversión web" sub={`${a.pedidosWeb}/${a.visitantes30d} visitantes`} color="#7A3CFF" />
       </div>
+
+      {/* Origen del tráfico */}
+      {a.origenes.length ? (
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 14 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: "#667085" }}>De dónde vienen:</span>
+          {a.origenes.map((o) => (
+            <span key={o.origen} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#fff", border: "1px solid #E6E8EE", borderRadius: 20, padding: "6px 12px", fontSize: 12.5, fontWeight: 700 }}>
+              {o.origen === "Facebook" ? "🔵" : o.origen === "Instagram" ? "🟣" : o.origen === "WhatsApp" ? "🟢" : o.origen === "Directo" ? "🔗" : "•"} {o.origen}: <b>{o.visitas}</b>
+            </span>
+          ))}
+        </div>
+      ) : null}
 
       {sinVentaWeb && (
         <div style={{ background: "#FEECEB", border: "1px solid #F04438", color: "#B42318", borderRadius: 12, padding: "12px 15px", fontSize: 13.5, marginBottom: 14, fontWeight: 600 }}>

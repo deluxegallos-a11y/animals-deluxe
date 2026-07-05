@@ -25,7 +25,7 @@ export const MP_COMPANIES: Record<string, string> = {
 const norm = (s: string) => (s || "").trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
 export async function getMpCreds(): Promise<{ apikey: string; baseUrl: string }> {
-  const baseDefault = "https://api-v2.mipaquete.com";
+  const baseDefault = "https://api.mipaquete.com";
   if (!db) return { apikey: process.env.MIPAQUETE_APIKEY || "", baseUrl: baseDefault };
   try {
     const [c] = await db.select().from(mpCredenciales).where(eq(mpCredenciales.id, "active")).limit(1);

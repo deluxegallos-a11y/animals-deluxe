@@ -70,28 +70,47 @@ export async function getDashboard(): Promise<DashboardKpis> {
 export type FuenteRow = { fuente: string; label: string; visitas: number; pedidos: number; conversion: number };
 export type Analytics = {
   visitas30d: number; visitasHoy: number; visitas7d: number;
+  visitantes30d: number; visitantesHoy: number;
   pedidosWeb: number; pedidosWhatsapp: number; pedidosTotal: number;
   porFuente: FuenteRow[];
   ventasPorCanal: { canal: string; n: number; total: number }[];
+  origenes: { origen: string; visitas: number }[];
 };
+function clasificarOrigen(ref: string, utm: string): string {
+  const s = (ref + " " + utm).toLowerCase();
+  if (/facebook|fb\.|m\.face|fbclid/.test(s)) return "Facebook";
+  if (/instagram|ig\b|insta/.test(s)) return "Instagram";
+  if (/tiktok/.test(s)) return "TikTok";
+  if (/google|goog/.test(s)) return "Google";
+  if (/whatsapp|wa\.me|whats/.test(s)) return "WhatsApp";
+  if (/t\.co|twitter|x\.com/.test(s)) return "X/Twitter";
+  if (!ref.trim() && !utm.trim()) return "Directo";
+  return "Otro";
+}
 const FUENTES: { key: string; label: string }[] = [
   { key: "tienda", label: "Tienda web (/)" }, { key: "gallos", label: "Landing Gallos" },
   { key: "perros", label: "Landing Perros" }, { key: "caballos", label: "Landing Caballos" },
 ];
 export async function getAnalytics(): Promise<Analytics> {
-  const empty: Analytics = { visitas30d: 0, visitasHoy: 0, visitas7d: 0, pedidosWeb: 0, pedidosWhatsapp: 0, pedidosTotal: 0, porFuente: FUENTES.map((f) => ({ fuente: f.key, label: f.label, visitas: 0, pedidos: 0, conversion: 0 })), ventasPorCanal: [] };
+  const empty: Analytics = { visitas30d: 0, visitasHoy: 0, visitas7d: 0, visitantes30d: 0, visitantesHoy: 0, pedidosWeb: 0, pedidosWhatsapp: 0, pedidosTotal: 0, porFuente: FUENTES.map((f) => ({ fuente: f.key, label: f.label, visitas: 0, pedidos: 0, conversion: 0 })), ventasPorCanal: [], origenes: [] };
   if (!db) return empty;
   const d30 = new Date(Date.now() - 30 * 86400_000);
   const d7 = new Date(Date.now() - 7 * 86400_000);
   const d0 = new Date(); d0.setHours(0, 0, 0, 0);
 
-  const [visF, [vHoy], [v7], pedCanal, pedWebF] = await Promise.all([
+  const [visF, [vHoy], [v7], [uniq], [uniqHoy], pedCanal, pedWebF, origRows] = await Promise.all([
     db.select({ f: visits.fuente, n: sql<number>`count(*)::int` }).from(visits).where(gte(visits.createdAt, d30)).groupBy(visits.fuente),
     db.select({ n: sql<number>`count(*)::int` }).from(visits).where(gte(visits.createdAt, d0)),
     db.select({ n: sql<number>`count(*)::int` }).from(visits).where(gte(visits.createdAt, d7)),
+    db.select({ n: sql<number>`count(distinct session_id)::int` }).from(visits).where(gte(visits.createdAt, d30)),
+    db.select({ n: sql<number>`count(distinct session_id)::int` }).from(visits).where(gte(visits.createdAt, d0)),
     db.select({ canal: orders.canal, n: sql<number>`count(*)::int`, total: sql<number>`coalesce(sum(total_cop),0)::int` }).from(orders).where(gte(orders.createdAt, d30)).groupBy(orders.canal),
     db.select({ f: orders.fuente, n: sql<number>`count(*)::int` }).from(orders).where(and(eq(orders.canal, "web"), gte(orders.createdAt, d30))).groupBy(orders.fuente),
+    db.select({ ref: visits.referrer, utm: visits.utmSource, n: sql<number>`count(*)::int` }).from(visits).where(gte(visits.createdAt, d30)).groupBy(visits.referrer, visits.utmSource),
   ]);
+  const origMap = new Map<string, number>();
+  for (const r of origRows) { const o = clasificarOrigen(r.ref || "", r.utm || ""); origMap.set(o, (origMap.get(o) || 0) + r.n); }
+  const origenes = [...origMap.entries()].map(([origen, visitas]) => ({ origen, visitas })).sort((a, b) => b.visitas - a.visitas);
   const visMap = new Map(visF.map((r) => [r.f || "otro", r.n]));
   const pedWebMap = new Map(pedWebF.map((r) => [(r.f || "tienda"), r.n])); // web sin fuente → tienda
   const porFuente: FuenteRow[] = FUENTES.map((f) => {
@@ -105,9 +124,11 @@ export async function getAnalytics(): Promise<Analytics> {
   const pedidosTotal = pedCanal.reduce((s, r) => s + r.n, 0);
   return {
     visitas30d, visitasHoy: vHoy?.n ?? 0, visitas7d: v7?.n ?? 0,
+    visitantes30d: uniq?.n ?? 0, visitantesHoy: uniqHoy?.n ?? 0,
     pedidosWeb, pedidosWhatsapp, pedidosTotal,
     porFuente,
     ventasPorCanal: pedCanal.map((r) => ({ canal: r.canal || "otro", n: r.n, total: r.total })),
+    origenes,
   };
 }
 
