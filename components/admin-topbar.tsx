@@ -9,14 +9,9 @@ import { ThemeToggle, CommandPalette } from "@/components/admin-tools";
 function openPalette() { window.dispatchEvent(new Event("adm-open-cmdk")); }
 
 const TITLES: Record<string, string> = {
-  "/dashboard": "Dashboard",
-  "/productos": "Productos",
-  "/pedidos": "Pedidos",
-  "/clientes": "Clientes",
-  "/conversaciones": "Conversaciones",
-  "/promociones": "Promociones",
-  "/asesores": "Asesores",
-  "/configuracion": "Configuración",
+  "/dashboard": "Dashboard", "/productos": "Productos", "/pedidos": "Pedidos",
+  "/clientes": "Clientes", "/conversaciones": "Conversaciones", "/anuncios": "Anuncios",
+  "/promociones": "Promociones", "/resenas": "Reseñas", "/asesores": "Asesores", "/configuracion": "Configuración",
 };
 
 export function AdminTopbar() {
@@ -24,23 +19,20 @@ export function AdminTopbar() {
   const key = Object.keys(TITLES).find((k) => path.startsWith(k)) || "/dashboard";
   const title = TITLES[key];
   return (
-    <header className="topbar">
-      <div className="crumb">
-        <span className="root">Animals Deluxe</span>
-        <span className="sep">/</span>
-        <b>{title}</b>
+    <header className="top">
+      <div className="pagetitle">Hola, Victor 👋</div>
+      <div className="crumbtag">{title}</div>
+      <div className="tr">
+        <button className="ticon" title="Buscar / ir a (⌘K)" onClick={openPalette}><Search size={17} /></button>
+        <ThemeToggle />
+        <button className="ticon" title="Notificaciones"><Bell size={17} /><span className="dot" /></button>
+        <Link href="/" target="_blank" className="plat blue" title="Ver tienda"><Store size={15} /> <span>Ver tienda</span></Link>
+        <div className="mepill" title="Animals Deluxe">
+          <div className="av">AD</div>
+          <div><b>Animals Deluxe</b><small>Admin</small></div>
+        </div>
+        <form action={logout}><button type="submit" className="ticon danger" title="Salir"><LogOut size={16} /></button></form>
       </div>
-      <div className="sp" />
-      <button className="tsearch" onClick={openPalette} aria-label="Buscar / ir a" style={{ cursor: "pointer" }}>
-        <Search size={16} />
-        <span style={{ flex: 1, textAlign: "left" }}>Ir a…</span>
-        <span className="kbd">⌘K</span>
-      </button>
-      <ThemeToggle />
-      <button className="tbtn" title="Notificaciones"><Bell size={18} /><span className="dot" /></button>
-      <Link href="/" target="_blank" className="primary"><Store size={16} /> <span>Ver tienda</span></Link>
-      <div className="avatar" title="Animals Deluxe">AD</div>
-      <form action={logout}><button type="submit" className="logout" title="Salir"><LogOut size={17} /></button></form>
       <CommandPalette />
     </header>
   );

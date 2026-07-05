@@ -711,3 +711,101 @@
 
 /* fuente global del panel */
 .adm, .adm h1, .adm h2, .adm h3, .adm h4, .adm button, .adm input, .adm select, .adm textarea, .adm table{ font-family:var(--sans); }
+
+/* ================================================================
+   🎨 DISEÑO FIEL A LA REFERENCIA (panel-animals-deluxe) — azul metalizado
+   Reproduce layout, tipografía, sidebar, tarjetas, badges, botones platinados
+   y tablas del HTML. Capa final (gana). Scoped a .adm.
+   ================================================================ */
+.adm{
+  --ink:#12212f; --ink-2:#33465a; --muted:#8b96a3; --bg:#f3f6fc; --card:#ffffff; --line:#eaeef5;
+  --blue:#2f6bff; --blue2:#1e50e6; --met:#8fbcff; --blue-soft:#e8f0ff;
+  --up:#1e50e6; --down:#e5484d;
+  --shadow:0 16px 40px rgba(20,40,90,.10),0 3px 10px -4px rgba(20,40,90,.10);
+  --shadow-sm:0 8px 22px rgba(20,40,90,.06);
+  --radius:22px; --radius-sm:16px;
+  --sans:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  grid-template-columns:250px 1fr; font-family:var(--sans); letter-spacing:-.01em;
+}
+.adm, .adm *{font-family:var(--sans)}
+
+/* ---------- SIDEBAR ---------- */
+.adm .sb{background:var(--card);border-right:1px solid var(--line);padding:24px 16px;gap:5px}
+.adm .sb .brand{font-size:19px;font-weight:800;letter-spacing:-.02em;padding:0 8px 20px;gap:11px}
+.adm .sb .brand .mk-img,.adm .sb .brand .mk{width:38px;height:38px;border-radius:12px;object-fit:cover;
+  background:radial-gradient(circle at 30% 25%,#9ec2ff,#2f6bff 70%);box-shadow:0 8px 18px rgba(47,107,255,.42);display:grid;place-items:center;color:#0a1b3d}
+.adm .sb .search{background:#f4f7fc;border:1px solid var(--line);border-radius:13px;padding:11px 13px;color:var(--muted);font-size:13.5px;font-weight:500;margin-bottom:4px}
+.adm .sb .search .kbd{background:#fff;border:1px solid var(--line);color:var(--muted)}
+.adm .sb .seclabel{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#aeb8c4;font-weight:700;padding:15px 12px 6px}
+.adm .sb .nav{gap:4px}
+.adm .sb a.item{padding:12px 14px;border-radius:14px;color:var(--muted);font-weight:600;font-size:14px;gap:13px}
+.adm .sb a.item svg{color:#a3adba}
+.adm .sb a.item:hover{background:#f4f7fc;color:var(--ink)}
+.adm .sb a.item:hover svg{color:var(--ink-2)}
+.adm .sb a.item.on{background:linear-gradient(120deg,#3b82f6,#1e50e6);color:#fff;font-weight:700;box-shadow:0 10px 22px rgba(47,107,255,.32)}
+.adm .sb a.item.on svg{color:#fff}
+.adm .sb a.item .badge{margin-left:auto;background:#eef1f6;color:var(--muted);font-size:11px;font-weight:700;padding:1px 8px;border-radius:20px}
+.adm .sb a.item.on .badge{background:rgba(255,255,255,.25);color:#fff}
+.adm .sb .promo{margin-top:auto;background:var(--blue-soft);border-radius:18px;padding:16px;text-align:center;color:var(--ink)}
+.adm .sb .promo:after{display:none}
+.adm .sb .promo h4{font-size:13px;font-weight:800;color:var(--ink)}
+.adm .sb .promo p{font-size:11px;color:#5a6b82;margin:5px 0 11px;line-height:1.5;opacity:1}
+.adm .sb .promo a{width:100%;justify-content:center;color:#0f2a55;font-weight:700;font-size:12.5px;padding:11px;border-radius:13px;
+  background:linear-gradient(180deg,#dfeaff,#bcd4ff 48%,#a3c4ff 52%,#cfe0ff);border:1px solid #a3c4ff;box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 8px 16px rgba(47,107,255,.28)}
+
+/* ---------- TOPBAR (reference .top) ---------- */
+.adm .top{display:flex;align-items:center;gap:16px;padding:20px 26px 4px;background:transparent;border:0;position:static}
+.adm .top .pagetitle{font-size:15px;font-weight:700;color:var(--muted)}
+.adm .top .crumbtag{background:var(--card);border-radius:12px;padding:8px 15px;font-size:13px;font-weight:700;color:var(--ink);box-shadow:var(--shadow-sm)}
+.adm .top .tr{margin-left:auto;display:flex;align-items:center;gap:10px}
+.adm .top .ticon{width:44px;height:44px;border-radius:50%;border:0;background:var(--card);display:grid;place-items:center;color:#6b7686;cursor:pointer;box-shadow:var(--shadow-sm);position:relative;transition:.2s}
+.adm .top .ticon:hover{color:var(--ink);transform:translateY(-1px)}
+.adm .top .ticon.danger:hover{color:var(--down)}
+.adm .top .ticon .dot{position:absolute;top:11px;right:12px;width:8px;height:8px;border-radius:50%;background:var(--down);border:2px solid #fff}
+.adm .top .mepill{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:40px;padding:6px 15px 6px 6px;box-shadow:var(--shadow-sm);cursor:pointer}
+.adm .top .mepill .av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#9ec2ff,#2f6bff);display:grid;place-items:center;color:#0a1b3d;font-weight:800;font-size:14px}
+.adm .top .mepill b{font-size:13px;display:block}.adm .top .mepill small{display:block;font-size:11px;color:var(--muted)}
+.adm .content{padding:16px 26px 44px;max-width:1320px}
+
+/* ---------- CARDS / SUPERFICIES ---------- */
+.adm .card,.adm .panel,.adm .sumc,.adm .tablewrap,.adm .pb-kpi,.adm .crm-stage,.adm .pb-row,.adm .crm-card,.adm .pb-modal,.adm .crm-drawer{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);box-shadow:var(--shadow-sm)}
+.adm .card,.adm .panel,.adm .tablewrap{border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px}
+.adm .sumc{border-radius:var(--radius);padding:18px 20px}
+.adm .sumc.hot{background:linear-gradient(140deg,#3b82f6,#1e50e6);color:#eaf1ff;border:0}
+.adm .sumc.hot .big,.adm .sumc.hot .lbl,.adm .sumc.hot small,.adm .sumc.hot .foot,.adm .sumc.hot .ic{color:#fff !important;-webkit-text-fill-color:#fff}
+
+/* ---------- BOTONES PLATINADOS ---------- */
+.adm .plat,.adm .btn,.adm .primary,.adm .pb-btn,.adm .chip-btn{border-radius:13px;font-weight:700;font-family:var(--sans);
+  transition:.18s cubic-bezier(.34,1.56,.64,1);display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
+.adm .plat.blue,.adm .btn,.adm .primary,.adm .pb-btn.bl,.adm .pb-btn.gp{color:#fff !important;
+  background:linear-gradient(180deg,#5b9bff 0%,#2f6bff 48%,#1e50e6 52%,#4c82ff 100%);border:1px solid #1e50e6;
+  box-shadow:0 1px 0 rgba(255,255,255,.4) inset,0 10px 20px -6px rgba(47,107,255,.5)}
+.adm .plat,.adm .btn.soft,.adm .chip-btn,.adm .pb-btn.dk{color:#0f2a55 !important;
+  background:linear-gradient(180deg,#fff 0%,#eef2fb 48%,#dfe6f4 52%,#f4f7fd 100%);border:1px solid #dde5f4;
+  box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 8px 16px rgba(20,40,90,.10)}
+.adm .btn:hover,.adm .primary:hover,.adm .plat:hover,.adm .pb-btn:hover{transform:translateY(-1px);filter:brightness(1.03)}
+.adm .btn:active,.adm .primary:active,.adm .plat:active,.adm .pb-btn:active{transform:scale(.97)}
+
+/* ---------- BADGES ---------- */
+.adm .badge,.adm .tag,.adm .pb-pill{font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:20px;letter-spacing:.01em}
+.adm .b-ok,.adm .tag.blue{background:#e6f0ff;color:#2f6bff}
+.adm .b-new{background:#e6f0ff;color:#3b74e0}
+.adm .b-ship,.adm .tag.pend{background:#fff0e2;color:#e8850c}
+.adm .b-done,.adm .tag.ok{background:#e6faf0;color:#12a150}
+.adm .tag.fail{background:#feecec;color:#e5484d}
+
+/* ---------- TABLAS ---------- */
+.adm table{width:100%;border-collapse:collapse}
+.adm .card table th,.adm .panel th,.adm table th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:700;padding:11px 8px 9px;background:transparent;border-top:0;border-bottom:1px solid var(--line)}
+.adm .card table td,.adm table td{padding:11px 8px;border-top:1px solid var(--line);border-bottom:0;font-size:13px;color:var(--ink-2)}
+.adm table tr:hover td{background:#f7faff}
+
+/* ---------- números metálicos ---------- */
+.adm .pb-kpi .num,.adm .crm-stage .n,.adm .kpi-big,.adm .page-head h1,.adm .pagehead h1{
+  background:linear-gradient(135deg,#0b2a66,#2f6bff 60%,#0b2a66);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.adm .pos,.adm .chg.up,.adm .lnk,.adm .up b{color:#1e50e6 !important}
+.adm .foot b{color:#2f6bff}
+/* theme toggle dentro del topbar como ícono redondo */
+.adm .top .tbtn{width:44px;height:44px;border-radius:50%;border:0;background:var(--card);display:grid;place-items:center;color:#6b7686;cursor:pointer;box-shadow:var(--shadow-sm);transition:.2s}
+.adm .top .tbtn:hover{color:var(--ink);transform:translateY(-1px)}
