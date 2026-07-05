@@ -177,7 +177,7 @@ export async function crearGuia(orderId: string, force?: boolean, deliveryCompan
 /** Traduce errores comunes de MiPaquete a algo entendible para el asesor. */
 function traducirErrorMp(err: string): string {
   const e = err.toLowerCase();
-  if (e.includes("shipping cannot be paid") || e.includes("537")) return "Tu cuenta MiPaquete NO tiene activado el servicio de RECAUDO CONTRA ENTREGA. Probado: el envío anticipado sí funciona, pero el contra entrega lo rechaza siempre (con o sin saldo). Escríbele a soporte de MiPaquete para que ACTIVEN contra entrega (recaudo) en tu cuenta — no basta con registrar el banco. Mientras tanto puedes despachar como envío anticipado.";
+  if (e.includes("shipping cannot be paid") || e.includes("537")) return "Tu APIKEY de MiPaquete no tiene permiso de CONTRA ENTREGA (recaudo). Comprobado: por la web de MiPaquete el contra entrega SÍ funciona con los mismos datos, pero por la API (que usa la plataforma) lo rechaza siempre con código 537, aun con saldo. Escríbele a soporte de MiPaquete y pídeles: “Activen el pago CONTRA ENTREGA (recaudo) para mi integración por API / apikey (cuenta deluxegallos@gmail.com)”. El envío anticipado por API sí funciona.";
   if (e.includes("nit")) return "Datos del remitente/destinatario incompletos (NIT/cédula).";
   if (e.includes("declaredvalue") || e.includes("declared")) return "El valor declarado no es válido.";
   if (e.includes("location") || e.includes("dane")) return "No se pudo resolver la ciudad de destino.";
