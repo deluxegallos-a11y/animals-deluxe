@@ -38,14 +38,37 @@ export async function mpConfigured(): Promise<boolean> {
   return !!(await getMpCreds()).apikey;
 }
 
-/** Resuelve una ciudad a su código DANE usando el caché mp_locations_cache. */
+/** Resuelve una ciudad a su código DANE. Primero el caché mp_locations_cache;
+ *  si no está y hay token, consulta /getLocations de MiPaquete (cubre todos los municipios). */
 export async function mpBuscarDane(ciudad: string): Promise<{ code: string; name: string; dep: string } | null> {
   if (!db || !ciudad?.trim()) return null;
   const n = norm(ciudad);
   const rows = await db.select().from(mpLocationsCache);
   const exact = rows.find((r) => norm(r.locationName || "") === n);
   const partial = exact || rows.find((r) => n.includes(norm(r.locationName || "")) && (r.locationName || "").length > 3);
-  return partial ? { code: partial.locationCode, name: partial.locationName || "", dep: partial.departmentName || "" } : null;
+  if (partial) return { code: partial.locationCode, name: partial.locationName || "", dep: partial.departmentName || "" };
+
+  // Fallback remoto (cubre municipios que no están en el caché).
+  const { apikey, baseUrl } = await getMpCreds();
+  if (!apikey) return null;
+  try {
+    const r = await fetch(`${baseUrl}/getLocations`, {
+      method: "POST", headers: { "content-type": "application/json", "Session-Tracker": apikey },
+      body: JSON.stringify({ location: ciudad.trim() }),
+    });
+    if (!r.ok) return null;
+    const data = await r.json();
+    const arr = Array.isArray(data) ? data : (data?.locations || data?.data || []);
+    const hit = arr.find((x: Record<string, unknown>) => norm(String(x.locationName || x.name || "")) === n) || arr[0];
+    if (!hit) return null;
+    const code = String(hit.locationCode || hit.code || "");
+    const name = String(hit.locationName || hit.name || ciudad);
+    const dep = String(hit.departmentOrStateName || hit.departmentName || hit.department || "");
+    if (code) { try { await db.insert(mpLocationsCache).values({ locationCode: code, locationName: name, departmentName: dep, raw: hit as object }).onConflictDoNothing(); } catch { /* noop */ } }
+    return code ? { code, name, dep } : null;
+  } catch {
+    return null;
+  }
 }
 
 export interface CotizacionMp {
@@ -73,28 +96,29 @@ export async function mpCotizar(p: {
 }): Promise<{ ok: boolean; cotizaciones: CotizacionMp[]; source: "mipaquete" | "local"; error?: string }> {
   const { apikey, baseUrl } = await getMpCreds();
   const local = () => ({ ok: true as const, cotizaciones: [cotizarLocal(p.declaredValue, p.paymentType)], source: "local" as const });
-  if (!apikey) return local();
+  if (!apikey || !p.destinyDane) return local();
   try {
-    const r = await fetch(`${baseUrl}/getRates`, {
+    // Contrato confirmado: POST /getQuotation con header Session-Tracker.
+    const r = await fetch(`${baseUrl}/getQuotation`, {
       method: "POST",
-      headers: { "content-type": "application/json", apikey, "session-tracking": apikey },
+      headers: { "content-type": "application/json", "Session-Tracker": apikey },
       body: JSON.stringify({
-        originLocationCode: p.originDane, destinationLocationCode: p.destinyDane,
-        height: 20, width: 20, length: 20, weightUnit: "kg", weight: p.weight,
-        declaredValue: p.declaredValue, deliveryType: p.paymentType === 102 ? "delivery" : "prepaid",
+        locationCodeFrom: p.originDane, locationCodeTo: p.destinyDane,
+        height: 20, width: 20, length: 20, weight: p.weight,
+        declaredValue: p.declaredValue,
+        deliveryType: p.paymentType === 102 ? 2 : 1, // 2 = contra entrega, 1 = anticipado
         paymentType: p.paymentType, // 101 anticipado / 102 COD
       }),
     });
     if (!r.ok) return { ...local(), source: "local", error: `mp ${r.status}` };
     const data = await r.json();
-    // TODO(token): mapear la forma REAL de la respuesta de MiPaquete.
-    const arr = Array.isArray(data) ? data : (data?.rates || data?.data || []);
+    const arr = Array.isArray(data) ? data : (data?.quotations || data?.rates || data?.data || []);
     const cot: CotizacionMp[] = arr.map((x: Record<string, unknown>) => ({
-      deliveryCompany: String(x.deliveryCompanyName || x.company || ""),
-      deliveryCompanyId: String(x.deliveryCompany || x.deliveryCompanyId || ""),
-      shippingCost: Math.round(Number(x.shippingCost ?? x.value ?? 0)),
-      collectionCommission: Math.round(Number(x.collectionCommission ?? 0)),
-      totalCost: Math.round(Number(x.totalCost ?? x.total ?? 0)),
+      deliveryCompany: String(x.deliveryCompanyName || x.deliveryCompany || ""),
+      deliveryCompanyId: String(x.idDeliveryCompany || x.deliveryCompany || x.deliveryCompanyId || ""),
+      shippingCost: Math.round(Number(x.shippingCost ?? x.collectionServiceValue ?? x.value ?? 0)),
+      collectionCommission: Math.round(Number(x.collectionCommission ?? x.collectionCommissionWithRate ?? 0)),
+      totalCost: Math.round(Number(x.total ?? x.totalValue ?? x.shippingCost ?? 0)),
       source: "mipaquete",
     }));
     return cot.length ? { ok: true, cotizaciones: cot, source: "mipaquete" } : local();
@@ -121,20 +145,21 @@ export async function mpCrearGuia(p: MpCrearGuiaPayload): Promise<{
   const { apikey, baseUrl } = await getMpCreds();
   if (!apikey) return { ok: false, pending: true, error: "MiPaquete sin token — guía en pendiente" };
   try {
-    // TODO(token): confirmar endpoint y forma del body con la doc de MiPaquete.
+    // Contrato confirmado: POST /createShipping con header Session-Tracker.
     const r = await fetch(`${baseUrl}/createShipping`, {
       method: "POST",
-      headers: { "content-type": "application/json", apikey, "session-tracking": apikey },
+      headers: { "content-type": "application/json", "Session-Tracker": apikey },
       body: JSON.stringify({
-        senderName: p.origin.name, senderPhone: p.origin.phone, senderIdNumber: p.origin.idNumber,
-        senderAddress: p.origin.address, originLocationCode: p.origin.locationCode,
-        receiverName: p.destiny.name, receiverPhone: p.destiny.phone, receiverIdNumber: p.destiny.idNumber,
-        receiverAddress: p.destiny.address, destinationLocationCode: p.destiny.locationCode,
-        weight: p.pkg.weight, width: p.pkg.width, height: p.pkg.height, length: p.pkg.length,
-        declaredValue: p.pkg.declaredValue, productDescription: p.pkg.description,
-        productReference: p.pkg.reference, quantity: p.pkg.quantity,
-        paymentType: p.paymentType, collectionValue: p.collectionValue,
-        deliveryCompany: p.deliveryCompanyId, idempotencyKey: p.idempotencyKey,
+        nameSender: p.origin.name, surnameSender: ".", phoneSender: p.origin.phone,
+        cellPhoneSender: p.origin.phone, addressSender: p.origin.address, locationCodeSender: p.origin.locationCode,
+        nameReceiver: p.destiny.name, surnameReceiver: ".", phoneReceiver: p.destiny.phone,
+        cellPhoneReceiver: p.destiny.phone, addressReceiver: p.destiny.address, locationCodeReceiver: p.destiny.locationCode,
+        idNumberReceiver: p.destiny.idNumber,
+        weight: p.pkg.weight, width: p.pkg.width, height: p.pkg.height, large: p.pkg.length,
+        declaredValue: p.pkg.declaredValue, comments: p.pkg.description,
+        productName: p.pkg.reference, quantity: p.pkg.quantity,
+        deliveryType: p.paymentType === 102 ? 2 : 1, collectionValue: p.collectionValue,
+        deliveryCompany: p.deliveryCompanyId, idOrderReference: p.idempotencyKey,
       }),
     });
     const data = await r.json().catch(() => ({}));
