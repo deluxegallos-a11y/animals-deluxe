@@ -106,13 +106,13 @@ export function cotizarLocal(declaredValue: number, paymentType: number): Cotiza
 }
 
 /** Cotiza flete (POST /quoteShipping). Sin apikey o error → estimación local. */
-export async function mpCotizar(p: { originDane: string; destinyDane: string; weight: number; declaredValue: number; paymentType: number }): Promise<{ ok: boolean; cotizaciones: CotizacionMp[]; source: "mipaquete" | "local"; error?: string }> {
+export async function mpCotizar(p: { originDane: string; destinyDane: string; weight: number; declaredValue: number; paymentType: number; width?: number; height?: number; length?: number }): Promise<{ ok: boolean; cotizaciones: CotizacionMp[]; source: "mipaquete" | "local"; error?: string }> {
   const local = () => ({ ok: true as const, cotizaciones: [cotizarLocal(p.declaredValue, p.paymentType)], source: "local" as const });
   if (!p.destinyDane) return local();
   const body = JSON.stringify({
     originCountryCode: CO, originLocationCode: p.originDane,
     destinyCountryCode: CO, destinyLocationCode: p.destinyDane,
-    quantity: 1, width: 20, length: 20, height: 20, weight: p.weight, declaredValue: p.declaredValue,
+    quantity: 1, width: p.width || 20, length: p.length || 20, height: p.height || 20, weight: p.weight, declaredValue: p.declaredValue,
   });
   try {
     let { apikey, baseUrl } = await ensureMpAuth();
@@ -159,7 +159,7 @@ export async function mpCrearGuia(p: MpCrearGuiaPayload): Promise<{ ok: boolean;
     productInformation: { declaredValue: p.pkg.declaredValue, forbiddenProduct: false, height: p.pkg.height, large: p.pkg.length, width: p.pkg.width, weight: p.pkg.weight, productReference: p.pkg.reference, quantity: p.pkg.quantity },
     receiver: { name: p.destiny.name, surname: ".", cellPhone: p.destiny.phone, prefix: "+57", destinationAddress: p.destiny.address, email: p.destiny.email || "cliente@animalsdeluxe.com", nit: p.destiny.idNumber || ".", nitType: "CC" },
     requestPickup: "false",
-    sender: { name: p.origin.name, surname: ".", cellPhone: p.origin.phone, prefix: "+57", pickupAddress: p.origin.address, email: p.origin.email || "deluxegallos@gmail.com", nit: p.origin.idNumber || ".", nitType: "NIT" },
+    sender: { name: p.origin.name, surname: ".", cellPhone: p.origin.phone, prefix: "+57", pickupAddress: p.origin.address, email: p.origin.email || "deluxegallos@gmail.com", nit: p.origin.idNumber || ".", nitType: "CC" },
   });
   try {
     let r = await fetch(`${baseUrl}/createSending`, { method: "POST", headers: mpHeaders(apikey), body });

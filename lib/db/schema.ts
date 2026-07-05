@@ -66,6 +66,11 @@ export const products = pgTable(
     salesPrompt: text("sales_prompt").default(""),
     disclaimer: text("disclaimer").default(""),
     stock: integer("stock").default(999),
+    // Dimensiones para el flete/guía MiPaquete (afectan el precio del envío)
+    pesoGr: integer("peso_gr").default(1000), // peso en gramos
+    altoCm: integer("alto_cm").default(15),
+    anchoCm: integer("ancho_cm").default(12),
+    largoCm: integer("largo_cm").default(8),
     activo: boolean("activo").default(true),
     envioGratis: boolean("envio_gratis").default(false),
     // --- Ficha enriquecida (§4.6): contenido de venta editable en el panel ---

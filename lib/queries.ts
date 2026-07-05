@@ -127,12 +127,14 @@ export type ProductAdminRow = ProductView & {
   shopifyProductId: string;
   shopifySync: "synced" | "pending" | "error";
   shopifySyncError: string;
+  pesoGr: number; altoCm: number; anchoCm: number; largoCm: number;
 };
 
 export async function listProducts(): Promise<ProductAdminRow[]> {
   if (!db) return demoProducts.map((p) => ({
     ...p, categoryColor: demoCategories.find((c) => c.slug === p.categorySlug)?.color || "#FF4D2E",
     shopifyProductId: "", shopifySync: "pending" as const, shopifySyncError: "",
+    pesoGr: 1000, altoCm: 15, anchoCm: 12, largoCm: 8,
   }));
   const rows = await db
     .select({ p: products, c: categories })
@@ -159,6 +161,7 @@ export async function listProducts(): Promise<ProductAdminRow[]> {
     shopifyProductId: r.p.shopifyProductId || "",
     shopifySync: (r.p.shopifySync as "synced" | "pending" | "error") || "pending",
     shopifySyncError: r.p.shopifySyncError || "",
+    pesoGr: r.p.pesoGr ?? 1000, altoCm: r.p.altoCm ?? 15, anchoCm: r.p.anchoCm ?? 12, largoCm: r.p.largoCm ?? 8,
   }));
 }
 

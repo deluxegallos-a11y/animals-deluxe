@@ -110,6 +110,11 @@ export async function saveProduct(formData: FormData) {
     adIds: String(formData.get("ad_ids") || "").split(/[,\n]/).map((s) => s.trim()).filter(Boolean).slice(0, 30),
     disclaimer: String(formData.get("disclaimer") || ""),
     stock: parseInt(String(formData.get("stock") || "999"), 10) || 999,
+    // Dimensiones para el flete/guía (afectan el precio del envío)
+    pesoGr: Math.max(1, parseInt(String(formData.get("pesoGr") || "1000").replace(/\D/g, ""), 10) || 1000),
+    altoCm: Math.max(1, parseInt(String(formData.get("altoCm") || "15").replace(/\D/g, ""), 10) || 15),
+    anchoCm: Math.max(1, parseInt(String(formData.get("anchoCm") || "12").replace(/\D/g, ""), 10) || 12),
+    largoCm: Math.max(1, parseInt(String(formData.get("largoCm") || "8").replace(/\D/g, ""), 10) || 8),
     activo: formData.get("activo") === "on" || formData.get("activo") === "true",
     envioGratis: formData.get("envioGratis") === "on" || formData.get("envioGratis") === "true",
     // Ficha enriquecida (§4.6)

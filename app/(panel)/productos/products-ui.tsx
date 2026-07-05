@@ -16,6 +16,7 @@ type P = {
   usage: string; pitch: string; faq: FaqItem[]; keywords: string[]; objeciones: Record<string, string>; adIds: string[]; disclaimer: string; stock: number; activo: boolean; envioGratis?: boolean;
   descripcion?: string; edadMinima?: string; dosificacion?: string; presentacion?: string; paraQue?: string;
   shopifyProductId: string; shopifySync: "synced" | "pending" | "error"; shopifySyncError: string;
+  pesoGr?: number; altoCm?: number; anchoCm?: number; largoCm?: number;
 };
 
 function SyncBadge({ p, shopifyOn }: { p: P; shopifyOn: boolean }) {
@@ -341,6 +342,15 @@ function ProductModal({ editing, categorias, onClose }: { editing: P | null; cat
                 <div className="field">
                   <label>Disclaimer</label>
                   <input name="disclaimer" defaultValue={editing?.disclaimer || ""} />
+                </div>
+              </div>
+              <div className="field">
+                <label>📦 Dimensiones para el envío (afectan el flete de la guía)</label>
+                <div className="field-row" style={{ gap: 8 }}>
+                  <div className="field" style={{ marginBottom: 0 }}><label style={{ fontSize: 11 }}>Peso (gramos)</label><input name="pesoGr" type="number" min={1} defaultValue={editing?.pesoGr ?? 1000} placeholder="1000" /></div>
+                  <div className="field" style={{ marginBottom: 0 }}><label style={{ fontSize: 11 }}>Alto (cm)</label><input name="altoCm" type="number" min={1} defaultValue={editing?.altoCm ?? 15} placeholder="15" /></div>
+                  <div className="field" style={{ marginBottom: 0 }}><label style={{ fontSize: 11 }}>Ancho (cm)</label><input name="anchoCm" type="number" min={1} defaultValue={editing?.anchoCm ?? 12} placeholder="12" /></div>
+                  <div className="field" style={{ marginBottom: 0 }}><label style={{ fontSize: 11 }}>Largo (cm)</label><input name="largoCm" type="number" min={1} defaultValue={editing?.largoCm ?? 8} placeholder="8" /></div>
                 </div>
               </div>
               <ImageUpload name="imageUrl" label="Imagen del producto" defaultUrl={imageUrl} folder="products" hint="JPG/PNG/WebP, máx 5MB" />

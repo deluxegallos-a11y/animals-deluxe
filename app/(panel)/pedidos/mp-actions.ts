@@ -10,7 +10,7 @@
 import { revalidatePath } from "next/cache";
 import { eq, inArray, and, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { orders, orderItems, mpShipments, mpAddresses, configEmpresa } from "@/lib/db/schema";
+import { orders, orderItems, mpShipments, mpAddresses, configEmpresa, products } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth";
 import { mpBuscarDane, mpCotizar, mpCrearGuia, MP_COMPANIES } from "@/lib/mipaquete";
 
@@ -21,6 +21,30 @@ async function bodegaOrigen() {
   const [b] = await db.select().from(mpAddresses).where(eq(mpAddresses.isDefault, true)).limit(1);
   return b || (await db.select().from(mpAddresses).limit(1))[0] || null;
 }
+const soloDig = (s: string) => { const d = (s || "").replace(/\D/g, ""); return d.length > 10 ? d.slice(-10) : d; };
+
+/** Calcula el paquete (peso + dimensiones) del pedido a partir de las dimensiones de cada producto. */
+async function paqueteDeOrden(orderId: string): Promise<{ qty: number; pesoKg: number; alto: number; ancho: number; largo: number; items: { name: string; cantidad: number; slug: string }[] }> {
+  const its = await db!.select({ slug: orderItems.productSlug, name: orderItems.productName, cantidad: orderItems.cantidad }).from(orderItems).where(eq(orderItems.orderId, orderId));
+  const slugs = its.map((i) => i.slug || "").filter(Boolean);
+  const dims = slugs.length ? await db!.select({ slug: products.slug, pesoGr: products.pesoGr, altoCm: products.altoCm, anchoCm: products.anchoCm, largoCm: products.largoCm }).from(products).where(inArray(products.slug, slugs)) : [];
+  const dmap = new Map(dims.map((d) => [d.slug, d]));
+  let pesoGr = 0, alto = 0, ancho = 0, largo = 0, qty = 0;
+  for (const it of its) {
+    const d = dmap.get(it.slug || "");
+    const c = it.cantidad ?? 1; qty += c;
+    pesoGr += (d?.pesoGr ?? 1000) * c;
+    alto = Math.max(alto, d?.altoCm ?? 15);
+    ancho = Math.max(ancho, d?.anchoCm ?? 12);
+    largo += (d?.largoCm ?? 8) * c; // se apilan a lo largo
+  }
+  return {
+    qty: qty || 1,
+    pesoKg: Math.max(1, Math.ceil(pesoGr / 1000)),
+    alto: Math.max(1, alto), ancho: Math.max(1, ancho), largo: Math.max(1, largo),
+    items: its.map((i) => ({ name: i.name || "", cantidad: i.cantidad ?? 1, slug: i.slug || "" })),
+  };
+}
 
 export interface Transportadora { company: string; id: string; flete: number; comision: number; total: number }
 /** Cotiza un pedido con MiPaquete → lista de transportadoras para que el asesor elija. */
@@ -29,13 +53,12 @@ export async function cotizarPedido(orderId: string): Promise<{ ok: boolean; sou
   if (!db || !orderId) return { ok: false, error: "Sin datos" };
   const [o] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
   if (!o) return { ok: false, error: "Pedido no encontrado" };
-  const items = await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
-  const qty = items.reduce((s, it) => s + (it.cantidad ?? 1), 0) || 1;
+  const pkg = await paqueteDeOrden(orderId);
   const bod = await bodegaOrigen();
   const dane = await mpBuscarDane(o.ciudad || "");
   const paymentType = o.metodoPago === "anticipado" ? 101 : 102;
   const declaredValue = o.subtotalCop ?? o.totalCop ?? 0;
-  const cot = await mpCotizar({ originDane: bod?.locationCode || "05001000", destinyDane: dane?.code || "", weight: qty, declaredValue, paymentType });
+  const cot = await mpCotizar({ originDane: bod?.locationCode || "05001000", destinyDane: dane?.code || "", weight: pkg.pesoKg, width: pkg.ancho, height: pkg.alto, length: pkg.largo, declaredValue, paymentType });
   return {
     ok: true, source: cot.source, ciudad: o.ciudad || "", sinDane: !dane,
     transportadoras: cot.cotizaciones.map((c) => ({ company: c.deliveryCompany, id: c.deliveryCompanyId, flete: c.shippingCost, comision: c.collectionCommission, total: c.totalCost })),
@@ -79,9 +102,10 @@ export async function crearGuia(orderId: string, force?: boolean, deliveryCompan
   const [exist] = await db.select().from(mpShipments).where(eq(mpShipments.orderId, orderId)).limit(1);
   if (exist && !force) return { ok: true, ref: o.ref, guideNumber: exist.guideNumber || "", status: exist.status || "", pending: exist.status === "pendiente", pdfUrl: exist.pdfGuideUrl || "" };
 
-  const items = await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
-  const qty = items.reduce((s, it) => s + (it.cantidad ?? 1), 0) || 1;
+  const pkg = await paqueteDeOrden(orderId);
+  const qty = pkg.qty;
   const bod = await bodegaOrigen();
+  const [cfg] = await db.select().from(configEmpresa).limit(1);
   const dane = await mpBuscarDane(o.ciudad || "");
 
   const paymentType = (o.metodoPago === "anticipado") ? 101 : 102;
@@ -90,18 +114,18 @@ export async function crearGuia(orderId: string, force?: boolean, deliveryCompan
 
   const cot = await mpCotizar({
     originDane: bod?.locationCode || "05001000", destinyDane: dane?.code || "",
-    weight: qty, declaredValue, paymentType,
+    weight: pkg.pesoKg, width: pkg.ancho, height: pkg.alto, length: pkg.largo, declaredValue, paymentType,
   });
   // transportadora elegida por el asesor, o la más barata por defecto
   const c = (deliveryCompanyId ? cot.cotizaciones.find((x) => x.deliveryCompanyId === deliveryCompanyId) : null) || cot.cotizaciones[0];
   const amountToTransfer = paymentType === 102 ? Math.max(0, collectionValue - c.totalCost) : 0;
 
-  // Crear guía real (o pending sin token)
+  // Crear guía real. Remitente: bodega + NIT/teléfono de la empresa. Destinatario: cliente.
   const idem = `${o.ref}`;
   const guia = await mpCrearGuia({
-    origin: { name: bod?.name || "Animals Deluxe", phone: "573026333595", idNumber: "", address: bod?.address || "", locationCode: bod?.locationCode || "05001000" },
-    destiny: { name: o.nombre || "", phone: o.telefono || "", idNumber: o.cedula || "", address: o.direccion || "", locationCode: dane?.code || "" },
-    pkg: { weight: qty, width: 20, height: 20, length: 20, declaredValue, description: items.map((i) => i.productName).join(", ").slice(0, 120), reference: o.ref, quantity: qty },
+    origin: { name: cfg?.nombreMarca || bod?.name || "Animals Deluxe", phone: soloDig(cfg?.whatsapp || "3026333595"), idNumber: cfg?.nit || "1037633158", address: bod?.address || "Medellín", locationCode: bod?.locationCode || "05001000", email: cfg?.email || "deluxegallos@gmail.com" },
+    destiny: { name: o.nombre || "Cliente", phone: soloDig(o.telefono || "3000000000"), idNumber: soloDig(o.cedula || "") || "1000000000", address: o.direccion || "Centro", locationCode: dane?.code || "" },
+    pkg: { weight: pkg.pesoKg, width: pkg.ancho, height: pkg.alto, length: pkg.largo, declaredValue, description: pkg.items.map((i) => i.name).join(", ").slice(0, 120) || "Suplementos", reference: o.ref, quantity: qty },
     paymentType, collectionValue, deliveryCompanyId: c.deliveryCompanyId || MP_COMPANIES.COORDINADORA, idempotencyKey: idem,
   });
 
@@ -119,7 +143,7 @@ export async function crearGuia(orderId: string, force?: boolean, deliveryCompan
     originDane: bod?.locationCode || "05001000", originCity: bod?.locationName || "Medellín",
     receiverName: o.nombre || "", receiverPhone: o.telefono || "", receiverIdNumber: o.cedula || "",
     receiverAddress: o.direccion || "", destinyDane: dane?.code || "", destinyCity: dane?.name || o.ciudad || "",
-    description: items.map((i) => i.productName).join(", ").slice(0, 200), productReference: o.ref, quantity: qty,
+    description: pkg.items.map((i) => i.name).join(", ").slice(0, 200), productReference: o.ref, quantity: qty,
     weight: qty, declaredValue, paymentType, collectionValue, saleValue: o.totalCop ?? 0,
     shippingCost: c.shippingCost, collectionCommission: c.collectionCommission, totalCost: c.totalCost, amountToTransfer,
     pdfGuideUrl: guia.pdfGuideUrl || "", channel: "Animals Deluxe Plataforma",
