@@ -122,14 +122,16 @@ export async function mpCotizar(p: { originDane: string; destinyDane: string; we
     if (!r.ok) return { ...local(), source: "local", error: `mp ${r.status}` };
     const data = await r.json();
     const arr = Array.isArray(data) ? data : (data?.data || data?.quotations || []);
-    const cot: CotizacionMp[] = (arr as Record<string, unknown>[]).map((x) => ({
-      deliveryCompany: String(x.deliveryCompanyName || x.deliveryCompany || ""),
-      deliveryCompanyId: String(x.idDeliveryCompany || x.deliveryCompany || ""),
-      shippingCost: Math.round(Number(x.shippingCost ?? x.collectionServiceValue ?? x.value ?? 0)),
-      collectionCommission: Math.round(Number(x.collectionCommission ?? 0)),
-      totalCost: Math.round(Number(x.total ?? x.totalValue ?? x.shippingCost ?? 0)),
-      source: "mipaquete" as const,
-    })).filter((x) => x.shippingCost > 0);
+    const cot: CotizacionMp[] = (arr as Record<string, unknown>[]).map((x) => {
+      const shippingCost = Math.round(Number(x.shippingCost ?? 0));
+      const collectionCommission = Math.round(Number(x.collectionCommissionWithRate ?? x.collectionCommissionWithOutRate ?? x.collectionCommission ?? 0));
+      return {
+        deliveryCompany: String(x.deliveryCompanyName || ""),
+        deliveryCompanyId: String(x.deliveryCompanyId || x.idDeliveryCompany || ""), // campo REAL: deliveryCompanyId
+        shippingCost, collectionCommission, totalCost: shippingCost + collectionCommission,
+        source: "mipaquete" as const,
+      };
+    }).filter((x) => x.shippingCost > 0 && x.deliveryCompanyId);
     return cot.length ? { ok: true, cotizaciones: cot.sort((a, b) => a.totalCost - b.totalCost), source: "mipaquete" } : local();
   } catch (e) {
     return { ...local(), source: "local", error: String(e).slice(0, 120) };

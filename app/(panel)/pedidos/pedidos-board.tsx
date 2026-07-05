@@ -246,9 +246,10 @@ function GuiaModal({ order, onClose, onToast }: { order: BoardOrder; onClose: ()
   }, [order.id]);
 
   async function generar() {
+    const chosen = sel || transp[0]?.id || "";
     setGenErr(""); setBusy(true);
     try {
-      const r = await crearGuia(order.id, false, sel);
+      const r = await crearGuia(order.id, false, chosen);
       if (r.ok) {
         if (r.pdfUrl) { try { window.open(r.pdfUrl, "_blank"); } catch { /* */ } }
         onToast(r.pending ? "Guía en pendiente 📦" : `Guía ${r.guideNumber || "generada"} ✅`);
@@ -287,7 +288,7 @@ function GuiaModal({ order, onClose, onToast }: { order: BoardOrder; onClose: ()
                     ))}
                   </div>
                   {genErr ? <div style={{ background: "#FEECEB", border: "1px solid #F04438", color: "#B42318", borderRadius: 11, padding: "11px 14px", fontSize: 12.5, fontWeight: 600, lineHeight: 1.45 }}>⚠️ {genErr}</div> : null}
-                  <button style={{ padding: 15, borderRadius: 13, border: "none", background: (busy || !sel) ? "#A9C6FF" : "linear-gradient(180deg,#3B82F6,#1E50E6)", color: "#fff", fontWeight: 800, fontSize: 15.5, cursor: (busy || !sel) ? "default" : "pointer", boxShadow: "0 10px 20px -6px rgba(47,107,255,.55)" }} disabled={busy || !sel} onClick={generar}>{busy ? "Generando guía…" : "🚚 Generar guía"}</button>
+                  <button style={{ padding: 15, borderRadius: 13, border: "none", background: (busy || !transp.length) ? "#A9C6FF" : "linear-gradient(180deg,#3B82F6,#1E50E6)", color: "#fff", fontWeight: 800, fontSize: 15.5, cursor: (busy || !transp.length) ? "default" : "pointer", boxShadow: "0 10px 20px -6px rgba(47,107,255,.55)" }} disabled={busy || !transp.length} onClick={generar}>{busy ? "Generando guía…" : "🚚 Generar guía con " + (transp.find((t) => t.id === (sel || transp[0]?.id))?.company || "transportadora")}</button>
                 </>
               )}
         </div>
