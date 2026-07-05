@@ -138,6 +138,28 @@ export async function mpCotizar(p: { originDane: string; destinyDane: string; we
   }
 }
 
+/** Tras crear el envío (mpCode), obtiene el número de guía (getSendingTracking) y arma el PDF. */
+export async function mpGetSendingInfo(mpCode: string): Promise<{ guideNumber: string; pdfGuideUrl: string; deliveryCompanyName: string; state: string }> {
+  const empty = { guideNumber: "", pdfGuideUrl: "", deliveryCompanyName: "", state: "" };
+  if (!mpCode) return empty;
+  const { apikey, baseUrl } = await ensureMpAuth();
+  if (!apikey) return empty;
+  try {
+    const r = await fetch(`${baseUrl}/getSendingTracking?mpCode=${encodeURIComponent(mpCode)}`, { headers: { "session-tracker": SESSION_TRACKER, apikey } });
+    if (!r.ok) return empty;
+    const d = (await r.json()) as Record<string, unknown>;
+    const guideNumber = String(d.guideNumber || "");
+    const company = String(d.deliveryCompanyName || "");
+    const tr = (d.tracking as { updateState?: string }[]) || [];
+    const state = tr.length ? String(tr[tr.length - 1]?.updateState || "") : "";
+    const compSlug = norm(company).replace(/\s+/g, ""); // "COORDINADORA" → "coordinadora"
+    const pdfGuideUrl = guideNumber && compSlug ? `https://s3.amazonaws.com/docs.mipaquete.com/sendings/guide/${compSlug}-guide-${guideNumber}.pdf` : "";
+    return { guideNumber, pdfGuideUrl, deliveryCompanyName: company, state };
+  } catch {
+    return empty;
+  }
+}
+
 export interface MpCrearGuiaPayload {
   origin: { name: string; phone: string; idNumber: string; address: string; locationCode: string; email?: string };
   destiny: { name: string; phone: string; idNumber: string; address: string; locationCode: string; email?: string };

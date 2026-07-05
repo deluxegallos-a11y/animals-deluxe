@@ -12,7 +12,7 @@ import { eq, inArray, and, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { orders, orderItems, mpShipments, mpAddresses, configEmpresa, products } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth";
-import { mpBuscarDane, mpCotizar, mpCrearGuia, MP_COMPANIES } from "@/lib/mipaquete";
+import { mpBuscarDane, mpCotizar, mpCrearGuia, mpGetSendingInfo, MP_COMPANIES } from "@/lib/mipaquete";
 
 export interface GuiaResult { ok: boolean; ref?: string; guideNumber?: string; status?: string; pending?: boolean; pdfUrl?: string; error?: string }
 
@@ -134,11 +134,22 @@ export async function crearGuia(orderId: string, force?: boolean, deliveryCompan
     return { ok: false, ref: o.ref, error: traducirErrorMp(guia.error || "") };
   }
 
+  // Guía creada → consultar número de guía + PDF (vienen tras el mpCode).
+  let guideNumber = guia.guideNumber || "";
+  let pdfGuideUrl = guia.pdfGuideUrl || "";
+  let deliveryCompanyName = guia.deliveryCompanyName || c.deliveryCompany;
+  if (guia.ok && guia.mpCode) {
+    const info = await mpGetSendingInfo(guia.mpCode);
+    if (info.guideNumber) guideNumber = info.guideNumber;
+    if (info.pdfGuideUrl) pdfGuideUrl = info.pdfGuideUrl;
+    if (info.deliveryCompanyName) deliveryCompanyName = info.deliveryCompanyName;
+  }
+
   const status = guia.ok ? "guia_generada" : "pendiente";
   const values = {
     orderId, orderRef: o.ref, status,
-    mpCode: guia.mpCode || "", guideNumber: guia.guideNumber || "", pickupNumber: guia.pickupNumber || "",
-    deliveryCompany: guia.deliveryCompanyName || c.deliveryCompany, deliveryCompanyId: c.deliveryCompanyId,
+    mpCode: guia.mpCode || "", guideNumber, pickupNumber: guia.pickupNumber || "",
+    deliveryCompany: deliveryCompanyName, deliveryCompanyId: c.deliveryCompanyId,
     senderName: bod?.name || "Animals Deluxe", senderPhone: "573026333595", senderAddress: bod?.address || "",
     originDane: bod?.locationCode || "05001000", originCity: bod?.locationName || "Medellín",
     receiverName: o.nombre || "", receiverPhone: o.telefono || "", receiverIdNumber: o.cedula || "",
@@ -146,7 +157,7 @@ export async function crearGuia(orderId: string, force?: boolean, deliveryCompan
     description: pkg.items.map((i) => i.name).join(", ").slice(0, 200), productReference: o.ref, quantity: qty,
     weight: qty, declaredValue, paymentType, collectionValue, saleValue: o.totalCop ?? 0,
     shippingCost: c.shippingCost, collectionCommission: c.collectionCommission, totalCost: c.totalCost, amountToTransfer,
-    pdfGuideUrl: guia.pdfGuideUrl || "", channel: "Animals Deluxe Plataforma",
+    pdfGuideUrl, channel: "Animals Deluxe Plataforma",
     idempotencyKey: idem, cotizacionSeleccionada: c as unknown as object, rawResponse: (guia.raw as object) ?? null,
     updatedAt: new Date(),
   };
@@ -160,7 +171,7 @@ export async function crearGuia(orderId: string, force?: boolean, deliveryCompan
   await db.update(orders).set({ estado: o.estado === "despachado" || o.estado === "entregado" ? o.estado : "guia", updatedAt: new Date() }).where(eq(orders.id, orderId));
   await asignarFactura(orderId);
   revalidatePath("/pedidos");
-  return { ok: true, ref: o.ref, guideNumber: guia.guideNumber || "", status, pending: !guia.ok, pdfUrl: guia.pdfGuideUrl || "" };
+  return { ok: true, ref: o.ref, guideNumber, status, pending: !guia.ok, pdfUrl: pdfGuideUrl };
 }
 
 /** Traduce errores comunes de MiPaquete a algo entendible para el asesor. */
