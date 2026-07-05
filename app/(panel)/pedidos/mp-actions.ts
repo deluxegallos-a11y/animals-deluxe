@@ -14,7 +14,7 @@ import { orders, orderItems, mpShipments, mpAddresses, configEmpresa } from "@/l
 import { requireUser } from "@/lib/auth";
 import { mpBuscarDane, mpCotizar, mpCrearGuia, MP_COMPANIES } from "@/lib/mipaquete";
 
-export interface GuiaResult { ok: boolean; ref?: string; guideNumber?: string; status?: string; pending?: boolean; error?: string }
+export interface GuiaResult { ok: boolean; ref?: string; guideNumber?: string; status?: string; pending?: boolean; pdfUrl?: string; error?: string }
 
 async function bodegaOrigen() {
   if (!db) return null;
@@ -77,7 +77,7 @@ export async function crearGuia(orderId: string, force?: boolean, deliveryCompan
 
   // ¿Ya tiene guía?
   const [exist] = await db.select().from(mpShipments).where(eq(mpShipments.orderId, orderId)).limit(1);
-  if (exist && !force) return { ok: true, ref: o.ref, guideNumber: exist.guideNumber || "", status: exist.status || "", pending: exist.status === "pendiente" };
+  if (exist && !force) return { ok: true, ref: o.ref, guideNumber: exist.guideNumber || "", status: exist.status || "", pending: exist.status === "pendiente", pdfUrl: exist.pdfGuideUrl || "" };
 
   const items = await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
   const qty = items.reduce((s, it) => s + (it.cantidad ?? 1), 0) || 1;
@@ -131,7 +131,19 @@ export async function crearGuia(orderId: string, force?: boolean, deliveryCompan
   await db.update(orders).set({ estado: o.estado === "despachado" || o.estado === "entregado" ? o.estado : "guia", updatedAt: new Date() }).where(eq(orders.id, orderId));
   await asignarFactura(orderId);
   revalidatePath("/pedidos");
-  return { ok: true, ref: o.ref, guideNumber: guia.guideNumber || "", status, pending: !guia.ok };
+  // Si MiPaquete falló (no fue solo "sin token"), propaga el error real para mostrarlo.
+  if (!guia.ok && !guia.pending) return { ok: false, ref: o.ref, status, error: traducirErrorMp(guia.error || "") };
+  return { ok: true, ref: o.ref, guideNumber: guia.guideNumber || "", status, pending: !guia.ok, pdfUrl: guia.pdfGuideUrl || "" };
+}
+
+/** Traduce errores comunes de MiPaquete a algo entendible para el asesor. */
+function traducirErrorMp(err: string): string {
+  const e = err.toLowerCase();
+  if (e.includes("shipping cannot be paid") || e.includes("537")) return "MiPaquete no puede cobrar el flete: te falta saldo en tu cuenta MiPaquete. Recarga saldo (el flete supera tu saldo actual) y vuelve a intentar.";
+  if (e.includes("nit")) return "Datos del remitente/destinatario incompletos (NIT/cédula).";
+  if (e.includes("declaredvalue") || e.includes("declared")) return "El valor declarado no es válido.";
+  if (e.includes("location") || e.includes("dane")) return "No se pudo resolver la ciudad de destino.";
+  return err || "MiPaquete rechazó la guía.";
 }
 
 /** Genera guías de VARIOS pedidos (masivo). */

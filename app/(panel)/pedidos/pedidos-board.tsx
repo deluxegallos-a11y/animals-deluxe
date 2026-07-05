@@ -229,6 +229,7 @@ function GuiaModal({ order, onClose, onToast }: { order: BoardOrder; onClose: ()
   const [sinDane, setSinDane] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
   const [err, setErr] = React.useState("");
+  const [genErr, setGenErr] = React.useState("");
 
   React.useEffect(() => {
     let alive = true;
@@ -245,11 +246,14 @@ function GuiaModal({ order, onClose, onToast }: { order: BoardOrder; onClose: ()
   }, [order.id]);
 
   async function generar() {
-    setBusy(true);
+    setGenErr(""); setBusy(true);
     const r = await crearGuia(order.id, false, sel);
     setBusy(false);
-    if (r.ok) { onToast(r.pending ? "Guía en pendiente 📦" : `Guía ${r.guideNumber || "generada"} ✅`); onClose(); }
-    else onToast(r.error || "Error");
+    if (r.ok) {
+      if (r.pdfUrl) { try { window.open(r.pdfUrl, "_blank"); } catch { /* */ } }
+      onToast(r.pending ? "Guía en pendiente 📦" : `Guía ${r.guideNumber || "generada"} ✅`);
+      onClose();
+    } else { setGenErr(r.error || "MiPaquete rechazó la guía."); }
   }
 
   return (
@@ -277,7 +281,8 @@ function GuiaModal({ order, onClose, onToast }: { order: BoardOrder; onClose: ()
                       </label>
                     ))}
                   </div>
-                  <button className="pb-btn bl" disabled={busy || !sel} onClick={generar}>{busy ? "Generando guía…" : "🚚 Generar guía"}</button>
+                  {genErr ? <div style={{ background: "#FEECEB", border: "1px solid #F04438", color: "#B42318", borderRadius: 11, padding: "11px 14px", fontSize: 12.5, fontWeight: 600, lineHeight: 1.45 }}>⚠️ {genErr}</div> : null}
+                  <button style={{ padding: 15, borderRadius: 13, border: "none", background: (busy || !sel) ? "#A9C6FF" : "linear-gradient(180deg,#3B82F6,#1E50E6)", color: "#fff", fontWeight: 800, fontSize: 15.5, cursor: (busy || !sel) ? "default" : "pointer", boxShadow: "0 10px 20px -6px rgba(47,107,255,.55)" }} disabled={busy || !sel} onClick={generar}>{busy ? "Generando guía…" : "🚚 Generar guía"}</button>
                 </>
               )}
         </div>
