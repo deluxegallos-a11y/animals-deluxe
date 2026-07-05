@@ -84,11 +84,14 @@ export async function ensureMpAuth(force = false): Promise<{ apikey: string; bas
 /** Resuelve ciudad → DANE (caché; opcionalmente valida vía /getLocations). */
 export async function mpBuscarDane(ciudad: string): Promise<{ code: string; name: string; dep: string } | null> {
   if (!db || !ciudad?.trim()) return null;
-  const n = norm(ciudad);
+  const n = norm(ciudad).replace(/,.*$/, "").trim(); // "bogota, cundinamarca" → "bogota"
   const rows = await db.select().from(mpLocationsCache);
   const exact = rows.find((r) => norm(r.locationName || "") === n);
-  const partial = exact || rows.find((r) => n.includes(norm(r.locationName || "")) && (r.locationName || "").length > 3);
-  return partial ? { code: partial.locationCode, name: partial.locationName || "", dep: partial.departmentName || "" } : null;
+  // "bogota" ↔ "bogota d.c." · "medellin" ↔ nombre que empieza igual
+  const hit = exact
+    || rows.find((r) => { const c = norm(r.locationName || ""); return c === n || c.startsWith(n + " ") || n.startsWith(c + " "); })
+    || rows.find((r) => { const c = norm(r.locationName || ""); return c.length > 3 && (n.includes(c) || c.includes(n)); });
+  return hit ? { code: hit.locationCode, name: hit.locationName || "", dep: hit.departmentName || "" } : null;
 }
 
 export interface CotizacionMp {
