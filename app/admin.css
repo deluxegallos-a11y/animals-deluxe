@@ -632,3 +632,82 @@
   .print-doc { border:none !important; border-radius:0 !important; page-break-after:always; margin:0 !important; }
   .print-doc.pg { border:2px solid #101828 !important; }
 }
+
+/* ================================================================
+   🔷 TEMA "AZUL METALIZADO" — inspirado en la referencia panel-animals-deluxe
+   (fuente Plus Jakarta, tarjetas suaves, botones platinados; verde → azul metálico)
+   Capa final: gana sobre lo anterior.
+   ================================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+.adm{
+  --sans:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  --blue:#2F6BFF; --blue-2:#1E50E6; --blue-3:#5C8BFF; --blue-soft:#E8F0FF;
+  --met-lite:#8FBCFF; --met-hi:#BFD9FF;
+  --radius:22px; --radius-sm:16px;
+  --shadow:0 16px 40px rgba(20,40,90,.10), 0 3px 10px -4px rgba(20,40,90,.12);
+  --shadow-sm:0 8px 22px rgba(20,40,90,.07);
+  font-family:var(--sans);
+  background:
+    radial-gradient(1200px 600px at 100% -10%, rgba(47,107,255,.09), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(92,139,255,.07), transparent 55%),
+    #F3F6FC;
+}
+
+/* Superficies suaves estilo referencia */
+.adm .card, .adm .sumc, .adm .tablewrap, .adm .pb-kpi, .adm .crm-stage,
+.adm .pb-row, .adm .pb-modal, .adm .crm-drawer, .adm .crm-card, .adm .panel{
+  border-radius:var(--radius-sm);
+  border:1px solid rgba(20,40,90,.06);
+  box-shadow:var(--shadow-sm);
+}
+.adm .card, .adm .tablewrap, .adm .panel{ box-shadow:var(--shadow); }
+
+/* Marca / avatar: azul metálico radial */
+.adm .sb .brand .mk, .adm .avatar{
+  background:radial-gradient(circle at 30% 25%, #9EC2FF, #2F6BFF 70%) !important;
+  color:#0a1b3d !important;
+  box-shadow:0 8px 18px rgba(47,107,255,.45), inset 0 1px 0 rgba(255,255,255,.5);
+}
+
+/* Sidebar: item activo = gradiente azul metálico */
+.adm .sb a.item.on{
+  background:linear-gradient(120deg,#3B82F6,#1E50E6) !important;
+  color:#fff !important; font-weight:700;
+  box-shadow:0 10px 22px rgba(47,107,255,.34);
+}
+.adm .sb a.item.on::before{ display:none; }
+.adm .sb a.item.on .badge{ background:rgba(255,255,255,.25); color:#fff; }
+
+/* ---- BOTONES PLATINADOS ---- */
+/* primarios (acción) = azul metálico con banda de brillo 48/52 */
+.adm .btn, .adm .primary, .adm .pb-btn.bl, .adm .pb-btn.gp{
+  background:linear-gradient(180deg,#5B9BFF 0%,#2F6BFF 48%,#1E50E6 52%,#4C82FF 100%) !important;
+  color:#fff !important; border:1px solid #1E50E6 !important;
+  box-shadow:0 1px 0 rgba(255,255,255,.4) inset, 0 10px 20px -6px rgba(47,107,255,.5) !important;
+  transition:.18s cubic-bezier(.34,1.56,.64,1);
+}
+.adm .btn:hover, .adm .primary:hover, .adm .pb-btn.bl:hover, .adm .pb-btn.gp:hover{ transform:translateY(-1px); filter:brightness(1.04); }
+.adm .btn:active, .adm .primary:active, .adm .pb-btn:active{ transform:scale(.98); }
+/* botón claro "platinado" (plata) */
+.adm .btn.soft, .adm .chip-btn, .adm .pb-btn.dk{
+  background:linear-gradient(180deg,#fff 0%,#eef2fb 48%,#dfe6f4 52%,#f4f7fd 100%) !important;
+  color:#1b3358 !important; border:1px solid #dde5f4 !important;
+  box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 8px 16px rgba(20,40,90,.10) !important;
+}
+.adm .pb-btn.dk{ color:#0f2a55 !important; }
+
+/* KPIs / números: azul metálico */
+.adm .pb-kpi .num, .adm .crm-stage .n, .adm .kpi-big, .adm .page-head h1{
+  background:linear-gradient(135deg,#0B2A66,#2F6BFF 60%,#0B2A66);
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+}
+.adm .sumc.hot{ background:linear-gradient(140deg,#3B82F6,#1E50E6) !important; color:#eaf1ff; }
+.adm .sumc.hot .big, .adm .sumc.hot .lbl, .adm .sumc.hot small, .adm .sumc.hot .foot{ color:#fff !important; -webkit-text-fill-color:#fff; }
+
+/* acentos verdes de ACCIÓN → azul (mantengo verdes de estado 'entregado/ok') */
+.adm .chg.up, .adm .pos, .adm .lnk{ color:#1E50E6 !important; }
+.adm .tag.blue{ background:var(--blue-soft); color:var(--blue-2); }
+
+/* fuente global del panel */
+.adm, .adm h1, .adm h2, .adm h3, .adm h4, .adm button, .adm input, .adm select, .adm textarea, .adm table{ font-family:var(--sans); }

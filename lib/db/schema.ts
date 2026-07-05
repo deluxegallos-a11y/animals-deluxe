@@ -115,7 +115,9 @@ export const visits = pgTable("visits", {
 export const mpCredenciales = pgTable("mp_credenciales", {
   id: text("id").primaryKey().default("active"),
   apikey: text("apikey").default(""),
-  baseUrl: text("base_url").default("https://api-v2.mipaquete.com"),
+  baseUrl: text("base_url").default("https://api.mipaquete.com"),
+  loginEmail: text("login_email").default(""),
+  loginPassEnc: text("login_pass_enc").default(""),
   generatedAt: timestamp("generated_at", { withTimezone: true }),
   refreshedCount: integer("refreshed_count").default(0),
   lastError: text("last_error").default(""),
