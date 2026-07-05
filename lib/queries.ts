@@ -35,26 +35,15 @@ export async function getDashboard(): Promise<DashboardKpis> {
   const startDay = new Date(); startDay.setHours(0, 0, 0, 0);
   const startWeek = new Date(Date.now() - 7 * 86400_000);
 
-  const [hoy] = await db.select({ n: sql<number>`count(*)::int` }).from(orders).where(gte(orders.createdAt, startDay));
-  const [sem] = await db.select({ n: sql<number>`count(*)::int` }).from(orders).where(gte(orders.createdAt, startWeek));
-  const [ing] = await db
-    .select({ s: sql<number>`coalesce(sum(total_cop),0)::int` })
-    .from(orders)
-    .where(sql`estado in ('aprobado','guia','despachado','entregado','confirmado','pagado')`);
-  const [leads] = await db.select({ n: sql<number>`count(*)::int` }).from(customers).where(gte(customers.createdAt, startWeek));
-
-  const top = await db
-    .select({ name: orderItems.productName, cantidad: sql<number>`sum(cantidad)::int` })
-    .from(orderItems)
-    .groupBy(orderItems.productName)
-    .orderBy(sql`sum(cantidad) desc`)
-    .limit(5);
-
-  const ult = await db
-    .select({ ref: orders.ref, nombre: orders.nombre, total: orders.totalCop, estado: orders.estado })
-    .from(orders)
-    .orderBy(desc(orders.createdAt))
-    .limit(6);
+  // Todas en PARALELO (antes eran 6 awaits en fila → ~3s).
+  const [[hoy], [sem], [ing], [leads], top, ult] = await Promise.all([
+    db.select({ n: sql<number>`count(*)::int` }).from(orders).where(gte(orders.createdAt, startDay)),
+    db.select({ n: sql<number>`count(*)::int` }).from(orders).where(gte(orders.createdAt, startWeek)),
+    db.select({ s: sql<number>`coalesce(sum(total_cop),0)::int` }).from(orders).where(sql`estado in ('aprobado','guia','despachado','entregado','confirmado','pagado')`),
+    db.select({ n: sql<number>`count(*)::int` }).from(customers).where(gte(customers.createdAt, startWeek)),
+    db.select({ name: orderItems.productName, cantidad: sql<number>`sum(cantidad)::int` }).from(orderItems).groupBy(orderItems.productName).orderBy(sql`sum(cantidad) desc`).limit(5),
+    db.select({ ref: orders.ref, nombre: orders.nombre, total: orders.totalCop, estado: orders.estado }).from(orders).orderBy(desc(orders.createdAt)).limit(6),
+  ]);
 
   return {
     pedidosHoy: hoy?.n ?? 0,
@@ -199,10 +188,12 @@ export async function listOrders(): Promise<OrderRow[]> {
     .orderBy(desc(orders.createdAt))
     .limit(200);
   const ids = rows.map((r) => r.o.id);
-  const items = ids.length
-    ? await db.select().from(orderItems).where(inArray(orderItems.orderId, ids))
-    : [];
-  const shipments = ids.length ? await db.select().from(mpShipments).where(inArray(mpShipments.orderId, ids)) : [];
+  const [items, shipments] = ids.length
+    ? await Promise.all([
+        db.select().from(orderItems).where(inArray(orderItems.orderId, ids)),
+        db.select().from(mpShipments).where(inArray(mpShipments.orderId, ids)),
+      ])
+    : [[], []];
   const shipByOrder = new Map(shipments.map((s) => [s.orderId as string, s]));
   return rows.map((r) => ({
     id: r.o.id, ref: r.o.ref, nombre: r.o.nombre || "", telefono: r.o.telefono || "", cedula: r.o.cedula || "",
@@ -270,27 +261,18 @@ export function deriveStage(numPedidos: number, interes: number, interacciones: 
 
 export async function listCRM(): Promise<CrmRow[]> {
   if (!db) return [];
-  const [custs, prods] = await Promise.all([
+  // 4 consultas en PARALELO (antes en fila).
+  const [custs, prods, aggs, boughtAgg] = await Promise.all([
     db.select().from(customers).orderBy(desc(customers.ultimoContacto)).limit(2000),
     db.select({ slug: products.slug, name: products.name }).from(products),
+    db.select({ cid: orders.customerId, n: sql<number>`count(*)::int`, total: sql<number>`coalesce(sum(total_cop),0)::int`, last: sql<Date>`max(created_at)` })
+      .from(orders).where(sql`customer_id is not null and coalesce(estado,'') <> 'cancelado'`).groupBy(orders.customerId),
+    db.select({ cid: orders.customerId, slugs: sql<string[]>`array_agg(distinct ${orderItems.productSlug})` })
+      .from(orderItems).innerJoin(orders, eq(orderItems.orderId, orders.id))
+      .where(sql`${orders.customerId} is not null and coalesce(${orders.estado},'') <> 'cancelado'`).groupBy(orders.customerId),
   ]);
   const nameOf = new Map(prods.map((p) => [p.slug, p.name]));
-
-  // Agregados de pedidos (no cancelados) por cliente
-  const aggs = await db
-    .select({ cid: orders.customerId, n: sql<number>`count(*)::int`, total: sql<number>`coalesce(sum(total_cop),0)::int`, last: sql<Date>`max(created_at)` })
-    .from(orders)
-    .where(sql`customer_id is not null and coalesce(estado,'') <> 'cancelado'`)
-    .groupBy(orders.customerId);
   const aggMap = new Map(aggs.map((a) => [a.cid as string, a]));
-
-  // Productos comprados por cliente — agregado en Postgres (una fila por cliente).
-  const boughtAgg = await db
-    .select({ cid: orders.customerId, slugs: sql<string[]>`array_agg(distinct ${orderItems.productSlug})` })
-    .from(orderItems)
-    .innerJoin(orders, eq(orderItems.orderId, orders.id))
-    .where(sql`${orders.customerId} is not null and coalesce(${orders.estado},'') <> 'cancelado'`)
-    .groupBy(orders.customerId);
   const boughtMap = new Map<string, string[]>();
   for (const b of boughtAgg) if (b.cid) boughtMap.set(b.cid, (b.slugs || []).filter(Boolean));
 
