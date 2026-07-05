@@ -89,6 +89,33 @@ export async function pasarAOrdenDeVenta(orderId: string): Promise<{ ok: boolean
   return { ok: true };
 }
 
+/** Editar datos del cliente/pedido desde la página de detalle. */
+export async function editarPedido(orderId: string, campos: { nombre?: string; telefono?: string; cedula?: string; ciudad?: string; direccion?: string; notas?: string; metodoPago?: string }): Promise<{ ok: boolean }> {
+  await requireUser();
+  if (!db || !orderId) return { ok: false };
+  const set: Record<string, unknown> = { updatedAt: new Date() };
+  for (const k of ["nombre", "telefono", "cedula", "ciudad", "direccion", "notas", "metodoPago"] as const) {
+    if (campos[k] !== undefined) set[k] = String(campos[k]).trim();
+  }
+  await db.update(orders).set(set).where(eq(orders.id, orderId));
+  revalidatePath("/pedidos"); revalidatePath(`/pedidos/${orderId}`);
+  return { ok: true };
+}
+
+/** Editar dimensiones de un producto (afectan el flete) desde el detalle del pedido. */
+export async function editarDimensionesProducto(slug: string, dims: { pesoGr: number; altoCm: number; anchoCm: number; largoCm: number }): Promise<{ ok: boolean }> {
+  await requireUser();
+  if (!db || !slug) return { ok: false };
+  await db.update(products).set({
+    pesoGr: Math.max(1, Math.round(dims.pesoGr) || 1000),
+    altoCm: Math.max(1, Math.round(dims.altoCm) || 15),
+    anchoCm: Math.max(1, Math.round(dims.anchoCm) || 12),
+    largoCm: Math.max(1, Math.round(dims.largoCm) || 8),
+  }).where(eq(products.slug, slug));
+  revalidatePath("/pedidos");
+  return { ok: true };
+}
+
 /** Crea la guía de un pedido (MiPaquete si hay token, si no queda pendiente con costos estimados). */
 export async function crearGuia(orderId: string, force?: boolean, deliveryCompanyId?: string): Promise<GuiaResult> {
   await requireUser();

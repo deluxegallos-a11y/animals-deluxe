@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { updateOrderStatus, bulkUpdateStatus, despacharPedido, crearPedidoManual } from "../actions";
 import { crearGuia, crearGuiasBulk, pasarAOrdenDeVenta, cotizarPedido, type Transportadora } from "./mp-actions";
 
@@ -72,6 +73,7 @@ function sameDay(iso: string | null, ref: Date) {
 async function copy(text: string) { try { await navigator.clipboard.writeText(text); return true; } catch { return false; } }
 
 export function PedidosBoard({ orders, catalog }: { orders: BoardOrder[]; catalog: CatProd[] }) {
+  const router = useRouter();
   const [dia, setDia] = React.useState<"hoy" | "ayer" | "todos">("hoy");
   const [canal, setCanal] = React.useState<"todos" | "whatsapp" | "messenger" | "web" | "asesor">("todos");
   const [q, setQ] = React.useState("");
@@ -192,7 +194,7 @@ export function PedidosBoard({ orders, catalog }: { orders: BoardOrder[]; catalo
             {filtrados.map((o) => {
               const c = chan(o.canal); const e = est(o.estado); const falta = faltantes(o).length;
               return (
-                <div key={o.id} className={"pb-row" + (sel.has(o.id) ? " sel" : "")} onClick={() => setOpenId(o.id)}>
+                <div key={o.id} className={"pb-row" + (sel.has(o.id) ? " sel" : "")} onClick={() => router.push(`/pedidos/${o.id}`)}>
                   <span onClick={(ev) => ev.stopPropagation()}><input type="checkbox" className="pb-check" checked={sel.has(o.id)} onChange={() => toggle(o.id)} /></span>
                   <span className="pb-chan"><span className="dot" style={{ background: c.color }}>{c.ic}</span>{c.label}</span>
                   <span className="pb-cli">

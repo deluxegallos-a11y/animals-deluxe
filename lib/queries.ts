@@ -230,6 +230,40 @@ export async function listOrders(): Promise<OrderRow[]> {
   }));
 }
 
+export type OrderDetail = {
+  id: string; ref: string; nombre: string; telefono: string; cedula: string; ciudad: string; direccion: string;
+  estado: string; canal: string; metodoPago: string; notas: string;
+  subtotal: number; envio: number; descuento: number; total: number;
+  createdAt: string | null; facturaNumero: number | null;
+  items: { id: string; slug: string; name: string; presentacion: string; cantidad: number; precio: number; pesoGr: number; altoCm: number; anchoCm: number; largoCm: number }[];
+  envioGuia: string; envioStatus: string; envioPdf: string; envioTransportadora: string; envioFlete: number; envioImpreso: boolean;
+};
+
+export async function getOrderDetail(id: string): Promise<OrderDetail | null> {
+  if (!db || !id) return null;
+  const [o] = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
+  if (!o) return null;
+  const [items, ship] = await Promise.all([
+    db.select({ it: orderItems, p: products }).from(orderItems).leftJoin(products, eq(orderItems.productSlug, products.slug)).where(eq(orderItems.orderId, id)),
+    db.select().from(mpShipments).where(eq(mpShipments.orderId, id)).limit(1),
+  ]);
+  const s = ship[0];
+  return {
+    id: o.id, ref: o.ref, nombre: o.nombre || "", telefono: o.telefono || "", cedula: o.cedula || "",
+    ciudad: o.ciudad || "", direccion: o.direccion || "", estado: o.estado || "remision",
+    canal: o.canal || "whatsapp", metodoPago: o.metodoPago || "contraentrega", notas: o.notas || "",
+    subtotal: o.subtotalCop ?? 0, envio: o.envioCop ?? 0, descuento: o.descuentoCop ?? 0, total: o.totalCop ?? 0,
+    createdAt: o.createdAt ? o.createdAt.toISOString() : null, facturaNumero: o.facturaNumero,
+    items: items.map((r) => ({
+      id: r.it.id, slug: r.it.productSlug || "", name: r.it.productName || "", presentacion: r.it.presentacionLabel || "",
+      cantidad: r.it.cantidad ?? 1, precio: r.it.precioCop ?? 0,
+      pesoGr: r.p?.pesoGr ?? 1000, altoCm: r.p?.altoCm ?? 15, anchoCm: r.p?.anchoCm ?? 12, largoCm: r.p?.largoCm ?? 8,
+    })),
+    envioGuia: s?.guideNumber || "", envioStatus: s?.status || "", envioPdf: s?.pdfGuideUrl || "",
+    envioTransportadora: s?.deliveryCompany || "", envioFlete: s?.totalCost ?? 0, envioImpreso: !!s?.impreso,
+  };
+}
+
 /* ---------- Despacho: config de empresa (factura) + bodega ---------- */
 export async function getConfigEmpresa() {
   if (!db) return null;
