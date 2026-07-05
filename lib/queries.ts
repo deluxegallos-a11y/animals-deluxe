@@ -2,7 +2,7 @@
    Lecturas para el PANEL admin. Drizzle server-side.
    En MODO DEMO (sin DB) devuelve mocks razonables a partir del catálogo.
    =========================================================== */
-import { desc, eq, gte, sql, asc, inArray } from "drizzle-orm";
+import { desc, eq, gte, sql, asc, inArray, and } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import {
   products, categories, orders, orderItems, customers, advisors,
@@ -90,7 +90,7 @@ export async function getAnalytics(): Promise<Analytics> {
     db.select({ n: sql<number>`count(*)::int` }).from(visits).where(gte(visits.createdAt, d0)),
     db.select({ n: sql<number>`count(*)::int` }).from(visits).where(gte(visits.createdAt, d7)),
     db.select({ canal: orders.canal, n: sql<number>`count(*)::int`, total: sql<number>`coalesce(sum(total_cop),0)::int` }).from(orders).where(gte(orders.createdAt, d30)).groupBy(orders.canal),
-    db.select({ f: orders.fuente, n: sql<number>`count(*)::int` }).from(orders).where(sql`canal = 'web' and created_at > ${d30}`).groupBy(orders.fuente),
+    db.select({ f: orders.fuente, n: sql<number>`count(*)::int` }).from(orders).where(and(eq(orders.canal, "web"), gte(orders.createdAt, d30))).groupBy(orders.fuente),
   ]);
   const visMap = new Map(visF.map((r) => [r.f || "otro", r.n]));
   const pedWebMap = new Map(pedWebF.map((r) => [(r.f || "tienda"), r.n])); // web sin fuente → tienda
