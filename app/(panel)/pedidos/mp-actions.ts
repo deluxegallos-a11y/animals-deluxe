@@ -105,6 +105,11 @@ export async function crearGuia(orderId: string, force?: boolean, deliveryCompan
     paymentType, collectionValue, deliveryCompanyId: c.deliveryCompanyId || MP_COMPANIES.COORDINADORA, idempotencyKey: idem,
   });
 
+  // Si MiPaquete RECHAZÓ la guía (no fue solo "sin token"): NO tocar el pedido, devolver el error.
+  if (!guia.ok && !guia.pending) {
+    return { ok: false, ref: o.ref, error: traducirErrorMp(guia.error || "") };
+  }
+
   const status = guia.ok ? "guia_generada" : "pendiente";
   const values = {
     orderId, orderRef: o.ref, status,
@@ -131,15 +136,13 @@ export async function crearGuia(orderId: string, force?: boolean, deliveryCompan
   await db.update(orders).set({ estado: o.estado === "despachado" || o.estado === "entregado" ? o.estado : "guia", updatedAt: new Date() }).where(eq(orders.id, orderId));
   await asignarFactura(orderId);
   revalidatePath("/pedidos");
-  // Si MiPaquete falló (no fue solo "sin token"), propaga el error real para mostrarlo.
-  if (!guia.ok && !guia.pending) return { ok: false, ref: o.ref, status, error: traducirErrorMp(guia.error || "") };
   return { ok: true, ref: o.ref, guideNumber: guia.guideNumber || "", status, pending: !guia.ok, pdfUrl: guia.pdfGuideUrl || "" };
 }
 
 /** Traduce errores comunes de MiPaquete a algo entendible para el asesor. */
 function traducirErrorMp(err: string): string {
   const e = err.toLowerCase();
-  if (e.includes("shipping cannot be paid") || e.includes("537")) return "MiPaquete no puede cobrar el flete: te falta saldo en tu cuenta MiPaquete. Recarga saldo (el flete supera tu saldo actual) y vuelve a intentar.";
+  if (e.includes("shipping cannot be paid") || e.includes("537")) return "MiPaquete rechazó la guía (código 537): tu cuenta aún no puede pagar/garantizar el flete. Aunque el pedido es contra entrega, MiPaquete pide saldo mínimo o que la cuenta esté verificada (cuenta bancaria para el recaudo). Revisa en app.mipaquete.com que la recarga esté aplicada y la cuenta activa para contra entrega, y reintenta.";
   if (e.includes("nit")) return "Datos del remitente/destinatario incompletos (NIT/cédula).";
   if (e.includes("declaredvalue") || e.includes("declared")) return "El valor declarado no es válido.";
   if (e.includes("location") || e.includes("dane")) return "No se pudo resolver la ciudad de destino.";

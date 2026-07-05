@@ -247,13 +247,18 @@ function GuiaModal({ order, onClose, onToast }: { order: BoardOrder; onClose: ()
 
   async function generar() {
     setGenErr(""); setBusy(true);
-    const r = await crearGuia(order.id, false, sel);
-    setBusy(false);
-    if (r.ok) {
-      if (r.pdfUrl) { try { window.open(r.pdfUrl, "_blank"); } catch { /* */ } }
-      onToast(r.pending ? "Guía en pendiente 📦" : `Guía ${r.guideNumber || "generada"} ✅`);
-      onClose();
-    } else { setGenErr(r.error || "MiPaquete rechazó la guía."); }
+    try {
+      const r = await crearGuia(order.id, false, sel);
+      if (r.ok) {
+        if (r.pdfUrl) { try { window.open(r.pdfUrl, "_blank"); } catch { /* */ } }
+        onToast(r.pending ? "Guía en pendiente 📦" : `Guía ${r.guideNumber || "generada"} ✅`);
+        onClose();
+      } else { setGenErr(r.error || "MiPaquete rechazó la guía."); }
+    } catch (e) {
+      setGenErr("No se pudo conectar con MiPaquete. Intenta de nuevo. (" + String(e).slice(0, 80) + ")");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
