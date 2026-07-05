@@ -959,3 +959,23 @@
 .pbctrl-new:hover { filter: brightness(1.05); }
 .pbctrl-new:focus-visible { outline: 2px solid #1E50E6; outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .pbflow-tab, .pbctrl-search, .pbctrl-new { transition: none; } }
+
+/* ---- Indicadores de estado en la fila + botón copiar ---- */
+.pb-tag { display: inline-flex; align-items: center; font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 999px; margin-left: 7px; letter-spacing: .2px; vertical-align: middle; }
+.pb-tag.ok { background: #ECFDF3; color: #067647; }
+.pb-tag.ship { background: #F4EBFF; color: #6941C6; }
+.pb-copybtn { border: 1px solid #E4E7EC; background: #fff; width: 30px; height: 30px; border-radius: 9px; font-size: 14px; cursor: pointer; display: inline-grid; place-items: center; padding: 0; transition: background .15s ease, border-color .15s ease; }
+.pb-copybtn:hover { background: #EAF0FF; border-color: #B9CCFF; }
+.pb-copybtn:focus-visible { outline: 2px solid #2f6bff; outline-offset: 2px; }
+.pb-copybtn:active { transform: scale(.94); }
+
+/* ---- Barra de selección múltiple (pulida, product) ---- */
+.pb-bulk { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: #101828; border-radius: 14px; padding: 10px 14px; margin-bottom: 14px; box-shadow: 0 10px 24px -10px rgba(16,24,40,.4); animation: od-toast-in .18s cubic-bezier(.22,1,.36,1); }
+.pb-bulk .cnt { color: #fff; font-weight: 800; font-size: 13.5px; }
+.pb-bulk .sp { flex: 1; }
+.pb-bulk button { border: none; border-radius: 9px; padding: 8px 13px; font-size: 12.5px; font-weight: 700; cursor: pointer; font-family: inherit; background: rgba(255,255,255,.12); color: #fff; transition: background .15s ease; }
+.pb-bulk button:hover { background: rgba(255,255,255,.22); }
+.pb-bulk button:focus-visible { outline: 2px solid #7aa3ff; outline-offset: 2px; }
+.pb-bulk button:disabled { opacity: .5; cursor: default; }
+.pb-bulk button.ghost { background: rgba(255,255,255,.08); }
+@media (prefers-reduced-motion: reduce) { .pb-bulk, .pb-copybtn { animation: none; transition: none; } }

@@ -89,6 +89,16 @@ export async function pasarAOrdenDeVenta(orderId: string): Promise<{ ok: boolean
   return { ok: true };
 }
 
+/** Marca que ya se copiaron los datos del pedido a WhatsApp (para ir liberando lo procesado). */
+export async function marcarCopiado(orderIds: string[]): Promise<{ ok: boolean }> {
+  await requireUser();
+  const ids = (orderIds || []).filter(Boolean);
+  if (!db || !ids.length) return { ok: false };
+  await db.update(orders).set({ copiadoWppAt: new Date() }).where(inArray(orders.id, ids));
+  revalidatePath("/pedidos");
+  return { ok: true };
+}
+
 /** Editar datos del cliente/pedido desde la página de detalle. */
 export async function editarPedido(orderId: string, campos: { nombre?: string; telefono?: string; cedula?: string; ciudad?: string; direccion?: string; notas?: string; metodoPago?: string }): Promise<{ ok: boolean }> {
   await requireUser();

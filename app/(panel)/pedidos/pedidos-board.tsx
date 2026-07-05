@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { updateOrderStatus, bulkUpdateStatus, despacharPedido, crearPedidoManual } from "../actions";
-import { crearGuia, crearGuiasBulk, pasarAOrdenDeVenta, cotizarPedido, type Transportadora } from "./mp-actions";
+import { crearGuia, crearGuiasBulk, pasarAOrdenDeVenta, cotizarPedido, marcarCopiado, type Transportadora } from "./mp-actions";
 
 export type BoardOrder = {
   id: string; ref: string; nombre: string; telefono: string; cedula: string; ciudad: string; direccion: string;
@@ -13,6 +13,7 @@ export type BoardOrder = {
   guia: string; transportadora: string; despachadoAt: string | null; clienteNotificado: boolean;
   shopifyOrderName: string;
   facturaNumero: number | null; envioGuia: string; envioStatus: string; envioImpreso: boolean;
+  copiadoAt: string | null;
 };
 const abrirImpresion = (tipo: string, refs: string[]) => { if (refs.length) window.open(`/pedidos/imprimir?tipo=${tipo}&refs=${refs.join(",")}`, "_blank"); };
 export type CatProd = { slug: string; name: string; presentaciones: { label: string; precio: number }[] };
@@ -119,7 +120,9 @@ export function PedidosBoard({ orders, catalog }: { orders: BoardOrder[]; catalo
   }
   async function bulkCopy() {
     const txt = selList.map(mensajeGuia).join("\n\n━━━━━━━━━━\n\n");
-    flash((await copy(txt)) ? `📋 ${selList.length} guía(s) copiada(s)` : "No se pudo copiar");
+    const ok = await copy(txt);
+    if (ok) { await marcarCopiado(selList.map((o) => o.id)); setSel(new Set()); }
+    flash(ok ? `📋 ${selList.length} copiado(s) a WhatsApp` : "No se pudo copiar");
   }
   async function bulkGuias() {
     setBulkBusy(true); const r = await crearGuiasBulk([...sel]); setBulkBusy(false);
@@ -194,14 +197,18 @@ export function PedidosBoard({ orders, catalog }: { orders: BoardOrder[]; catalo
                   <span onClick={(ev) => ev.stopPropagation()}><input type="checkbox" className="pb-check" checked={sel.has(o.id)} onChange={() => toggle(o.id)} /></span>
                   <span className="pb-chan"><span className="dot" style={{ background: c.color }}>{c.ic}</span>{c.label}</span>
                   <span className="pb-cli">
-                    <div className="nm">{o.nombre || "— sin nombre —"} {falta ? <span title={`Faltan: ${faltantes(o).join(", ")}`} style={{ color: "#F79009" }}>⚠</span> : null}</div>
-                    <div className="meta">{o.ref} · {o.telefono || "sin tel"} · {o.ciudad || "sin ciudad"}{o.envioGuia ? <span style={{ color: "#1E50E6", fontWeight: 700 }}> · 🚚 {o.envioGuia}</span> : null}</div>
+                    <div className="nm">
+                      {o.nombre || "— sin nombre —"} {falta ? <span title={`Faltan: ${faltantes(o).join(", ")}`} style={{ color: "#F79009" }}>⚠</span> : null}
+                      {o.copiadoAt ? <span className="pb-tag ok" title={`Copiado a WhatsApp ${new Date(o.copiadoAt).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}`}>✓ copiado</span> : null}
+                      {o.despachadoAt ? <span className="pb-tag ship">🚚 despachado</span> : null}
+                    </div>
+                    <div className="meta">{o.ref} · {o.telefono || "sin tel"} · {o.ciudad || "sin ciudad"}{o.envioGuia ? <span style={{ color: "#1E50E6", fontWeight: 700 }}> · guía {o.envioGuia}</span> : null}</div>
                   </span>
                   <span><span className="pb-pill" style={{ color: e.color, background: e.bg }}>{e.label}</span></span>
                   <span className="pb-time">{o.createdAt ? new Date(o.createdAt).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }) : "—"}<div className="d">{o.createdAt ? new Date(o.createdAt).toLocaleDateString("es-CO", { day: "2-digit", month: "2-digit" }) : ""}</div></span>
                   <span className="pb-total">{COP(o.total)}<div className="e">envío {o.envio ? COP(o.envio) : "incl."}</div></span>
                   <span className="pb-chev" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span onClick={async (ev) => { ev.stopPropagation(); flash((await copy(mensajeGuia(o))) ? "📋 Datos copiados" : "No se pudo copiar"); }} title="Copiar datos para WhatsApp" style={{ cursor: "pointer", fontSize: 16, userSelect: "none" }}>📋</span>
+                    <button className="pb-copybtn" onClick={async (ev) => { ev.stopPropagation(); const ok = await copy(mensajeGuia(o)); if (ok) await marcarCopiado([o.id]); flash(ok ? "📋 Copiado a WhatsApp" : "No se pudo copiar"); }} title="Copiar datos para WhatsApp">📋</button>
                     ›
                   </span>
                 </div>

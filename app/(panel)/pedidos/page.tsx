@@ -25,6 +25,7 @@ export default async function PedidosPage() {
     despachadoAt: o.despachadoAt ? o.despachadoAt.toISOString() : null,
     clienteNotificado: !!o.clienteNotificadoAt, shopifyOrderName: o.shopifyOrderName,
     facturaNumero: o.facturaNumero, envioGuia: o.envioGuia, envioStatus: o.envioStatus, envioImpreso: o.envioImpreso,
+    copiadoAt: o.copiadoAt ? o.copiadoAt.toISOString() : null,
   }));
   return (
     <>

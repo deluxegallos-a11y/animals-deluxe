@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { OrderDetail as OD } from "@/lib/queries";
-import { editarPedido, editarDimensionesProducto, cotizarPedido, crearGuia, pasarAOrdenDeVenta, type Transportadora } from "../mp-actions";
+import { editarPedido, editarDimensionesProducto, cotizarPedido, crearGuia, pasarAOrdenDeVenta, marcarCopiado, type Transportadora } from "../mp-actions";
 import { despacharPedido, updateOrderStatus } from "../../actions";
 
 const COP = (n: number) => "$" + Number(n || 0).toLocaleString("es-CO");
@@ -86,7 +86,7 @@ export function OrderDetail({ o }: { o: OD }) {
   async function avanzar(fn: () => Promise<unknown>, msg: string) { setStBusy(true); await fn(); setStBusy(false); flash(msg); router.refresh(); }
 
   async function copiar() {
-    try { await navigator.clipboard.writeText(mensajeWpp(o, nombre, tel, cc, ciu, dir)); flash("📋 Datos copiados"); }
+    try { await navigator.clipboard.writeText(mensajeWpp(o, nombre, tel, cc, ciu, dir)); await marcarCopiado([o.id]); flash("📋 Copiado a WhatsApp"); router.refresh(); }
     catch { flash("No se pudo copiar"); }
   }
 

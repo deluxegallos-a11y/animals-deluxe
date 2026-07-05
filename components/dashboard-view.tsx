@@ -39,8 +39,10 @@ function Count({ to, fmt }: { to: number; fmt?: (n: number) => string }) {
   return <span ref={ref}>{fmt ? fmt(v) : Math.round(v).toLocaleString("es-CO")}</span>;
 }
 
-const card: Variants = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] } } };
-const stagger: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.07 } } };
+// Sin orquestación de carga (regla product): el contenido aparece al instante.
+// Se conservan los motion.div solo por el whileHover (micro-interacción, no reveal).
+const card: Variants = { hidden: { opacity: 1, y: 0 }, show: { opacity: 1, y: 0 } };
+const stagger: Variants = { hidden: {}, show: {} };
 const ini = (s: string) => (s || "?").trim().charAt(0).toUpperCase();
 
 export function DashboardView({ d, a }: { d: Dash; a: Analytics }) {

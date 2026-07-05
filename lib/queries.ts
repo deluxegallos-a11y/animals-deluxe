@@ -185,7 +185,7 @@ export type OrderRow = {
   id: string; ref: string; nombre: string; telefono: string; cedula: string; ciudad: string; direccion: string;
   estado: string; canal: string; metodoPago: string; total: number; subtotal: number; envio: number; descuento: number;
   createdAt: Date | null; advisor: string; items: { name: string; presentacion: string; cantidad: number; precio: number }[];
-  guia: string; transportadora: string; despachadoAt: Date | null; clienteNotificadoAt: Date | null;
+  guia: string; transportadora: string; despachadoAt: Date | null; clienteNotificadoAt: Date | null; copiadoAt: Date | null;
   shopifyOrderId: string; shopifyOrderName: string;
   facturaNumero: number | null;
   // Despacho / MiPaquete
@@ -219,7 +219,7 @@ export async function listOrders(): Promise<OrderRow[]> {
       cantidad: it.cantidad ?? 1, precio: it.precioCop ?? 0,
     })),
     guia: r.o.guia || "", transportadora: r.o.transportadora || "",
-    despachadoAt: r.o.despachadoAt ?? null, clienteNotificadoAt: r.o.clienteNotificadoAt ?? null,
+    despachadoAt: r.o.despachadoAt ?? null, clienteNotificadoAt: r.o.clienteNotificadoAt ?? null, copiadoAt: r.o.copiadoWppAt ?? null,
     shopifyOrderId: r.o.shopifyOrderId || "", shopifyOrderName: r.o.shopifyOrderName || "",
     facturaNumero: r.o.facturaNumero ?? null,
     envioGuia: shipByOrder.get(r.o.id)?.guideNumber || "",

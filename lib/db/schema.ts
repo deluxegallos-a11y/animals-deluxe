@@ -316,6 +316,7 @@ export const orders = pgTable(
     transportadora: text("transportadora").default(""),   // Interrapidísimo | Servientrega | Coordinadora | Envía ...
     despachadoAt: timestamp("despachado_at", { withTimezone: true }),        // cuándo se marcó despachado
     clienteNotificadoAt: timestamp("cliente_notificado_at", { withTimezone: true }), // cuándo se avisó al cliente por WhatsApp
+    copiadoWppAt: timestamp("copiado_wpp_at", { withTimezone: true }),        // cuándo se copiaron los datos a WhatsApp
     // --- Espejo Shopify (registro/libro de pedidos) ---
     shopifyOrderId: text("shopify_order_id"),
     shopifyOrderName: text("shopify_order_name").default(""),
