@@ -19,20 +19,17 @@ export const MP_COMPANIES: Record<string, string> = {
 
 // session-tracker: UUID fijo (reutilizable). Configurable por env.
 const SESSION_TRACKER = process.env.MIPAQUETE_SESSION_TRACKER || "a0c96ea6-b22d-4fb7-a278-850678d5429c";
-// Candidatos de base URL de producción (se descubre cuál responde y se guarda).
-const BASE_CANDIDATES = [
-  process.env.MIPAQUETE_BASE_URL,
-  "https://api-v2.mipaquete.com/api",
-  "https://api.v2.mpr.mipaquete.com/api",
-  "https://api.v2.dev.mpr.mipaquete.com/api",
-  "https://api.mipaquete.com/api",
-].filter(Boolean) as string[];
+// Base confirmada en vivo: api.mipaquete.com (SIN /api). Endpoints: /generateapikey,
+// /quoteShipping, /createSending, /getDeliveryCompanies, /getLocations.
+const MP_BASE = "https://api.mipaquete.com";
+const CO = "170"; // código de país Colombia en MiPaquete (¡NO 484, que es México!)
+const BASE_CANDIDATES = [process.env.MIPAQUETE_BASE_URL, MP_BASE].filter(Boolean) as string[];
 
 const norm = (s: string) => (s || "").trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 const mpHeaders = (apikey: string) => ({ "content-type": "application/json", "session-tracker": SESSION_TRACKER, apikey });
 
 export async function getMpCreds(): Promise<{ apikey: string; baseUrl: string; email: string; password: string }> {
-  const base = process.env.MIPAQUETE_BASE_URL || "https://api-v2.mipaquete.com/api";
+  const base = process.env.MIPAQUETE_BASE_URL || MP_BASE;
   if (!db) return { apikey: process.env.MIPAQUETE_APIKEY || "", baseUrl: base, email: process.env.MIPAQUETE_EMAIL || "", password: process.env.MIPAQUETE_PASSWORD || "" };
   const [c] = await db.select().from(mpCredenciales).where(eq(mpCredenciales.id, "active")).limit(1);
   let password = process.env.MIPAQUETE_PASSWORD || "";
@@ -64,7 +61,7 @@ export async function mpGenerateApiKey(): Promise<{ ok: boolean; apikey?: string
       });
       const t = await r.text();
       let apikey = "";
-      try { const j = JSON.parse(t) as Record<string, unknown>; const d = (j.data || {}) as Record<string, unknown>; apikey = String(j.apikey || j.apiKey || j.token || d.apikey || d.token || ""); } catch { /* */ }
+      try { const j = JSON.parse(t) as Record<string, unknown>; const d = (j.data || {}) as Record<string, unknown>; apikey = String(j.APIKey || j.apikey || j.apiKey || j.token || d.APIKey || d.apikey || d.token || ""); } catch { /* */ }
       if (r.ok && apikey) {
         if (db) await db.update(mpCredenciales).set({ apikey, baseUrl: base, generatedAt: new Date(), lastError: "", updatedAt: new Date() }).where(eq(mpCredenciales.id, "active"));
         return { ok: true, apikey, baseUrl: base };
@@ -110,8 +107,8 @@ export async function mpCotizar(p: { originDane: string; destinyDane: string; we
   const local = () => ({ ok: true as const, cotizaciones: [cotizarLocal(p.declaredValue, p.paymentType)], source: "local" as const });
   if (!p.destinyDane) return local();
   const body = JSON.stringify({
-    originCountryCode: "484", originLocationCode: p.originDane,
-    destinyCountryCode: "484", destinyLocationCode: p.destinyDane,
+    originCountryCode: CO, originLocationCode: p.originDane,
+    destinyCountryCode: CO, destinyLocationCode: p.destinyDane,
     quantity: 1, width: 20, length: 20, height: 20, weight: p.weight, declaredValue: p.declaredValue,
   });
   try {
@@ -152,7 +149,7 @@ export async function mpCrearGuia(p: MpCrearGuiaPayload): Promise<{ ok: boolean;
     channel: "Animals Deluxe Plataforma",
     comments: p.pkg.description, description: p.pkg.description, criteria: "price",
     deliveryCompany: p.deliveryCompanyId,
-    locate: { originDaneCode: p.origin.locationCode, destinyDaneCode: p.destiny.locationCode, originCountryCode: "484", destinyCountryCode: "484" },
+    locate: { originDaneCode: p.origin.locationCode, destinyDaneCode: p.destiny.locationCode, originCountryCode: CO, destinyCountryCode: CO },
     paymentType: p.paymentType,
     productInformation: { declaredValue: p.pkg.declaredValue, forbiddenProduct: false, height: p.pkg.height, large: p.pkg.length, width: p.pkg.width, weight: p.pkg.weight, productReference: p.pkg.reference, quantity: p.pkg.quantity },
     receiver: { name: p.destiny.name, surname: ".", cellPhone: p.destiny.phone, prefix: "+57", destinationAddress: p.destiny.address, email: p.destiny.email || "cliente@animalsdeluxe.com", nit: p.destiny.idNumber || ".", nitType: "CC" },
