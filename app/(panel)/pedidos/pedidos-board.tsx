@@ -81,7 +81,7 @@ export function PedidosBoard({ orders, catalog }: { orders: BoardOrder[]; catalo
   const [openId, setOpenId] = React.useState<string | null>(null);
   const [manualOpen, setManualOpen] = React.useState(false);
   const [guiaFor, setGuiaFor] = React.useState<string | null>(null);
-  const [estadoF, setEstadoF] = React.useState<string>("todos");
+  const [estadoF, setEstadoF] = React.useState<string>("remision");
   const [bulkBusy, setBulkBusy] = React.useState(false);
   const [toast, setToast] = React.useState("");
 
@@ -128,45 +128,40 @@ export function PedidosBoard({ orders, catalog }: { orders: BoardOrder[]; catalo
 
   return (
     <div>
-      {/* KPIs */}
-      <div className="pb-kpis">
-        <Kpi ic="🧾" num={String(delDia.length)} lbl={dia === "hoy" ? "Pedidos hoy" : dia === "ayer" ? "Pedidos ayer" : "Pedidos totales"} sub={`Recaudo: ${COP(recaudo)}`} color="#101828" />
-        <Kpi ic="📱" num={String(kCanal("whatsapp"))} lbl="WhatsApp" color="#16C784" />
-        <Kpi ic="💬" num={String(kCanal("messenger"))} lbl="Messenger" color="#0084FF" />
-        <Kpi ic="🌐" num={String(kCanal("web"))} lbl="Página web" color="#7A3CFF" />
-        <Kpi ic="📦" num={`${kEst("remision")}·${kEst("guia")}`} lbl="Remisión · En guía" sub={`Aprobados: ${kEst("aprobado")}`} color="#F79009" />
+      {/* Flujo por estados — organizador principal */}
+      <div className="pbflow">
+        {[
+          { k: "remision", label: "Remisiones de venta", n: kEst("remision") },
+          { k: "aprobado", label: "Órdenes de venta", n: kEst("aprobado") },
+          { k: "guia_generada", label: "Con guía", n: kGuia },
+          { k: "despachado", label: "Despachados", n: kEst("despachado") },
+          { k: "todos", label: "Todos", n: delDia.length },
+        ].map((f, i, arr) => (
+          <React.Fragment key={f.k}>
+            <button className={"pbflow-tab" + (estadoF === f.k ? " on" : "")} onClick={() => { setEstadoF(f.k); setSel(new Set()); }}>
+              <span className="l">{f.label}</span><span className="n">{f.n}</span>
+            </button>
+            {i < arr.length - 1 ? <span className="pbflow-arrow" aria-hidden>›</span> : null}
+          </React.Fragment>
+        ))}
       </div>
 
-      {/* Toolbar */}
-      <div className="pb-toolbar">
+      {/* Controles */}
+      <div className="pbctrl">
+        <input className="pbctrl-search" placeholder="Buscar por nombre, ref, teléfono o cédula…" value={q} onChange={(e) => setQ(e.target.value)} />
         <div className="pb-seg">
           {(["hoy", "ayer", "todos"] as const).map((d) => (
             <button key={d} className={dia === d ? "on" : ""} onClick={() => { setDia(d); setSel(new Set()); }}>{d === "hoy" ? "Hoy" : d === "ayer" ? "Ayer" : "Todos"}</button>
           ))}
         </div>
-        <div className="pb-chips">
-          {(["todos", "whatsapp", "messenger", "web", "asesor"] as const).map((c) => {
-            const info = c === "todos" ? { label: "Todos", color: "#475467", ic: "📋" } : chan(c);
-            const on = canal === c;
-            return <button key={c} className={"pb-chip" + (on ? " on" : "")} style={on ? { background: info.color } : { color: info.color }} onClick={() => setCanal(c)}>{info.ic} {info.label}</button>;
-          })}
-        </div>
-        <input className="pb-search" placeholder="🔍 Buscar por nombre, ref, teléfono…" value={q} onChange={(e) => setQ(e.target.value)} />
-        <button className="pb-btn gp" style={{ flex: "0 0 auto", minWidth: 0, padding: "10px 16px" }} onClick={() => setManualOpen(true)}>➕ Crear pedido manual</button>
-      </div>
-
-      {/* Barrita de estados (incluye "Guía generada") */}
-      <div className="pb-chips" style={{ marginBottom: 14 }}>
-        {[
-          { k: "todos", label: `Todos (${delDia.length})`, color: "#475467" },
-          { k: "sin_guia", label: "Sin guía", color: "#B54708" },
-          { k: "aprobado", label: `Orden de venta (${kEst("aprobado")})`, color: "#067647" },
-          { k: "guia_generada", label: `🚚 Guía generada (${kGuia})`, color: "#1E50E6" },
-          { k: "despachado", label: `Despachado (${kEst("despachado")})`, color: "#6941C6" },
-        ].map((e) => {
-          const on = estadoF === e.k;
-          return <button key={e.k} className={"pb-chip" + (on ? " on" : "")} style={on ? { background: e.color } : { color: e.color }} onClick={() => setEstadoF(e.k)}>{e.label}</button>;
-        })}
+        <select className="pbctrl-canal" value={canal} onChange={(e) => setCanal(e.target.value as typeof canal)}>
+          <option value="todos">Todos los canales</option>
+          <option value="whatsapp">WhatsApp</option>
+          <option value="messenger">Messenger</option>
+          <option value="web">Página web</option>
+          <option value="asesor">Asesor</option>
+        </select>
+        <button className="pbctrl-new" onClick={() => setManualOpen(true)}>+ Crear pedido</button>
       </div>
 
       {/* Barra de acciones masivas */}
