@@ -313,6 +313,8 @@
 .adm .btn-ico:hover{background:#f4f6fa;color:#1f2733}
 .adm .btn-ico.danger:hover{background:#fdecec;color:#d11616;border-color:#f3c2c2}
 .adm .btn-ico:disabled{opacity:.5;cursor:wait}
+.adm .btn-ico:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.adm .switch input:focus-visible+.switch-track{outline:2px solid var(--blue);outline-offset:2px}
 
 /* ============ Pedidos board (rediseño) ============ */
 .adm .pb-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:13px;margin-bottom:18px}
@@ -585,9 +587,7 @@
 .adm .icon-act:focus-visible,.adm .treat .icon-act:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){.adm .prodgrid .treat{transition:none}}
 
-/* Entrada suave universal en todas las páginas (tarjetas + encabezado) */
-.adm .content > .card, .adm .content > .pagehead, .adm .content > .page-head{ animation:crmIn .4s both }
-.adm .content > .card{ animation-delay:.05s }
+/* Sin orquestar la carga (regla product): las páginas aparecen al instante. */
 
 /* ============ Impresión: facturas + guías ============ */
 .adm .print-root{max-width:840px;margin:0 auto;padding:20px}
