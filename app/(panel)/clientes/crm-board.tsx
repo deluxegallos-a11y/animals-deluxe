@@ -323,12 +323,16 @@ function CuponModal({ n, onClose, onToast }: { n: number; onClose: () => void; o
 }
 
 function WhatsAppModal({ ids, n, onClose, onToast }: { ids: string[]; n: number; onClose: () => void; onToast: (m: string) => void }) {
-  const [msg, setMsg] = React.useState(""); const [busy, setBusy] = React.useState(false);
+  const [msg, setMsg] = React.useState(""); const [img, setImg] = React.useState(""); const [busy, setBusy] = React.useState(false);
   return (
-    <Modal title={`📲 WhatsApp a ${n} cliente(s)`} onClose={onClose}>
-      <div style={{ fontSize: 12.5, color: "var(--ink-2)" }}>Se envía por el bot solo a los que tienen WhatsApp del bot. Manuales/importados no reciben.</div>
-      <textarea className="crm-input" rows={6} placeholder="🔥 ¡Oferta para ti! Usa el cupón GALLO20 y llévate 20% en tu próximo pedido. 🐓" value={msg} onChange={(e) => setMsg(e.target.value)} />
-      <button className="pb-btn gp" disabled={busy || !msg.trim()} onClick={async () => { setBusy(true); const r = await enviarWhatsAppSegmento(ids, msg); setBusy(false); if (r.ok) { onToast(`📲 Enviados: ${r.enviados} · sin WhatsApp: ${r.fallidos}`); onClose(); } else onToast(r.error || "Error"); }}>{busy ? "Enviando…" : "Enviar mensaje"}</button>
+    <Modal title={`📲 Campaña a ${n} cliente(s)`} onClose={onClose}>
+      <div style={{ fontSize: 12.5, color: "var(--ink-2)", marginBottom: 4 }}>Se envía por el bot a los que tienen WhatsApp. Manuales/importados/web no reciben. <b>Ojo:</b> fuera de la ventana de 24h de Meta puede requerir plantilla aprobada.</div>
+      <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)" }}>Mensaje</label>
+      <textarea className="crm-input" rows={5} placeholder="🔥 ¡Promo para ti! Combo Cuidado Total (4 Tapas) a $100.000, contra entrega. Escríbenos y te lo despachamos hoy 🐓" value={msg} onChange={(e) => setMsg(e.target.value)} />
+      <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginTop: 8, display: "block" }}>Imagen (URL) — opcional</label>
+      <input className="crm-input" placeholder="https://animalsdeluxe.com/products/combo-4-tapas.jpg" value={img} onChange={(e) => setImg(e.target.value)} />
+      {img ? <div style={{ marginTop: 8, borderRadius: 12, overflow: "hidden", border: "1px solid var(--line)" }}><img src={img} alt="Vista previa" style={{ width: "100%", maxHeight: 180, objectFit: "cover", display: "block" }} /></div> : null}
+      <button className="pb-btn gp" style={{ marginTop: 10 }} disabled={busy || (!msg.trim() && !img.trim())} onClick={async () => { setBusy(true); const r = await enviarWhatsAppSegmento(ids, msg, img.trim() || undefined); setBusy(false); if (r.ok) { onToast(`📲 Enviados: ${r.enviados} · sin WhatsApp: ${r.fallidos}`); onClose(); } else onToast(r.error || "Error"); }}>{busy ? "Enviando…" : img ? "Enviar campaña con imagen" : "Enviar mensaje"}</button>
     </Modal>
   );
 }

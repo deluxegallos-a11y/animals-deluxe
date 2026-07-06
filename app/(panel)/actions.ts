@@ -11,7 +11,7 @@ import { requireUser } from "@/lib/auth";
 import { encrypt } from "@/lib/crypto";
 import { syncProductToShopify, archiveProductInShopify, retryPendingProducts } from "@/lib/shopify-sync";
 import { notificarDespacho, type NotifyResult } from "@/lib/ai/notificaciones";
-import { uchatSendText } from "@/lib/uchat";
+import { uchatSendText, uchatSendImage } from "@/lib/uchat";
 import { getProducts } from "@/lib/ai/data";
 import { createOrder } from "@/lib/ai/orders";
 import { sendMetaPurchase } from "@/lib/meta-capi";
@@ -575,22 +575,26 @@ export async function crearCuponSegmento(data: {
 }
 
 /** Envía un mensaje por WhatsApp (bot UChat) a un segmento de clientes. Fail-soft. */
-export async function enviarWhatsAppSegmento(ids: string[], mensaje: string): Promise<{ ok: boolean; enviados: number; fallidos: number; error?: string }> {
+export async function enviarWhatsAppSegmento(ids: string[], mensaje: string, imageUrl?: string): Promise<{ ok: boolean; enviados: number; fallidos: number; error?: string }> {
   await requireUser();
   if (!db) return { ok: false, enviados: 0, fallidos: 0, error: "Sin base de datos" };
   const clean = (ids || []).filter(Boolean);
   const texto = (mensaje || "").trim();
-  if (!clean.length || !texto) return { ok: false, enviados: 0, fallidos: 0, error: "Faltan destinatarios o mensaje" };
+  const img = (imageUrl || "").trim();
+  if (!clean.length || (!texto && !img)) return { ok: false, enviados: 0, fallidos: 0, error: "Faltan destinatarios o contenido (texto o imagen)" };
   const rows = await db.select({ sub: customers.uchatSubId }).from(customers).where(inArray(customers.id, clean));
   let enviados = 0, fallidos = 0;
   for (const r of rows) {
     const sub = r.sub || "";
-    // solo suscriptores reales del bot (no importados/manuales)
+    // solo suscriptores reales del bot (no importados/manuales/web)
     if (!sub || sub.startsWith("manual:") || sub.startsWith("import:") || sub.startsWith("web:")) { fallidos++; continue; }
-    const res = await uchatSendText(sub, texto);
-    if (res.ok) enviados++; else fallidos++;
+    // Campaña: imagen primero (con el texto como caption) y refuerzo de texto si hace falta.
+    let ok = false;
+    if (img) { const ri = await uchatSendImage(sub, img, texto); ok = ri.ok; if (ri.ok && texto) { try { await uchatSendText(sub, texto); } catch { /* noop */ } } }
+    if (texto && !img) { const rt = await uchatSendText(sub, texto); ok = rt.ok; }
+    if (ok) enviados++; else fallidos++;
   }
-  await logAudit("whatsapp_segmento", "customers", { destinatarios: clean.length, enviados, fallidos });
+  await logAudit("whatsapp_segmento", "customers", { destinatarios: clean.length, enviados, fallidos, conImagen: !!img });
   return { ok: true, enviados, fallidos };
 }
 
