@@ -101,9 +101,12 @@ export async function addReview(raw: unknown): Promise<AddReviewResult> {
 const schema = z.object({
   nombre: z.string().trim().min(2).max(80),
   telefono: z.string().trim().min(7).max(20).regex(/^[0-9+()\-\s]+$/, "Teléfono inválido"),
+  cedula: z.string().trim().min(4).max(20).regex(/^[0-9.\-\s]+$/, "Cédula inválida"),
   departamento: z.string().trim().min(2).max(60),
   ciudad: z.string().trim().min(2).max(60),
-  direccion: z.string().trim().min(5).max(160),
+  direccion: z.string().trim().min(5).max(200),
+  entrega: z.enum(["domicilio", "oficina"]).optional().default("domicilio"),
+  transportadora: z.string().trim().max(40).optional().default(""),
   upsell: z.boolean().optional().default(false),
   items: z.array(z.object({
     slug: z.string().min(1).max(80),
@@ -137,11 +140,16 @@ export async function crearPedidoWeb(raw: unknown): Promise<PedidoWebResult> {
       }
     }
 
+    // Dirección final: si recoge en oficina, se antepone la transportadora.
+    const dirFinal = b.entrega === "oficina"
+      ? `🏢 Recoger en oficina ${b.transportadora || "transportadora"}: ${b.direccion}`.trim()
+      : b.direccion;
+
     // Cliente (lead web)
     let customerId = "web-" + Date.now();
     if (db) {
       const [c] = await db.insert(customers).values({
-        nombre: b.nombre, telefono: b.telefono, departamento: b.departamento, ciudad: b.ciudad, direccion: b.direccion,
+        nombre: b.nombre, telefono: b.telefono, departamento: b.departamento, ciudad: b.ciudad, direccion: dirFinal,
         canalOrigen: "web", estado: "cliente", ultimoContacto: new Date(),
       }).returning();
       customerId = c?.id || customerId;
@@ -150,7 +158,7 @@ export async function crearPedidoWeb(raw: unknown): Promise<PedidoWebResult> {
     // Pedido COD (idempotente)
     const order = await createOrder({
       subId: "web:" + b.telefono, customerId, items: validItems,
-      nombre: b.nombre, telefono: b.telefono, ciudad: b.ciudad, direccion: b.direccion,
+      nombre: b.nombre, telefono: b.telefono, cedula: b.cedula, ciudad: b.ciudad, direccion: dirFinal,
       metodo: "contraentrega", canal: "web", catalog,
     });
 

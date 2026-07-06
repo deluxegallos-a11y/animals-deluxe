@@ -45,3 +45,32 @@
 .cod-upsell .cu-body b{display:block;font-size:14px;color:#fff}
 .cod-upsell .cu-body span{font-size:12px;color:#C7CCDA}
 .cod-upsell .cu-price{font-weight:900;color:#FF6A4D;font-size:14px;white-space:nowrap}
+
+/* ============ FONDO BLANCO HUESO (override) + campos nuevos ============ */
+.cod-modal{background:#FBFAF7 !important;color:#1A1A1F !important;border:1px solid #E7E3DA !important;box-shadow:0 30px 80px rgba(20,16,10,.28) !important}
+.cod-modal h3{color:#141118 !important}
+.cod-sub{color:#6b6560 !important}.cod-sub b{color:#141118 !important}
+.cod-x{background:#F0ECE3 !important;border:1px solid #E1DCD1 !important;color:#6b6560 !important}
+.cod-x:hover{background:#e9e4d8 !important;color:#141118 !important}
+.cod-modal input,.cod-sel{background:#fff !important;border:1px solid #DDD8CD !important;color:#1A1A1F !important}
+.cod-modal input::placeholder{color:#9a948b !important}
+.cod-modal input:focus,.cod-sel:focus{border-color:#e0a92e !important;box-shadow:0 0 0 3px rgba(224,169,46,.22) !important}
+.cod-note{color:#8a847b !important}
+.cod-item{background:#fff !important;border:1px solid #E7E3DA !important}
+.cod-item-img{background:#F5F2EA !important}
+.cod-item-info b,.cod-step span,.cod-step button,.cod-item-price{color:#1A1A1F !important}
+.cod-item-pres{color:#8a847b !important}
+.cod-step{background:#F5F2EA !important;border:1px solid #E1DCD1 !important}
+.cod-done p{color:#4a453f !important}.cod-done b{color:#141118 !important}
+/* 2 columnas (teléfono + cédula) */
+.cod-2col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+/* Tipo de entrega */
+.cod-entrega{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cod-entrega button{padding:11px;border-radius:11px;border:1.5px solid #DDD8CD;background:#fff;color:#4a453f;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;transition:.15s}
+.cod-entrega button.on{border-color:#e0a92e;background:#fdf6e3;color:#141118}
+/* Desglose de total con envío */
+.cod-tot{background:#F5F2EA;border:1px solid #E7E3DA;border-radius:13px;padding:12px 14px;margin-top:4px;display:flex;flex-direction:column;gap:6px}
+.cod-totrow{display:flex;justify-content:space-between;font-size:13.5px;color:#4a453f}
+.cod-totrow b{color:#1A1A1F;font-weight:700}
+.cod-totrow.big{border-top:1px solid #E1DCD1;padding-top:8px;margin-top:2px;font-size:15px}
+.cod-totrow.big b{font-size:18px;font-weight:800}
