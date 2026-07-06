@@ -350,6 +350,14 @@ function PDPBody({ p, wa, related, reviews, codForm }: { p: PDProduct; wa: strin
   const [presIdx, setPresIdx] = React.useState(0);
   const [qty, setQty] = React.useState(1);
   const [codOpen, setCodOpen] = React.useState(false);
+  // CTA flotante: aparece al bajar (como en las landings).
+  const [showSticky, setShowSticky] = React.useState(false);
+  React.useEffect(() => {
+    const onScroll = () => setShowSticky(window.scrollY > 520);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
   const sel = p.presentations[presIdx] || { label: "", priceCOP: p.priceCOP };
   function onAdd() { add({ slug: p.slug, name: p.name, presLabel: sel.label, priceCOP: sel.priceCOP, qty, imageUrl: p.imageUrl }); }
 
@@ -442,6 +450,17 @@ function PDPBody({ p, wa, related, reviews, codForm }: { p: PDProduct; wa: strin
       ) : null}
 
       <footer className="sfoot"><div className="wrap"><p className="muted" style={{ textAlign: "center", margin: "0 auto" }}>Animals Deluxe · Contraentrega en Colombia 🇨🇴</p></div></footer>
+
+      {/* CTA flotante (aparece al bajar, como en las landings) */}
+      <div className={"pdp-sticky" + (showSticky && !codOpen ? " show" : "")}>
+        <div className="pdp-sticky-info">
+          <b>{p.name}</b>
+          <span>${sel.priceCOP.toLocaleString("es-CO")}{sel.label ? ` · ${sel.label}` : ""}</span>
+        </div>
+        <button type="button" className="pdp-sticky-btn" onClick={() => setCodOpen(true)}>
+          <PackageCheck size={18} /> Comprar
+        </button>
+      </div>
 
       {codOpen ? <CodForm items={[{ slug: p.slug, name: p.name, presLabel: sel.label, qty, priceCOP: sel.priceCOP, imageUrl: p.imageUrl }]} upsellCfg={codForm} onClose={() => setCodOpen(false)} /> : null}
 
