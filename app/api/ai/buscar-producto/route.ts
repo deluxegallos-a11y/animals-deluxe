@@ -14,8 +14,12 @@ export const POST = withBridge(
     const r = searchProducts(body.q, catalog);
     if (r.product) await recordInterest(customer.id, [r.product.slug]); // CRM: registró interés
 
+    // Sugerencias: excluye el producto elegido Y los que tengan su MISMO nombre (SKUs duplicados),
+    // y dedupe por nombre para no repetir "More Muscle Dogs Premium".
+    const vistos = new Set<string>([(r.product?.name || "").toLowerCase().trim()]);
     const sugerencias = r.ranked
       .filter((x) => x.product.slug !== r.product?.slug)
+      .filter((x) => { const k = (x.product.name || "").toLowerCase().trim(); if (vistos.has(k)) return false; vistos.add(k); return true; })
       .slice(0, 3)
       .map((x) => suggestion(x.product));
 

@@ -226,6 +226,9 @@ export function searchProducts(query: string, products: ProductView[]): SearchRe
     return { status: "not_found", product: null, ranked };
   }
   const gap = top.score - (second?.score ?? 0);
-  const status: SearchStatus = gap < 2.5 && (second?.score ?? 0) >= 3 ? "ambiguous" : "found";
+  // Si el 1º y 2º son el MISMO producto (mismo nombre, p.ej. dos SKUs "More Muscle Dogs Premium"),
+  // NO es ambiguo: presenta uno. Evita el ridículo "¿*X* o *X*?".
+  const mismoNombre = !!second && normalize(second.product.name) === normalize(top.product.name);
+  const status: SearchStatus = !mismoNombre && gap < 2.5 && (second?.score ?? 0) >= 3 ? "ambiguous" : "found";
   return { status, product: top.product, ranked };
 }
