@@ -502,15 +502,19 @@
 .adm .crm-card:hover{transform:translateY(-2px);box-shadow:0 4px 14px -6px rgba(16,24,40,.14);border-color:var(--blue-3)}
 @media (prefers-reduced-motion:reduce){.adm .crm-card{transition:none}}
 .adm .crm-card.sel{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-soft)}
-.adm .crm-card .top{display:flex;align-items:center;gap:11px}
-.adm .crm-av{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:17px;flex:0 0 auto;box-shadow:inset 0 1px 0 rgba(255,255,255,.4),inset 0 -6px 12px -6px rgba(0,0,0,.22),0 6px 14px -6px rgba(0,0,0,.3)}
-.adm .crm-card .nm2{font-weight:800;font-size:15px;color:var(--ink);letter-spacing:-.2px;line-height:1.15}
-.adm .crm-card .mt2{font-size:11.5px;color:var(--muted)}
-.adm .crm-card .stat{display:flex;gap:14px;margin-top:11px;padding-top:11px;border-top:1px solid var(--line)}
-.adm .crm-card .stat b{font-size:16px;font-weight:800;color:var(--ink);display:block;letter-spacing:-.3px}
-.adm .crm-card .stat span{font-size:10.5px;color:var(--muted)}
-.adm .crm-sect{margin-top:11px}
-.adm .crm-sect .lb{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);margin-bottom:5px}
+.adm .crm-card{padding:17px 18px}
+.adm .crm-card .top{display:flex;align-items:center;gap:12px}
+.adm .crm-av{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:16px;flex:0 0 auto;box-shadow:0 4px 10px -4px rgba(16,24,40,.3)}
+.adm .crm-card .nm2{font-weight:800;font-size:15px;color:var(--ink);letter-spacing:-.3px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adm .crm-card .mt2{font-size:12px;color:var(--ink-2);font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adm .crm-card .stat{display:grid;grid-template-columns:1fr 1fr 1fr;margin-top:14px;padding-top:13px;border-top:1px solid var(--line);text-align:center}
+.adm .crm-card .stat > div{position:relative}
+.adm .crm-card .stat > div + div::before{content:"";position:absolute;left:0;top:2px;bottom:2px;width:1px;background:var(--line)}
+.adm .crm-card .stat b{font-size:16px;font-weight:800;color:var(--ink);display:block;letter-spacing:-.3px;line-height:1.1}
+.adm .crm-card .stat span{font-size:10px;color:#667085;font-weight:600;letter-spacing:.2px}
+.adm .crm-sect{margin-top:12px}
+.adm .crm-sect .lb{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:#667085;margin-bottom:6px}
+.adm .crm-tagp{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:8px}
 /* view toggle */
 .adm .crm-view{display:inline-flex;gap:3px;background:var(--bg);padding:4px;border-radius:11px;border:1px solid var(--line)}
 .adm .crm-view button{padding:6px 11px;border:0;background:transparent;border-radius:8px;font-weight:700;font-size:12.5px;color:var(--ink-2);cursor:pointer}
