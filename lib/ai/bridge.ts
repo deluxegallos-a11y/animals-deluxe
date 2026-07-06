@@ -230,11 +230,14 @@ export function withBridge<S extends z.ZodTypeAny>(
     const contacto = (() => {
       const r = (raw ?? {}) as Record<string, unknown>;
       const s = (x: unknown) => (x == null ? "" : String(x)).trim();
-      // nombre real primero; si no hay, el del perfil de WhatsApp (nombre_wa) como provisional.
-      const nombre = s(r.nombre ?? r.cliente ?? r.nombre_cliente ?? r.user_name ?? r.full_name ?? r.first_name) || s(r.nombre_wa ?? r.wa_name ?? r.profile_name);
+      // Normaliza a 57XXXXXXXXXX (quita +, espacios; antepone 57 a un celular colombiano de 10 díg).
+      const normTel = (x: unknown) => { let d = s(x).replace(/\D/g, ""); if (d.length === 10 && d.startsWith("3")) d = "57" + d; return d; };
       return {
-        nombre,
-        telefono: s(r.telefono ?? r.celular ?? r.whatsapp ?? r.phone ?? r.tel),
+        // "real": lo que el cliente escribe (sobrescribe). "wa": del perfil de WhatsApp (solo si falta).
+        nombreReal: s(r.nombre ?? r.cliente ?? r.nombre_cliente ?? r.user_name ?? r.full_name),
+        nombreWa: s(r.nombre_wa ?? r.first_name ?? r.wa_name ?? r.profile_name),
+        telReal: normTel(r.telefono ?? r.celular ?? r.whatsapp ?? r.tel),
+        telWa: normTel(r.telefono_wa ?? r.phone ?? r.wa_phone),
         ciudad: s(r.ciudad ?? r.municipio),
         direccion: s(r.direccion ?? r.direccion_entrega),
       };
@@ -249,8 +252,11 @@ export function withBridge<S extends z.ZodTypeAny>(
       if (found) {
         customer = found;
         const set: Record<string, unknown> = { ultimoContacto: new Date(), interacciones: sql`coalesce(${customers.interacciones},0) + 1` };
-        if (contacto.nombre) set.nombre = contacto.nombre;
-        if (contacto.telefono) set.telefono = contacto.telefono;
+        // nombre/teléfono reales sobrescriben; los de WhatsApp solo rellenan si el lead está vacío.
+        if (contacto.nombreReal) set.nombre = contacto.nombreReal;
+        else if (contacto.nombreWa && !found.nombre) set.nombre = contacto.nombreWa;
+        if (contacto.telReal) set.telefono = contacto.telReal;
+        else if (contacto.telWa && !found.telefono) set.telefono = contacto.telWa;
         if (contacto.ciudad) set.ciudad = contacto.ciudad;
         if (contacto.direccion) set.direccion = contacto.direccion;
         await db.update(customers).set(set).where(eq(customers.id, found.id));
@@ -258,7 +264,7 @@ export function withBridge<S extends z.ZodTypeAny>(
       } else {
         const [created] = await db
           .insert(customers)
-          .values({ uchatSubId: body.sub_id, canalOrigen: "whatsapp", estado: "nuevo", nombre: contacto.nombre, telefono: contacto.telefono, ciudad: contacto.ciudad, direccion: contacto.direccion })
+          .values({ uchatSubId: body.sub_id, canalOrigen: "whatsapp", estado: "nuevo", nombre: contacto.nombreReal || contacto.nombreWa, telefono: contacto.telReal || contacto.telWa, ciudad: contacto.ciudad, direccion: contacto.direccion })
           .returning();
         customer = created;
       }
