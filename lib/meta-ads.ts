@@ -48,6 +48,28 @@ export async function metaFetchInsights(datePreset = "last_30d"): Promise<MetaIn
   return out;
 }
 
+/** Insights con caché en DB (30 min): evita pegarle a Meta en cada carga de /anuncios. */
+async function getInsightsCached(range: string): Promise<MetaInsight[]> {
+  if (!db) return metaFetchInsights(range);
+  try {
+    const fresh = await db.execute(sql`select raw from meta_ad_insights where fecha_rango = ${range} and snapshot_at > now() - interval '30 minutes'`);
+    const rows = fresh as unknown as { raw: MetaInsight }[];
+    if (rows.length) return rows.map((r) => r.raw).filter((x) => x && x.adId);
+  } catch { /* sigue a fetch live */ }
+  const live = await metaFetchInsights(range);
+  if (live.length) {
+    try {
+      await db.execute(sql`delete from meta_ad_insights where fecha_rango = ${range}`);
+      for (const i of live) {
+        await db.execute(sql`insert into meta_ad_insights (ad_id, ad_name, campaign_name, spend, impressions, clicks, ctr, cpm, purchase_roas, fecha_rango, raw)
+          values (${i.adId}, ${i.adName}, ${i.campaign}, ${i.spend}, ${i.impressions}, ${i.clicks}, ${i.ctr}, ${i.cpm}, ${i.roasMeta}, ${range}, ${JSON.stringify(i)}::jsonb)
+          on conflict (ad_id, fecha_rango) do update set raw = excluded.raw, spend = excluded.spend, snapshot_at = now()`);
+      }
+    } catch { /* caché es opcional */ }
+  }
+  return live;
+}
+
 export type AnuncioAnalisis = MetaInsight & {
   productos: string[];        // nombres de producto que promociona (ad_map)
   pedidos: number;            // pedidos reales atribuidos (proporcional al gasto)
@@ -76,7 +98,7 @@ export type AnunciosResumen = {
 /** Análisis completo: insights de Meta cruzados con ventas reales por producto. */
 export async function getAnunciosAnalisis(datePreset = "last_30d"): Promise<AnunciosResumen> {
   if (!metaAdsConfigured()) return { ok: false, error: "Falta META_ADS_TOKEN / META_AD_ACCOUNT_ID", gastoTotal: 0, ventasTotal: 0, roasGlobal: 0, mensajesTotal: 0, costoPorMensajeProm: 0, anuncios: [], mejor: null, peor: null };
-  const insights = await metaFetchInsights(datePreset);
+  const insights = await getInsightsCached(datePreset);
   if (!insights.length) return { ok: false, error: "Meta no devolvió anuncios (token vencido o sin datos)", gastoTotal: 0, ventasTotal: 0, roasGlobal: 0, mensajesTotal: 0, costoPorMensajeProm: 0, anuncios: [], mejor: null, peor: null };
 
   // ad_map: ad_id → [product_slug]; ventas por producto (pedidos no cancelados)
