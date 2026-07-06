@@ -53,3 +53,27 @@ export async function uchatSendText(userId: string, text: string): Promise<Uchat
     return { ok: false, error: err instanceof Error ? err.message : "fetch_error" };
   }
 }
+
+/** Trae datos del suscriptor (teléfono/nombre de WhatsApp) por su user_id (sub_id).
+ *  Fail-soft. Normaliza el teléfono a 57XXXXXXXXXX. Usado para recuperar leads viejos sin número. */
+export async function uchatGetSubscriber(userId: string): Promise<{ ok: boolean; telefono?: string; nombre?: string; error?: string }> {
+  const token = process.env.UCHAT_API_TOKEN || "";
+  if (!token || !userId) return { ok: false, error: "uchat_not_configured" };
+  const base = (process.env.UCHAT_API_BASE || "https://www.uchat.com.au/api").replace(/\/$/, "");
+  const path = process.env.UCHAT_GET_PATH || "/subscriber/get-info-by-user-id";
+  const url = `${base}${path.startsWith("/") ? path : "/" + path}?user_id=${encodeURIComponent(userId)}`;
+  try {
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } });
+    if (!res.ok) return { ok: false, error: `uchat_error_${res.status}` };
+    const j = (await res.json()) as Record<string, unknown>;
+    const d = ((j.data as Record<string, unknown>) || j) as Record<string, unknown>;
+    const s = (x: unknown) => (x == null ? "" : String(x)).trim();
+    const rawTel = s(d.whatsapp_phone ?? d.phone ?? d.whatsapp ?? d.wa_id ?? d.telefono);
+    let tel = rawTel.replace(/\D/g, "");
+    if (tel.length === 10 && tel.startsWith("3")) tel = "57" + tel;
+    const nombre = s(d.name ?? d.first_name ?? d.full_name);
+    return { ok: true, telefono: tel, nombre };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "fetch_error" };
+  }
+}
