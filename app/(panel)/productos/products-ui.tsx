@@ -98,8 +98,8 @@ export function ProductsUI({ productos, categorias, shopifyOn }: { productos: P[
       </Card>
 
       <div className="prodgrid">
-        {filtered.map((p, i) => (
-          <div key={p.id} className={`treat ${p.activo ? "" : "treat-off"}`} style={{ animationDelay: `${Math.min(i, 24) * 24}ms` }}>
+        {filtered.map((p) => (
+          <div key={p.id} className={`treat ${p.activo ? "" : "treat-off"}`}>
             <div className="treat-top">
               <div className="ic" style={{ background: p.categoryColor + "22", color: p.categoryColor }}>{flag(p.origin)}</div>
               <div className="treat-acts">

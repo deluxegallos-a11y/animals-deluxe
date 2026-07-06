@@ -122,10 +122,10 @@ export function CrmBoard({ rows, catalog }: { rows: BoardCustomer[]; catalog: Pr
         <div className="empty"><div className="ico">🙋</div><h4>Sin clientes en este filtro</h4><p>Ajusta el embudo/filtros o agrega con ＋ Nuevo / 📥 Importar.</p></div>
       ) : view === "cards" ? (
         <div className="crm-cards">
-          {filtered.map((r, i) => {
+          {filtered.map((r) => {
             const c = chan(r.canal); const s = stageOf(r.etapa);
             return (
-              <div key={r.id} className={"crm-card" + (sel.has(r.id) ? " sel" : "")} style={{ animationDelay: `${Math.min(i, 20) * 22}ms` }} onClick={() => setOpenId(r.id)}>
+              <div key={r.id} className={"crm-card" + (sel.has(r.id) ? " sel" : "")} onClick={() => setOpenId(r.id)}>
                 <div className="top">
                   <div className="crm-av" style={{ background: avColor(r.nombre) }}>{initials(r.nombre)}</div>
                   <div style={{ minWidth: 0, flex: 1 }}>

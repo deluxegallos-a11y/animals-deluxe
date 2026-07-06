@@ -496,9 +496,10 @@
 @keyframes crmIn{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
 @keyframes crmPop{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:none}}
 .adm .crm-stage{animation:crmPop .4s both}
-.adm .crm-cards{columns:4 250px;column-gap:14px}
-.adm .crm-card{break-inside:avoid;margin-bottom:14px;background:linear-gradient(180deg,#fff,#fbfcfe);border:1px solid rgba(16,24,40,.075);border-radius:18px;padding:15px 16px;box-shadow:var(--shadow-sm),inset 0 1px 0 rgba(255,255,255,.7);cursor:pointer;animation:crmIn .45s both;transition:transform .18s cubic-bezier(.2,.9,.3,1),box-shadow .18s ease}
-.adm .crm-card:hover{transform:translateY(-4px);box-shadow:0 2px 8px -2px rgba(16,24,40,.12),0 24px 50px -24px rgba(47,107,255,.4),inset 0 1px 0 rgba(255,255,255,.8)}
+.adm .crm-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.adm .crm-card{margin:0;background:#fff;border:1px solid rgba(16,24,40,.09);border-radius:16px;padding:15px 16px;box-shadow:var(--shadow-sm);cursor:pointer;transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease}
+.adm .crm-card:hover{transform:translateY(-2px);box-shadow:0 4px 14px -6px rgba(16,24,40,.14);border-color:var(--blue-3)}
+@media (prefers-reduced-motion:reduce){.adm .crm-card{transition:none}}
 .adm .crm-card.sel{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-soft)}
 .adm .crm-card .top{display:flex;align-items:center;gap:11px}
 .adm .crm-av{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:17px;flex:0 0 auto;box-shadow:inset 0 1px 0 rgba(255,255,255,.4),inset 0 -6px 12px -6px rgba(0,0,0,.22),0 6px 14px -6px rgba(0,0,0,.3)}
@@ -579,11 +580,11 @@
 [data-theme="dark"] .adm .empty{ color:var(--muted) }
 
 /* ============ Productos — masonry Pinterest + animación ============ */
-.adm .prodgrid{columns:3 290px;column-gap:18px}
-@media (max-width:900px){.adm .prodgrid{columns:2 240px}}
-@media (max-width:560px){.adm .prodgrid{columns:1}}
-.adm .prodgrid .treat{break-inside:avoid;margin-bottom:18px;animation:crmIn .5s both;transition:transform .18s cubic-bezier(.2,.9,.3,1),box-shadow .18s ease,border-color .18s ease}
-.adm .prodgrid .treat:hover{transform:translateY(-5px);box-shadow:0 2px 8px -2px rgba(16,24,40,.12),0 26px 54px -26px rgba(47,107,255,.42),inset 0 1px 0 rgba(255,255,255,.8);border-color:var(--blue-3)}
+.adm .prodgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.adm .prodgrid .treat{margin:0;transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease}
+.adm .prodgrid .treat:hover{transform:translateY(-2px);box-shadow:0 4px 14px -6px rgba(16,24,40,.14);border-color:var(--blue-3)}
+.adm .icon-act:focus-visible,.adm .treat .icon-act:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.adm .prodgrid .treat{transition:none}}
 
 /* Entrada suave universal en todas las páginas (tarjetas + encabezado) */
 .adm .content > .card, .adm .content > .pagehead, .adm .content > .page-head{ animation:crmIn .4s both }
