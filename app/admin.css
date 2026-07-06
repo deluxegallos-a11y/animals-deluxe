@@ -495,7 +495,6 @@
 /* ============ CRM — tarjetas Pinterest + animaciones ============ */
 @keyframes crmIn{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
 @keyframes crmPop{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:none}}
-.adm .crm-stage{animation:crmPop .4s both}
 .adm .crm-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
 .adm .crm-card{margin:0;background:#fff;border:1px solid rgba(16,24,40,.09);border-radius:16px;padding:15px 16px;box-shadow:var(--shadow-sm);cursor:pointer;transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease}
 .adm .crm-card:hover{transform:translateY(-2px);box-shadow:0 4px 14px -6px rgba(16,24,40,.14);border-color:var(--blue-3)}
@@ -980,3 +979,15 @@
 .pb-bulk button:disabled { opacity: .5; cursor: default; }
 .pb-bulk button.ghost { background: rgba(255,255,255,.08); }
 @media (prefers-reduced-motion: reduce) { .pb-bulk, .pb-copybtn { animation: none; transition: none; } }
+
+/* ============ Foco visible CONSISTENTE en todo el panel (impeccable) ============ */
+.adm .btn:focus-visible, .adm .btn.soft:focus-visible, .adm .btn.auto:focus-visible,
+.adm .pb-btn:focus-visible, .adm .tbtn:focus-visible, .adm .modal-x:focus-visible,
+.adm .chip-btn:focus-visible, .adm .icon-act:focus-visible, .adm .crm-stage:focus-visible,
+.adm select:focus-visible, .adm .cobro-monto:focus-visible {
+  outline: 2px solid var(--blue); outline-offset: 2px;
+}
+/* El drawer de cliente entra por deslizamiento (motion de estado, OK); sin orquestar carga interna */
+@media (prefers-reduced-motion: reduce) {
+  .adm .crm-drawer, .cmdk, .adm .pp-chip { animation: none !important; }
+}
