@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { motion, animate, useInView, type Variants } from "framer-motion";
 import {
   DollarSign, ShoppingBag, Users, ArrowRight, MoreHorizontal,
   TrendingUp, Package, Search, Filter, CheckCircle2, Trophy,
@@ -28,21 +27,9 @@ const ESTADO: Record<string, { cls: string; txt: string }> = {
 };
 
 function Count({ to, fmt }: { to: number; fmt?: (n: number) => string }) {
-  const ref = React.useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true });
-  const [v, setV] = React.useState(0);
-  React.useEffect(() => {
-    if (!inView) return;
-    const c = animate(0, to, { duration: 1.2, ease: [0.22, 1, 0.36, 1], onUpdate: (x) => setV(x) });
-    return () => c.stop();
-  }, [inView, to]);
-  return <span ref={ref}>{fmt ? fmt(v) : Math.round(v).toLocaleString("es-CO")}</span>;
+  return <span>{fmt ? fmt(to) : Math.round(to).toLocaleString("es-CO")}</span>;
 }
 
-// Sin orquestación de carga (regla product): el contenido aparece al instante.
-// Se conservan los motion.div solo por el whileHover (micro-interacción, no reveal).
-const card: Variants = { hidden: { opacity: 1, y: 0 }, show: { opacity: 1, y: 0 } };
-const stagger: Variants = { hidden: {}, show: {} };
 const ini = (s: string) => (s || "?").trim().charAt(0).toUpperCase();
 
 export function DashboardView({ d, a }: { d: Dash; a: Analytics }) {
@@ -63,46 +50,46 @@ export function DashboardView({ d, a }: { d: Dash; a: Analytics }) {
       </div>
 
       {/* ---- 4 KPIs claros ---- */}
-      <motion.div className="sumgrid" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(210px,1fr))" }} initial="hidden" animate="show" variants={stagger}>
-        <motion.div className="sumc" variants={card} whileHover={{ y: -4 }}>
+      <div className="sumgrid" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(210px,1fr))" }}>
+        <div className="sumc">
           <div className="top">
             <span className="ic" style={{ background: "#EAF0FF", color: "#1E50E6" }}><ShoppingBag size={20} /></span>
             <div className="lbl">Pedidos de hoy<small>{d.pedidosSemana} en los últimos 7 días</small></div>
           </div>
           <div className="big"><Count to={d.pedidosHoy} /></div>
           <div className="foot" style={{ color: "#475467" }}>{cop(d.ventasHoyCop)} en ventas hoy</div>
-        </motion.div>
+        </div>
 
-        <motion.div className="sumc hot" variants={card} whileHover={{ y: -4 }}>
+        <div className="sumc hot">
           <div className="top">
             <span className="ic"><DollarSign size={20} /></span>
             <div className="lbl">En caja (entregados)<small>Plata ya cobrada</small></div>
           </div>
           <div className="big"><Count to={d.ingresosCop} fmt={(n) => cop(Math.round(n))} /></div>
           <Link href="/pedidos" className="foot">Ver pedidos <ArrowRight size={16} /></Link>
-        </motion.div>
+        </div>
 
-        <motion.div className="sumc" variants={card} whileHover={{ y: -4 }}>
+        <div className="sumc">
           <div className="top">
             <span className="ic" style={{ background: "#FFF4E5", color: "#B54708" }}><Package size={20} /></span>
             <div className="lbl">Por recaudar<small>Contra entrega en camino</small></div>
           </div>
           <div className="big"><Count to={d.aRecaudarCop} fmt={(n) => cop(Math.round(n))} /></div>
           <div className="foot" style={{ color: "#475467" }}>se cobra al entregar</div>
-        </motion.div>
+        </div>
 
-        <motion.div className="sumc" variants={card} whileHover={{ y: -4 }}>
+        <div className="sumc">
           <div className="top">
             <span className="ic" style={{ background: "#F4EBFF", color: "#6941C6" }}><Users size={20} /></span>
             <div className="lbl">Leads nuevos<small>Últimos 7 días</small></div>
           </div>
           <div className="big"><Count to={d.leadsNuevos} /></div>
           <Link href="/clientes" className="foot">Ver clientes <ArrowRight size={16} /></Link>
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
 
       {/* ---- Pipeline por estados ---- */}
-      <motion.div className="panel" style={{ marginTop: 18 }} initial="hidden" animate="show" variants={card}>
+      <div className="panel" style={{ marginTop: 18 }}>
         <div className="ph"><div><h3>Flujo de pedidos</h3><div className="sub">Dónde está cada pedido ahora mismo</div></div></div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 4 }}>
           {d.porEstado.map((s, i) => (
@@ -116,14 +103,14 @@ export function DashboardView({ d, a }: { d: Dash; a: Analytics }) {
             </React.Fragment>
           ))}
         </div>
-      </motion.div>
+      </div>
 
       {/* ---- Analítica: tráfico vs ventas por fuente ---- */}
       <Analitica a={a} />
 
       {/* ---- lista top productos + chart ---- */}
-      <motion.div className="drow" initial="hidden" animate="show" variants={stagger}>
-        <motion.div className="panel" variants={card}>
+      <div className="drow">
+        <div className="panel">
           <div className="ph">
             <div><h3>Top productos</h3><div className="sub">Más vendidos</div></div>
             <Link href="/productos" className="chip-btn"><Package size={15} /> Ver todos</Link>
@@ -131,17 +118,17 @@ export function DashboardView({ d, a }: { d: Dash; a: Analytics }) {
           {d.topProductos.length ? (
             <div className="wlist">
               {d.topProductos.slice(0, 4).map((t, i) => (
-                <motion.div className="wrow" key={t.name + i} whileHover={{ x: 3 }}>
+                <div className="wrow" key={t.name + i}>
                   <div className={`rk ${i === 1 ? "g2" : i === 2 ? "g3" : ""}`}>{i + 1}</div>
                   <div className="nm">{t.name}<small>Producto premium</small></div>
                   <div className="val"><b>{t.cantidad}</b><span className="pill">vendido{t.cantidad !== 1 ? "s" : ""}</span></div>
-                </motion.div>
+                </div>
               ))}
             </div>
           ) : <div className="empty2"><div className="ico"><Trophy size={22} /></div><h4>Sin ventas aún</h4><p>Aparecerán cuando el bot cree pedidos.</p></div>}
-        </motion.div>
+        </div>
 
-        <motion.div className="panel chart" variants={card}>
+        <div className="panel chart">
           <div className="ph">
             <div>
               <div className="sub">Ingresos confirmados</div>
@@ -164,11 +151,11 @@ export function DashboardView({ d, a }: { d: Dash; a: Analytics }) {
               })}
             </div>
           ) : <div className="empty2"><div className="ico"><TrendingUp size={22} /></div><h4>Sin datos de ventas</h4></div>}
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
 
       {/* ---- tabla pedidos recientes ---- */}
-      <motion.div className="tablewrap" initial="hidden" animate="show" variants={card}>
+      <div className="tablewrap">
         <div className="ph">
           <h3>Pedidos recientes</h3>
           <div className="ctrls">
@@ -197,7 +184,7 @@ export function DashboardView({ d, a }: { d: Dash; a: Analytics }) {
             </tbody>
           </table>
         ) : <div className="empty2"><div className="ico"><ShoppingBag size={22} /></div><h4>Sin pedidos aún</h4><p>Cuando el bot cree pedidos aparecerán aquí.</p></div>}
-      </motion.div>
+      </div>
     </div>
   );
 }
