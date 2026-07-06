@@ -45,6 +45,23 @@ export function MetaAnalisis({ a, rango }: { a: AnunciosResumen; rango: string }
             {a.peor ? <div className="panel" style={{ borderLeft: "4px solid #B42318" }}><div className="sub">🔴 El que más te desgasta</div><div style={{ fontWeight: 800, fontSize: 15, margin: "4px 0" }}>{a.peor.adName || a.peor.campaign || a.peor.adId}</div><div style={{ fontSize: 13, color: "#475467" }}>{cop(a.peor.spend)} gastados, {a.peor.pedidos} pedidos (ROAS {a.peor.roasReal}x). <b>{a.peor.roasReal < 1 ? "Te está quemando plata — págalo o cambia el creativo." : "Justo — optimiza público/creativo."}</b></div></div> : null}
           </div>
 
+          {/* Recomendaciones agrupadas */}
+          {(() => {
+            const escalar = a.anuncios.filter((x) => x.veredicto === "escalar");
+            const apagar = a.anuncios.filter((x) => x.veredicto === "apagar");
+            const gastoApagar = apagar.reduce((s, x) => s + x.spend, 0);
+            return (
+              <div className="panel" style={{ marginBottom: 16, background: "#F9FAFB" }}>
+                <div className="ph"><h3>💡 Recomendaciones</h3></div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 12 }}>
+                  <div><div style={{ fontSize: 13, fontWeight: 800, color: "#067647" }}>🟢 Escala ({escalar.length})</div>{escalar.length ? escalar.slice(0, 4).map((x) => <div key={x.adId} style={{ fontSize: 12, color: "#475467", marginTop: 3 }}>• {(x.adName || x.campaign || x.adId).slice(0, 40)} — ROAS {x.roasReal}x</div>) : <div style={{ fontSize: 12, color: "#98A2B3", marginTop: 3 }}>Aún ninguno con ROAS ≥ 2.5x.</div>}</div>
+                  <div><div style={{ fontSize: 13, fontWeight: 800, color: "#B42318" }}>🔴 Apaga ({apagar.length})</div>{apagar.length ? apagar.slice(0, 4).map((x) => <div key={x.adId} style={{ fontSize: 12, color: "#475467", marginTop: 3 }}>• {(x.adName || x.campaign || x.adId).slice(0, 40)} — {cop(x.spend)}, {x.pedidos} ped.</div>) : <div style={{ fontSize: 12, color: "#98A2B3", marginTop: 3 }}>Ninguno quemando plata 👌</div>}</div>
+                </div>
+                {gastoApagar > 0 ? <div style={{ marginTop: 12, padding: "10px 13px", background: "#EAF0FF", borderRadius: 10, fontSize: 13, color: "#1E50E6", fontWeight: 600 }}>📌 Estás gastando <b>{cop(gastoApagar)}</b> en {apagar.length} anuncio(s) 🔴. Reasigna ese presupuesto a los 🟢 para vender más con la misma plata.</div> : null}
+              </div>
+            );
+          })()}
+
           {/* Tabla */}
           <div className="tablewrap">
             <div className="ph"><h3>Todos los anuncios (por gasto)</h3></div>
@@ -61,7 +78,7 @@ export function MetaAnalisis({ a, rango }: { a: AnunciosResumen; rango: string }
                       <td style={{ textAlign: "right", fontWeight: 800, color: x.roasReal >= 1 ? "#067647" : x.pedidos ? "#B42318" : "#98A2B3" }}>{x.pedidos ? x.roasReal + "x" : "—"}</td>
                       <td style={{ textAlign: "right" }}>{x.cpaReal ? cop(x.cpaReal) : "—"}</td>
                       <td style={{ textAlign: "right", fontSize: 12 }}>{x.ctr ? x.ctr.toFixed(1) + "%" : "—"}</td>
-                      <td><Chip v={x.veredicto} /></td>
+                      <td title={x.recomendacion} style={{ cursor: "help" }}><Chip v={x.veredicto} /></td>
                     </tr>
                   ))}
                 </tbody>

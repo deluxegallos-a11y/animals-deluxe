@@ -52,6 +52,7 @@ export type AnuncioAnalisis = MetaInsight & {
   roasReal: number;           // ventas / gasto
   roiReal: number;            // (ventas − gasto) / gasto
   veredicto: "escalar" | "vigilar" | "apagar" | "sin_datos";
+  recomendacion: string;      // consejo en texto según las métricas
 };
 
 export type AnunciosResumen = {
@@ -102,6 +103,15 @@ export async function getAnunciosAnalisis(datePreset = "last_30d"): Promise<Anun
     if (roas >= 1.2) return "vigilar";
     return "apagar";
   };
+  const fmt = (n: number) => "$" + Math.round(n).toLocaleString("es-CO");
+  const recomendacionDe = (v: AnuncioAnalisis["veredicto"], spend: number, roas: number, pedidos: number, cpa: number, mapeado: boolean): string => {
+    if (!mapeado && spend > 20000) return `Gastó ${fmt(spend)} pero no está mapeado a ningún producto — mapéalo abajo para saber si vende.`;
+    if (v === "escalar") return `🔥 Tu mejor tipo de anuncio: ROAS ${roas.toFixed(1)}x, CPA de ${fmt(cpa)}. Súbele presupuesto y graba más videos parecidos.`;
+    if (v === "vigilar") return `Rentable pero justo (ROAS ${roas.toFixed(1)}x). Prueba mejorar el gancho del video o afinar el público antes de escalar.`;
+    if (v === "apagar" && !pedidos) return `Gastó ${fmt(spend)} y 0 pedidos. Te está quemando plata — págalo o cambia el creativo ya.`;
+    if (v === "apagar") return `Pierde plata: gastó ${fmt(spend)} y solo trajo ${fmt(spend * roas)} (ROAS ${roas.toFixed(1)}x). Bájale presupuesto o cámbialo.`;
+    return `Sin ventas todavía. Dale un poco más de tiempo si el gasto es bajo, o revisa el creativo.`;
+  };
 
   const anuncios: AnuncioAnalisis[] = insights.map((ins) => {
     const slugs = mapa.get(ins.adId) || [];
@@ -115,14 +125,16 @@ export async function getAnunciosAnalisis(datePreset = "last_30d"): Promise<Anun
     }
     pedidos = Math.round(pedidos); ventas = Math.round(ventas);
     const roasReal = ins.spend > 0 ? ventas / ins.spend : 0;
+    const cpaReal = pedidos > 0 ? Math.round(ins.spend / pedidos) : 0;
+    const veredicto = veredictoDe(ins.spend, roasReal, pedidos);
     return {
       ...ins,
       productos: slugs.map((s) => nombreProd.get(s) || s),
-      pedidos, ventas,
-      cpaReal: pedidos > 0 ? Math.round(ins.spend / pedidos) : 0,
+      pedidos, ventas, cpaReal,
       roasReal: Math.round(roasReal * 100) / 100,
       roiReal: ins.spend > 0 ? Math.round(((ventas - ins.spend) / ins.spend) * 100) / 100 : 0,
-      veredicto: veredictoDe(ins.spend, roasReal, pedidos),
+      veredicto,
+      recomendacion: recomendacionDe(veredicto, ins.spend, roasReal, pedidos, cpaReal, slugs.length > 0),
     };
   }).sort((a, b) => b.spend - a.spend);
 
