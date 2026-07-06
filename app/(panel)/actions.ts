@@ -598,6 +598,32 @@ export async function enviarWhatsAppSegmento(ids: string[], mensaje: string, ima
   return { ok: true, enviados, fallidos };
 }
 
+/** Cuántos clientes (con WhatsApp del bot) hay en un segmento (por producto de interés, o todos). */
+export async function contarSegmento(productoSlug: string): Promise<{ total: number }> {
+  await requireUser();
+  if (!db) return { total: 0 };
+  const botOnly = sql`coalesce(uchat_sub_id,'') <> '' and uchat_sub_id not like 'manual:%' and uchat_sub_id not like 'import:%' and uchat_sub_id not like 'web:%'`;
+  const where = productoSlug
+    ? sql`${botOnly} and (productos_interes @> ${JSON.stringify([productoSlug])}::jsonb or productos_comprados_manual @> ${JSON.stringify([productoSlug])}::jsonb)`
+    : botOnly;
+  const [r] = await db.select({ n: sql<number>`count(*)::int` }).from(customers).where(where);
+  return { total: r?.n ?? 0 };
+}
+
+/** Envía una CAMPAÑA (texto + imagen) a un segmento por producto de interés (o a todos los del bot). */
+export async function enviarCampana(productoSlug: string, mensaje: string, imageUrl: string): Promise<{ ok: boolean; enviados: number; fallidos: number; total: number; error?: string }> {
+  await requireUser();
+  if (!db) return { ok: false, enviados: 0, fallidos: 0, total: 0, error: "Sin base de datos" };
+  if (!(mensaje || "").trim() && !(imageUrl || "").trim()) return { ok: false, enviados: 0, fallidos: 0, total: 0, error: "Falta el mensaje o la imagen" };
+  const botOnly = sql`coalesce(uchat_sub_id,'') <> '' and uchat_sub_id not like 'manual:%' and uchat_sub_id not like 'import:%' and uchat_sub_id not like 'web:%'`;
+  const where = productoSlug
+    ? sql`${botOnly} and (productos_interes @> ${JSON.stringify([productoSlug])}::jsonb or productos_comprados_manual @> ${JSON.stringify([productoSlug])}::jsonb)`
+    : botOnly;
+  const rows = await db.select({ id: customers.id }).from(customers).where(where);
+  const r = await enviarWhatsAppSegmento(rows.map((x) => x.id), mensaje, imageUrl || undefined);
+  return { ...r, total: rows.length };
+}
+
 /* ============================================================
    Pedido MANUAL desde el panel (asesor humano). Reutiliza la
    MISMA lógica del bot (createOrder: flete por valor, ref AD-XXXX,
