@@ -14,14 +14,14 @@ export function metaAdsConfigured(): boolean {
   return !!(process.env.META_ADS_TOKEN && process.env.META_AD_ACCOUNT_ID);
 }
 
-export type MetaInsight = { adId: string; adName: string; campaign: string; spend: number; impressions: number; clicks: number; ctr: number; cpm: number; roasMeta: number };
+export type MetaInsight = { adId: string; adName: string; campaign: string; spend: number; impressions: number; clicks: number; ctr: number; cpm: number; roasMeta: number; mensajes: number };
 
 /** Trae los insights por anuncio de la Marketing API (con paginación). */
 export async function metaFetchInsights(datePreset = "last_30d"): Promise<MetaInsight[]> {
   const token = process.env.META_ADS_TOKEN || "";
   const act = process.env.META_AD_ACCOUNT_ID || "";
   if (!token || !act) return [];
-  const fields = "ad_id,ad_name,campaign_name,spend,impressions,clicks,ctr,cpm,purchase_roas";
+  const fields = "ad_id,ad_name,campaign_name,spend,impressions,clicks,ctr,cpm,purchase_roas,actions";
   // Solo anuncios ACTIVOS (no pausados/archivados).
   const filtering = encodeURIComponent(JSON.stringify([{ field: "ad.effective_status", operator: "IN", value: ["ACTIVE"] }]));
   let url: string | null = `${GRAPH}/${act}/insights?level=ad&date_preset=${datePreset}&limit=200&fields=${fields}&filtering=${filtering}&access_token=${token}`;
@@ -34,10 +34,12 @@ export async function metaFetchInsights(datePreset = "last_30d"): Promise<MetaIn
       if (j.error || !j.data) break;
       for (const a of j.data) {
         const roas = Array.isArray(a.purchase_roas) ? Number((a.purchase_roas as { value?: string }[])[0]?.value || 0) : 0;
+        const acts = (a.actions as { action_type: string; value: string }[]) || [];
+        const mensajes = Number(acts.find((x) => x.action_type === "onsite_conversion.messaging_conversation_started_7d")?.value || 0);
         out.push({
           adId: String(a.ad_id || ""), adName: String(a.ad_name || ""), campaign: String(a.campaign_name || ""),
           spend: Math.round(Number(a.spend || 0)), impressions: Number(a.impressions || 0), clicks: Number(a.clicks || 0),
-          ctr: Number(a.ctr || 0), cpm: Number(a.cpm || 0), roasMeta: roas,
+          ctr: Number(a.ctr || 0), cpm: Number(a.cpm || 0), roasMeta: roas, mensajes,
         });
       }
       url = j.paging?.next || null;
@@ -51,6 +53,7 @@ export type AnuncioAnalisis = MetaInsight & {
   pedidos: number;            // pedidos reales atribuidos (proporcional al gasto)
   ventas: number;             // $ de ventas reales atribuidas
   cpaReal: number;            // gasto / pedidos
+  costoPorMensaje: number;    // gasto / mensajes (métrica CLAVE en anuncios de mensajes)
   roasReal: number;           // ventas / gasto
   roiReal: number;            // (ventas − gasto) / gasto
   veredicto: "escalar" | "vigilar" | "apagar" | "sin_datos";
@@ -63,6 +66,8 @@ export type AnunciosResumen = {
   gastoTotal: number;
   ventasTotal: number;
   roasGlobal: number;
+  mensajesTotal: number;
+  costoPorMensajeProm: number;
   anuncios: AnuncioAnalisis[];
   mejor: AnuncioAnalisis | null;
   peor: AnuncioAnalisis | null;
@@ -70,9 +75,9 @@ export type AnunciosResumen = {
 
 /** Análisis completo: insights de Meta cruzados con ventas reales por producto. */
 export async function getAnunciosAnalisis(datePreset = "last_30d"): Promise<AnunciosResumen> {
-  if (!metaAdsConfigured()) return { ok: false, error: "Falta META_ADS_TOKEN / META_AD_ACCOUNT_ID", gastoTotal: 0, ventasTotal: 0, roasGlobal: 0, anuncios: [], mejor: null, peor: null };
+  if (!metaAdsConfigured()) return { ok: false, error: "Falta META_ADS_TOKEN / META_AD_ACCOUNT_ID", gastoTotal: 0, ventasTotal: 0, roasGlobal: 0, mensajesTotal: 0, costoPorMensajeProm: 0, anuncios: [], mejor: null, peor: null };
   const insights = await metaFetchInsights(datePreset);
-  if (!insights.length) return { ok: false, error: "Meta no devolvió anuncios (token vencido o sin datos)", gastoTotal: 0, ventasTotal: 0, roasGlobal: 0, anuncios: [], mejor: null, peor: null };
+  if (!insights.length) return { ok: false, error: "Meta no devolvió anuncios (token vencido o sin datos)", gastoTotal: 0, ventasTotal: 0, roasGlobal: 0, mensajesTotal: 0, costoPorMensajeProm: 0, anuncios: [], mejor: null, peor: null };
 
   // ad_map: ad_id → [product_slug]; ventas por producto (pedidos no cancelados)
   const [mapRows, ventasRows, prodRows] = db
@@ -98,21 +103,25 @@ export async function getAnunciosAnalisis(datePreset = "last_30d"): Promise<Anun
   const gastoPorProducto = new Map<string, number>();
   for (const ins of insights) for (const slug of (mapa.get(ins.adId) || [])) gastoPorProducto.set(slug, (gastoPorProducto.get(slug) || 0) + ins.spend);
 
-  const veredictoDe = (spend: number, roas: number, pedidos: number): AnuncioAnalisis["veredicto"] => {
-    if (!pedidos && spend > 30000) return "apagar";
-    if (!pedidos) return "sin_datos";
-    if (roas >= 2.5) return "escalar";
-    if (roas >= 1.2) return "vigilar";
-    return "apagar";
-  };
   const fmt = (n: number) => "$" + Math.round(n).toLocaleString("es-CO");
-  const recomendacionDe = (v: AnuncioAnalisis["veredicto"], spend: number, roas: number, pedidos: number, cpa: number, mapeado: boolean): string => {
-    if (!mapeado && spend > 20000) return `Gastó ${fmt(spend)} pero no está mapeado a ningún producto — mapéalo abajo para saber si vende.`;
-    if (v === "escalar") return `🔥 Tu mejor tipo de anuncio: ROAS ${roas.toFixed(1)}x, CPA de ${fmt(cpa)}. Súbele presupuesto y graba más videos parecidos.`;
-    if (v === "vigilar") return `Rentable pero justo (ROAS ${roas.toFixed(1)}x). Prueba mejorar el gancho del video o afinar el público antes de escalar.`;
-    if (v === "apagar" && !pedidos) return `Gastó ${fmt(spend)} y 0 pedidos. Te está quemando plata — págalo o cambia el creativo ya.`;
-    if (v === "apagar") return `Pierde plata: gastó ${fmt(spend)} y solo trajo ${fmt(spend * roas)} (ROAS ${roas.toFixed(1)}x). Bájale presupuesto o cámbialo.`;
-    return `Sin ventas todavía. Dale un poco más de tiempo si el gasto es bajo, o revisa el creativo.`;
+  // Costo por mensaje PROMEDIO de la cuenta (referencia para el veredicto: entre más barato, mejor).
+  const cpmsg = insights.filter((i) => i.mensajes > 0).map((i) => i.spend / i.mensajes);
+  const avgCPM = cpmsg.length ? cpmsg.reduce((s, x) => s + x, 0) / cpmsg.length : 0;
+
+  const veredictoDe = (spend: number, mensajes: number, cxm: number): AnuncioAnalisis["veredicto"] => {
+    if (!mensajes && spend > 20000) return "apagar";       // gasta y no trae mensajes
+    if (!mensajes) return "sin_datos";
+    if (!avgCPM) return "vigilar";
+    if (cxm <= avgCPM * 0.75) return "escalar";            // más barato que el promedio → 🟢
+    if (cxm <= avgCPM * 1.4) return "vigilar";             // cerca del promedio → 🟡
+    return "apagar";                                        // más caro que el promedio → 🔴
+  };
+  const recomendacionDe = (v: AnuncioAnalisis["veredicto"], spend: number, mensajes: number, cxm: number): string => {
+    if (v === "escalar") return `🔥 Trae mensajes baratos (${fmt(cxm)} c/u vs ${fmt(avgCPM)} promedio). Súbele presupuesto y graba más videos como este.`;
+    if (v === "vigilar") return `Costo por mensaje normal (${fmt(cxm)}). Rentable; prueba mejorar el gancho para bajarlo aún más.`;
+    if (v === "apagar" && !mensajes) return `Gastó ${fmt(spend)} y 0 mensajes. Te está quemando plata — pausa o cambia el creativo ya.`;
+    if (v === "apagar") return `Mensaje caro: ${fmt(cxm)} c/u (promedio ${fmt(avgCPM)}). Bájale presupuesto o cambia el video.`;
+    return `Pocos mensajes aún. Dale tiempo si el gasto es bajo, o revisa el creativo.`;
   };
 
   const anuncios: AnuncioAnalisis[] = insights.map((ins) => {
@@ -121,30 +130,38 @@ export async function getAnunciosAnalisis(datePreset = "last_30d"): Promise<Anun
     for (const slug of slugs) {
       const vp = ventasProd.get(slug); if (!vp) continue;
       const gp = gastoPorProducto.get(slug) || ins.spend || 1;
-      const share = gp > 0 ? ins.spend / gp : 1; // reparte las ventas del producto por % de gasto del anuncio
+      const share = gp > 0 ? ins.spend / gp : 1;
       pedidos += vp.pedidos * share;
       ventas += vp.ventas * share;
     }
     pedidos = Math.round(pedidos); ventas = Math.round(ventas);
     const roasReal = ins.spend > 0 ? ventas / ins.spend : 0;
-    const cpaReal = pedidos > 0 ? Math.round(ins.spend / pedidos) : 0;
-    const veredicto = veredictoDe(ins.spend, roasReal, pedidos);
+    const costoPorMensaje = ins.mensajes > 0 ? Math.round(ins.spend / ins.mensajes) : 0;
+    const veredicto = veredictoDe(ins.spend, ins.mensajes, costoPorMensaje || Infinity);
     return {
       ...ins,
       productos: slugs.map((s) => nombreProd.get(s) || s),
-      pedidos, ventas, cpaReal,
+      pedidos, ventas,
+      cpaReal: pedidos > 0 ? Math.round(ins.spend / pedidos) : 0,
+      costoPorMensaje,
       roasReal: Math.round(roasReal * 100) / 100,
       roiReal: ins.spend > 0 ? Math.round(((ventas - ins.spend) / ins.spend) * 100) / 100 : 0,
       veredicto,
-      recomendacion: recomendacionDe(veredicto, ins.spend, roasReal, pedidos, cpaReal, slugs.length > 0),
+      recomendacion: recomendacionDe(veredicto, ins.spend, ins.mensajes, costoPorMensaje),
     };
-  }).sort((a, b) => b.spend - a.spend);
+  }).sort((a, b) => {
+    // Los que traen mensajes primero, ordenados por costo por mensaje (más barato arriba).
+    if ((a.mensajes > 0) !== (b.mensajes > 0)) return a.mensajes > 0 ? -1 : 1;
+    if (a.mensajes > 0 && b.mensajes > 0) return a.costoPorMensaje - b.costoPorMensaje;
+    return b.spend - a.spend;
+  });
 
   const gastoTotal = anuncios.reduce((s, a) => s + a.spend, 0);
   const ventasTotal = anuncios.reduce((s, a) => s + a.ventas, 0);
-  const conVentas = anuncios.filter((a) => a.pedidos > 0);
-  const mejor = conVentas.length ? conVentas.reduce((m, a) => (a.roasReal > m.roasReal ? a : m)) : null;
-  const peor = anuncios.filter((a) => a.spend > 20000).sort((a, b) => a.roasReal - b.roasReal)[0] || null;
+  const mensajesTotal = anuncios.reduce((s, a) => s + a.mensajes, 0);
+  const conMsg = anuncios.filter((a) => a.mensajes > 0);
+  const mejor = conMsg.length ? conMsg.reduce((m, a) => (a.costoPorMensaje < m.costoPorMensaje ? a : m)) : null;
+  const peor = anuncios.filter((a) => a.spend > 15000).sort((a, b) => (b.costoPorMensaje || Infinity) - (a.costoPorMensaje || Infinity))[0] || null;
 
-  return { ok: true, gastoTotal, ventasTotal, roasGlobal: gastoTotal > 0 ? Math.round((ventasTotal / gastoTotal) * 100) / 100 : 0, anuncios, mejor, peor };
+  return { ok: true, gastoTotal, ventasTotal, roasGlobal: gastoTotal > 0 ? Math.round((ventasTotal / gastoTotal) * 100) / 100 : 0, mensajesTotal, costoPorMensajeProm: Math.round(avgCPM), anuncios, mejor, peor };
 }

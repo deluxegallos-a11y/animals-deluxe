@@ -1010,3 +1010,36 @@
 .dash-rbtn.apply:disabled{opacity:.5;cursor:default}
 .dash-rbtn.apply.on{color:#fff}
 @media (max-width:640px){.dash-custom{margin-left:0;width:100%}}
+
+/* ============ Análisis de anuncios Meta — tarjetas ============ */
+.adm .mad-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:16px}
+.adm .mad-kpi{display:flex;align-items:center;gap:13px;background:#fff;border:1px solid #EAECF0;border-radius:16px;padding:16px 18px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+.adm .mad-kpi-ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:20px;flex:0 0 auto}
+.adm .mad-kpi-lbl{font-size:12px;font-weight:700;color:#667085}
+.adm .mad-kpi-val{font-size:22px;font-weight:800;color:#101828;letter-spacing:-.5px;line-height:1.1;margin-top:2px}
+.adm .mad-kpi-sub{font-size:11px;color:#98A2B3;margin-top:1px}
+.adm .mad-hilite{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+@media (max-width:720px){.adm .mad-hilite{grid-template-columns:1fr}}
+.adm .mad-hi{border-radius:16px;padding:15px 17px;border:1px solid #EAECF0}
+.adm .mad-hi.best{background:linear-gradient(180deg,#F6FEF9,#fff);border-color:#A6F4C5}
+.adm .mad-hi.worst{background:linear-gradient(180deg,#FFFBFA,#fff);border-color:#FECDCA}
+.adm .mad-hi .tag{font-size:12px;font-weight:800;color:#475467}
+.adm .mad-hi .nm{font-size:15.5px;font-weight:800;color:#101828;margin:4px 0;letter-spacing:-.2px}
+.adm .mad-hi .dt{font-size:12.5px;color:#475467;line-height:1.45}
+.adm .mad-tip{background:#EAF0FF;border:1px solid #C7D7FE;color:#1E50E6;border-radius:12px;padding:11px 14px;font-size:13px;font-weight:600;margin-bottom:6px}
+.adm .mad-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.adm .mad-card{background:#fff;border:1px solid #EAECF0;border-radius:16px;padding:16px;box-shadow:0 1px 3px rgba(16,24,40,.05);transition:box-shadow .15s ease,transform .15s ease}
+.adm .mad-card:hover{box-shadow:0 8px 22px -10px rgba(16,24,40,.18);transform:translateY(-2px)}
+.adm .mad-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.adm .mad-card-name{font-size:13.5px;font-weight:800;color:#101828;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.adm .mad-verd{flex:0 0 auto;font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.adm .mad-prod{font-size:11.5px;color:#1E50E6;font-weight:700;margin-top:5px}
+.adm .mad-prod.dim{color:#98A2B3;font-weight:600}
+.adm .mad-cpm{display:flex;align-items:baseline;gap:7px;margin:12px 0}
+.adm .mad-cpm .big{font-size:28px;font-weight:800;letter-spacing:-1px;color:#101828}
+.adm .mad-cpm .lbl{font-size:12px;font-weight:600;color:#98A2B3}
+.adm .mad-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;text-align:center;padding:11px 0;border-top:1px solid #F2F4F7;border-bottom:1px solid #F2F4F7}
+.adm .mad-stats b{display:block;font-size:13.5px;font-weight:800;color:#101828}
+.adm .mad-stats span{font-size:10px;color:#98A2B3;font-weight:600}
+.adm .mad-rec{font-size:12px;color:#475467;line-height:1.45;margin-top:11px}
+@media (prefers-reduced-motion:reduce){.adm .mad-card{transition:none}}

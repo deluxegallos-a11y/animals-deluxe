@@ -6,7 +6,7 @@ import { MetaAnalisis } from "./meta-analisis";
 
 export const dynamic = "force-dynamic";
 
-const FB: AnunciosResumen = { ok: false, error: "Meta tardó demasiado, recarga.", gastoTotal: 0, ventasTotal: 0, roasGlobal: 0, anuncios: [], mejor: null, peor: null };
+const FB: AnunciosResumen = { ok: false, error: "Meta tardó demasiado, recarga.", gastoTotal: 0, ventasTotal: 0, roasGlobal: 0, mensajesTotal: 0, costoPorMensajeProm: 0, anuncios: [], mejor: null, peor: null };
 function conTope<T>(p: Promise<T>, ms: number, fb: T): Promise<T> {
   return Promise.race([p.catch(() => fb), new Promise<T>((r) => setTimeout(() => r(fb), ms))]);
 }
