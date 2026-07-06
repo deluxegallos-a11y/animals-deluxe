@@ -323,15 +323,20 @@ function ManualOrderModal({ catalog, onClose, onToast }: { catalog: CatProd[]; o
 
   async function guardar(force: boolean) {
     setBusy(true);
-    const r = await crearPedidoManual({
-      nombre: f.nombre, cedula: f.cedula, telefono: f.telefono, ciudad: f.ciudad, departamento: f.departamento,
-      direccion: f.direccion, slug: f.slug, presentacion: f.presentacion, cantidad: parseInt(f.cantidad) || 1, subId: f.subId,
-    }, force);
-    setBusy(false);
-    if (r.ok) { onToast(`✅ Pedido ${r.ref} creado${r.duplicate ? " (reusado)" : ""}`); onClose(); return; }
-    if (r.duplicate && r.ref) { setDup({ ref: r.ref }); return; }
-    if (r.campos) { setErrs(r.campos); onToast("Completa los campos en rojo"); return; }
-    onToast(r.error || "Error");
+    try {
+      const r = await crearPedidoManual({
+        nombre: f.nombre, cedula: f.cedula, telefono: f.telefono, ciudad: f.ciudad, departamento: f.departamento,
+        direccion: f.direccion, slug: f.slug, presentacion: f.presentacion, cantidad: parseInt(f.cantidad) || 1, subId: f.subId,
+      }, force);
+      if (r.ok) { onToast(`✅ Pedido ${r.ref} creado${r.duplicate ? " (reusado)" : ""}`); onClose(); return; }
+      if (r.duplicate && r.ref) { setDup({ ref: r.ref }); return; }
+      if (r.campos) { setErrs(r.campos); onToast("Completa los campos en rojo"); return; }
+      onToast(r.error || "Error");
+    } catch {
+      onToast("❌ No se pudo crear (revisa la conexión e intenta de nuevo)");
+    } finally {
+      setBusy(false); // nunca se queda cargando
+    }
   }
 
   return (

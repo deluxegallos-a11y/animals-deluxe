@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { eq, inArray, sql } from "drizzle-orm";
+import { eq, inArray, sql, and, gte } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import {
   products, categories, orders, orderItems, customers, advisors, promotions, coupons, storeConfig, integrations, auditLog, reviews, adMap,
@@ -662,7 +662,7 @@ export async function crearPedidoManual(
       .select({ ref: orders.ref })
       .from(orders)
       .innerJoin(orderItems, eq(orderItems.orderId, orders.id))
-      .where(sql`${orders.telefono} = ${data.telefono} and ${orderItems.productSlug} = ${data.slug} and ${orders.createdAt} > ${since}`)
+      .where(and(eq(orders.telefono, data.telefono), eq(orderItems.productSlug, data.slug), gte(orders.createdAt, since)))
       .limit(1);
     if (recent[0]) return { ok: false, duplicate: true, ref: recent[0].ref, error: `Ya existe un pedido similar (${recent[0].ref}) creado hace menos de 10 min.` };
   }
