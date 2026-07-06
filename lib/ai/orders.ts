@@ -28,7 +28,10 @@ export function resolveItems(items: ItemInput[], catalog: ProductView[]): Resolv
     const p = catalog.find((x) => x.slug === it.slug);
     if (!p) domainError(`No encontré "${it.slug}" en el catálogo. ¿Lo buscamos de nuevo?`);
     const prod = p!;
-    if ((prod.stock ?? 999) < cantidad) domainError(`Por ahora no tengo stock suficiente de ${prod.name}. 😕`);
+    // Animals Deluxe vende bajo demanda (contra entrega), NO lleva inventario unitario.
+    // El catálogo ya solo incluye productos activos → si está aquí, está disponible.
+    // NO se bloquea por stock (antes: stock 0/null tumbaba ventas cerradas). Si algún día se
+    // quiere control de inventario, hacerlo con una bandera por producto (default: sin control).
     // precio por presentación (si se indicó y existe)
     let label = prod.presentations[0]?.label || "Unidad";
     let precio = prod.presentations[0]?.priceCOP ?? prod.priceCOP;
