@@ -22,7 +22,9 @@ export async function metaFetchInsights(datePreset = "last_30d"): Promise<MetaIn
   const act = process.env.META_AD_ACCOUNT_ID || "";
   if (!token || !act) return [];
   const fields = "ad_id,ad_name,campaign_name,spend,impressions,clicks,ctr,cpm,purchase_roas";
-  let url: string | null = `${GRAPH}/${act}/insights?level=ad&date_preset=${datePreset}&limit=200&fields=${fields}&access_token=${token}`;
+  // Solo anuncios ACTIVOS (no pausados/archivados).
+  const filtering = encodeURIComponent(JSON.stringify([{ field: "ad.effective_status", operator: "IN", value: ["ACTIVE"] }]));
+  let url: string | null = `${GRAPH}/${act}/insights?level=ad&date_preset=${datePreset}&limit=200&fields=${fields}&filtering=${filtering}&access_token=${token}`;
   const out: MetaInsight[] = [];
   let guard = 0;
   try {
