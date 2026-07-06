@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { OrderDetail as OD } from "@/lib/queries";
-import { editarPedido, editarDimensionesProducto, cotizarPedido, crearGuia, pasarAOrdenDeVenta, marcarCopiado, type Transportadora } from "../mp-actions";
+import { editarPedido, editarDimensionesProducto, cotizarPedido, crearGuia, obtenerPdfGuia, pasarAOrdenDeVenta, marcarCopiado, type Transportadora } from "../mp-actions";
 import { despacharPedido, updateOrderStatus } from "../../actions";
 
 const COP = (n: number) => "$" + Number(n || 0).toLocaleString("es-CO");
@@ -78,6 +78,16 @@ export function OrderDetail({ o }: { o: OD }) {
       else setGenErr(r.error || "MiPaquete rechazó la guía.");
     } catch (e) { setGenErr("No se pudo conectar. " + String(e).slice(0, 60)); }
     finally { setGenBusy(false); }
+  }
+  const [pdfBusy, setPdfBusy] = React.useState(false);
+  async function descargarGuia() {
+    setPdfBusy(true);
+    try {
+      const r = await obtenerPdfGuia(o.id);
+      if (r.ok && r.pdfUrl) { window.open(r.pdfUrl, "_blank"); if (!o.envioPdf) router.refresh(); }
+      else flash(r.error || "No se pudo obtener la guía");
+    } catch { flash("No se pudo conectar con MiPaquete"); }
+    finally { setPdfBusy(false); }
   }
 
   // ---- Estado ----
@@ -163,7 +173,8 @@ export function OrderDetail({ o }: { o: OD }) {
                   <div className="od-sub">Guía {o.envioTransportadora}</div>
                   <div className="od-guianum">{o.envioGuia}</div>
                 </div>
-                <button className="od-btn primary" onClick={() => (o.envioPdf ? window.open(o.envioPdf, "_blank") : abrirImpresion("guia", o.ref))}>📄 Imprimir guía</button>
+                <button className="od-btn primary" disabled={pdfBusy} onClick={descargarGuia}>{pdfBusy ? "Obteniendo…" : "📥 Descargar guía de MiPaquete"}</button>
+                <button className="od-btn" onClick={() => abrirImpresion("guia", o.ref)}>🖨️ Imprimir (formato interno)</button>
                 <button className="od-btn" onClick={() => window.open(`/pedidos/imprimir?tipo=guia&refs=${o.ref}&sticker=1`, "_blank")}>🏷️ Sticker 4×4 (térmica)</button>
               </>
             ) : !transp.length ? (

@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { updateOrderStatus, bulkUpdateStatus, despacharPedido, crearPedidoManual } from "../actions";
-import { crearGuia, crearGuiasBulk, pasarAOrdenDeVenta, cotizarPedido, marcarCopiado, type Transportadora } from "./mp-actions";
+import { crearGuia, crearGuiasBulk, obtenerPdfGuia, obtenerPdfGuiasBulk, pasarAOrdenDeVenta, cotizarPedido, marcarCopiado, type Transportadora } from "./mp-actions";
 
 export type BoardOrder = {
   id: string; ref: string; nombre: string; telefono: string; cedula: string; ciudad: string; direccion: string;
@@ -128,6 +128,18 @@ export function PedidosBoard({ orders, catalog }: { orders: BoardOrder[]; catalo
     setBulkBusy(true); const r = await crearGuiasBulk([...sel]); setBulkBusy(false);
     setSel(new Set()); flash(`🚚 Guías: ${r.creadas} creadas · ${r.pendientes} pendientes (sin token) · ${r.errores} error`);
   }
+  async function bulkPdf() {
+    setBulkBusy(true);
+    try {
+      const r = await obtenerPdfGuiasBulk([...sel]);
+      if (!r.guias.length) { flash("Ninguno de los seleccionados tiene guía lista"); return; }
+      // Abre cada PDF en una pestaña (el navegador puede pedir permiso para varias)
+      r.guias.forEach((g, i) => setTimeout(() => { try { window.open(g.pdfUrl, "_blank"); } catch { /* */ } }, i * 350));
+      flash(`📥 ${r.guias.length} guía(s) abierta(s)${r.faltantes ? ` · ${r.faltantes} sin guía lista` : ""}`);
+      setSel(new Set());
+    } catch { flash("No se pudieron descargar las guías"); }
+    finally { setBulkBusy(false); }
+  }
 
   return (
     <div>
@@ -174,6 +186,7 @@ export function PedidosBoard({ orders, catalog }: { orders: BoardOrder[]; catalo
           <span className="sp" />
           <button className="ghost" disabled={bulkBusy} onClick={() => bulk("aprobado")}>✓ Orden de venta</button>
           <button style={{ background: "var(--blue)" }} disabled={bulkBusy} onClick={bulkGuias}>🚚 Crear guías MiPaquete</button>
+          <button style={{ background: "var(--green)" }} disabled={bulkBusy} onClick={bulkPdf}>{bulkBusy ? "…" : "📥 Descargar guías MiPaquete"}</button>
           <button className="ghost" onClick={() => abrirImpresion("factura", selList.map((o) => o.ref))}>🖨️ Facturas</button>
           <button className="ghost" onClick={() => abrirImpresion("guia", selList.map((o) => o.ref))}>📄 Guías</button>
           <button className="ghost" onClick={() => window.open(`/pedidos/imprimir?tipo=sticker&refs=${selList.map((o) => o.ref).join(",")}`, "_blank")}>🏷️ Stickers 4×4</button>
@@ -416,6 +429,12 @@ function DetailModal({ o, onClose, onToast, onGuia }: { o: BoardOrder; onClose: 
   async function ordenVenta() { setBusy(true); await pasarAOrdenDeVenta(o.id); setBusy(false); onToast("→ Orden de venta ✅"); onClose(); }
   const guiaMp = () => onGuia(o.id);
   async function copiar() { onToast((await copy(mensajeGuia(o))) ? "📋 Datos copiados" : "No se pudo copiar"); }
+  async function descargarGuiaMp() {
+    setBusy(true);
+    try { const r = await obtenerPdfGuia(o.id); if (r.ok && r.pdfUrl) window.open(r.pdfUrl, "_blank"); else onToast(r.error || "Guía no lista"); }
+    catch { onToast("No se pudo conectar con MiPaquete"); }
+    finally { setBusy(false); }
+  }
   async function despachar() {
     if (!guia.trim()) { setShowMsg(true); return; }
     setBusy(true); const r = await despacharPedido(o.id, guia.trim(), o.transportadora || "Interrapidísimo"); setBusy(false);
@@ -487,9 +506,10 @@ function DetailModal({ o, onClose, onToast, onGuia }: { o: BoardOrder; onClose: 
         )}
 
         {/* Impresión (siempre) */}
-        <div className="pb-mfoot" style={{ borderBottom: "1px solid var(--line)", paddingBottom: 12 }}>
+        <div className="pb-mfoot" style={{ borderBottom: "1px solid var(--line)", paddingBottom: 12, flexWrap: "wrap" }}>
           <button className="pb-btn dk" style={{ flex: 1 }} onClick={() => abrirImpresion("factura", [o.ref])}>🖨️ Imprimir factura</button>
-          <button className="pb-btn dk" style={{ flex: 1 }} onClick={() => abrirImpresion("guia", [o.ref])}>📄 Imprimir guía</button>
+          {(o.envioGuia || o.envioStatus === "guia_generada") ? <button className="pb-btn gp" style={{ flex: 1 }} disabled={busy} onClick={descargarGuiaMp}>📥 Descargar guía MiPaquete</button> : null}
+          <button className="pb-btn dk" style={{ flex: 1 }} onClick={() => abrirImpresion("guia", [o.ref])}>🖨️ Guía (interno)</button>
         </div>
 
         {/* Copiar datos para WhatsApp — SIEMPRE disponible (acción principal) */}

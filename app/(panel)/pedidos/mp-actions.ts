@@ -176,10 +176,15 @@ export async function crearGuia(orderId: string, force?: boolean, deliveryCompan
   let pdfGuideUrl = guia.pdfGuideUrl || "";
   let deliveryCompanyName = guia.deliveryCompanyName || c.deliveryCompany;
   if (guia.ok && guia.mpCode) {
-    const info = await mpGetSendingInfo(guia.mpCode);
-    if (info.guideNumber) guideNumber = info.guideNumber;
-    if (info.pdfGuideUrl) pdfGuideUrl = info.pdfGuideUrl;
-    if (info.deliveryCompanyName) deliveryCompanyName = info.deliveryCompanyName;
+    // MiPaquete tarda unos segundos en asignar el número/PDF → reintenta hasta captarlo.
+    for (let intento = 0; intento < 3; intento++) {
+      const info = await mpGetSendingInfo(guia.mpCode);
+      if (info.guideNumber) guideNumber = info.guideNumber;
+      if (info.pdfGuideUrl) pdfGuideUrl = info.pdfGuideUrl;
+      if (info.deliveryCompanyName) deliveryCompanyName = info.deliveryCompanyName;
+      if (pdfGuideUrl) break;
+      if (intento < 2) await new Promise((r) => setTimeout(r, 2500));
+    }
   }
 
   const status = guia.ok ? "guia_generada" : "pendiente";
@@ -219,6 +224,40 @@ function traducirErrorMp(err: string): string {
   if (e.includes("declaredvalue") || e.includes("declared")) return "El valor declarado no es válido.";
   if (e.includes("location") || e.includes("dane")) return "No se pudo resolver la ciudad de destino.";
   return err || "MiPaquete rechazó la guía.";
+}
+
+/** Devuelve el link del PDF de la guía de MiPaquete. Si aún no se había capturado
+ *  (MiPaquete tarda unos segundos en asignar el número), lo consulta y lo guarda. */
+export async function obtenerPdfGuia(orderId: string): Promise<{ ok: boolean; pdfUrl?: string; guideNumber?: string; error?: string }> {
+  await requireUser();
+  if (!db) return { ok: false, error: "Sin base de datos" };
+  const [s] = await db.select().from(mpShipments).where(eq(mpShipments.orderId, orderId)).limit(1);
+  if (!s) return { ok: false, error: "Este pedido no tiene guía generada todavía." };
+  if (s.pdfGuideUrl) return { ok: true, pdfUrl: s.pdfGuideUrl, guideNumber: s.guideNumber || "" };
+  if (s.mpCode) {
+    const info = await mpGetSendingInfo(s.mpCode);
+    if (info.pdfGuideUrl) {
+      await db.update(mpShipments).set({ guideNumber: info.guideNumber || s.guideNumber || "", pdfGuideUrl: info.pdfGuideUrl }).where(eq(mpShipments.id, s.id));
+      return { ok: true, pdfUrl: info.pdfGuideUrl, guideNumber: info.guideNumber || "" };
+    }
+  }
+  return { ok: false, error: "La guía aún se está generando en MiPaquete. Intenta de nuevo en 1 minuto." };
+}
+
+/** Links de PDF de VARIAS guías (descarga masiva). Rellena las que falten. */
+export async function obtenerPdfGuiasBulk(orderIds: string[]): Promise<{ ok: boolean; guias: { ref: string; guideNumber: string; pdfUrl: string }[]; faltantes: number }> {
+  await requireUser();
+  if (!db) return { ok: false, guias: [], faltantes: 0 };
+  const ids = (orderIds || []).filter(Boolean);
+  const guias: { ref: string; guideNumber: string; pdfUrl: string }[] = [];
+  let faltantes = 0;
+  for (const id of ids) {
+    const r = await obtenerPdfGuia(id);
+    const [o] = await db.select({ ref: orders.ref }).from(orders).where(eq(orders.id, id)).limit(1);
+    if (r.ok && r.pdfUrl) guias.push({ ref: o?.ref || id, guideNumber: r.guideNumber || "", pdfUrl: r.pdfUrl });
+    else faltantes++;
+  }
+  return { ok: true, guias, faltantes };
 }
 
 /** Genera guías de VARIOS pedidos (masivo). */
