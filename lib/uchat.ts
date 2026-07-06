@@ -60,8 +60,9 @@ export async function uchatGetSubscriber(userId: string): Promise<{ ok: boolean;
   const token = process.env.UCHAT_API_TOKEN || "";
   if (!token || !userId) return { ok: false, error: "uchat_not_configured" };
   const base = (process.env.UCHAT_API_BASE || "https://www.uchat.com.au/api").replace(/\/$/, "");
-  const path = process.env.UCHAT_GET_PATH || "/subscriber/get-info-by-user-id";
-  const url = `${base}${path.startsWith("/") ? path : "/" + path}?user_id=${encodeURIComponent(userId)}`;
+  const path = process.env.UCHAT_GET_PATH || "/subscriber/get-info";
+  // UChat identifica al suscriptor por user_ns (= nuestro sub_id, p.ej. f280503u823082027).
+  const url = `${base}${path.startsWith("/") ? path : "/" + path}?user_ns=${encodeURIComponent(userId)}`;
   try {
     const res = await fetch(url, { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } });
     if (!res.ok) return { ok: false, error: `uchat_error_${res.status}` };
