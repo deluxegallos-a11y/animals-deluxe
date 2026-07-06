@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   DollarSign, ShoppingBag, Users, ArrowRight, MoreHorizontal,
   TrendingUp, Package, Search, Filter, CheckCircle2, Trophy,
@@ -10,11 +11,16 @@ import { cop } from "@/lib/ai/format";
 import type { Analytics } from "@/lib/queries";
 
 type Dash = {
+  rangoLabel: string;
   pedidosHoy: number; pedidosSemana: number; ventasHoyCop: number; ingresosCop: number; aRecaudarCop: number; leadsNuevos: number;
   porEstado: { estado: string; label: string; n: number; monto: number }[];
   topProductos: { name: string; cantidad: number }[];
   ultimosPedidos: { ref: string; nombre: string; total: number; estado: string; createdAt: string | null; canal: string }[];
 };
+const RANGOS: { k: string; label: string }[] = [
+  { k: "hoy", label: "Hoy" }, { k: "ayer", label: "Ayer" }, { k: "semana", label: "7 días" },
+  { k: "mes", label: "Este mes" }, { k: "30d", label: "30 días" },
+];
 const CANAL_IC: Record<string, string> = { whatsapp: "📱", messenger: "💬", web: "🌐", asesor: "🎧" };
 const EST_COLOR: Record<string, string> = { remision: "#B54708", aprobado: "#067647", guia: "#1E50E6", despachado: "#6941C6", entregado: "#067647" };
 
@@ -32,7 +38,7 @@ function Count({ to, fmt }: { to: number; fmt?: (n: number) => string }) {
 
 const ini = (s: string) => (s || "?").trim().charAt(0).toUpperCase();
 
-export function DashboardView({ d, a }: { d: Dash; a: Analytics }) {
+export function DashboardView({ d, a, range, from, to }: { d: Dash; a: Analytics; range: string; from?: string; to?: string }) {
   const maxQ = Math.max(1, ...d.topProductos.map((t) => t.cantidad));
   const topBars = d.topProductos.slice(0, 7);
 
@@ -41,23 +47,24 @@ export function DashboardView({ d, a }: { d: Dash; a: Analytics }) {
       <div className="pagehead">
         <div>
           <h1>Resumen general</h1>
-          <p>Pedidos, ingresos y leads de tu tienda en tiempo real.</p>
+          <p>Pedidos, ingresos y leads · <b>{d.rangoLabel}</b></p>
         </div>
-        <div className="ctrls">
-          <button className="chip-btn"><TrendingUp size={15} /> Este mes</button>
-          <Link href="/pedidos" className="chip-btn"><ShoppingBag size={15} /> Ver pedidos</Link>
-        </div>
+        <Link href="/pedidos" className="chip-btn"><ShoppingBag size={15} /> Ver pedidos</Link>
       </div>
+
+      {/* Selector de rango de fechas */}
+      <RangeSelector range={range} from={from} to={to} />
+
 
       {/* ---- 4 KPIs claros ---- */}
       <div className="sumgrid" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(210px,1fr))" }}>
         <div className="sumc">
           <div className="top">
             <span className="ic" style={{ background: "#EAF0FF", color: "#1E50E6" }}><ShoppingBag size={20} /></span>
-            <div className="lbl">Pedidos de hoy<small>{d.pedidosSemana} en los últimos 7 días</small></div>
+            <div className="lbl">Pedidos · {d.rangoLabel}<small>{d.pedidosSemana} en los últimos 7 días</small></div>
           </div>
           <div className="big"><Count to={d.pedidosHoy} /></div>
-          <div className="foot" style={{ color: "#475467" }}>{cop(d.ventasHoyCop)} en ventas hoy</div>
+          <div className="foot" style={{ color: "#475467" }}>{cop(d.ventasHoyCop)} en ventas</div>
         </div>
 
         <div className="sumc hot">
@@ -184,6 +191,26 @@ export function DashboardView({ d, a }: { d: Dash; a: Analytics }) {
             </tbody>
           </table>
         ) : <div className="empty2"><div className="ico"><ShoppingBag size={22} /></div><h4>Sin pedidos aún</h4><p>Cuando el bot cree pedidos aparecerán aquí.</p></div>}
+      </div>
+    </div>
+  );
+}
+
+/* ============ Selector de rango de fechas ============ */
+function RangeSelector({ range, from, to }: { range: string; from?: string; to?: string }) {
+  const router = useRouter();
+  const [f, setF] = React.useState(from || "");
+  const [t, setT] = React.useState(to || "");
+  return (
+    <div className="dash-range">
+      {RANGOS.map((r) => (
+        <Link key={r.k} href={`/dashboard?range=${r.k}`} className={"dash-rbtn" + (range === r.k ? " on" : "")}>{r.label}</Link>
+      ))}
+      <div className="dash-custom">
+        <input type="date" value={f} max={t || undefined} onChange={(e) => setF(e.target.value)} aria-label="Desde" />
+        <span className="sep">→</span>
+        <input type="date" value={t} min={f || undefined} onChange={(e) => setT(e.target.value)} aria-label="Hasta" />
+        <button className={"dash-rbtn apply" + (range === "custom" ? " on" : "")} disabled={!f} onClick={() => router.push(`/dashboard?range=custom&from=${f}${t ? `&to=${t}` : ""}`)}>Aplicar</button>
       </div>
     </div>
   );

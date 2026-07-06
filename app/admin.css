@@ -991,3 +991,18 @@
 @media (prefers-reduced-motion: reduce) {
   .adm .crm-drawer, .cmdk, .adm .pp-chip { animation: none !important; }
 }
+
+/* ============ Dashboard — selector de rango de fechas ============ */
+.dash-range{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 18px}
+.dash-rbtn{display:inline-flex;align-items:center;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:#fff;color:#475467;font-size:13px;font-weight:700;font-family:inherit;text-decoration:none;cursor:pointer;transition:background .15s ease,color .15s ease,border-color .15s ease}
+.dash-rbtn:hover{background:#F2F4F7;color:#101828}
+.dash-rbtn:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.dash-rbtn.on{background:linear-gradient(180deg,#3B82F6,#1E50E6);color:#fff;border-color:transparent;box-shadow:0 6px 14px -8px rgba(47,107,255,.5)}
+.dash-custom{display:inline-flex;align-items:center;gap:7px;margin-left:auto;flex-wrap:wrap}
+.dash-custom .sep{color:#98A2B3;font-weight:700}
+.dash-custom input[type=date]{border:1px solid var(--line);border-radius:10px;padding:7px 11px;font-size:13px;font-weight:600;color:#344054;font-family:inherit;background:#fff;outline:none}
+.dash-custom input[type=date]:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+.dash-rbtn.apply{border-color:var(--blue);color:var(--blue)}
+.dash-rbtn.apply:disabled{opacity:.5;cursor:default}
+.dash-rbtn.apply.on{color:#fff}
+@media (max-width:640px){.dash-custom{margin-left:0;width:100%}}

@@ -2,7 +2,7 @@
    Lecturas para el PANEL admin. Drizzle server-side.
    En MODO DEMO (sin DB) devuelve mocks razonables a partir del catálogo.
    =========================================================== */
-import { desc, eq, gte, sql, asc, inArray, and } from "drizzle-orm";
+import { desc, eq, gte, lt, sql, asc, inArray, and } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import {
   products, categories, orders, orderItems, customers, advisors,
@@ -13,46 +13,70 @@ import type { ProductView } from "@/lib/ai/types";
 
 /* ---------- Dashboard ---------- */
 export type DashboardKpis = {
-  pedidosHoy: number;         // pedidos de hoy (sin cancelados)
-  pedidosSemana: number;      // últimos 7 días (sin cancelados)
-  ventasHoyCop: number;       // $ de los pedidos de hoy (sin cancelados)
-  ingresosCop: number;        // $ entregados/pagados (plata ya en caja)
-  aRecaudarCop: number;       // $ de contra entrega en camino (aún no entregado)
-  leadsNuevos: number;
+  rangoLabel: string;         // etiqueta del rango elegido (Hoy, Ayer, …)
+  pedidosHoy: number;         // pedidos DEL RANGO (sin cancelados)
+  pedidosSemana: number;      // comparativo: últimos 7 días (sin cancelados)
+  ventasHoyCop: number;       // $ de los pedidos DEL RANGO (sin cancelados)
+  ingresosCop: number;        // $ entregados/pagados DEL RANGO
+  aRecaudarCop: number;       // $ de contra entrega en camino (aún no entregado, vivo)
+  leadsNuevos: number;        // leads nuevos DEL RANGO
   porEstado: { estado: string; label: string; n: number; monto: number }[]; // pipeline
   topProductos: { name: string; cantidad: number }[];
   ultimosPedidos: { ref: string; nombre: string; total: number; estado: string; createdAt: string | null; canal: string }[];
 };
 
-export async function getDashboard(): Promise<DashboardKpis> {
+/** Rango [from, to) para el dashboard, calculado en hora de Colombia (UTC-5). */
+export function rangoFechas(range: string, fromISO?: string, toISO?: string): { from: Date; to: Date; label: string } {
+  const OFF = 5 * 3600_000; // Colombia = UTC-5
+  const col = (d: Date) => new Date(d.getTime() - OFF); // instante real → "hora Colombia como UTC"
+  const utc = (d: Date) => new Date(d.getTime() + OFF); // vuelta a instante real
+  const colMidnight = (daysAgo: number) => { const c = col(new Date()); c.setUTCHours(0, 0, 0, 0); c.setUTCDate(c.getUTCDate() - daysAgo); return utc(c); };
+  const now = new Date();
+  switch (range) {
+    case "ayer": return { from: colMidnight(1), to: colMidnight(0), label: "Ayer" };
+    case "semana": return { from: colMidnight(6), to: now, label: "Últimos 7 días" };
+    case "mes": { const c = col(new Date()); c.setUTCDate(1); c.setUTCHours(0, 0, 0, 0); return { from: utc(c), to: now, label: "Este mes" }; }
+    case "30d": return { from: colMidnight(29), to: now, label: "Últimos 30 días" };
+    case "custom": {
+      const f = fromISO ? new Date(fromISO + "T00:00:00-05:00") : colMidnight(0);
+      const t = toISO ? new Date(toISO + "T23:59:59-05:00") : now;
+      return { from: f, to: t, label: fromISO ? `${fromISO}${toISO && toISO !== fromISO ? " → " + toISO : ""}` : "Personalizado" };
+    }
+    default: return { from: colMidnight(0), to: now, label: "Hoy" };
+  }
+}
+
+export async function getDashboard(range: string = "hoy", fromISO?: string, toISO?: string): Promise<DashboardKpis> {
   const EST_LABEL: Record<string, string> = { remision: "Remisión", aprobado: "Orden de venta", guia: "Con guía", despachado: "Despachado", entregado: "Entregado", cancelado: "Cancelado" };
   const EST_ORDER = ["remision", "aprobado", "guia", "despachado", "entregado"];
+  const { from, to, label } = rangoFechas(range, fromISO, toISO);
   if (!db) {
     return {
-      pedidosHoy: 0, pedidosSemana: 0, ventasHoyCop: 0, ingresosCop: 0, aRecaudarCop: 0, leadsNuevos: 0,
+      rangoLabel: label, pedidosHoy: 0, pedidosSemana: 0, ventasHoyCop: 0, ingresosCop: 0, aRecaudarCop: 0, leadsNuevos: 0,
       porEstado: EST_ORDER.map((e) => ({ estado: e, label: EST_LABEL[e], n: 0, monto: 0 })),
       topProductos: demoProducts.slice(0, 5).map((p) => ({ name: p.name, cantidad: 0 })),
       ultimosPedidos: [],
     };
   }
-  const startDay = new Date(); startDay.setHours(0, 0, 0, 0);
   const startWeek = new Date(Date.now() - 7 * 86400_000);
   const noCancel = sql`coalesce(estado,'') <> 'cancelado'`;
+  const enRango = and(gte(orders.createdAt, from), lt(orders.createdAt, to), noCancel);
 
   // Todas en PARALELO.
   const [[hoy], [sem], [ing], [rec], [leads], estados, top, ult] = await Promise.all([
-    db.select({ n: sql<number>`count(*)::int`, s: sql<number>`coalesce(sum(total_cop),0)::int` }).from(orders).where(and(gte(orders.createdAt, startDay), noCancel)),
+    db.select({ n: sql<number>`count(*)::int`, s: sql<number>`coalesce(sum(total_cop),0)::int` }).from(orders).where(enRango),
     db.select({ n: sql<number>`count(*)::int` }).from(orders).where(and(gte(orders.createdAt, startWeek), noCancel)),
-    db.select({ s: sql<number>`coalesce(sum(total_cop),0)::int` }).from(orders).where(sql`estado in ('entregado','pagado','confirmado')`),
+    db.select({ s: sql<number>`coalesce(sum(total_cop),0)::int` }).from(orders).where(and(gte(orders.createdAt, from), lt(orders.createdAt, to), sql`estado in ('entregado','pagado','confirmado')`)),
     db.select({ s: sql<number>`coalesce(sum(total_cop),0)::int` }).from(orders).where(sql`estado in ('aprobado','guia','despachado') and coalesce(metodo_pago,'contraentrega') <> 'anticipado'`),
-    db.select({ n: sql<number>`count(*)::int` }).from(customers).where(gte(customers.createdAt, startWeek)),
+    db.select({ n: sql<number>`count(*)::int` }).from(customers).where(and(gte(customers.createdAt, from), lt(customers.createdAt, to))),
     db.select({ estado: orders.estado, n: sql<number>`count(*)::int`, monto: sql<number>`coalesce(sum(total_cop),0)::int` }).from(orders).where(noCancel).groupBy(orders.estado),
-    db.select({ name: orderItems.productName, cantidad: sql<number>`sum(cantidad)::int` }).from(orderItems).groupBy(orderItems.productName).orderBy(sql`sum(cantidad) desc`).limit(7),
+    db.select({ name: orderItems.productName, cantidad: sql<number>`sum(cantidad)::int` }).from(orderItems).innerJoin(orders, eq(orderItems.orderId, orders.id)).where(enRango).groupBy(orderItems.productName).orderBy(sql`sum(cantidad) desc`).limit(7),
     db.select({ ref: orders.ref, nombre: orders.nombre, total: orders.totalCop, estado: orders.estado, createdAt: orders.createdAt, canal: orders.canal }).from(orders).orderBy(desc(orders.createdAt)).limit(8),
   ]);
 
   const estMap = new Map(estados.map((e) => [e.estado || "", e]));
   return {
+    rangoLabel: label,
     pedidosHoy: hoy?.n ?? 0,
     pedidosSemana: sem?.n ?? 0,
     ventasHoyCop: hoy?.s ?? 0,
