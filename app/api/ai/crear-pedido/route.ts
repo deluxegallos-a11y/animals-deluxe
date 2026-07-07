@@ -58,7 +58,9 @@ export const POST = withBridge(
     let direccion = str(b.direccion ?? b.direccion_entrega ?? b.dir);
     if (!direccion && oficina) direccion = oficina;
     else if (direccion && oficina && !direccion.toLowerCase().includes(oficina.toLowerCase())) direccion = `${direccion} · ${oficina}`;
-    const cedula = str(b.cedula ?? b.cc ?? b.documento ?? b.identificacion ?? b.nid);
+    // Cédula: solo dígitos. Placeholders del bot ("[Tu cédula]", "N/A"…) → vacío. NO bloquea el pedido.
+    const cedulaRaw = str(b.cedula ?? b.cc ?? b.documento ?? b.identificacion ?? b.nid).replace(/[^0-9]/g, "");
+    const cedula = cedulaRaw.length >= 5 ? cedulaRaw : "";
     const correo = str(b.correo ?? b.email);
     const cupon = str(b.cupon ?? b.codigo ?? b.cupon_codigo);
     const metodo: "contraentrega" | "anticipado" = str(b.metodo).toLowerCase().startsWith("antic") ? "anticipado" : "contraentrega";
@@ -112,7 +114,8 @@ export const POST = withBridge(
     if (!telefono) faltantes.push("telefono");
     if (!ciudad) faltantes.push("ciudad");
     if (!direccion) faltantes.push("direccion");
-    if (!cedula) faltantes.push("cedula");
+    // La cédula NO bloquea el pedido (se necesita para la guía, no para capturar la venta).
+    // Se pide después / la completa el asesor antes de generar la guía. Nunca se pierde la venta.
     if (!items.length) faltantes.push("producto");
     if (faltantes.length) {
       await logEvent("pedido_no_creado", {
