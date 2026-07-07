@@ -266,7 +266,7 @@ export async function obtenerPdfGuiasBulk(orderIds: string[]): Promise<{ ok: boo
 /** Cancela la guía. MiPaquete NO permite cancelar por API → la marcamos cancelada en la plataforma
  *  (revierte el pedido a orden de venta para poder regenerar) y el asesor la cancela también en el
  *  portal de MiPaquete para que no la despachen / no se cobre. */
-export async function cancelarGuia(orderId: string): Promise<{ ok: boolean; error?: string; avisoMp?: boolean }> {
+export async function cancelarGuia(orderId: string): Promise<{ ok: boolean; error?: string; avisoMp?: boolean; guideNumber?: string; portalUrl?: string }> {
   await requireUser();
   if (!db) return { ok: false, error: "Sin base de datos" };
   const [s] = await db.select().from(mpShipments).where(eq(mpShipments.orderId, orderId)).limit(1);
@@ -275,8 +275,8 @@ export async function cancelarGuia(orderId: string): Promise<{ ok: boolean; erro
   // revertir el pedido a orden de venta (aprobado) para regenerar si hace falta
   await db.update(orders).set({ estado: "aprobado", updatedAt: new Date() }).where(and(eq(orders.id, orderId), inArray(orders.estado, ["guia", "despachado"])));
   revalidatePath("/pedidos");
-  // avisoMp: si tenía número real, hay que cancelarla también en MiPaquete
-  return { ok: true, avisoMp: !!s.guideNumber };
+  // MiPaquete NO cancela por API → devolvemos el nº de guía + link al portal para cancelarla allá.
+  return { ok: true, avisoMp: !!s.guideNumber, guideNumber: s.guideNumber || "", portalUrl: "https://app.mipaquete.com" };
 }
 
 /** Genera guías de VARIOS pedidos (masivo). */

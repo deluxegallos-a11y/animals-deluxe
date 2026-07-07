@@ -95,8 +95,13 @@ export function OrderDetail({ o }: { o: OD }) {
     setCancBusy(true);
     try {
       const r = await cancelarGuia(o.id);
-      if (r.ok) { flash(r.avisoMp ? "Guía cancelada aquí ✅ — cancélala también en MiPaquete" : "Guía cancelada ✅"); router.refresh(); }
-      else flash(r.error || "No se pudo cancelar");
+      if (r.ok) {
+        if (r.avisoMp && r.portalUrl) {
+          flash(`Cancelada aquí ✅ — ahora cancela la guía ${r.guideNumber} en MiPaquete`);
+          if (confirm(`Guía cancelada en la plataforma.\n\nMiPaquete no cancela por API, así que abre su portal y cancela la guía N.º ${r.guideNumber} allá (para que no la despachen ni te la cobren).\n\n¿Abrir el portal de MiPaquete ahora?`)) window.open(r.portalUrl, "_blank");
+        } else flash("Guía cancelada ✅");
+        router.refresh();
+      } else flash(r.error || "No se pudo cancelar");
     } catch { flash("No se pudo cancelar"); }
     finally { setCancBusy(false); }
   }

@@ -438,7 +438,7 @@ function DetailModal({ o, onClose, onToast, onGuia }: { o: BoardOrder; onClose: 
   async function cancelarGuiaMp() {
     if (!confirm("¿Cancelar esta guía?\n\nMiPaquete no permite cancelar por API: esto la cancela aquí y podrás regenerarla, pero cancélala TAMBIÉN en el portal de MiPaquete para que no la despachen.")) return;
     setBusy(true);
-    try { const r = await cancelarGuia(o.id); if (r.ok) { onToast(r.avisoMp ? "Cancelada aquí — cancélala también en MiPaquete" : "Guía cancelada ✅"); onClose(); } else onToast(r.error || "No se pudo cancelar"); }
+    try { const r = await cancelarGuia(o.id); if (r.ok) { if (r.avisoMp && r.portalUrl) { if (confirm(`Guía cancelada en la plataforma.\n\nMiPaquete no cancela por API — abre su portal y cancela la guía N.º ${r.guideNumber} allá.\n\n¿Abrir MiPaquete ahora?`)) window.open(r.portalUrl, "_blank"); } onToast("Guía cancelada ✅"); onClose(); } else onToast(r.error || "No se pudo cancelar"); }
     catch { onToast("No se pudo cancelar"); }
     finally { setBusy(false); }
   }
