@@ -135,9 +135,9 @@ export async function crearGuia(orderId: string, force?: boolean, deliveryCompan
   if (!o) return { ok: false, error: "Pedido no encontrado" };
   if (o.estado === "cancelado") return { ok: false, error: "El pedido está cancelado" };
 
-  // ¿Ya tiene guía?
+  // ¿Ya tiene guía? (una guía CANCELADA no cuenta → se puede regenerar)
   const [exist] = await db.select().from(mpShipments).where(eq(mpShipments.orderId, orderId)).limit(1);
-  if (exist && !force) return { ok: true, ref: o.ref, guideNumber: exist.guideNumber || "", status: exist.status || "", pending: exist.status === "pendiente", pdfUrl: exist.pdfGuideUrl || "" };
+  if (exist && exist.status !== "cancelado" && !force) return { ok: true, ref: o.ref, guideNumber: exist.guideNumber || "", status: exist.status || "", pending: exist.status === "pendiente", pdfUrl: exist.pdfGuideUrl || "" };
 
   const pkg = await paqueteDeOrden(orderId);
   const qty = pkg.qty;
@@ -261,6 +261,22 @@ export async function obtenerPdfGuiasBulk(orderIds: string[]): Promise<{ ok: boo
     else faltantes++;
   }
   return { ok: true, guias, faltantes };
+}
+
+/** Cancela la guía. MiPaquete NO permite cancelar por API → la marcamos cancelada en la plataforma
+ *  (revierte el pedido a orden de venta para poder regenerar) y el asesor la cancela también en el
+ *  portal de MiPaquete para que no la despachen / no se cobre. */
+export async function cancelarGuia(orderId: string): Promise<{ ok: boolean; error?: string; avisoMp?: boolean }> {
+  await requireUser();
+  if (!db) return { ok: false, error: "Sin base de datos" };
+  const [s] = await db.select().from(mpShipments).where(eq(mpShipments.orderId, orderId)).limit(1);
+  if (!s) return { ok: false, error: "Este pedido no tiene guía generada." };
+  await db.update(mpShipments).set({ status: "cancelado" }).where(eq(mpShipments.id, s.id));
+  // revertir el pedido a orden de venta (aprobado) para regenerar si hace falta
+  await db.update(orders).set({ estado: "aprobado", updatedAt: new Date() }).where(and(eq(orders.id, orderId), inArray(orders.estado, ["guia", "despachado"])));
+  revalidatePath("/pedidos");
+  // avisoMp: si tenía número real, hay que cancelarla también en MiPaquete
+  return { ok: true, avisoMp: !!s.guideNumber };
 }
 
 /** Genera guías de VARIOS pedidos (masivo). */

@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { OrderDetail as OD } from "@/lib/queries";
-import { editarPedido, editarDimensionesProducto, cotizarPedido, crearGuia, obtenerPdfGuia, pasarAOrdenDeVenta, marcarCopiado, type Transportadora } from "../mp-actions";
+import { editarPedido, editarDimensionesProducto, cotizarPedido, crearGuia, obtenerPdfGuia, cancelarGuia, pasarAOrdenDeVenta, marcarCopiado, type Transportadora } from "../mp-actions";
 import { despacharPedido, updateOrderStatus } from "../../actions";
 
 const COP = (n: number) => "$" + Number(n || 0).toLocaleString("es-CO");
@@ -88,6 +88,17 @@ export function OrderDetail({ o }: { o: OD }) {
       else flash(r.error || "No se pudo obtener la guía");
     } catch { flash("No se pudo conectar con MiPaquete"); }
     finally { setPdfBusy(false); }
+  }
+  const [cancBusy, setCancBusy] = React.useState(false);
+  async function cancelarGuiaMp() {
+    if (!confirm("¿Cancelar esta guía?\n\nOJO: MiPaquete no permite cancelar por API. Esto la cancela en la plataforma y podrás regenerarla, pero DEBES cancelarla también en el portal de MiPaquete para que no la despachen ni te la cobren.")) return;
+    setCancBusy(true);
+    try {
+      const r = await cancelarGuia(o.id);
+      if (r.ok) { flash(r.avisoMp ? "Guía cancelada aquí ✅ — cancélala también en MiPaquete" : "Guía cancelada ✅"); router.refresh(); }
+      else flash(r.error || "No se pudo cancelar");
+    } catch { flash("No se pudo cancelar"); }
+    finally { setCancBusy(false); }
   }
 
   // ---- Estado ----
@@ -176,6 +187,7 @@ export function OrderDetail({ o }: { o: OD }) {
                 <button className="od-btn primary" disabled={pdfBusy} onClick={descargarGuia}>{pdfBusy ? "Obteniendo…" : "📥 Descargar guía de MiPaquete"}</button>
                 <button className="od-btn" onClick={() => abrirImpresion("guia", o.ref)}>🖨️ Imprimir (formato interno)</button>
                 <button className="od-btn" onClick={() => window.open(`/pedidos/imprimir?tipo=guia&refs=${o.ref}&sticker=1`, "_blank")}>🏷️ Sticker 4×4 (térmica)</button>
+                <button className="od-btn danger" disabled={cancBusy} onClick={cancelarGuiaMp}>{cancBusy ? "Cancelando…" : "❌ Cancelar guía"}</button>
               </>
             ) : !transp.length ? (
               <>

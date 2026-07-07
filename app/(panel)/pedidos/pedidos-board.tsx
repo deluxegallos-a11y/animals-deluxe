@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { updateOrderStatus, bulkUpdateStatus, despacharPedido, crearPedidoManual } from "../actions";
-import { crearGuia, crearGuiasBulk, obtenerPdfGuia, obtenerPdfGuiasBulk, pasarAOrdenDeVenta, cotizarPedido, marcarCopiado, type Transportadora } from "./mp-actions";
+import { crearGuia, crearGuiasBulk, obtenerPdfGuia, obtenerPdfGuiasBulk, cancelarGuia, pasarAOrdenDeVenta, cotizarPedido, marcarCopiado, type Transportadora } from "./mp-actions";
 
 export type BoardOrder = {
   id: string; ref: string; nombre: string; telefono: string; cedula: string; ciudad: string; direccion: string;
@@ -435,6 +435,13 @@ function DetailModal({ o, onClose, onToast, onGuia }: { o: BoardOrder; onClose: 
     catch { onToast("No se pudo conectar con MiPaquete"); }
     finally { setBusy(false); }
   }
+  async function cancelarGuiaMp() {
+    if (!confirm("¿Cancelar esta guía?\n\nMiPaquete no permite cancelar por API: esto la cancela aquí y podrás regenerarla, pero cancélala TAMBIÉN en el portal de MiPaquete para que no la despachen.")) return;
+    setBusy(true);
+    try { const r = await cancelarGuia(o.id); if (r.ok) { onToast(r.avisoMp ? "Cancelada aquí — cancélala también en MiPaquete" : "Guía cancelada ✅"); onClose(); } else onToast(r.error || "No se pudo cancelar"); }
+    catch { onToast("No se pudo cancelar"); }
+    finally { setBusy(false); }
+  }
   async function despachar() {
     if (!guia.trim()) { setShowMsg(true); return; }
     setBusy(true); const r = await despacharPedido(o.id, guia.trim(), o.transportadora || "Interrapidísimo"); setBusy(false);
@@ -510,6 +517,7 @@ function DetailModal({ o, onClose, onToast, onGuia }: { o: BoardOrder; onClose: 
           <button className="pb-btn dk" style={{ flex: 1 }} onClick={() => abrirImpresion("factura", [o.ref])}>🖨️ Imprimir factura</button>
           {(o.envioGuia || o.envioStatus === "guia_generada") ? <button className="pb-btn gp" style={{ flex: 1 }} disabled={busy} onClick={descargarGuiaMp}>📥 Descargar guía MiPaquete</button> : null}
           <button className="pb-btn dk" style={{ flex: 1 }} onClick={() => abrirImpresion("guia", [o.ref])}>🖨️ Guía (interno)</button>
+          {(o.envioGuia || o.envioStatus === "guia_generada") ? <button className="pb-btn out" style={{ flex: 1 }} disabled={busy} onClick={cancelarGuiaMp}>❌ Cancelar guía</button> : null}
         </div>
 
         {/* Copiar datos para WhatsApp — SIEMPRE disponible (acción principal) */}
