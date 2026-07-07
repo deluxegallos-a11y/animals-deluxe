@@ -147,7 +147,10 @@ export async function crearGuia(orderId: string, force?: boolean, deliveryCompan
 
   const paymentType = (o.metodoPago === "anticipado") ? 101 : 102;
   const declaredValue = o.subtotalCop ?? o.totalCop ?? 0; // cobertura = valor del producto
-  const collectionValue = paymentType === 102 ? (o.totalCop ?? 0) : 0;
+  // RECAUDO = SOLO el valor del producto (NO producto + flete). El flete lo cobra la transportadora
+  // (Coordinadora/Interrapidísimo) aparte al destinatario. Antes se mandaba o.totalCop (producto+flete)
+  // → el cliente pagaba flete doble. La cotización de envío es solo una guía estimada para el cliente.
+  const collectionValue = paymentType === 102 ? (o.subtotalCop ?? o.totalCop ?? 0) : 0;
 
   const cot = await mpCotizar({
     originDane: bod?.locationCode || "05001000", destinyDane: dane?.code || "",
@@ -197,7 +200,7 @@ export async function crearGuia(orderId: string, force?: boolean, deliveryCompan
     receiverName: o.nombre || "", receiverPhone: o.telefono || "", receiverIdNumber: o.cedula || "",
     receiverAddress: o.direccion || "", destinyDane: dane?.code || "", destinyCity: dane?.name || o.ciudad || "",
     description: pkg.items.map((i) => i.name).join(", ").slice(0, 200), productReference: o.ref, quantity: qty,
-    weight: qty, declaredValue, paymentType, collectionValue, saleValue: o.totalCop ?? 0,
+    weight: qty, declaredValue, paymentType, collectionValue, saleValue: collectionValue,
     shippingCost: c.shippingCost, collectionCommission: c.collectionCommission, totalCost: c.totalCost, amountToTransfer,
     pdfGuideUrl, channel: "Animals Deluxe Plataforma",
     idempotencyKey: idem, cotizacionSeleccionada: c as unknown as object, rawResponse: (guia.raw as object) ?? null,
