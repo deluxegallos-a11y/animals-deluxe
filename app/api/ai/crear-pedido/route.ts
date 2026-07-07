@@ -189,10 +189,12 @@ export const POST = withBridge(
     const mensaje =
       `✅ ¡Listo${nombre ? " " + nombre.split(" ")[0] : ""}! Tu pedido quedó confirmado 🎉 Ref *${ref}*\n` +
       `${listaProductos}\n` +
-      `Subtotal: ${cop(order.subtotal_cop)}` +
-      (order.descuento_cop ? ` · Descuento: -${cop(order.descuento_cop)}` : "") +
-      ` · Envío: ${order.envio_cop ? cop(order.envio_cop) : "GRATIS"}\n` +
-      `*Total a pagar al recibir: ${cop(order.total_cop)}* 🚚\n` +
+      `Producto: ${cop(order.subtotal_cop)}` +
+      (order.descuento_cop ? ` · Descuento: -${cop(order.descuento_cop)}` : "") + `\n` +
+      `*Total a recaudar: ${cop(order.total_cop)}* (solo el producto)\n` +
+      (order.envio_cop
+        ? `🚚 El flete lo cobra la transportadora al entregar (aprox ${cop(order.envio_cop)}, puede variar).\n`
+        : `🚚 ¡Envío GRATIS! 🎉\n`) +
       `Te despachamos a ${ciudad} contra entrega. ¡Gracias por confiar en Animals Deluxe! 🐓`;
 
     return {

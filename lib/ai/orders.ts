@@ -60,7 +60,9 @@ export function computeTotals(resolved: ResolvedItem[], envioCop: number, coupon
       : coupon.valor;
     descuento = Math.min(descuento, subtotal);
   }
-  const total = Math.max(0, subtotal - descuento) + Math.max(0, envioCop);
+  // El total a RECAUDAR = solo el producto (menos descuento). El flete NO se suma: es un estimado
+  // referencial para el cliente; la transportadora (MiPaquete) le cobra el flete real aparte.
+  const total = Math.max(0, subtotal - descuento);
   return { subtotal, descuento, envio: Math.max(0, envioCop), total };
 }
 

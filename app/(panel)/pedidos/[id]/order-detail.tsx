@@ -27,8 +27,9 @@ function mensajeWpp(o: OD, nombre: string, tel: string, cc: string, ciu: string,
     `📦 *PEDIDO ${o.ref}* (${anticipado ? "pago anticipado" : "contra entrega"})`,
     `👤 ${nombre || "—"}`, `🪪 CC ${cc || "—"}`, `📱 ${tel || "—"}`,
     `📍 ${ciu || "—"} — ${dir || "—"}`, `🛒 ${prod || "—"}`,
-    anticipado ? `💳 YA PAGÓ · ${COP(o.total)}` : `💵 A RECAUDAR: ${COP(o.total)}`,
-  ].join("\n");
+    anticipado ? `💳 YA PAGÓ · ${COP(o.total)}` : `💵 A RECAUDAR (producto): ${COP(o.total)}`,
+    anticipado ? "" : `🚚 Flete: lo cobra la transportadora aparte${o.envio ? ` (aprox ${COP(o.envio)})` : ""}`,
+  ].filter(Boolean).join("\n");
 }
 
 export function OrderDetail({ o }: { o: OD }) {
@@ -170,10 +171,10 @@ export function OrderDetail({ o }: { o: OD }) {
           {/* Resumen */}
           <section className="od-card">
             <div className="od-ch"><h2>Resumen</h2></div>
-            <div className="od-sum"><span>Subtotal</span><b>{COP(o.subtotal)}</b></div>
+            <div className="od-sum"><span>Producto</span><b>{COP(o.subtotal)}</b></div>
             {o.descuento ? <div className="od-sum"><span>Descuento</span><b style={{ color: "#067647" }}>−{COP(o.descuento)}</b></div> : null}
-            <div className="od-sum"><span>Envío</span><b>{o.envio ? COP(o.envio) : "Incluido"}</b></div>
             <div className="od-sum total"><span>{pago === "anticipado" ? "Ya pagó" : "A recaudar"}</span><b>{COP(o.total)}</b></div>
+            <div className="od-sum" style={{ opacity: .7, fontSize: 12.5 }}><span>Flete (aprox)</span><b style={{ fontWeight: 600 }}>{o.envio ? `${COP(o.envio)} · lo cobra la transportadora` : "Incluido"}</b></div>
             <div className="od-pago">
               <button className={pago !== "anticipado" ? "on" : ""} onClick={() => cambiarPago("contraentrega")}>Contra entrega</button>
               <button className={pago === "anticipado" ? "on" : ""} onClick={() => cambiarPago("anticipado")}>Anticipado</button>

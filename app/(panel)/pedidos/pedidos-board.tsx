@@ -51,7 +51,7 @@ function mensajeGuia(o: BoardOrder): string {
     `🛒 ${prod || "—"}`,
     anticipado
       ? `💳 YA PAGÓ (anticipado) · valor ${COP(o.total)}`
-      : `💵 A RECAUDAR: ${COP(o.total)} (envío ${o.envio ? COP(o.envio) : "incluido"})`,
+      : `💵 A RECAUDAR (producto): ${COP(o.total)}\n🚚 Flete: lo cobra la transportadora aparte${o.envio ? ` (aprox ${COP(o.envio)})` : ""}`,
   ].join("\n");
 }
 
@@ -220,7 +220,7 @@ export function PedidosBoard({ orders, catalog }: { orders: BoardOrder[]; catalo
                   </span>
                   <span><span className="pb-pill" style={{ color: e.color, background: e.bg }}>{e.label}</span></span>
                   <span className="pb-time">{o.createdAt ? new Date(o.createdAt).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }) : "—"}<div className="d">{o.createdAt ? new Date(o.createdAt).toLocaleDateString("es-CO", { day: "2-digit", month: "2-digit" }) : ""}</div></span>
-                  <span className="pb-total">{COP(o.total)}<div className="e">envío {o.envio ? COP(o.envio) : "incl."}</div></span>
+                  <span className="pb-total">{COP(o.total)}<div className="e">flete aparte{o.envio ? ` ~${COP(o.envio)}` : ""}</div></span>
                   <span className="pb-chev" style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
                     <button className="pb-copybtn" onClick={async (ev) => { ev.stopPropagation(); const ok = await copy(mensajeGuia(o)); if (ok) await marcarCopiado([o.id]); flash(ok ? "📋 Copiado a WhatsApp" : "No se pudo copiar"); }} title="Copiar datos para WhatsApp">📋</button>
                     ›

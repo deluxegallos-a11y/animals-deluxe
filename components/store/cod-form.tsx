@@ -134,12 +134,12 @@ export function CodForm({ items: initial, upsellCfg, onClose, onSuccess }: { ite
               {/* Desglose con envío calculado */}
               <div className="cod-tot">
                 <div className="cod-totrow"><span>Productos ({units})</span><b>{cop(productos)}</b></div>
-                <div className="cod-totrow"><span>Envío{envio ? "" : " · incluido"}</span><b>{envio ? cop(envio) : "Gratis"}</b></div>
-                <div className="cod-totrow big"><span>Total a pagar al recibir</span><b>{cop(grandTotal)}</b></div>
+                <div className="cod-totrow big"><span>Total a pagar al recibir</span><b>{cop(productos)}</b></div>
+                <div className="cod-totrow" style={{ opacity: .75, fontSize: 12.5 }}><span>Flete</span><b style={{ fontWeight: 600 }}>{envio ? `lo cobra la transportadora aparte (aprox ${cop(envio)})` : "Gratis 🎉"}</b></div>
               </div>
               {err ? <div className="cod-err">{err}</div> : null}
               <button className="cod-submit" type="submit" disabled={busy}>
-                {busy ? "Enviando…" : <><ShoppingCart size={18} /> Confirmar pedido · {cop(grandTotal)}</>}
+                {busy ? "Enviando…" : <><ShoppingCart size={18} /> Confirmar pedido · {cop(productos)}</>}
               </button>
               <p className="cod-note">💵 Pago contraentrega · pagás cuando recibís. Sin anticipos.</p>
             </form>
