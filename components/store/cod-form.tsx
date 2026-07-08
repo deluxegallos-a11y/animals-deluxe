@@ -19,7 +19,9 @@ const idOf = (i: CodItem) => `${i.slug}::${i.presLabel}`;
 /* Formulario contraentrega: acepta varios productos y cantidades editables. */
 export function CodForm({ items: initial, upsellCfg, onClose, onSuccess }: { items: CodItem[]; upsellCfg?: CodFormConfig; onClose: () => void; onSuccess?: (ref: string) => void }) {
   const [items, setItems] = React.useState<CodItem[]>(initial);
-  const [f, setF] = React.useState({ nombre: "", telefono: "", departamento: "", ciudad: "", direccion: "" });
+  const [f, setF] = React.useState({ nombre: "", telefono: "", cedula: "", departamento: "", ciudad: "", direccion: "" });
+  const [entrega, setEntrega] = React.useState<"domicilio" | "oficina">("domicilio");
+  const [transportadora, setTransportadora] = React.useState("Interrapidísimo");
   const [busy, setBusy] = React.useState(false);
   const [err, setErr] = React.useState("");
   const [done, setDone] = React.useState<{ ref: string } | null>(null);
@@ -32,7 +34,13 @@ export function CodForm({ items: initial, upsellCfg, onClose, onSuccess }: { ite
   const upsellOn = !!(upsellCfg?.upsellEnabled && upsellCfg.upsellTitulo);
   const upsellPrice = upsellCfg?.upsellPrecioCop || 0;
   const subtotal = items.reduce((s, it) => s + it.priceCOP * it.qty, 0);
-  const grandTotal = subtotal + (addUpsell ? upsellPrice : 0);
+  // Envío = $20.000 + 7% del valor de los productos que SÍ cobran flete (More Muscle Dogs y
+  // Horse Deluxe van con envío incluido). Si todos son gratis → envío 0.
+  const FREE_ENVIO = new Set(["more-muscle-dogs", "more-muscle-dogs-3m", "horse-deluxe"]);
+  const baseEnvio = items.reduce((s, it) => s + (FREE_ENVIO.has(it.slug) ? 0 : it.priceCOP * it.qty), 0);
+  const envio = baseEnvio > 0 ? 20000 + Math.round(baseEnvio * 0.07) : 0;
+  const productos = subtotal + (addUpsell ? upsellPrice : 0);
+  const grandTotal = productos + envio;
   const units = items.reduce((s, it) => s + it.qty, 0);
 
   async function submit(e: React.FormEvent) {
@@ -41,6 +49,7 @@ export function CodForm({ items: initial, upsellCfg, onClose, onSuccess }: { ite
     setBusy(true); setErr("");
     const r = await crearPedidoWeb({
       ...f, upsell: addUpsell,
+      entrega, transportadora: entrega === "oficina" ? transportadora : "",
       items: items.map((it) => ({ slug: it.slug, presentacion: it.presLabel, cantidad: it.qty })),
     });
     setBusy(false);
@@ -90,13 +99,27 @@ export function CodForm({ items: initial, upsellCfg, onClose, onSuccess }: { ite
 
             <form onSubmit={submit}>
               <input required placeholder="Nombre completo" value={f.nombre} onChange={(e) => set("nombre", e.target.value)} />
-              <input required placeholder="WhatsApp / teléfono" inputMode="tel" value={f.telefono} onChange={(e) => set("telefono", e.target.value)} />
+              <div className="cod-2col">
+                <input required placeholder="WhatsApp / teléfono" inputMode="tel" value={f.telefono} onChange={(e) => set("telefono", e.target.value)} />
+                <input required placeholder="Cédula" inputMode="numeric" value={f.cedula} onChange={(e) => set("cedula", e.target.value)} />
+              </div>
               <select required className="cod-sel" value={f.departamento} onChange={(e) => set("departamento", e.target.value)}>
                 <option value="" disabled>Departamento</option>
                 {DEPARTAMENTOS.map((d) => <option key={d} value={d}>{d}</option>)}
               </select>
               <input required placeholder="Ciudad o pueblo" value={f.ciudad} onChange={(e) => set("ciudad", e.target.value)} />
-              <input required placeholder="Dirección (barrio, calle y número)" value={f.direccion} onChange={(e) => set("direccion", e.target.value)} />
+
+              {/* Tipo de entrega */}
+              <div className="cod-entrega">
+                <button type="button" className={entrega === "domicilio" ? "on" : ""} onClick={() => setEntrega("domicilio")}>🏠 A domicilio</button>
+                <button type="button" className={entrega === "oficina" ? "on" : ""} onClick={() => setEntrega("oficina")}>🏢 Recoger en oficina</button>
+              </div>
+              {entrega === "oficina" ? (
+                <select required className="cod-sel" value={transportadora} onChange={(e) => setTransportadora(e.target.value)}>
+                  {["Interrapidísimo", "Coordinadora", "Servientrega", "Envía", "TCC"].map((t) => <option key={t} value={t}>Oficina {t}</option>)}
+                </select>
+              ) : null}
+              <input required placeholder={entrega === "oficina" ? "Dirección de la oficina donde recoge" : "Dirección (barrio, calle y número)"} value={f.direccion} onChange={(e) => set("direccion", e.target.value)} />
               {upsellOn ? (
                 <label className={`cod-upsell ${addUpsell ? "on" : ""}`}>
                   <input type="checkbox" checked={addUpsell} onChange={(e) => setAddUpsell(e.target.checked)} />
@@ -108,9 +131,15 @@ export function CodForm({ items: initial, upsellCfg, onClose, onSuccess }: { ite
                   {upsellPrice ? <span className="cu-price">+{cop(upsellPrice)}</span> : null}
                 </label>
               ) : null}
+              {/* Desglose con envío calculado */}
+              <div className="cod-tot">
+                <div className="cod-totrow"><span>Productos ({units})</span><b>{cop(productos)}</b></div>
+                <div className="cod-totrow big"><span>Total a pagar al recibir</span><b>{cop(productos)}</b></div>
+                <div className="cod-totrow" style={{ opacity: .75, fontSize: 12.5 }}><span>Flete</span><b style={{ fontWeight: 600 }}>{envio ? `lo cobra la transportadora aparte (aprox ${cop(envio)})` : "Gratis 🎉"}</b></div>
+              </div>
               {err ? <div className="cod-err">{err}</div> : null}
               <button className="cod-submit" type="submit" disabled={busy}>
-                {busy ? "Enviando…" : <><ShoppingCart size={18} /> Confirmar — {units} {units === 1 ? "unidad" : "unidades"} · {cop(grandTotal)}</>}
+                {busy ? "Enviando…" : <><ShoppingCart size={18} /> Confirmar pedido · {cop(productos)}</>}
               </button>
               <p className="cod-note">💵 Pago contraentrega · pagás cuando recibís. Sin anticipos.</p>
             </form>

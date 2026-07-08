@@ -31,6 +31,96 @@ const INTENTS: { match: RegExp; category: string; kw: string[] }[] = [
   { match: /\b(caballo|equino|yegua|potro|horse)\w*/i, category: "caballos", kw: ["caballo"] },
 ];
 
+/* ---- Animal / audiencia (para NUNCA mezclar animales) ----
+   El animal del producto se deduce de su categoría; el resto del catálogo
+   (energia, vitaminas, respiratorio, etc.) son productos de gallos. */
+export type Animal = "perros" | "caballos" | "pollos" | "gallos";
+
+export function animalOf(p: ProductView): Animal {
+  const c = p.categorySlug;
+  if (c === "perros") return "perros";
+  if (c === "caballos") return "caballos";
+  if (c === "pollos") return "pollos";
+  return "gallos";
+}
+
+/* Detecta el animal mencionado en el query. null si no es claro. */
+const ANIMAL_Q: { animal: Animal; re: RegExp }[] = [
+  { animal: "caballos", re: /\b(caball|equin|yegua|potr|horse)\w*/ },
+  { animal: "perros", re: /\b(perr|canin|cachorr|dog|mascota)\w*/ },
+  { animal: "pollos", re: /\b(pollo|polluel|pollit|levante|engord)\w*/ },
+  { animal: "gallos", re: /\b(gallo|gallin|rooster)\w*/ },
+];
+export function detectAnimal(query: string): Animal | null {
+  const q = normalize(query);
+  for (const a of ANIMAL_Q) if (a.re.test(q)) return a.animal;
+  return null;
+}
+
+/* Palabras de animal (para medir si el match es por la NECESIDAD y no solo por el animal). */
+const ANIMAL_WORDS = new Set([
+  "caballo", "caballos", "equino", "equinos", "yegua", "potro", "potra", "horse",
+  "perro", "perros", "perra", "canino", "cachorro", "dog", "mascota",
+  "pollo", "pollos", "polluelo", "pollito", "levante", "engorde", "engordar", "cria",
+  "gallo", "gallos", "gallina", "rooster", "ave", "aves",
+]);
+
+/* ---- Presentación / forma (§4.5b): si piden "inyectable", NO ofrecer gotas ---- */
+const FORMAS: { forma: string; q: RegExp; prod: RegExp }[] = [
+  { forma: "inyectable", q: /\b(inyect|ampoll|jeringa|intramuscular)\w*/, prod: /\b(inyect|ampoll|intramuscular)\w*/ },
+  { forma: "gotas", q: /\b(gota|gotero|goteo)\w*/, prod: /\b(gota|gotero)\w*/ },
+  { forma: "polvo", q: /\b(polvo|polvos)\w*/, prod: /\b(polvo)\w*/ },
+  { forma: "pastillas", q: /\b(pastilla|tableta|capsul|caps|comprimid|pildora)\w*/, prod: /\b(pastilla|tableta|capsul|caps|comprimid)\w*/ },
+  { forma: "shampoo", q: /\b(shampoo|champu)\w*/, prod: /\b(shampoo|champu)\w*/ },
+  { forma: "topico", q: /\b(ungu|unguent|pomada|crema|roll|topic|frota)\w*/, prod: /\b(ungu|unguent|pomada|crema|roll|topic|frota)\w*/ },
+];
+export function detectForma(query: string): string | null {
+  const q = normalize(query);
+  for (const f of FORMAS) if (f.q.test(q)) return f.forma;
+  return null;
+}
+function formaText(p: ProductView): string {
+  return normalize([
+    p.presentacion,
+    (p.presentations || []).map((x) => x.label).join(" "),
+    p.tagline, p.shortDesc, p.name, p.descripcion || "",
+  ].filter(Boolean).join(" "));
+}
+/** ¿El producto es de esa presentación? (según su texto: presentación, tagline, nombre…). */
+export function productMatchesForma(p: ProductView, forma: string): boolean {
+  const f = FORMAS.find((x) => x.forma === forma);
+  return f ? f.prod.test(formaText(p)) : true;
+}
+
+/* ¿El query describe un problema médico/síntoma/lesión? (no lo tratan los
+   suplementos → mejor pasar a un asesor que fabricar una recomendación). */
+const MEDICAL_RE = /\b(ojo|ojos|vista|ceguer|herida|herid|fractur|hueso|quebr|cojea|cojer|renqu|sangr|infecci|infectad|tumor|cancer|bulto|pelota|masa|quiste|hinchad|inflamad|absces|vomit|diarre|moquillo|parvo|garrapat|sarna|hongo|fiebre|dolor|convuls|paraliz|picadur|mordedur|quemadur|ampoll|ulcer|desnutr|anemi)\w*/;
+export function looksMedical(query: string): boolean {
+  return MEDICAL_RE.test(normalize(query));
+}
+
+/**
+ * Puntaje de RELEVANCIA por la necesidad (ignora el impulso de animal/categoría).
+ * Sirve para NO fabricar recomendaciones: si el query pide algo que el producto
+ * no trata (ej. "perro con pelota en el ojo" vs suplemento muscular), da ~0.
+ */
+/* Palabras de presentación/forma (se excluyen del needScore: "gotas" no es la necesidad). */
+const FORM_WORDS = new Set([
+  "inyectable", "inyectado", "inyeccion", "ampolla", "jeringa", "intramuscular",
+  "gotas", "gota", "gotero", "polvo", "polvos", "pastilla", "pastillas", "tableta",
+  "tabletas", "capsula", "capsulas", "caps", "comprimido", "shampoo", "champu",
+  "unguento", "pomada", "crema", "roll", "topico", "frota", "liquido", "jarabe",
+]);
+
+export function needScore(query: string, p: ProductView): number {
+  const qNorm = normalize(query);
+  const qTokens = qNorm
+    .split(/[^a-z0-9]+/)
+    .filter((w) => w.length >= 2 && !STOP.has(w) && !ANIMAL_WORDS.has(w) && !FORM_WORDS.has(w));
+  if (!qTokens.length) return -1; // query sin necesidad concreta (ej. "algo para mi perro") → no bloquear
+  return scoreProduct(qTokens, qNorm, p, new Set<string>(), []);
+}
+
 function trigrams(s: string): Set<string> {
   const t = `  ${s} `;
   const out = new Set<string>();
@@ -57,6 +147,7 @@ function haystackTokens(p: ProductView): string[] {
     p.shortDesc,
     p.pitch,
     p.benefits.join(" "),
+    p.paraQue || "",
     p.categoryName,
     p.categorySlug,
     (p.keywords?.length ? p.keywords : deriveKeywords(p)).join(" "),
@@ -111,6 +202,13 @@ export function searchProducts(query: string, products: ProductView[]): SearchRe
 
   const qTokens = qNorm.split(/[^a-z0-9]+/).filter((w) => w.length >= 2 && !STOP.has(w));
 
+  // Filtro por animal: si el query menciona un animal, SOLO ese animal (no mezclar).
+  const animal = detectAnimal(query);
+  let pool = animal ? products.filter((p) => animalOf(p) === animal) : products;
+  // Filtro por presentación (§4.5b): si piden "inyectable", NO ofrecer gotas/otras formas.
+  const forma = detectForma(query);
+  if (forma) pool = pool.filter((p) => productMatchesForma(p, forma));
+
   // intents
   const intentCats = new Set<string>();
   const intentKw: string[] = [];
@@ -118,7 +216,7 @@ export function searchProducts(query: string, products: ProductView[]): SearchRe
     if (it.match.test(qNorm)) { intentCats.add(it.category); intentKw.push(...it.kw); }
   }
 
-  const ranked = products
+  const ranked = pool
     .map((p) => ({ product: p, score: scoreProduct(qTokens, qNorm, p, intentCats, intentKw) }))
     .sort((a, b) => b.score - a.score);
 
@@ -128,6 +226,9 @@ export function searchProducts(query: string, products: ProductView[]): SearchRe
     return { status: "not_found", product: null, ranked };
   }
   const gap = top.score - (second?.score ?? 0);
-  const status: SearchStatus = gap < 2.5 && (second?.score ?? 0) >= 3 ? "ambiguous" : "found";
+  // Si el 1º y 2º son el MISMO producto (mismo nombre, p.ej. dos SKUs "More Muscle Dogs Premium"),
+  // NO es ambiguo: presenta uno. Evita el ridículo "¿*X* o *X*?".
+  const mismoNombre = !!second && normalize(second.product.name) === normalize(top.product.name);
+  const status: SearchStatus = !mismoNombre && gap < 2.5 && (second?.score ?? 0) >= 3 ? "ambiguous" : "found";
   return { status, product: top.product, ranked };
 }

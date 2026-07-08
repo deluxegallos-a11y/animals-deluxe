@@ -3,7 +3,7 @@
 import * as React from "react";
 import { PageHead, Card } from "@/components/ui";
 import { ImageUpload, SubmitButton } from "@/components/forms";
-import { savePromotion, deletePromotion } from "../actions";
+import { savePromotion, deletePromotion, enviarCampana, contarSegmento } from "../actions";
 import { cop } from "@/lib/ai/format";
 
 type Promo = {
@@ -19,6 +19,9 @@ export function PromosUI({ promos, productos }: { promos: Promo[]; productos: { 
     <>
       <PageHead title="Promociones" subtitle={`${promos.length} promos`} right={<button className="btn auto" onClick={() => { setEditing(null); setOpen(true); }}>+ Nueva promo</button>} />
 
+      <CampanaWhatsApp productos={productos} />
+
+      <h3 style={{ margin: "24px 0 12px", fontSize: 16, fontWeight: 800 }}>🏷️ Promos de la tienda</h3>
       <div className="cardgrid">
         {promos.map((p) => (
           <Card key={p.id}>
@@ -43,6 +46,59 @@ export function PromosUI({ promos, productos }: { promos: Promo[]; productos: { 
 
       {open ? <PromoModal editing={editing} productos={productos} onClose={() => setOpen(false)} /> : null}
     </>
+  );
+}
+
+function CampanaWhatsApp({ productos }: { productos: { slug: string; name: string }[] }) {
+  const [seg, setSeg] = React.useState("");     // "" = todos; o slug de producto de interés
+  const [msg, setMsg] = React.useState("");
+  const [img, setImg] = React.useState("");
+  const [total, setTotal] = React.useState<number | null>(null);
+  const [busy, setBusy] = React.useState(false);
+  const [res, setRes] = React.useState("");
+
+  React.useEffect(() => {
+    let alive = true;
+    contarSegmento(seg).then((r) => { if (alive) setTotal(r.total); });
+    return () => { alive = false; };
+  }, [seg]);
+
+  async function enviar() {
+    if (!confirm(`¿Enviar esta campaña por WhatsApp a ${total ?? "?"} cliente(s)?`)) return;
+    setBusy(true); setRes("");
+    const r = await enviarCampana(seg, msg, img.trim());
+    setBusy(false);
+    setRes(r.ok ? `✅ Enviados: ${r.enviados} · sin WhatsApp del bot: ${r.fallidos} (de ${r.total})` : `❌ ${r.error || "Error"}`);
+  }
+
+  return (
+    <Card>
+      <div className="flex aic" style={{ justifyContent: "space-between", marginBottom: 12 }}>
+        <div><b style={{ fontSize: 16 }}>📣 Campaña de WhatsApp</b><div className="t-mut" style={{ fontSize: 12.5 }}>Envía una promo (texto + imagen) a un segmento de clientes por su producto de interés.</div></div>
+      </div>
+      <div className="cfg-grid" style={{ gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+        <div className="field" style={{ marginBottom: 0 }}>
+          <label>Segmento</label>
+          <select className="field" style={{ marginBottom: 0 }} value={seg} onChange={(e) => setSeg(e.target.value)}>
+            <option value="">Todos los clientes del bot</option>
+            {productos.map((p) => <option key={p.slug} value={p.slug}>Interesados en: {p.name}</option>)}
+          </select>
+          <div className="field-hint">{total === null ? "Contando…" : `${total} cliente(s) con WhatsApp del bot recibirán`}</div>
+        </div>
+        <div className="field" style={{ marginBottom: 0 }}>
+          <label>Imagen de la promo (URL) — opcional</label>
+          <input className="field" style={{ marginBottom: 0 }} placeholder="https://animalsdeluxe.com/products/combo-4-tapas.jpg" value={img} onChange={(e) => setImg(e.target.value)} />
+        </div>
+      </div>
+      <div className="field" style={{ marginTop: 12 }}>
+        <label>Mensaje</label>
+        <textarea className="field" rows={4} placeholder="🔥 ¡Promo para ti! Combo Cuidado Total (4 Tapas) a $100.000, contra entrega. Escríbenos y te lo despachamos hoy 🐓" value={msg} onChange={(e) => setMsg(e.target.value)} />
+      </div>
+      {img ? <div style={{ borderRadius: 12, overflow: "hidden", border: "1px solid var(--line)", maxWidth: 260, marginBottom: 10 }}><img src={img} alt="Vista previa" style={{ width: "100%", maxHeight: 160, objectFit: "cover", display: "block" }} /></div> : null}
+      <div className="field-hint" style={{ marginBottom: 8 }}>⚠️ Fuera de la ventana de 24h de Meta, a los leads viejos puede requerir una plantilla aprobada (mensaje libre/imagen funciona con los recientes).</div>
+      {res ? <div className={res.startsWith("✅") ? "form-msg ok" : "form-msg err"} style={{ marginBottom: 10 }}>{res}</div> : null}
+      <button className="btn auto" disabled={busy || (!msg.trim() && !img.trim()) || !total} onClick={enviar}>{busy ? "Enviando…" : `📲 Enviar campaña${total ? ` a ${total}` : ""}`}</button>
+    </Card>
   );
 }
 

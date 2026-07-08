@@ -9,7 +9,7 @@
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { customers, products, reviews, type Presentacion } from "@/lib/db/schema";
+import { customers, products, reviews, orderAttempts, type Presentacion } from "@/lib/db/schema";
 import { createOrder } from "@/lib/ai/orders";
 import { pushOrderToShopify } from "@/lib/shopify-sync";
 import { getShopifyCreds } from "@/lib/shopify";
@@ -101,9 +101,12 @@ export async function addReview(raw: unknown): Promise<AddReviewResult> {
 const schema = z.object({
   nombre: z.string().trim().min(2).max(80),
   telefono: z.string().trim().min(7).max(20).regex(/^[0-9+()\-\s]+$/, "Teléfono inválido"),
+  cedula: z.string().trim().min(4).max(20).regex(/^[0-9.\-\s]+$/, "Cédula inválida"),
   departamento: z.string().trim().min(2).max(60),
   ciudad: z.string().trim().min(2).max(60),
-  direccion: z.string().trim().min(5).max(160),
+  direccion: z.string().trim().min(5).max(200),
+  entrega: z.enum(["domicilio", "oficina"]).optional().default("domicilio"),
+  transportadora: z.string().trim().max(40).optional().default(""),
   upsell: z.boolean().optional().default(false),
   items: z.array(z.object({
     slug: z.string().min(1).max(80),
@@ -137,11 +140,16 @@ export async function crearPedidoWeb(raw: unknown): Promise<PedidoWebResult> {
       }
     }
 
+    // Dirección final: si recoge en oficina, se antepone la transportadora.
+    const dirFinal = b.entrega === "oficina"
+      ? `🏢 Recoger en oficina ${b.transportadora || "transportadora"}: ${b.direccion}`.trim()
+      : b.direccion;
+
     // Cliente (lead web)
     let customerId = "web-" + Date.now();
     if (db) {
       const [c] = await db.insert(customers).values({
-        nombre: b.nombre, telefono: b.telefono, departamento: b.departamento, ciudad: b.ciudad, direccion: b.direccion,
+        nombre: b.nombre, telefono: b.telefono, departamento: b.departamento, ciudad: b.ciudad, direccion: dirFinal,
         canalOrigen: "web", estado: "cliente", ultimoContacto: new Date(),
       }).returning();
       customerId = c?.id || customerId;
@@ -150,8 +158,8 @@ export async function crearPedidoWeb(raw: unknown): Promise<PedidoWebResult> {
     // Pedido COD (idempotente)
     const order = await createOrder({
       subId: "web:" + b.telefono, customerId, items: validItems,
-      nombre: b.nombre, telefono: b.telefono, ciudad: b.ciudad, direccion: b.direccion,
-      metodo: "contraentrega", catalog,
+      nombre: b.nombre, telefono: b.telefono, cedula: b.cedula, ciudad: b.ciudad, direccion: dirFinal,
+      metodo: "contraentrega", canal: "web", catalog,
     });
 
     // Shopify (libro de pedidos) — opcional, no rompe si no está configurado.
@@ -172,7 +180,21 @@ export async function crearPedidoWeb(raw: unknown): Promise<PedidoWebResult> {
     }
 
     return { ok: true, ref: order.ref, total: order.total_cop, reused: order.reused, shopify };
-  } catch {
+  } catch (e) {
+    // NUNCA perder un pedido web en silencio: lo registramos en order_attempts (panel "Intentos
+    // fallidos") con TODOS los datos + productos para recuperarlo a mano.
+    if (db) {
+      try {
+        await db.insert(orderAttempts).values({
+          subId: "web:" + b.telefono,
+          rawBody: b as object,
+          rawText: `Pedido WEB contra entrega de ${b.nombre} (${b.telefono}) — ${b.ciudad}, ${b.departamento}`,
+          resultado: "error",
+          motivo: ("web_cod_error: " + (e instanceof Error ? e.message : String(e))).slice(0, 500),
+          ref: "",
+        });
+      } catch { /* noop */ }
+    }
     return { ok: false, error: "No se pudo crear el pedido. Intenta de nuevo en un momento." };
   }
 }

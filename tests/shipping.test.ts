@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   computeShipping,
+  calcularFlete,
   resolveZona,
   pedidoEnvioGratis,
 } from "@/lib/ai/shipping";
@@ -18,43 +19,23 @@ test("resolveZona tolera ciudad con departamento", () => {
   assert.equal(resolveZona("Cali, Valle"), "nacional_metro");
 });
 
-test("flete local contraentrega: base + sobreflete(2%) + recargo(5%)", () => {
-  // Medellín (local 7900), 1 unidad, producto $70.000, contraentrega
-  const s = computeShipping({ ciudad: "Medellín", subtotalCop: 70000, unidades: 1, metodo: "contraentrega" });
-  assert.equal(s.zona, "local");
-  // base 7900 + sobreflete 2%*70000=1400 + recargo 5%*70000=3500 = 12800
-  assert.equal(s.costo_envio, 12800);
-  assert.equal(s.envio_gratis, false);
-  assert.equal(s.tiempo, "24 a 72 horas");
+test("calcularFlete = 20.000 + 7% (tabla del dueño)", () => {
+  assert.equal(calcularFlete(50000), 23500);
+  assert.equal(calcularFlete(70000), 24900);
+  assert.equal(calcularFlete(150000), 30500);
+  assert.equal(calcularFlete(180000), 32600);
 });
 
-test("flete nacional metro cobra kilo inicial mayor", () => {
-  const s = computeShipping({ ciudad: "Bogotá", subtotalCop: 70000, unidades: 1, metodo: "contraentrega" });
-  assert.equal(s.zona, "nacional_metro");
-  // 17600 + 1400 + 3500 = 22500
-  assert.equal(s.costo_envio, 22500);
+test("flete por valor: mismo para cualquier ciudad (depende del producto, no de la zona)", () => {
+  for (const ciudad of ["Medellín", "Bogotá", "Morales", "Pueblito Lejano"]) {
+    const s = computeShipping({ ciudad, subtotalCop: 70000, unidades: 1 });
+    assert.equal(s.costo_envio, 24900, `${ciudad} con $70.000 debe dar 24900`);
+  }
+  const alto = computeShipping({ ciudad: "Bogotá", subtotalCop: 180000, unidades: 2 });
+  assert.equal(alto.costo_envio, 32600);
 });
 
-test("anticipado no cobra el recargo del 5%", () => {
-  const s = computeShipping({ ciudad: "Medellín", subtotalCop: 70000, unidades: 1, metodo: "anticipado" });
-  // 7900 + 1400 (sin recargo contraentrega) = 9300
-  assert.equal(s.costo_envio, 9300);
-});
-
-test("kilo adicional se suma por unidad extra", () => {
-  const s = computeShipping({ ciudad: "Medellín", subtotalCop: 140000, unidades: 2, metodo: "anticipado" });
-  // base 7900 + 1*3800 = 11700 ; sobreflete 2%*140000 = 2800 → 14500
-  assert.equal(s.desglose.kilos, 2);
-  assert.equal(s.costo_envio, 14500);
-});
-
-test("declarado mínimo aplica cuando el subtotal es bajo", () => {
-  const s = computeShipping({ ciudad: "Medellín", subtotalCop: 10000, unidades: 1, metodo: "anticipado" });
-  // declarado = max(10000, 45000) = 45000 → sobreflete 900 ; base 7900 → 8800
-  assert.equal(s.costo_envio, 8800);
-});
-
-test("envío gratis fuerza costo 0", () => {
+test("envío incluido fuerza costo 0", () => {
   const s = computeShipping({ ciudad: "Bogotá", subtotalCop: 200000, unidades: 1, envioGratis: true });
   assert.equal(s.costo_envio, 0);
   assert.equal(s.envio_gratis, true);

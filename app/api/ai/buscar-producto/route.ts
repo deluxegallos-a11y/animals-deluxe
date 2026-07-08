@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { withBridge, audit, logEvent } from "@/lib/ai/bridge";
+import { withBridge, audit, logEvent, recordInterest } from "@/lib/ai/bridge";
 import { getProducts } from "@/lib/ai/data";
 import { searchProducts } from "@/lib/ai/search";
 import { publicProduct, suggestion, emptyProduct, richMensaje } from "@/lib/ai/present";
@@ -9,12 +9,17 @@ export const dynamic = "force-dynamic";
 
 export const POST = withBridge(
   z.object({ q: z.string().optional().default("") }),
-  async ({ body }) => {
+  async ({ body, customer }) => {
     const catalog = await getProducts();
     const r = searchProducts(body.q, catalog);
+    if (r.product) await recordInterest(customer.id, [r.product.slug]); // CRM: registró interés
 
+    // Sugerencias: excluye el producto elegido Y los que tengan su MISMO nombre (SKUs duplicados),
+    // y dedupe por nombre para no repetir "More Muscle Dogs Premium".
+    const vistos = new Set<string>([(r.product?.name || "").toLowerCase().trim()]);
     const sugerencias = r.ranked
       .filter((x) => x.product.slug !== r.product?.slug)
+      .filter((x) => { const k = (x.product.name || "").toLowerCase().trim(); if (vistos.has(k)) return false; vistos.add(k); return true; })
       .slice(0, 3)
       .map((x) => suggestion(x.product));
 
@@ -36,13 +41,18 @@ export const POST = withBridge(
     await audit("buscar_producto", "products", { slug: p.slug, q: body.q });
 
     const pub = publicProduct(p);
+    // Coherencia mensaje↔status (§4.5): si hay producto, el mensaje NUNCA dice "no encontré".
+    // En ambiguous, preguntamos entre las opciones cercanas; en found, presentamos.
+    const mensaje = r.status === "ambiguous" && sugerencias.length
+      ? `Tengo un par de opciones parecidas: *${p.name}*${sugerencias[0] ? ` o *${sugerencias[0].name}*` : ""}. ¿Cuál te muestro? 🐓`
+      : richMensaje(p);
     return {
       status: r.status,
       match: p.slug,
       producto: pub,
       producto_contexto: pub.producto_contexto,
       sugerencias,
-      mensaje: richMensaje(p),
+      mensaje,
     };
   },
 );

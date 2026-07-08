@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutGrid, Package, ShoppingBag, Users, MessageSquare,
-  BadgePercent, Headphones, Settings, Search, Store, ArrowUpRight, Star,
+  BadgePercent, Headphones, Settings, Search, Store, ArrowUpRight, Star, Megaphone,
 } from "lucide-react";
 
 const GROUPS: { label: string; items: { href: string; label: string; icon: any }[] }[] = [
@@ -15,6 +15,7 @@ const GROUPS: { label: string; items: { href: string; label: string; icon: any }
       { href: "/productos", label: "Productos", icon: Package },
       { href: "/pedidos", label: "Pedidos", icon: ShoppingBag },
       { href: "/clientes", label: "Clientes", icon: Users },
+      { href: "/anuncios", label: "Anuncios", icon: Megaphone },
     ],
   },
   {

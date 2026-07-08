@@ -30,12 +30,13 @@ export const ZONES: Record<Zona, ZoneRate> = {
   vereda: { kiloInicial: 88000, kiloAdicional: 15200, label: "Veredas" },
 };
 
-/* Recargos. */
-const CONTRAENTREGA_PCT = 0.05; // +5% sobre el valor del producto (pago en casa)
-const SOBREFLETE_PCT = 0.02; // +2% sobre el valor declarado
-const MIN_DECLARADO_HASTA_2KG = 45000;
-const MIN_DECLARADO_2_A_5KG = 60000;
-const PESO_POR_UNIDAD_KG = 1; // 1 producto liviano ≈ 1 kg
+/* FLETE POR VALOR (contraentrega Interrapidísimo): $20.000 + 7% del valor total
+   de los productos (recaudo COD). Una sola vez por pedido, sobre el TOTAL (no por ítem).
+   Ej.: 70.000→24.900 · 150.000→30.500 · 180.000→32.600. Excepción: envío incluido → $0. */
+export function calcularFlete(totalProductos: number): number {
+  return Math.round(20000 + Math.max(0, totalProductos || 0) * 0.07);
+}
+const PESO_POR_UNIDAD_KG = 1; // 1 producto liviano ≈ 1 kg (solo informativo)
 export const TIEMPO_ENTREGA = "24 a 72 horas";
 
 /* Productos con envío gratis. Slugs reales del catálogo. Además, cualquier
@@ -120,40 +121,27 @@ export interface ShippingResult {
   };
 }
 
-/** Calcula el flete con la tabla de zonas desde Medellín. Determinista. */
+/** Flete = $20.000 + 7% del valor de los productos que pagan envío (calcularFlete).
+ *  $0 si todo el pedido es envío-incluido. Determinista: mismo valor → misma cifra. */
 export function computeShipping(input: ShippingInput): ShippingResult {
-  const zona = resolveZona(input.ciudad);
-  const rate = ZONES[zona];
-
-  const pesoKg =
-    input.pesoKg != null
-      ? input.pesoKg
-      : Math.max(1, input.unidades ?? 1) * PESO_POR_UNIDAD_KG;
+  const zona = resolveZona(input.ciudad); // solo informativo (cobertura nacional)
+  const pesoKg = input.pesoKg != null ? input.pesoKg : Math.max(1, input.unidades ?? 1) * PESO_POR_UNIDAD_KG;
   const kilos = Math.max(1, Math.ceil(pesoKg));
 
-  const base = rate.kiloInicial + Math.max(0, kilos - 1) * rate.kiloAdicional;
-
-  const subtotal = Math.max(0, Math.round(input.subtotalCop || 0));
-  const minDeclarado = kilos <= 2 ? MIN_DECLARADO_HASTA_2KG : MIN_DECLARADO_2_A_5KG;
-  const declarado = Math.max(subtotal, minDeclarado);
-  const sobreflete = Math.round(declarado * SOBREFLETE_PCT);
-
-  const recargoContraentrega =
-    (input.metodo ?? "contraentrega") === "contraentrega"
-      ? Math.round(subtotal * CONTRAENTREGA_PCT)
-      : 0;
-
+  // subtotalCop = valor de los productos que SÍ pagan envío (los de envío-incluido
+  // se excluyen; en mezcla, el 7% aplica solo sobre esta base). envioGratis = todo incluido.
   const envioGratis = !!input.envioGratis;
-  const costo = envioGratis ? 0 : base + sobreflete + recargoContraentrega;
+  const base = Math.max(0, input.subtotalCop || 0);
+  const costo = envioGratis ? 0 : calcularFlete(base);
 
   return {
     zona,
-    zona_label: rate.label,
-    cubre: true, // cubrimos todo el país (incl. difícil acceso / veredas con su tarifa)
-    envio_gratis: envioGratis,
+    zona_label: ZONES[zona].label,
+    cubre: true, // cubrimos todo el país
+    envio_gratis: costo === 0,
     costo_envio: costo,
     tiempo: TIEMPO_ENTREGA,
-    desglose: { kilos, base, sobreflete, recargo_contraentrega: recargoContraentrega },
+    desglose: { kilos, base: 20000, sobreflete: costo ? costo - 20000 : 0, recargo_contraentrega: 0 },
   };
 }
 

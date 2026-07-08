@@ -1,23 +1,31 @@
 import { z } from "zod";
-import { withBridge } from "@/lib/ai/bridge";
-import { getProductBySlug } from "@/lib/ai/data";
-import { publicProduct, emptyProduct } from "@/lib/ai/present";
-import { cop } from "@/lib/ai/format";
+import { withBridge, recordInterest } from "@/lib/ai/bridge";
+import { getProductBySlug, getProducts } from "@/lib/ai/data";
+import { searchProducts } from "@/lib/ai/search";
+import { publicProduct, emptyProduct, richMensaje } from "@/lib/ai/present";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export const POST = withBridge(
   z.object({ slug: z.string().min(1) }),
-  async ({ body }) => {
-    const p = await getProductBySlug(body.slug);
+  async ({ body, customer }) => {
+    // 1) match exacto por slug
+    let p = await getProductBySlug(body.slug);
+    // 2) fallback: el bot a veces manda un slug derivado del NOMBRE que no coincide
+    //    (p.ej. "combo-cuidado-total-4-tapas" en vez de "combo-4-tapas"). Antes de rendirnos,
+    //    buscamos por texto. Así NUNCA decimos "No encontré" con el producto existiendo.
     if (!p) {
-      return { producto: emptyProduct(), mensaje: "No encontré ese producto. ¿Buscamos otro? 🐓" };
+      const catalog = await getProducts();
+      const r = searchProducts(body.slug.replace(/[-_]+/g, " "), catalog);
+      if (r.product) p = r.product;
     }
-    const mensaje =
-      `${p.name} — ${cop(p.priceCOP)}\n${p.pitch || p.shortDesc}\n` +
-      (p.usage ? `📋 Uso: ${p.usage}\n` : "") +
-      `Contraentrega en toda Colombia. ¿Te lo empaco?`;
-    return { producto: publicProduct(p), mensaje };
+    // 3) solo si de verdad no hay match: mensaje de "no encontré" (coherente con status)
+    if (!p) {
+      return { status: "not_found" as const, producto: emptyProduct(), mensaje: "No encontré ese producto. ¿Buscamos otro? 🐓" };
+    }
+    await recordInterest(customer.id, [p.slug]); // CRM: registró interés
+    const pub = publicProduct(p);
+    return { status: "found" as const, producto: pub, producto_contexto: pub.producto_contexto, mensaje: richMensaje(p) };
   },
 );

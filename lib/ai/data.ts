@@ -53,6 +53,11 @@ function toView(p: ProdRow, cat?: CatRow | null): ProductView {
     stock: p.stock ?? 999,
     activo: p.activo ?? true,
     envioGratis: p.envioGratis ?? false,
+    descripcion: p.descripcion || "",
+    edadMinima: p.edadMinima || "",
+    dosificacion: p.dosificacion || "",
+    presentacion: p.presentacion || "",
+    paraQue: p.paraQue || "",
   };
 }
 
@@ -153,27 +158,10 @@ export interface CoberturaResult {
     Respeta overrides explícitos del admin (store_config.ciudadesCobertura). */
 export async function cotizarEnvio(ciudad: string, opts: CotizarOpts = {}): Promise<CoberturaResult> {
   const cfg = await getStoreConfig();
-  const norm = normalize(ciudad);
   const metodo = opts.metodo ?? "contraentrega";
 
-  // 1) override explícito configurado por el admin para esa ciudad
-  const match = cfg.ciudadesCobertura.find(
-    (c) => normalize(c.ciudad) && (normalize(c.ciudad).includes(norm) || norm.includes(normalize(c.ciudad))),
-  );
-  if (match) {
-    const gratis = !!opts.envioGratis || match.costo_envio === 0;
-    return {
-      cobertura: true, cubre: true,
-      contraentrega: match.contraentrega,
-      costo_envio: gratis ? 0 : match.costo_envio,
-      envio_gratis: gratis,
-      zona: resolveZona(match.ciudad), zona_label: "",
-      tiempo: TIEMPO_ENTREGA,
-      ciudad: match.ciudad,
-    };
-  }
-
-  // 2) tabla de zonas (cobertura nacional por defecto)
+  // FLETE POR VALOR ($20.000 + 7% del valor de los productos, o $0 si envío incluido).
+  // Se ignoran los overrides por ciudad del store_config: misma fórmula para todo el país.
   const s = computeShipping({
     ciudad: ciudad || cfg.ciudadBase,
     subtotalCop: opts.subtotalCop ?? 0,

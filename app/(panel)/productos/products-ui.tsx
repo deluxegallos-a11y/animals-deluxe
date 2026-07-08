@@ -14,7 +14,9 @@ type P = {
   audience: string; origin: string; priceCOP: number; presentations: Presentacion[]; imageUrl: string;
   badges: string[]; tagline: string; shortDesc: string; benefits: string[]; ingredients: Ingrediente[];
   usage: string; pitch: string; faq: FaqItem[]; keywords: string[]; objeciones: Record<string, string>; adIds: string[]; disclaimer: string; stock: number; activo: boolean; envioGratis?: boolean;
+  descripcion?: string; edadMinima?: string; dosificacion?: string; presentacion?: string; paraQue?: string;
   shopifyProductId: string; shopifySync: "synced" | "pending" | "error"; shopifySyncError: string;
+  pesoGr?: number; altoCm?: number; anchoCm?: number; largoCm?: number;
 };
 
 function SyncBadge({ p, shopifyOn }: { p: P; shopifyOn: boolean }) {
@@ -95,7 +97,7 @@ export function ProductsUI({ productos, categorias, shopifyOn }: { productos: P[
         </div>
       </Card>
 
-      <div className="cardgrid">
+      <div className="prodgrid">
         {filtered.map((p) => (
           <div key={p.id} className={`treat ${p.activo ? "" : "treat-off"}`}>
             <div className="treat-top">
@@ -249,6 +251,32 @@ function ProductModal({ editing, categorias, onClose }: { editing: P | null; cat
                 <input name="badges" defaultValue={editing ? editing.badges.join(", ") : ""} placeholder="Original, Best Choice" />
               </div>
 
+              <div className="form-sec">📝 Ficha enriquecida (lo que manda el bot con la foto)</div>
+              <div className="field">
+                <label>¿Para qué sirve? (propósito real — guía la recomendación)</label>
+                <input name="paraQue" defaultValue={editing?.paraQue || ""} placeholder="Ej. energía y vitalidad · desparasitante · viruela/bubas (tópico)" />
+                <span className="field-hint">El bot recomienda por este propósito, no por el nombre. Sé concreto (para qué es y para qué NO).</span>
+              </div>
+              <div className="field">
+                <label>Descripción de venta</label>
+                <textarea name="descripcion" rows={6} defaultValue={editing?.descripcion || ""} placeholder={"Gancho en 1 línea…\n✅ Beneficio 1\n✅ Beneficio 2\n✅ Beneficio 3"} />
+                <span className="field-hint">Si la dejas vacía, el bot arma la descripción con el gancho + los beneficios. No inventes datos médicos.</span>
+              </div>
+              <div className="field-row">
+                <div className="field">
+                  <label>Edad mínima</label>
+                  <input name="edadMinima" defaultValue={editing?.edadMinima || ""} placeholder="8 meses" />
+                </div>
+                <div className="field">
+                  <label>Dosificación</label>
+                  <input name="dosificacion" defaultValue={editing?.dosificacion || ""} placeholder="60 a 80 gr al día" />
+                </div>
+              </div>
+              <div className="field">
+                <label>Presentación</label>
+                <input name="presentacion" defaultValue={editing?.presentacion || ""} placeholder="polvo x 3 kg" />
+              </div>
+
               <div className="form-sec">🔑 Palabras clave (cómo te encuentra el bot)</div>
               <div className="field">
                 <div className="flex aic" style={{ justifyContent: "space-between", marginBottom: 6 }}>
@@ -314,6 +342,15 @@ function ProductModal({ editing, categorias, onClose }: { editing: P | null; cat
                 <div className="field">
                   <label>Disclaimer</label>
                   <input name="disclaimer" defaultValue={editing?.disclaimer || ""} />
+                </div>
+              </div>
+              <div className="field">
+                <label>📦 Dimensiones para el envío (afectan el flete de la guía)</label>
+                <div className="field-row" style={{ gap: 8 }}>
+                  <div className="field" style={{ marginBottom: 0 }}><label style={{ fontSize: 11 }}>Peso (gramos)</label><input name="pesoGr" type="number" min={1} defaultValue={editing?.pesoGr ?? 1000} placeholder="1000" /></div>
+                  <div className="field" style={{ marginBottom: 0 }}><label style={{ fontSize: 11 }}>Alto (cm)</label><input name="altoCm" type="number" min={1} defaultValue={editing?.altoCm ?? 15} placeholder="15" /></div>
+                  <div className="field" style={{ marginBottom: 0 }}><label style={{ fontSize: 11 }}>Ancho (cm)</label><input name="anchoCm" type="number" min={1} defaultValue={editing?.anchoCm ?? 12} placeholder="12" /></div>
+                  <div className="field" style={{ marginBottom: 0 }}><label style={{ fontSize: 11 }}>Largo (cm)</label><input name="largoCm" type="number" min={1} defaultValue={editing?.largoCm ?? 8} placeholder="8" /></div>
                 </div>
               </div>
               <ImageUpload name="imageUrl" label="Imagen del producto" defaultUrl={imageUrl} folder="products" hint="JPG/PNG/WebP, máx 5MB" />

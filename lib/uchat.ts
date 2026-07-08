@@ -53,3 +53,71 @@ export async function uchatSendText(userId: string, text: string): Promise<Uchat
     return { ok: false, error: err instanceof Error ? err.message : "fetch_error" };
   }
 }
+
+/** Envía una IMAGEN (con caption opcional) a un suscriptor por su user_id. Fail-soft.
+ *  Para campañas de promoción con imagen del producto/combo. */
+export async function uchatSendImage(userId: string, imageUrl: string, caption = ""): Promise<UchatSendResult> {
+  const token = process.env.UCHAT_API_TOKEN || "";
+  if (!token || !userId || !imageUrl) return { ok: false, skipped: true, error: "uchat_not_configured" };
+  const base = (process.env.UCHAT_API_BASE || "https://www.uchat.com.au/api").replace(/\/$/, "");
+  const path = process.env.UCHAT_SEND_PATH || "/subscriber/send-content";
+  const url = `${base}${path.startsWith("/") ? path : "/" + path}`;
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ user_id: userId, content: { type: "image", url: imageUrl, caption } }),
+    });
+    if (!res.ok) return { ok: false, error: `uchat_error_${res.status}` };
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "fetch_error" };
+  }
+}
+
+/** Envía una PLANTILLA de WhatsApp aprobada (para llegar a leads fuera de la ventana de 24h).
+ *  `imageUrl` opcional para el header de imagen; `bodyParams` para las variables {{1}},{{2}}… del cuerpo. */
+export async function uchatSendTemplate(userId: string, tpl: { name: string; lang: string; namespace: string; imageUrl?: string; bodyParams?: string[] }): Promise<UchatSendResult> {
+  const token = process.env.UCHAT_API_TOKEN || "";
+  if (!token || !userId || !tpl.name) return { ok: false, skipped: true, error: "uchat_not_configured" };
+  const base = (process.env.UCHAT_API_BASE || "https://www.uchat.com.au/api").replace(/\/$/, "");
+  const components: unknown[] = [];
+  if (tpl.imageUrl) components.push({ type: "header", parameters: [{ type: "image", image: { link: tpl.imageUrl } }] });
+  if (tpl.bodyParams?.length) components.push({ type: "body", parameters: tpl.bodyParams.map((t) => ({ type: "text", text: t })) });
+  try {
+    const res = await fetch(`${base}/subscriber/send-whatsapp-template`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ user_ns: userId, content: { name: tpl.name, lang: tpl.lang, namespace: tpl.namespace, components } }),
+    });
+    if (!res.ok) return { ok: false, error: `uchat_error_${res.status}: ${(await res.text()).slice(0, 120)}` };
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "fetch_error" };
+  }
+}
+
+/** Trae datos del suscriptor (teléfono/nombre de WhatsApp) por su user_id (sub_id).
+ *  Fail-soft. Normaliza el teléfono a 57XXXXXXXXXX. Usado para recuperar leads viejos sin número. */
+export async function uchatGetSubscriber(userId: string): Promise<{ ok: boolean; telefono?: string; nombre?: string; error?: string }> {
+  const token = process.env.UCHAT_API_TOKEN || "";
+  if (!token || !userId) return { ok: false, error: "uchat_not_configured" };
+  const base = (process.env.UCHAT_API_BASE || "https://www.uchat.com.au/api").replace(/\/$/, "");
+  const path = process.env.UCHAT_GET_PATH || "/subscriber/get-info";
+  // UChat identifica al suscriptor por user_ns (= nuestro sub_id, p.ej. f280503u823082027).
+  const url = `${base}${path.startsWith("/") ? path : "/" + path}?user_ns=${encodeURIComponent(userId)}`;
+  try {
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } });
+    if (!res.ok) return { ok: false, error: `uchat_error_${res.status}` };
+    const j = (await res.json()) as Record<string, unknown>;
+    const d = ((j.data as Record<string, unknown>) || j) as Record<string, unknown>;
+    const s = (x: unknown) => (x == null ? "" : String(x)).trim();
+    const rawTel = s(d.whatsapp_phone ?? d.phone ?? d.whatsapp ?? d.wa_id ?? d.telefono);
+    let tel = rawTel.replace(/\D/g, "");
+    if (tel.length === 10 && tel.startsWith("3")) tel = "57" + tel;
+    const nombre = s(d.name ?? d.first_name ?? d.full_name);
+    return { ok: true, telefono: tel, nombre };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "fetch_error" };
+  }
+}

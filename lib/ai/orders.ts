@@ -10,7 +10,7 @@ import type { ProductView } from "@/lib/ai/types";
 import { domainError } from "@/lib/ai/bridge";
 import { shortCode } from "@/lib/ai/format";
 import { assignAdvisor, cotizarEnvio, validateCoupon } from "@/lib/ai/data";
-import { pedidoEnvioGratis } from "@/lib/ai/shipping";
+import { FREE_SHIPPING_SLUGS } from "@/lib/ai/shipping";
 
 export type ItemInput = { slug: string; presentacion?: string; cantidad?: number };
 export type ResolvedItem = {
@@ -28,7 +28,10 @@ export function resolveItems(items: ItemInput[], catalog: ProductView[]): Resolv
     const p = catalog.find((x) => x.slug === it.slug);
     if (!p) domainError(`No encontré "${it.slug}" en el catálogo. ¿Lo buscamos de nuevo?`);
     const prod = p!;
-    if ((prod.stock ?? 999) < cantidad) domainError(`Por ahora no tengo stock suficiente de ${prod.name}. 😕`);
+    // Animals Deluxe vende bajo demanda (contra entrega), NO lleva inventario unitario.
+    // El catálogo ya solo incluye productos activos → si está aquí, está disponible.
+    // NO se bloquea por stock (antes: stock 0/null tumbaba ventas cerradas). Si algún día se
+    // quiere control de inventario, hacerlo con una bandera por producto (default: sin control).
     // precio por presentación (si se indicó y existe)
     let label = prod.presentations[0]?.label || "Unidad";
     let precio = prod.presentations[0]?.priceCOP ?? prod.priceCOP;
@@ -57,7 +60,9 @@ export function computeTotals(resolved: ResolvedItem[], envioCop: number, coupon
       : coupon.valor;
     descuento = Math.min(descuento, subtotal);
   }
-  const total = Math.max(0, subtotal - descuento) + Math.max(0, envioCop);
+  // El total a RECAUDAR = solo el producto (menos descuento). El flete NO se suma: es un estimado
+  // referencial para el cliente; la transportadora (MiPaquete) le cobra el flete real aparte.
+  const total = Math.max(0, subtotal - descuento);
   return { subtotal, descuento, envio: Math.max(0, envioCop), total };
 }
 
@@ -78,8 +83,10 @@ export interface CreateOrderInput {
   telefono: string;
   ciudad: string;
   direccion: string;
+  cedula?: string;
   cupon?: string;
   metodo?: "contraentrega" | "anticipado";
+  canal?: string; // whatsapp | messenger | web
   catalog: ProductView[];
 }
 
@@ -95,17 +102,15 @@ export interface CreatedOrder {
 export async function createOrder(input: CreateOrderInput): Promise<CreatedOrder> {
   const metodo = input.metodo || "contraentrega";
   const resolved = resolveItems(input.items, input.catalog);
-  // Flete con la tabla de zonas desde Medellín (valor real → sobreflete + recargo + gratis).
-  const subtotalProductos = resolved.reduce((s, r) => s + r.subtotalCop, 0);
   const unidades = resolved.reduce((s, r) => s + r.cantidad, 0);
-  const envioGratis = pedidoEnvioGratis(
-    resolved.map((r) => ({
-      slug: r.slug,
-      envioGratis: input.catalog.find((p) => p.slug === r.slug)?.envioGratis,
-    })),
-  );
+  // Flete = $20.000 + 7% del valor de los productos que SÍ pagan envío (los de
+  // envío-incluido no suman a la base; si TODOS son gratis → flete 0).
+  const esGratis = (slug: string) => !!input.catalog.find((p) => p.slug === slug)?.envioGratis
+    || FREE_SHIPPING_SLUGS.has(slug);
+  const subtotalNoGratis = resolved.reduce((s, r) => s + (esGratis(r.slug) ? 0 : r.subtotalCop), 0);
+  const envioGratis = subtotalNoGratis <= 0;
   const cobertura = await cotizarEnvio(input.ciudad, {
-    subtotalCop: subtotalProductos,
+    subtotalCop: subtotalNoGratis,
     unidades,
     metodo,
     envioGratis,
@@ -120,7 +125,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreatedOrder
     return {
       pedido_id: "demo-order", ref: shortCode("AD"),
       subtotal_cop: totals.subtotal, descuento_cop: totals.descuento,
-      envio_cop: totals.envio, total_cop: totals.total, estado: "pendiente_confirmacion",
+      envio_cop: totals.envio, total_cop: totals.total, estado: "remision",
       asesor: { nombre: "Asesor Animals Deluxe", whatsapp: process.env.NEXT_PUBLIC_WHATSAPP || "" },
       reused: false,
       items: resolved,
@@ -139,7 +144,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreatedOrder
       pedido_id: existing.id, ref: existing.ref,
       subtotal_cop: existing.subtotalCop ?? 0, descuento_cop: existing.descuentoCop ?? 0,
       envio_cop: existing.envioCop ?? 0, total_cop: existing.totalCop ?? 0,
-      estado: existing.estado || "pendiente_confirmacion",
+      estado: existing.estado || "remision",
       asesor: { nombre: "", whatsapp: "" }, reused: true,
       items: resolved,
     };
@@ -151,11 +156,13 @@ export async function createOrder(input: CreateOrderInput): Promise<CreatedOrder
     .values({
       ref: shortCode("AD"),
       customerId: input.customerId.startsWith("demo-") ? null : input.customerId,
-      estado: "pendiente_confirmacion",
+      estado: "remision",
+      canal: input.canal || "whatsapp",
       metodoPago: metodo,
       subtotalCop: totals.subtotal, descuentoCop: totals.descuento,
       envioCop: totals.envio, totalCop: totals.total,
       ciudad: input.ciudad, direccion: input.direccion, telefono: input.telefono, nombre: input.nombre,
+      cedula: input.cedula || "",
       couponId: coupon?.id ?? null,
       advisorId: "id" in asesor ? (asesor as { id: string }).id : null,
       idempotencyKey: idem,
@@ -173,7 +180,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreatedOrder
   return {
     pedido_id: created.id, ref: created.ref,
     subtotal_cop: totals.subtotal, descuento_cop: totals.descuento,
-    envio_cop: totals.envio, total_cop: totals.total, estado: created.estado || "pendiente_confirmacion",
+    envio_cop: totals.envio, total_cop: totals.total, estado: created.estado || "remision",
     asesor: { nombre: asesor.nombre, whatsapp: asesor.whatsapp || "" }, reused: false,
     items: resolved,
   };

@@ -1,0 +1,189 @@
+/* ============================================================
+   Meta Ads — análisis de ROI real por anuncio.
+   Trae insights (gasto/impresiones/CTR) de la Marketing API y los cruza con
+   las VENTAS reales de la plataforma (vía ad_map: anuncio → producto → pedidos).
+   Fail-soft: si no hay credenciales, devuelve { ok:false }.
+   Env: META_ADS_TOKEN, META_AD_ACCOUNT_ID.
+   ============================================================ */
+import { sql } from "drizzle-orm";
+import { db } from "@/lib/db/client";
+
+const GRAPH = "https://graph.facebook.com/v21.0";
+
+export function metaAdsConfigured(): boolean {
+  return !!(process.env.META_ADS_TOKEN && process.env.META_AD_ACCOUNT_ID);
+}
+
+export type MetaInsight = { adId: string; adName: string; campaign: string; spend: number; impressions: number; clicks: number; ctr: number; cpm: number; roasMeta: number; mensajes: number };
+
+/** Trae los insights por anuncio de la Marketing API (con paginación). */
+export async function metaFetchInsights(datePreset = "last_30d"): Promise<MetaInsight[]> {
+  const token = process.env.META_ADS_TOKEN || "";
+  const act = process.env.META_AD_ACCOUNT_ID || "";
+  if (!token || !act) return [];
+  const fields = "ad_id,ad_name,campaign_name,spend,impressions,clicks,ctr,cpm,purchase_roas,actions";
+  // Solo anuncios ACTIVOS (no pausados/archivados).
+  const filtering = encodeURIComponent(JSON.stringify([{ field: "ad.effective_status", operator: "IN", value: ["ACTIVE"] }]));
+  let url: string | null = `${GRAPH}/${act}/insights?level=ad&date_preset=${datePreset}&limit=200&fields=${fields}&filtering=${filtering}&access_token=${token}`;
+  const out: MetaInsight[] = [];
+  let guard = 0;
+  try {
+    while (url && guard++ < 20) {
+      const r = await fetch(url);
+      const j = (await r.json()) as { data?: Record<string, unknown>[]; paging?: { next?: string }; error?: unknown };
+      if (j.error || !j.data) break;
+      for (const a of j.data) {
+        const roas = Array.isArray(a.purchase_roas) ? Number((a.purchase_roas as { value?: string }[])[0]?.value || 0) : 0;
+        const acts = (a.actions as { action_type: string; value: string }[]) || [];
+        const mensajes = Number(acts.find((x) => x.action_type === "onsite_conversion.messaging_conversation_started_7d")?.value || 0);
+        out.push({
+          adId: String(a.ad_id || ""), adName: String(a.ad_name || ""), campaign: String(a.campaign_name || ""),
+          spend: Math.round(Number(a.spend || 0)), impressions: Number(a.impressions || 0), clicks: Number(a.clicks || 0),
+          ctr: Number(a.ctr || 0), cpm: Number(a.cpm || 0), roasMeta: roas, mensajes,
+        });
+      }
+      url = j.paging?.next || null;
+    }
+  } catch { /* fail-soft */ }
+  return out;
+}
+
+/** Insights con caché en DB (30 min): evita pegarle a Meta en cada carga de /anuncios. */
+async function getInsightsCached(range: string): Promise<MetaInsight[]> {
+  if (!db) return metaFetchInsights(range);
+  try {
+    const fresh = await db.execute(sql`select raw from meta_ad_insights where fecha_rango = ${range} and snapshot_at > now() - interval '30 minutes'`);
+    const rows = fresh as unknown as { raw: MetaInsight }[];
+    if (rows.length) return rows.map((r) => r.raw).filter((x) => x && x.adId);
+  } catch { /* sigue a fetch live */ }
+  const live = await metaFetchInsights(range);
+  if (live.length) {
+    try {
+      await db.execute(sql`delete from meta_ad_insights where fecha_rango = ${range}`);
+      for (const i of live) {
+        await db.execute(sql`insert into meta_ad_insights (ad_id, ad_name, campaign_name, spend, impressions, clicks, ctr, cpm, purchase_roas, fecha_rango, raw)
+          values (${i.adId}, ${i.adName}, ${i.campaign}, ${i.spend}, ${i.impressions}, ${i.clicks}, ${i.ctr}, ${i.cpm}, ${i.roasMeta}, ${range}, ${JSON.stringify(i)}::jsonb)
+          on conflict (ad_id, fecha_rango) do update set raw = excluded.raw, spend = excluded.spend, snapshot_at = now()`);
+      }
+    } catch { /* caché es opcional */ }
+  }
+  return live;
+}
+
+export type AnuncioAnalisis = MetaInsight & {
+  productos: string[];        // nombres de producto que promociona (ad_map)
+  pedidos: number;            // pedidos reales atribuidos (proporcional al gasto)
+  ventas: number;             // $ de ventas reales atribuidas
+  cpaReal: number;            // gasto / pedidos
+  costoPorMensaje: number;    // gasto / mensajes (métrica CLAVE en anuncios de mensajes)
+  roasReal: number;           // ventas / gasto
+  roiReal: number;            // (ventas − gasto) / gasto
+  veredicto: "escalar" | "vigilar" | "apagar" | "sin_datos";
+  recomendacion: string;      // consejo en texto según las métricas
+};
+
+export type AnunciosResumen = {
+  ok: boolean;
+  error?: string;
+  gastoTotal: number;
+  ventasTotal: number;
+  roasGlobal: number;
+  mensajesTotal: number;
+  costoPorMensajeProm: number;
+  anuncios: AnuncioAnalisis[];
+  mejor: AnuncioAnalisis | null;
+  peor: AnuncioAnalisis | null;
+};
+
+/** Análisis completo: insights de Meta cruzados con ventas reales por producto. */
+export async function getAnunciosAnalisis(datePreset = "last_30d"): Promise<AnunciosResumen> {
+  if (!metaAdsConfigured()) return { ok: false, error: "Falta META_ADS_TOKEN / META_AD_ACCOUNT_ID", gastoTotal: 0, ventasTotal: 0, roasGlobal: 0, mensajesTotal: 0, costoPorMensajeProm: 0, anuncios: [], mejor: null, peor: null };
+  const insights = await getInsightsCached(datePreset);
+  if (!insights.length) return { ok: false, error: "Meta no devolvió anuncios (token vencido o sin datos)", gastoTotal: 0, ventasTotal: 0, roasGlobal: 0, mensajesTotal: 0, costoPorMensajeProm: 0, anuncios: [], mejor: null, peor: null };
+
+  // ad_map: ad_id → [product_slug]; ventas por producto (pedidos no cancelados)
+  const [mapRows, ventasRows, prodRows] = db
+    ? await Promise.all([
+        db.execute(sql`select ad_id, product_slug from ad_map`),
+        db.execute(sql`select oi.product_slug, count(distinct o.id)::int pedidos, coalesce(sum(oi.subtotal_cop),0)::int ventas
+                       from order_items oi join orders o on o.id = oi.order_id
+                       where coalesce(o.estado,'') <> 'cancelado' group by oi.product_slug`),
+        db.execute(sql`select slug, name from products`),
+      ])
+    : [[], [], []];
+
+  const mapa = new Map<string, string[]>(); // ad_id → slugs
+  for (const r of mapRows as unknown as { ad_id: string; product_slug: string }[]) {
+    const arr = mapa.get(r.ad_id) || []; arr.push(r.product_slug); mapa.set(r.ad_id, arr);
+  }
+  const ventasProd = new Map<string, { pedidos: number; ventas: number }>();
+  for (const r of ventasRows as unknown as { product_slug: string; pedidos: number; ventas: number }[]) ventasProd.set(r.product_slug, { pedidos: r.pedidos, ventas: r.ventas });
+  const nombreProd = new Map<string, string>();
+  for (const r of prodRows as unknown as { slug: string; name: string }[]) nombreProd.set(r.slug, r.name);
+
+  // Gasto total por producto (para repartir sus ventas entre los anuncios de ese producto)
+  const gastoPorProducto = new Map<string, number>();
+  for (const ins of insights) for (const slug of (mapa.get(ins.adId) || [])) gastoPorProducto.set(slug, (gastoPorProducto.get(slug) || 0) + ins.spend);
+
+  const fmt = (n: number) => "$" + Math.round(n).toLocaleString("es-CO");
+  // Costo por mensaje PROMEDIO de la cuenta (referencia para el veredicto: entre más barato, mejor).
+  const cpmsg = insights.filter((i) => i.mensajes > 0).map((i) => i.spend / i.mensajes);
+  const avgCPM = cpmsg.length ? cpmsg.reduce((s, x) => s + x, 0) / cpmsg.length : 0;
+
+  const veredictoDe = (spend: number, mensajes: number, cxm: number): AnuncioAnalisis["veredicto"] => {
+    if (!mensajes && spend > 20000) return "apagar";       // gasta y no trae mensajes
+    if (!mensajes) return "sin_datos";
+    if (!avgCPM) return "vigilar";
+    if (cxm <= avgCPM * 0.75) return "escalar";            // más barato que el promedio → 🟢
+    if (cxm <= avgCPM * 1.4) return "vigilar";             // cerca del promedio → 🟡
+    return "apagar";                                        // más caro que el promedio → 🔴
+  };
+  const recomendacionDe = (v: AnuncioAnalisis["veredicto"], spend: number, mensajes: number, cxm: number): string => {
+    if (v === "escalar") return `🔥 Trae mensajes baratos (${fmt(cxm)} c/u vs ${fmt(avgCPM)} promedio). Súbele presupuesto y graba más videos como este.`;
+    if (v === "vigilar") return `Costo por mensaje normal (${fmt(cxm)}). Rentable; prueba mejorar el gancho para bajarlo aún más.`;
+    if (v === "apagar" && !mensajes) return `Gastó ${fmt(spend)} y 0 mensajes. Te está quemando plata — pausa o cambia el creativo ya.`;
+    if (v === "apagar") return `Mensaje caro: ${fmt(cxm)} c/u (promedio ${fmt(avgCPM)}). Bájale presupuesto o cambia el video.`;
+    return `Pocos mensajes aún. Dale tiempo si el gasto es bajo, o revisa el creativo.`;
+  };
+
+  const anuncios: AnuncioAnalisis[] = insights.map((ins) => {
+    const slugs = mapa.get(ins.adId) || [];
+    let pedidos = 0, ventas = 0;
+    for (const slug of slugs) {
+      const vp = ventasProd.get(slug); if (!vp) continue;
+      const gp = gastoPorProducto.get(slug) || ins.spend || 1;
+      const share = gp > 0 ? ins.spend / gp : 1;
+      pedidos += vp.pedidos * share;
+      ventas += vp.ventas * share;
+    }
+    pedidos = Math.round(pedidos); ventas = Math.round(ventas);
+    const roasReal = ins.spend > 0 ? ventas / ins.spend : 0;
+    const costoPorMensaje = ins.mensajes > 0 ? Math.round(ins.spend / ins.mensajes) : 0;
+    const veredicto = veredictoDe(ins.spend, ins.mensajes, costoPorMensaje || Infinity);
+    return {
+      ...ins,
+      productos: slugs.map((s) => nombreProd.get(s) || s),
+      pedidos, ventas,
+      cpaReal: pedidos > 0 ? Math.round(ins.spend / pedidos) : 0,
+      costoPorMensaje,
+      roasReal: Math.round(roasReal * 100) / 100,
+      roiReal: ins.spend > 0 ? Math.round(((ventas - ins.spend) / ins.spend) * 100) / 100 : 0,
+      veredicto,
+      recomendacion: recomendacionDe(veredicto, ins.spend, ins.mensajes, costoPorMensaje),
+    };
+  }).sort((a, b) => {
+    // Los que traen mensajes primero, ordenados por costo por mensaje (más barato arriba).
+    if ((a.mensajes > 0) !== (b.mensajes > 0)) return a.mensajes > 0 ? -1 : 1;
+    if (a.mensajes > 0 && b.mensajes > 0) return a.costoPorMensaje - b.costoPorMensaje;
+    return b.spend - a.spend;
+  });
+
+  const gastoTotal = anuncios.reduce((s, a) => s + a.spend, 0);
+  const ventasTotal = anuncios.reduce((s, a) => s + a.ventas, 0);
+  const mensajesTotal = anuncios.reduce((s, a) => s + a.mensajes, 0);
+  const conMsg = anuncios.filter((a) => a.mensajes > 0);
+  const mejor = conMsg.length ? conMsg.reduce((m, a) => (a.costoPorMensaje < m.costoPorMensaje ? a : m)) : null;
+  const peor = anuncios.filter((a) => a.spend > 15000).sort((a, b) => (b.costoPorMensaje || Infinity) - (a.costoPorMensaje || Infinity))[0] || null;
+
+  return { ok: true, gastoTotal, ventasTotal, roasGlobal: gastoTotal > 0 ? Math.round((ventasTotal / gastoTotal) * 100) / 100 : 0, mensajesTotal, costoPorMensajeProm: Math.round(avgCPM), anuncios, mejor, peor };
+}
