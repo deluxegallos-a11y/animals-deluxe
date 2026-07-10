@@ -5,10 +5,11 @@ import { sendMetaPurchase } from "@/lib/meta-capi";
 import { db } from "@/lib/db/client";
 import { customers } from "@/lib/db/schema";
 import { getProducts } from "@/lib/ai/data";
-import { createOrder } from "@/lib/ai/orders";
+import { createOrder, parsePlainItems } from "@/lib/ai/orders";
 import { pushOrderToShopify } from "@/lib/shopify-sync";
 import { cop } from "@/lib/ai/format";
 import { searchProducts } from "@/lib/ai/search";
+import type { ProductView } from "@/lib/ai/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,24 +20,19 @@ const qty = (x: unknown) => {
   return n > 0 ? n : 1;
 };
 
-/** Parsea items en TEXTO PLANO: "American Rooster Fury x2", "2 Energy Cobra",
- *  "Dragon Mamba, 3", o varios separados por salto de línea / ; / + . */
-function parsePlainItems(text: string): { name: string; cantidad: number }[] {
-  const out: { name: string; cantidad: number }[] = [];
-  for (const part of String(text).split(/[\n;]+|\s\+\s/).map((s) => s.trim()).filter(Boolean)) {
-    let cantidad = 1;
-    let name = part;
-    const mX = part.match(/\bx\s*(\d+)\b/i) || part.match(/(\d+)\s*(?:und|unid|unidades|productos?|tarros?|frascos?)\b/i);
-    const mFin = part.match(/[,\s-]+(\d+)\s*$/);
-    const mIni = part.match(/^\s*(\d+)\s+(.+)/);
-    if (mX) { cantidad = parseInt(mX[1], 10); name = part.replace(mX[0], " "); }
-    else if (mIni) { cantidad = parseInt(mIni[1], 10); name = mIni[2]; }
-    else if (mFin) { cantidad = parseInt(mFin[1], 10); name = part.slice(0, mFin.index); }
-    name = name.replace(/[,x·\-\s]+$/i, "").replace(/^[,x·\-\s]+/i, "").trim();
-    if (name) out.push({ name, cantidad: cantidad > 0 ? cantidad : 1 });
-  }
-  return out;
+/** ¿Este texto (con sus dígitos) es un producto real del catálogo? Se usa para
+ *  decidir si un número al inicio es cantidad o parte del nombre. */
+function resolvesToProduct(name: string, catalog: ProductView[]): boolean {
+  const n = name.trim().toLowerCase();
+  if (!n) return false;
+  if (catalog.some((p) => p.slug === n)) return true;
+  return !!searchProducts(name, catalog).product;
 }
+
+/* Umbrales de la salvaguarda de sensatez (§2 · bug $385M). COD de productos de
+   gallos: una cantidad enorme o un total absurdo NO se confirma automático. */
+const SOSPECHA_CANTIDAD = 20;
+const SOSPECHA_TOTAL_COP = 2_000_000;
 
 export const POST = withBridge(
   // Body PERMISIVO (§2.1): NUNCA rechazamos por formato ("faltan datos"). Normalizamos
@@ -77,7 +73,7 @@ export const POST = withBridge(
     if (typeof itemsArr === "string" && itemsArr.trim()) {
       // 1) string con JSON dentro; 2) si no, TEXTO PLANO ("American Rooster Fury x2").
       const s: string = itemsArr;
-      try { itemsArr = JSON.parse(s); } catch { itemsArr = parsePlainItems(s); }
+      try { itemsArr = JSON.parse(s); } catch { itemsArr = parsePlainItems(s, (n) => resolvesToProduct(n, catalog)); }
     }
     if (itemsArr && !Array.isArray(itemsArr) && typeof itemsArr === "object") itemsArr = [itemsArr];
     if (Array.isArray(itemsArr)) {
@@ -89,7 +85,7 @@ export const POST = withBridge(
     // producto "suelto" (fuera de items) — muy común desde el bot; también en texto plano.
     const prodSuelto = str(b.producto ?? b.producto_nombre ?? b.nombre_producto ?? b.item);
     if (!raws.length && prodSuelto) {
-      const parsed = parsePlainItems(prodSuelto);
+      const parsed = parsePlainItems(prodSuelto, (n) => resolvesToProduct(n, catalog));
       if (parsed.length === 1 && (b.cantidad || b.unidades)) parsed[0].cantidad = qty(b.cantidad ?? b.unidades);
       for (const x of parsed) raws.push({ name: x.name, cantidad: x.cantidad });
     }
@@ -144,6 +140,18 @@ export const POST = withBridge(
         .where(eq(customers.id, customer.id));
     }
 
+    // --- SALVAGUARDA DE SENSATEZ (§2 · bug $385M) ---------------------------------
+    // Nunca confirmar automáticamente un pedido con una cantidad o un valor absurdos,
+    // aunque el bot se equivoque. Sospechoso → "por_revisar", SIN empujar a Shopify/Meta,
+    // y se le pide al cliente confirmar la cantidad (un asesor lo valida antes de despachar).
+    const precioDe = (slug: string) => {
+      const p = catalog.find((x) => x.slug === slug);
+      return p?.presentations?.[0]?.priceCOP ?? p?.priceCOP ?? 0;
+    };
+    const maxCantidad = items.reduce((m, it) => Math.max(m, it.cantidad), 0);
+    const totalEstimado = items.reduce((s, it) => s + precioDe(it.slug) * it.cantidad, 0);
+    const sospechoso = maxCantidad > SOSPECHA_CANTIDAD || totalEstimado > SOSPECHA_TOTAL_COP;
+
     const order = await createOrder({
       subId: customer.uchatSubId || customer.id,
       customerId: customer.id,
@@ -153,11 +161,36 @@ export const POST = withBridge(
       metodo,
       canal,
       catalog,
+      estado: sospechoso ? "por_revisar" : undefined,
+      notas: sospechoso
+        ? `⚠️ REVISAR CANTIDAD (posible error del bot): pidió ${maxCantidad} unid · total estimado ${cop(totalEstimado)}. Confirmar con el cliente antes de despachar. La cantidad real suele ser 1.`
+        : undefined,
     });
+
+    const ref = order.ref;
+
+    // Pedido sospechoso: NO se confirma. Queda "por_revisar" para el asesor y se le
+    // pregunta al cliente cuántas unidades quiere (por defecto 1). No va a Shopify/Meta.
+    if (sospechoso) {
+      await logEvent("pedido_sospechoso", { ref, sub_id: subId, max_cantidad: maxCantidad, total_estimado: totalEstimado, items });
+      await audit("pedido_por_revisar", "orders", { ref, maxCantidad, total: totalEstimado });
+      await updateOrderAttempt(attemptId, { resultado: "por_revisar", ref, motivo: `sospechoso: ${maxCantidad} unid / ${totalEstimado}` });
+      const listaNombres = order.items.map((it) => it.name).join(", ");
+      return {
+        pedido_id: order.pedido_id,
+        ref,
+        estado: "por_revisar",
+        requiere_revision: true,
+        asesor: order.asesor,
+        mensaje:
+          `¡Gracias${nombre ? " " + nombre.split(" ")[0] : ""}! 🙏 Antes de cerrar quiero confirmar bien: ` +
+          `¿cuántas unidades querés de ${listaNombres}? (por defecto es *1*). ` +
+          `Un asesor te confirma el total exacto enseguida. 🐓`,
+      };
+    }
 
     // La ref que ve el cliente SIEMPRE es la interna AD-XXXX (con esa consulta
     // estado-pedido, y es idempotente). El nombre de Shopify queda guardado aparte.
-    const ref = order.ref;
     if (!order.reused && !order.pedido_id.startsWith("demo-")) {
       const shop = await pushOrderToShopify({
         orderId: order.pedido_id,

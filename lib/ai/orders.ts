@@ -19,6 +19,45 @@ export type ResolvedItem = {
   shopifyVariantId?: string;
 };
 
+/**
+ * Parsea items en TEXTO PLANO ("American Rooster Fury x2", "2 Energy Cobra", varios
+ * separados por salto de línea / ; / +).
+ *
+ * REGLA DE ORO (bug $385M · pedido AD-H3GW): la cantidad NUNCA sale de un número que
+ * viva DENTRO del nombre del producto. Muchos productos llevan cifras en el nombre
+ * ("CyanoMax B12 5500", "Super Energy 77", "Hunk 160", "Energy 500"): esos dígitos son
+ * parte del NOMBRE, jamás la cantidad. Solo se toma como cantidad:
+ *   1) un multiplicador EXPLÍCITO — "x2", "2 unidades/tarros/frascos/productos"; o
+ *   2) un número al INICIO cuyo resto resuelve a un producto real — "2 Energy Cobra".
+ * `resolves(name)` decide (2): debe devolver true si `name` es un producto del catálogo.
+ */
+export function parsePlainItems(
+  text: string,
+  resolves: (name: string) => boolean,
+): { name: string; cantidad: number }[] {
+  const out: { name: string; cantidad: number }[] = [];
+  for (const part of String(text).split(/[\n;]+|\s\+\s/).map((s) => s.trim()).filter(Boolean)) {
+    // 1) Multiplicador EXPLÍCITO. "x2" o "2 und/unidades/tarros/frascos/productos".
+    const mX = part.match(/\bx\s*(\d+)\b/i) || part.match(/\b(\d+)\s*(?:und|unid|unidades|productos?|tarros?|frascos?)\b/i);
+    if (mX) {
+      const name = part.replace(mX[0], " ").replace(/[,x·\-\s]+$/i, "").replace(/^[,x·\-\s]+/i, "").trim();
+      if (name) out.push({ name, cantidad: Math.max(1, parseInt(mX[1], 10)) });
+      continue;
+    }
+    // 2) Número al INICIO ("2 Energy Cobra") SOLO si el resto es un producto real.
+    const mIni = part.match(/^\s*(\d+)\s+(.+)/);
+    if (mIni && resolves(mIni[2].trim())) {
+      out.push({ name: mIni[2].trim(), cantidad: Math.max(1, parseInt(mIni[1], 10)) });
+      continue;
+    }
+    // 3) Por defecto: TODO el texto es el NOMBRE y la cantidad es 1. Los números del
+    //    nombre se conservan para resolver el producto correcto (nunca son cantidad).
+    const name = part.replace(/^[,x·\-\s]+/i, "").trim();
+    if (name) out.push({ name, cantidad: 1 });
+  }
+  return out;
+}
+
 /** Resuelve items contra el catálogo. Lanza domainError si falta producto/stock. */
 export function resolveItems(items: ItemInput[], catalog: ProductView[]): ResolvedItem[] {
   if (!items?.length) domainError("No veo productos en el pedido. ¿Cuál te empaco? 🐓");
@@ -88,6 +127,10 @@ export interface CreateOrderInput {
   metodo?: "contraentrega" | "anticipado";
   canal?: string; // whatsapp | messenger | web
   catalog: ProductView[];
+  /** Estado inicial. Default "remision". La salvaguarda de sensatez lo pone en
+   *  "por_revisar" cuando la cantidad o el total son sospechosos (bug $385M). */
+  estado?: string;
+  notas?: string;
 }
 
 export interface CreatedOrder {
@@ -125,7 +168,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreatedOrder
     return {
       pedido_id: "demo-order", ref: shortCode("AD"),
       subtotal_cop: totals.subtotal, descuento_cop: totals.descuento,
-      envio_cop: totals.envio, total_cop: totals.total, estado: "remision",
+      envio_cop: totals.envio, total_cop: totals.total, estado: input.estado || "remision",
       asesor: { nombre: "Asesor Animals Deluxe", whatsapp: process.env.NEXT_PUBLIC_WHATSAPP || "" },
       reused: false,
       items: resolved,
@@ -156,7 +199,8 @@ export async function createOrder(input: CreateOrderInput): Promise<CreatedOrder
     .values({
       ref: shortCode("AD"),
       customerId: input.customerId.startsWith("demo-") ? null : input.customerId,
-      estado: "remision",
+      estado: input.estado || "remision",
+      notas: input.notas || "",
       canal: input.canal || "whatsapp",
       metodoPago: metodo,
       subtotalCop: totals.subtotal, descuentoCop: totals.descuento,
