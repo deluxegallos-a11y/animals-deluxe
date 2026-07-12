@@ -19,9 +19,11 @@ export const POST = withBridge(
       )
       .optional()
       .default([]),
-    metodo: z.enum(["contraentrega", "anticipado"]).optional().default("contraentrega"),
+    metodo: z.enum(["contraentrega", "anticipado"]).optional(),
   }),
-  async ({ body }) => {
+  async ({ body, tenant }) => {
+    // Método: lo que mande el bot; si no, el modo del tenant.
+    const metodo = body.metodo ?? (tenant.paymentMode === "anticipado" ? "anticipado" : "contraentrega");
     // Si vienen ítems, cotizamos con valor real (sobreflete + recargo + gratis).
     let subtotalCop = 0;
     let unidades = 0;
@@ -42,15 +44,18 @@ export const POST = withBridge(
     const c = await cotizarEnvio(body.ciudad, {
       subtotalCop,
       unidades: unidades || undefined,
-      metodo: body.metodo,
+      metodo,
       envioGratis,
     });
 
-    const mensaje = c.envio_gratis
-      ? `¡Buenísimo! 🎉 A ${c.ciudad} el envío te sale *GRATIS* y es contraentrega (pagas al recibir). ¿Te armo el pedido?`
-      : c.contraentrega
-        ? `¡Sí llegamos a ${c.ciudad}! 🚚 Contraentrega (pagas al recibir). Envío: ${cop(c.costo_envio)} · Entrega ${c.tiempo}. ¿Te armo el pedido?`
-        : `Llegamos a ${c.ciudad}, ahí el pago va anticipado. Envío: ${cop(c.costo_envio)} · Entrega ${c.tiempo}. ¿Seguimos?`;
+    // Anticipado (Rooster): NUNCA menciona contra entrega.
+    const mensaje = metodo === "anticipado"
+      ? (c.envio_gratis
+          ? `¡Buenísimo! 🎉 A ${c.ciudad} el envío te sale *GRATIS*. El pago es por adelantado. ¿Te armo el pedido?`
+          : `¡Sí llegamos a ${c.ciudad}! 🚚 Envío: ${cop(c.costo_envio)} · Entrega ${c.tiempo}. El pago es por adelantado. ¿Te armo el pedido?`)
+      : (c.envio_gratis
+          ? `¡Buenísimo! 🎉 A ${c.ciudad} el envío te sale *GRATIS* y es contraentrega (pagas al recibir). ¿Te armo el pedido?`
+          : `¡Sí llegamos a ${c.ciudad}! 🚚 Contraentrega (pagas al recibir). Envío: ${cop(c.costo_envio)} · Entrega ${c.tiempo}. ¿Te armo el pedido?`);
 
     return {
       // legacy (compat)

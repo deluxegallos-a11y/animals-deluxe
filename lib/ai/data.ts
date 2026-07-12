@@ -12,6 +12,7 @@ import type { ProductView, CategoryView } from "@/lib/ai/types";
 import { demoProducts, demoCategories, demoStore } from "@/lib/demo-data";
 import { normalize } from "@/lib/ai/format";
 import { computeShipping, resolveZona, TIEMPO_ENTREGA } from "@/lib/ai/shipping";
+import { currentTenantId, currentTenant } from "@/lib/ai/tenant";
 
 type ProdRow = typeof products.$inferSelect;
 type CatRow = typeof categories.$inferSelect;
@@ -64,7 +65,10 @@ function toView(p: ProdRow, cat?: CatRow | null): ProductView {
 /* ---------- Categorías ---------- */
 export async function getCategories(): Promise<CategoryView[]> {
   if (!db) return demoCategories;
-  const rows = await db.select().from(categories).orderBy(asc(categories.sortOrder), asc(categories.name));
+  const tid = await currentTenantId();
+  const rows = await db.select().from(categories)
+    .where(eq(categories.tenantId, tid!))
+    .orderBy(asc(categories.sortOrder), asc(categories.name));
   return rows.map((c) => ({ id: c.id, slug: c.slug, name: c.name, color: c.color || "#FF4D2E" }));
 }
 
@@ -75,11 +79,12 @@ export async function getProducts(opts: { categorySlug?: string; limit?: number 
     if (opts.categorySlug) list = list.filter((p) => p.categorySlug === opts.categorySlug);
     return opts.limit ? list.slice(0, opts.limit) : list;
   }
+  const tid = await currentTenantId();
   const rows = await db
     .select({ p: products, c: categories })
     .from(products)
     .leftJoin(categories, eq(products.categoryId, categories.id))
-    .where(eq(products.activo, true))
+    .where(and(eq(products.tenantId, tid!), eq(products.activo, true)))
     .orderBy(asc(products.name));
   let list = rows.map((r) => toView(r.p, r.c));
   if (opts.categorySlug) list = list.filter((p) => p.categorySlug === opts.categorySlug);
@@ -89,11 +94,12 @@ export async function getProducts(opts: { categorySlug?: string; limit?: number 
 export async function getProductBySlug(slug: string): Promise<ProductView | null> {
   if (!slug) return null;
   if (!db) return demoProducts.find((p) => p.slug === slug) || null;
+  const tid = await currentTenantId();
   const [row] = await db
     .select({ p: products, c: categories })
     .from(products)
     .leftJoin(categories, eq(products.categoryId, categories.id))
-    .where(eq(products.slug, slug))
+    .where(and(eq(products.tenantId, tid!), eq(products.slug, slug)))
     .limit(1);
   return row ? toView(row.p, row.c) : null;
 }
@@ -158,10 +164,30 @@ export interface CoberturaResult {
     Respeta overrides explícitos del admin (store_config.ciudadesCobertura). */
 export async function cotizarEnvio(ciudad: string, opts: CotizarOpts = {}): Promise<CoberturaResult> {
   const cfg = await getStoreConfig();
+  const tenant = await currentTenant();
   const metodo = opts.metodo ?? "contraentrega";
 
-  // FLETE POR VALOR ($20.000 + 7% del valor de los productos, o $0 si envío incluido).
-  // Se ignoran los overrides por ciudad del store_config: misma fórmula para todo el país.
+  // FLETE según flete_modo del TENANT:
+  //   incluido → $0 (envío gratis)
+  //   fijo     → flete_valor fijo
+  //   por_ciudad → fórmula por zona desde la ciudad base (comportamiento Animals Deluxe)
+  if (tenant.fleteModo === "incluido" || opts.envioGratis) {
+    return {
+      cobertura: true, cubre: true, contraentrega: metodo === "contraentrega",
+      costo_envio: 0, envio_gratis: true,
+      zona: resolveZona(ciudad || cfg.ciudadBase), zona_label: "", tiempo: TIEMPO_ENTREGA,
+      ciudad: ciudad || cfg.ciudadBase,
+    };
+  }
+  if (tenant.fleteModo === "fijo") {
+    return {
+      cobertura: true, cubre: true, contraentrega: metodo === "contraentrega",
+      costo_envio: tenant.fleteValor || 0, envio_gratis: (tenant.fleteValor || 0) === 0,
+      zona: resolveZona(ciudad || cfg.ciudadBase), zona_label: "", tiempo: TIEMPO_ENTREGA,
+      ciudad: ciudad || cfg.ciudadBase,
+    };
+  }
+  // por_ciudad (default): fórmula por valor/zona desde la ciudad base.
   const s = computeShipping({
     ciudad: ciudad || cfg.ciudadBase,
     subtotalCop: opts.subtotalCop ?? 0,
@@ -198,11 +224,12 @@ export type PromoView = {
 
 export async function getActivePromotions(categorySlug?: string): Promise<PromoView[]> {
   if (!db) return [];
+  const tid = await currentTenantId();
   const rows = await db
     .select({ pr: promotions, prod: products })
     .from(promotions)
     .leftJoin(products, eq(promotions.productId, products.id))
-    .where(eq(promotions.activa, true))
+    .where(and(eq(promotions.tenantId, tid!), eq(promotions.activa, true)))
     .orderBy(asc(promotions.orden));
   return rows
     .map((r) => ({
@@ -220,7 +247,10 @@ export async function getActivePromotions(categorySlug?: string): Promise<PromoV
 export async function validateCoupon(codigo: string) {
   if (!codigo) return null;
   if (!db) return null;
-  const [c] = await db.select().from(coupons).where(eq(coupons.codigo, codigo.toUpperCase().trim())).limit(1);
+  const tid = await currentTenantId();
+  const [c] = await db.select().from(coupons)
+    .where(and(eq(coupons.tenantId, tid!), eq(coupons.codigo, codigo.toUpperCase().trim())))
+    .limit(1);
   if (!c || !c.activo) return null;
   if (c.vence && new Date(c.vence).getTime() < Date.now()) return null;
   if (c.usosMax != null && (c.usos ?? 0) >= c.usosMax) return null;
@@ -230,13 +260,14 @@ export async function validateCoupon(codigo: string) {
 /* ---------- Asesores (round-robin) ---------- */
 export async function assignAdvisor() {
   if (!db) return { nombre: "Asesor Animals Deluxe", whatsapp: process.env.NEXT_PUBLIC_WHATSAPP || "" };
+  const tid = await currentTenantId();
   const [a] = await db
     .select()
     .from(advisors)
-    .where(eq(advisors.activo, true))
+    .where(and(eq(advisors.tenantId, tid!), eq(advisors.activo, true)))
     .orderBy(asc(advisors.pedidosAsignados), asc(advisors.createdAt))
     .limit(1);
-  if (!a) return { nombre: "Asesor Animals Deluxe", whatsapp: process.env.NEXT_PUBLIC_WHATSAPP || "" };
+  if (!a) return { nombre: "Asesor", whatsapp: process.env.NEXT_PUBLIC_WHATSAPP || "" };
   await db.update(advisors).set({ pedidosAsignados: (a.pedidosAsignados ?? 0) + 1 }).where(eq(advisors.id, a.id));
   return { id: a.id, nombre: a.nombre, whatsapp: a.whatsapp || "" };
 }

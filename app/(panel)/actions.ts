@@ -8,6 +8,7 @@ import {
   type Presentacion, type Ingrediente, type FaqItem, type CiudadCobertura, type CuentaBancaria,
 } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth";
+import { getPanelTenantId } from "@/lib/tenant-panel";
 import { encrypt } from "@/lib/crypto";
 import { syncProductToShopify, archiveProductInShopify, retryPendingProducts } from "@/lib/shopify-sync";
 import { notificarDespacho, type NotifyResult } from "@/lib/ai/notificaciones";
@@ -79,7 +80,8 @@ export async function saveProduct(formData: FormData) {
   const categorySlug = String(formData.get("categorySlug") || "");
   let categoryId: string | null = null;
   if (categorySlug) {
-    const [c] = await db.select().from(categories).where(eq(categories.slug, categorySlug)).limit(1);
+    const [c] = await db.select().from(categories)
+      .where(and(eq(categories.tenantId, (await getPanelTenantId())!), eq(categories.slug, categorySlug))).limit(1);
     categoryId = c?.id || null;
   }
 
@@ -131,7 +133,8 @@ export async function saveProduct(formData: FormData) {
     await db.update(products).set({ ...values, shopifySync: "pending", updatedAt: new Date() }).where(eq(products.id, id));
     await logAudit("editar_producto", "products", { id, slug });
   } else {
-    const [created] = await db.insert(products).values({ ...values, shopifySync: "pending" }).returning();
+    const tid = (await getPanelTenantId())!;
+    const [created] = await db.insert(products).values({ ...values, tenantId: tid, shopifySync: "pending" }).returning();
     productId = created?.id || "";
     await logAudit("crear_producto", "products", { id: productId, slug });
   }
@@ -291,9 +294,10 @@ export async function saveAdMap(formData: FormData) {
   const activo = formData.get("activo") === "on" || formData.get("activo") === "true";
   if (!adId) return { ok: false, error: "El ad_id es obligatorio." };
   if (!slugs.length) return { ok: false, error: "Elige al menos un producto." };
+  const tid = (await getPanelTenantId())!;
   // Reemplaza las filas de este ad_id (una fila por producto, con su orden).
-  await db.delete(adMap).where(eq(adMap.adId, adId));
-  await db.insert(adMap).values(slugs.map((slug, i) => ({ adId, productSlug: slug, nombreAnuncio, orden: i, activo })));
+  await db.delete(adMap).where(and(eq(adMap.tenantId, tid), eq(adMap.adId, adId)));
+  await db.insert(adMap).values(slugs.map((slug, i) => ({ tenantId: tid, adId, productSlug: slug, nombreAnuncio, orden: i, activo })));
   await logAudit("guardar_ad_map", "ad_map", { adId, slugs });
   revalidatePath("/anuncios");
   return { ok: true };
@@ -302,7 +306,8 @@ export async function saveAdMap(formData: FormData) {
 export async function deleteAdMap(adId: string) {
   await requireUser();
   if (!db || !adId) return;
-  await db.delete(adMap).where(eq(adMap.adId, adId)); // borra todas las filas del anuncio
+  const tid = (await getPanelTenantId())!;
+  await db.delete(adMap).where(and(eq(adMap.tenantId, tid), eq(adMap.adId, adId))); // borra todas las filas del anuncio
   await logAudit("eliminar_ad_map", "ad_map", { adId });
   revalidatePath("/anuncios");
 }
@@ -320,7 +325,8 @@ export async function savePromotion(formData: FormData) {
   const productSlug = String(formData.get("productSlug") || "");
   let productId: string | null = null;
   if (productSlug) {
-    const [p] = await db.select().from(products).where(eq(products.slug, productSlug)).limit(1);
+    const [p] = await db.select().from(products)
+      .where(and(eq(products.tenantId, (await getPanelTenantId())!), eq(products.slug, productSlug))).limit(1);
     productId = p?.id || null;
   }
   const values = {
@@ -334,7 +340,7 @@ export async function savePromotion(formData: FormData) {
     orden: parseInt(String(formData.get("orden") || "0"), 10) || 0,
   };
   if (id) await db.update(promotions).set(values).where(eq(promotions.id, id));
-  else await db.insert(promotions).values(values);
+  else await db.insert(promotions).values({ ...values, tenantId: (await getPanelTenantId())! });
   await logAudit(id ? "editar_promo" : "crear_promo", "promotions", { titulo });
   revalidatePath("/promociones");
   return { ok: true };
@@ -362,7 +368,7 @@ export async function saveAdvisor(formData: FormData) {
     activo: formData.get("activo") === "on" || formData.get("activo") === "true",
   };
   if (id) await db.update(advisors).set(values).where(eq(advisors.id, id));
-  else await db.insert(advisors).values(values);
+  else await db.insert(advisors).values({ ...values, tenantId: (await getPanelTenantId())! });
   revalidatePath("/asesores");
   return { ok: true };
 }
@@ -473,6 +479,7 @@ export async function crearClienteManual(data: {
   const comprados = (data.comprados || []).filter(Boolean).slice(0, 40);
   const interes = (data.interes || []).filter(Boolean).slice(0, 40);
   await db.insert(customers).values({
+    tenantId: (await getPanelTenantId())!,
     uchatSubId: "manual:" + (digits(telefono) || Date.now().toString()),
     nombre, telefono, ciudad: (data.ciudad || "").trim(),
     canalOrigen: data.canal || "manual", estado: comprados.length ? "cliente" : "nuevo",
@@ -513,6 +520,7 @@ export async function importarClientes(texto: string): Promise<{ ok: boolean; cr
   const iT = idx(["tel", "celular", "phone", "whats"]);
   const iC = idx(["ciudad", "city", "municipio"]);
   let creados = 0;
+  const tid = (await getPanelTenantId())!;
   for (const line of raw) {
     const parts = line.split(/[,;\t]/).map((p) => p.trim());
     const nombre = (iN >= 0 ? parts[iN] : parts[0]) || "";
@@ -521,6 +529,7 @@ export async function importarClientes(texto: string): Promise<{ ok: boolean; cr
     if (!nombre && !telefono) continue;
     try {
       await db.insert(customers).values({
+        tenantId: tid,
         uchatSubId: "import:" + (digits(telefono) || `${Date.now()}-${creados}`),
         nombre, telefono, ciudad, canalOrigen: "import", estado: "nuevo", ultimoContacto: new Date(),
       }).onConflictDoNothing();
@@ -563,6 +572,7 @@ export async function crearCuponSegmento(data: {
   const vence = data.diasVence ? new Date(Date.now() + data.diasVence * 86400_000) : null;
   try {
     await db.insert(coupons).values({
+      tenantId: (await getPanelTenantId())!,
       codigo, tipo: data.tipo, valor, activo: true,
       usosMax: data.usosMax || null, vence,
     });
@@ -667,20 +677,22 @@ export async function crearPedidoManual(
     if (recent[0]) return { ok: false, duplicate: true, ref: recent[0].ref, error: `Ya existe un pedido similar (${recent[0].ref}) creado hace menos de 10 min.` };
   }
 
-  // Cliente: enlazar por sub_id, luego por teléfono, o crear (canal asesor)
+  // Cliente: enlazar por sub_id, luego por teléfono, o crear (canal asesor) — scoped al tenant
+  const tidCliente = (await getPanelTenantId())!;
   let customerId = "";
   const sub = (data.subId || "").trim();
-  if (sub) { const [c] = await db.select().from(customers).where(eq(customers.uchatSubId, sub)).limit(1); if (c) customerId = c.id; }
-  if (!customerId) { const [c] = await db.select().from(customers).where(eq(customers.telefono, data.telefono)).limit(1); if (c) customerId = c.id; }
+  if (sub) { const [c] = await db.select().from(customers).where(and(eq(customers.tenantId, tidCliente), eq(customers.uchatSubId, sub))).limit(1); if (c) customerId = c.id; }
+  if (!customerId) { const [c] = await db.select().from(customers).where(and(eq(customers.tenantId, tidCliente), eq(customers.telefono, data.telefono))).limit(1); if (c) customerId = c.id; }
   if (!customerId) {
     const uid = sub || "asesor:" + telClean;
     const [c] = await db.insert(customers).values({
+      tenantId: (await getPanelTenantId())!,
       uchatSubId: uid, nombre: data.nombre, telefono: data.telefono, ciudad: data.ciudad,
       departamento: data.departamento || "", direccion: data.direccion,
       canalOrigen: "asesor", estado: "cliente", ultimoContacto: new Date(),
     }).onConflictDoNothing().returning();
     customerId = c?.id || "";
-    if (!customerId) { const [c2] = await db.select().from(customers).where(eq(customers.uchatSubId, uid)).limit(1); customerId = c2?.id || ""; }
+    if (!customerId) { const [c2] = await db.select().from(customers).where(and(eq(customers.tenantId, tidCliente), eq(customers.uchatSubId, uid))).limit(1); customerId = c2?.id || ""; }
   }
 
   // subId: en "force" único para saltar la idempotencia interna de createOrder

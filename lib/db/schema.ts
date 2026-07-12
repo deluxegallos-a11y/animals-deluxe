@@ -9,6 +9,36 @@ import {
 
 const id = () => uuid("id").primaryKey().defaultRandom();
 const now = () => timestamp("created_at", { withTimezone: true }).defaultNow();
+/** FK a tenants(id). Multitenant: cada fila de dominio pertenece a un tenant. */
+const tenantId = () => uuid("tenant_id");
+
+/* 0. tenants — cada bot/tienda es un tenant, resuelto por x-bridge-token.
+   payment_mode 'contra_entrega' (Animals Deluxe) | 'anticipado' (Rooster Deluxe).
+   cuentas_pago/asesor_wa/flete salen de aquí, NO de constantes. */
+export const tenants = pgTable("tenants", {
+  id: id(),
+  slug: text("slug").notNull().unique(),
+  nombre: text("nombre").notNull().default(""),
+  bridgeToken: text("bridge_token").notNull().unique(),
+  paymentMode: text("payment_mode").$type<"anticipado" | "contra_entrega">().notNull().default("contra_entrega"),
+  cuentasPago: text("cuentas_pago").notNull().default(""),
+  asesorWa: text("asesor_wa").notNull().default(""),
+  fleteModo: text("flete_modo").$type<"incluido" | "fijo" | "por_ciudad">().notNull().default("incluido"),
+  fleteValor: integer("flete_valor").notNull().default(0),
+  activo: boolean("activo").notNull().default(true),
+  createdAt: now(),
+});
+
+/* 0b. tenant_users — qué usuario del panel pertenece a qué tenant (por email).
+   El login del panel resuelve su tenant por aquí; email NO mapeado → tenant por
+   defecto (Animals Deluxe), así el admin actual de AD no cambia. */
+export const tenantUsers = pgTable("tenant_users", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull(),
+  email: text("email").notNull().unique(),
+  rol: text("rol").notNull().default("admin"),
+  createdAt: now(),
+});
 
 /* tipos jsonb */
 export type Presentacion = { label: string; priceCOP: number; shopifyVariantId?: string };
@@ -31,7 +61,8 @@ export type ShopifySync = "synced" | "pending" | "error";
 /* 1. categories */
 export const categories = pgTable("categories", {
   id: id(),
-  slug: text("slug").notNull().unique(),
+  tenantId: tenantId(),
+  slug: text("slug").notNull(),
   name: text("name").notNull(),
   color: text("color").default("#FF4D2E"),
   sortOrder: integer("sort_order").default(0),
@@ -43,7 +74,8 @@ export const products = pgTable(
   "products",
   {
     id: id(),
-    slug: text("slug").notNull().unique(),
+    tenantId: tenantId(),
+    slug: text("slug").notNull(),
     name: text("name").notNull(),
     categoryId: uuid("category_id"),
     audience: text("audience").default(""),
@@ -95,6 +127,7 @@ export const products = pgTable(
 /* 2c. order_attempts: TODO intento de crear-pedido (body crudo) para no perder ventas. */
 export const orderAttempts = pgTable("order_attempts", {
   id: id(),
+  tenantId: tenantId(), // nullable: un intento con token inválido no tiene tenant
   createdAt: now(),
   subId: text("sub_id").default(""),
   rawBody: jsonb("raw_body"),
@@ -229,18 +262,20 @@ export const mpTrackingEvents = pgTable("mp_tracking_events", {
 /* 2b. ad_map: anuncio de Meta (ad_id) → producto(s). Un ad puede tener VARIOS
    productos (una fila por producto). PK compuesta (ad_id, product_slug). */
 export const adMap = pgTable("ad_map", {
+  tenantId: tenantId(),
   adId: text("ad_id").notNull(),               // ad_id de Meta (referral del anuncio)
   productSlug: text("product_slug").notNull(), // → products.slug
   nombreAnuncio: text("nombre_anuncio").default(""),
   orden: integer("orden").default(0),          // orden de presentación cuando el ad tiene varios
   activo: boolean("activo").default(true),
   createdAt: now(),
-}, (t) => ({ pk: primaryKey({ columns: [t.adId, t.productSlug] }) }));
+}, (t) => ({ pk: primaryKey({ columns: [t.tenantId, t.adId, t.productSlug] }) }));
 
 /* 3. customers (leads) */
 export const customers = pgTable("customers", {
   id: id(),
-  uchatSubId: text("uchat_sub_id").unique(),
+  tenantId: tenantId(),
+  uchatSubId: text("uchat_sub_id"), // único POR tenant (ver 04-multitenant-constraints.sql)
   nombre: text("nombre").default(""),
   telefono: text("telefono").default(""),
   departamento: text("departamento").default(""),
@@ -265,6 +300,7 @@ export const customers = pgTable("customers", {
 /* 4. advisors (asesores de venta) — round-robin */
 export const advisors = pgTable("advisors", {
   id: id(),
+  tenantId: tenantId(),
   nombre: text("nombre").notNull(),
   whatsapp: text("whatsapp").default(""),
   activo: boolean("activo").default(true),
@@ -275,7 +311,8 @@ export const advisors = pgTable("advisors", {
 /* 5. coupons */
 export const coupons = pgTable("coupons", {
   id: id(),
-  codigo: text("codigo").notNull().unique(),
+  tenantId: tenantId(),
+  codigo: text("codigo").notNull(), // único POR tenant (ver 04-multitenant-constraints.sql)
   tipo: text("tipo").default("porcentaje"), // porcentaje | fijo
   valor: integer("valor").notNull().default(0),
   activo: boolean("activo").default(true),
@@ -290,9 +327,14 @@ export const orders = pgTable(
   "orders",
   {
     id: id(),
+    tenantId: tenantId(),
     ref: text("ref").notNull().unique(),
     customerId: uuid("customer_id"),
     estado: text("estado").default("remision"),
+    // Anticipado (Rooster Deluxe): payment_type + comprobante. Ciclo anticipado:
+    // por_verificar_pago → pagado → despachado → entregado | cancelado
+    paymentType: text("payment_type").$type<"contra_entrega" | "anticipado">().notNull().default("contra_entrega"),
+    comprobanteUrl: text("comprobante_url").notNull().default(""),
     // FLUJO: remision → aprobado (orden de venta) → guia → despachado → entregado (+ cancelado)
     canal: text("canal").default("whatsapp"), // whatsapp | messenger | web | asesor
     fuente: text("fuente").default(""), // tienda | gallos | perros | caballos (página de origen del pedido web)
@@ -332,6 +374,7 @@ export const orders = pgTable(
 /* 7. order_items */
 export const orderItems = pgTable("order_items", {
   id: id(),
+  tenantId: tenantId(),
   orderId: uuid("order_id").notNull(),
   productId: uuid("product_id"),
   productSlug: text("product_slug").default(""),
@@ -345,6 +388,7 @@ export const orderItems = pgTable("order_items", {
 /* 8. promotions */
 export const promotions = pgTable("promotions", {
   id: id(),
+  tenantId: tenantId(),
   titulo: text("titulo").notNull(),
   descripcion: text("descripcion").default(""),
   productId: uuid("product_id"),
@@ -428,6 +472,7 @@ export const reviews = pgTable(
   "reviews",
   {
     id: id(),
+    tenantId: tenantId(),
     productSlug: text("product_slug").notNull(),
     nombre: text("nombre").notNull(),
     ciudad: text("ciudad").default(""),

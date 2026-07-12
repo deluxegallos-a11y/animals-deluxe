@@ -25,12 +25,19 @@ function formatCuentas(cuentas: { banco: string; tipo: string; numero: string; t
 
 export const POST = withBridge(
   z.object({ razon: z.string().optional().default("") }),
-  async ({ body, customer }) => {
+  async ({ body, customer, tenant }) => {
     const asesor = await assignAdvisor();
+    // WhatsApp del asesor: el round-robin manda; si no hay asesores, cae al asesor_wa del tenant.
+    const asesorWa = asesor.whatsapp || tenant.asesorWa || "";
 
-    // --- Pago anticipado: el bot pide los datos de cuentas bancarias ---
-    if (body.razon === "pago_anticipado") {
+    // --- Pago anticipado: el bot pide los datos de cuentas de pago del TENANT ---
+    if (body.razon === "pago_anticipado" || tenant.paymentMode === "anticipado") {
       const cfg = await getStoreConfig();
+      // Las cuentas salen del tenant (texto libre: Bancolombia/Nequi/…); fallback a store_config.
+      const cuentasTexto = (tenant.cuentasPago || "").trim();
+      const mensajePago = cuentasTexto
+        ? `Para confirmar tu pedido, realiza el pago a:\n\n${cuentasTexto}\n\nApenas transfieras, envíame el *comprobante* y un asesor confirma y despacha tu pedido. 🐓`
+        : formatCuentas(cfg.cuentasBancarias);
       // Marca la conversación para que un asesor confirme el pago manualmente.
       if (db && !customer.id.startsWith("demo-")) {
         const [conv] = await db.select().from(conversations).where(eq(conversations.customerId, customer.id)).limit(1);
@@ -50,17 +57,17 @@ export const POST = withBridge(
 
       return {
         razon: "pago_anticipado",
-        asesor: { nombre: asesor.nombre, whatsapp: asesor.whatsapp || "" },
-        cuentas: cfg.cuentasBancarias,
-        mensaje: formatCuentas(cfg.cuentasBancarias),
+        asesor: { nombre: asesor.nombre, whatsapp: asesorWa },
+        cuentas: cuentasTexto || cfg.cuentasBancarias,
+        mensaje: mensajePago,
       };
     }
 
     // --- Escalado normal a asesor ---
     await logEvent("asesor_asignado", { razon: body.razon, asesor: asesor.nombre });
     return {
-      asesor: { nombre: asesor.nombre, whatsapp: asesor.whatsapp || "" },
-      mensaje: `Te conecto con ${asesor.nombre}, nuestro asesor 🐓. ${asesor.whatsapp ? `Escríbele al ${asesor.whatsapp}` : "En un momento te contacta"} para cerrar tu pedido.`,
+      asesor: { nombre: asesor.nombre, whatsapp: asesorWa },
+      mensaje: `Te conecto con ${asesor.nombre}, nuestro asesor 🐓. ${asesorWa ? `Escríbele al ${asesorWa}` : "En un momento te contacta"} para cerrar tu pedido.`,
     };
   },
 );

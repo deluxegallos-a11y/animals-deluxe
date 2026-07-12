@@ -9,18 +9,20 @@
    - Helpers audit_log + events
    =========================================================== */
 import { NextRequest, NextResponse } from "next/server";
-import { eq, sql } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db/client";
 import { customers, auditLog, events, orderAttempts } from "@/lib/db/schema";
-import { safeEqual } from "@/lib/crypto";
 import { isRateLimited } from "@/lib/ratelimit";
+import { resolveTenantByToken, getDefaultTenant, runWithTenant, type Tenant } from "@/lib/ai/tenant";
 
 export const runtime = "nodejs";
 
 type Customer = typeof customers.$inferSelect;
 
 export interface Ctx<B> {
+  /** Tenant resuelto por x-bridge-token. Todo el scoping cuelga de aquí. */
+  tenant: Tenant;
   customer: Customer;
   body: B;
   req: NextRequest;
@@ -71,13 +73,14 @@ export async function logEvent(tipo: string, payload: unknown) {
 /** Registra un intento de crear-pedido en order_attempts (para NO perder ventas).
  *  Devuelve el id de la fila para actualizarla luego con el resultado. */
 export async function logOrderAttempt(
-  data: { subId?: string; rawBody?: unknown; rawText?: string; resultado?: string; motivo?: string; ref?: string },
+  data: { subId?: string; rawBody?: unknown; rawText?: string; resultado?: string; motivo?: string; ref?: string; tenantId?: string | null },
 ): Promise<string | null> {
   if (!db) return null;
   try {
     const [row] = await db
       .insert(orderAttempts)
       .values({
+        tenantId: data.tenantId || null,
         subId: data.subId || "",
         rawBody: (data.rawBody as object) ?? null,
         rawText: (data.rawText || "").slice(0, 4000),
@@ -146,6 +149,7 @@ function fail(status: number, error: string, mensaje = "") {
 function demoCustomer(subId: string): Customer {
   return {
     id: "demo-" + subId,
+    tenantId: null,
     uchatSubId: subId,
     nombre: "",
     telefono: "",
@@ -170,14 +174,20 @@ export function withBridge<S extends z.ZodTypeAny>(
   return async function POST(req: NextRequest) {
     const ruta = (() => { try { return new URL(req.url).pathname; } catch { return ""; } })();
     const esCrearPedido = ruta.endsWith("/crear-pedido");
-    // 1) token (tiempo constante)
+    // 1) token → tenant (multitenant). El x-bridge-token identifica al tenant.
+    //    Sin token válido → 401. En MODO DEMO (sin DB) se usa el tenant por defecto.
     const token = req.headers.get("x-bridge-token") || "";
-    const expected = process.env.BRIDGE_TOKEN || "";
-    // En modo demo (sin BRIDGE_TOKEN configurado) se permite para poder probar local.
-    if (expected && !safeEqual(token, expected)) {
-      await logEvent("bridge_auth_fail", { ruta, tokenPresente: !!token, tokenLen: token.length });
-      if (esCrearPedido) await logOrderAttempt({ resultado: "error", motivo: "token_invalido" });
-      return fail(401, "invalid_bridge_token", "");
+    let tenant: Tenant;
+    if (!db) {
+      tenant = await getDefaultTenant(); // demo: tenant sintético Animals Deluxe
+    } else {
+      const resolved = await resolveTenantByToken(token);
+      if (!resolved) {
+        await logEvent("bridge_auth_fail", { ruta, tokenPresente: !!token, tokenLen: token.length });
+        if (esCrearPedido) await logOrderAttempt({ resultado: "error", motivo: "token_invalido" });
+        return fail(401, "invalid_bridge_token", "");
+      }
+      tenant = resolved;
     }
 
     // 2) body: leemos el TEXTO CRUDO primero (así un JSON roto queda recuperable).
@@ -197,7 +207,7 @@ export function withBridge<S extends z.ZodTypeAny>(
           raw = loose;
         } else {
           await logEvent("bridge_invalid_json", { ruta, rawText: rawText.slice(0, 2000) });
-          if (esCrearPedido) await logOrderAttempt({ rawText, resultado: "error", motivo: "json_invalido" });
+          if (esCrearPedido) await logOrderAttempt({ rawText, resultado: "error", motivo: "json_invalido", tenantId: tenant.id });
           return fail(400, "invalid_json", "");
         }
       }
@@ -212,7 +222,7 @@ export function withBridge<S extends z.ZodTypeAny>(
       await logEvent("bridge_invalid_body", { ruta, keys, errores });
       if (esCrearPedido) {
         const sid = raw && typeof raw === "object" ? String((raw as Record<string, unknown>).sub_id || "") : "";
-        await logOrderAttempt({ subId: sid, rawBody: raw, rawText, resultado: "rejected", motivo: "body_invalido: " + errores.join("; ") });
+        await logOrderAttempt({ subId: sid, rawBody: raw, rawText, resultado: "rejected", motivo: "body_invalido: " + errores.join("; "), tenantId: tenant.id });
       }
       return fail(400, "invalid_body", "Faltan datos en la solicitud.");
     }
@@ -248,7 +258,11 @@ export function withBridge<S extends z.ZodTypeAny>(
     if (!db) {
       customer = demoCustomer(body.sub_id);
     } else {
-      const [found] = await db.select().from(customers).where(eq(customers.uchatSubId, body.sub_id)).limit(1);
+      // Cliente resuelto POR TENANT: el mismo sub_id de WhatsApp puede existir en
+      // dos tenants distintos y son leads diferentes.
+      const [found] = await db.select().from(customers)
+        .where(and(eq(customers.tenantId, tenant.id), eq(customers.uchatSubId, body.sub_id)))
+        .limit(1);
       if (found) {
         customer = found;
         const set: Record<string, unknown> = { ultimoContacto: new Date(), interacciones: sql`coalesce(${customers.interacciones},0) + 1` };
@@ -264,16 +278,17 @@ export function withBridge<S extends z.ZodTypeAny>(
       } else {
         const [created] = await db
           .insert(customers)
-          .values({ uchatSubId: body.sub_id, canalOrigen: "whatsapp", estado: "nuevo", nombre: contacto.nombreReal || contacto.nombreWa, telefono: contacto.telReal || contacto.telWa, ciudad: contacto.ciudad, direccion: contacto.direccion })
+          .values({ tenantId: tenant.id, uchatSubId: body.sub_id, canalOrigen: "whatsapp", estado: "nuevo", nombre: contacto.nombreReal || contacto.nombreWa, telefono: contacto.telReal || contacto.telWa, ciudad: contacto.ciudad, direccion: contacto.direccion })
           .returning();
         customer = created;
       }
       if (!customer) return fail(500, "customer_error", "Tuvimos un inconveniente, intenta de nuevo.");
     }
 
-    // 6) handler de dominio
+    // 6) handler de dominio — corre DENTRO del contexto del tenant (AsyncLocalStorage),
+    //    así todas las queries de data.ts/orders.ts filtran por este tenant.
     try {
-      const data = await handler({ customer, body, req });
+      const data = await runWithTenant(tenant, () => handler({ tenant, customer, body, req }));
       return ok(data);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "error";

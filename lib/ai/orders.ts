@@ -11,6 +11,7 @@ import { domainError } from "@/lib/ai/bridge";
 import { shortCode } from "@/lib/ai/format";
 import { assignAdvisor, cotizarEnvio, validateCoupon } from "@/lib/ai/data";
 import { FREE_SHIPPING_SLUGS } from "@/lib/ai/shipping";
+import { currentTenantId } from "@/lib/ai/tenant";
 
 export type ItemInput = { slug: string; presentacion?: string; cantidad?: number };
 export type ResolvedItem = {
@@ -161,7 +162,9 @@ export async function createOrder(input: CreateOrderInput): Promise<CreatedOrder
   const envio = cobertura.costo_envio;
   const coupon = input.cupon ? await validateCoupon(input.cupon) : null;
   const totals = computeTotals(resolved, envio, coupon ? { tipo: coupon.tipo || "porcentaje", valor: coupon.valor } : null);
-  const idem = idempotencyKey(input.subId, metodo, resolved);
+  const tid = await currentTenantId(); // tenant actual (multitenant)
+  const idem = idempotencyKey(`${tid || "default"}:${input.subId}`, metodo, resolved);
+  const paymentType: "contra_entrega" | "anticipado" = metodo === "anticipado" ? "anticipado" : "contra_entrega";
 
   if (!db) {
     // Modo demo: no persiste, devuelve un pedido calculado.
@@ -197,12 +200,14 @@ export async function createOrder(input: CreateOrderInput): Promise<CreatedOrder
   const [created] = await db
     .insert(orders)
     .values({
+      tenantId: tid,
       ref: shortCode("AD"),
       customerId: input.customerId.startsWith("demo-") ? null : input.customerId,
       estado: input.estado || "remision",
       notas: input.notas || "",
       canal: input.canal || "whatsapp",
       metodoPago: metodo,
+      paymentType,
       subtotalCop: totals.subtotal, descuentoCop: totals.descuento,
       envioCop: totals.envio, totalCop: totals.total,
       ciudad: input.ciudad, direccion: input.direccion, telefono: input.telefono, nombre: input.nombre,
@@ -215,7 +220,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreatedOrder
 
   await db.insert(orderItems).values(
     resolved.map((r) => ({
-      orderId: created.id, productId: r.productId.startsWith("prod-") ? null : r.productId,
+      tenantId: tid, orderId: created.id, productId: r.productId.startsWith("prod-") ? null : r.productId,
       productSlug: r.slug, productName: r.name, presentacionLabel: r.presentacionLabel,
       precioCop: r.precioCop, cantidad: r.cantidad, subtotalCop: r.subtotalCop,
     })),

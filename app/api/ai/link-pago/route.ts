@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { withBridge, logEvent } from "@/lib/ai/bridge";
 import { db } from "@/lib/db/client";
 import { orders } from "@/lib/db/schema";
@@ -9,15 +9,28 @@ import { createBoldPaymentLink, boldConfigured } from "@/lib/bold";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/* Pago anticipado con Bold. Si Bold no está activo → mensaje contraentrega. */
+/* Pago del pedido. Tenant anticipado (Rooster) → da las cuentas de pago del tenant.
+   Tenant contra entrega (Animals Deluxe) → Bold si está activo, si no, mensaje COD. */
 export const POST = withBridge(
   z.object({ ref: z.string().min(1), metodo: z.string().optional().default("") }),
-  async ({ body }) => {
+  async ({ body, tenant }) => {
     const ref = body.ref.toUpperCase().trim();
     let total = 0;
     if (db) {
-      const [o] = await db.select().from(orders).where(eq(orders.ref, ref)).limit(1);
+      const [o] = await db.select().from(orders).where(and(eq(orders.tenantId, tenant.id), eq(orders.ref, ref))).limit(1);
       total = o?.totalCop ?? 0;
+    }
+
+    // --- Tenant de PAGO ANTICIPADO: cuentas del tenant, NUNCA contra entrega ---
+    if (tenant.paymentMode === "anticipado") {
+      const cuentas = (tenant.cuentasPago || "").trim();
+      return {
+        link: "",
+        ref_pago: "",
+        mensaje: cuentas
+          ? `Para despachar tu pedido ${ref}${total ? ` (${cop(total)})` : ""}, realiza el pago a:\n\n${cuentas}\n\nApenas transfieras, envíame el *comprobante* y confirmamos el despacho. 🐓`
+          : `Para despachar tu pedido ${ref}${total ? ` (${cop(total)})` : ""} necesitamos el pago por adelantado. En un momento un asesor te comparte los datos. 🐓`,
+      };
     }
 
     // Sin Bold configurado → seguimos contraentrega (no se requiere pago anticipado).

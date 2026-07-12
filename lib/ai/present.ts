@@ -2,8 +2,14 @@
    Contrato estable: si renombras estos campos, el bot deja de mapear. */
 import type { ProductView } from "@/lib/ai/types";
 import { cop } from "@/lib/ai/format";
+import { peekTenant } from "@/lib/ai/tenant";
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://animalsdeluxe.com";
+
+/** ¿El tenant del request cobra por adelantado? (anticipado → nunca "contra entrega"). */
+function esAnticipado(): boolean {
+  return peekTenant()?.paymentMode === "anticipado";
+}
 
 /** Bloque de contexto que el LLM del bot (Victor) usa pa asesorar a fondo. */
 export function buildContexto(p: ProductView): string {
@@ -34,10 +40,12 @@ export function descripcionRica(p: ProductView): string {
   return [gancho, bens].filter(Boolean).join("\n");
 }
 
-/** Cierre de precio listo para pegar (precio + envío/gratis + contra entrega). */
+/** Cierre de precio listo para pegar (precio + envío/gratis + forma de pago del tenant). */
 export function cierrePrecio(p: ProductView): string {
   const envio = p.envioGratis ? "envío GRATIS 🚚" : "+ envío";
-  return `💵 ${cop(p.priceCOP)} · ${envio} · contra entrega, pagás al recibir.`;
+  // Anticipado (Rooster Deluxe): NUNCA menciona contra entrega.
+  const pago = esAnticipado() ? "pago por adelantado." : "contra entrega, pagás al recibir.";
+  return `💵 ${cop(p.priceCOP)} · ${envio} · ${pago}`;
 }
 
 /** Mensaje WhatsApp-ready en voz Victor (nunca vacío). Enriquecido con ficha. */

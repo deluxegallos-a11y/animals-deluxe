@@ -18,7 +18,7 @@ export const POST = withBridge(
   z.object({
     ad_id: z.union([z.string(), z.number()]).transform((v) => String(v)).optional().default(""),
   }),
-  async ({ body, customer }) => {
+  async ({ body, customer, tenant }) => {
     const adId = body.ad_id.trim();
     const catalog = await getProducts();
 
@@ -28,7 +28,7 @@ export const POST = withBridge(
       const rows = await db
         .select({ slug: adMap.productSlug })
         .from(adMap)
-        .where(and(eq(adMap.adId, adId), eq(adMap.activo, true)))
+        .where(and(eq(adMap.tenantId, tenant.id), eq(adMap.adId, adId), eq(adMap.activo, true)))
         .orderBy(asc(adMap.orden));
       slugs = rows.map((r) => r.slug);
     }

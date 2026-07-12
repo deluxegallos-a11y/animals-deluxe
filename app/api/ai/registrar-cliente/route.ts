@@ -17,7 +17,7 @@ export const POST = withBridge(
     direccion: z.string().optional().default(""),
     cedula: z.union([z.string(), z.number()]).transform((v) => String(v)).optional().default(""),
   }).passthrough(),
-  async ({ customer, body }) => {
+  async ({ customer, body, tenant }) => {
     const nombre = (body.nombre || "").trim();
     const telefono = (body.telefono || "").trim();
     let guardado = false;
@@ -32,13 +32,14 @@ export const POST = withBridge(
       await audit("registrar_cliente", "customers", { id: customer.id, nombre, telefono });
       guardado = true;
     }
+    const formaPago = tenant.paymentMode === "anticipado" ? "pago por adelantado" : "contraentrega, pagas al recibir";
     return {
       ok: true,
       guardado,
       customer_id: customer.id,
       mensaje: nombre
-        ? `¡Listo ${nombre}! 🙌 Ya tengo tus datos. Cuando quieras armamos el pedido (contraentrega, pagas al recibir).`
-        : `¡Listo! 🙌 Ya te tengo registrado. Cuando quieras armamos el pedido (contraentrega, pagas al recibir).`,
+        ? `¡Listo ${nombre}! 🙌 Ya tengo tus datos. Cuando quieras armamos el pedido (${formaPago}).`
+        : `¡Listo! 🙌 Ya te tengo registrado. Cuando quieras armamos el pedido (${formaPago}).`,
     };
   },
 );

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { withBridge } from "@/lib/ai/bridge";
 import { db } from "@/lib/db/client";
 import { orders, orderItems } from "@/lib/db/schema";
@@ -11,6 +11,7 @@ export const dynamic = "force-dynamic";
 const ESTADO_TXT: Record<string, string> = {
   remision: "en preparación 📝",
   pendiente_confirmacion: "en preparación 📝",
+  por_verificar_pago: "esperando la confirmación de tu pago 💳",
   aprobado: "confirmado ✅",
   confirmado: "confirmado ✅",
   guia: "alistando tu envío 📦",
@@ -22,12 +23,13 @@ const ESTADO_TXT: Record<string, string> = {
 
 export const POST = withBridge(
   z.object({ ref: z.string().min(1) }),
-  async ({ body }) => {
+  async ({ body, tenant }) => {
     if (!db) {
       return { estado: "pendiente_confirmacion", total_cop: 0, guia: "", transportadora: "", requiere_asesor: false, items: [], mensaje: `Tu pedido ${body.ref} está pendiente de confirmación 🐓` };
     }
     const ref = body.ref.toUpperCase().trim();
-    const [o] = await db.select().from(orders).where(eq(orders.ref, ref)).limit(1);
+    // Scoped al tenant: un tenant no puede consultar el pedido de otro.
+    const [o] = await db.select().from(orders).where(and(eq(orders.tenantId, tenant.id), eq(orders.ref, ref))).limit(1);
     if (!o) {
       // Sin info clara → que un asesor lo confirme (UChat asigna la conversación).
       return {
@@ -53,7 +55,7 @@ export const POST = withBridge(
       transportadora,
       requiere_asesor,
       items: list,
-      mensaje: `Tu pedido *${ref}* está ${txt}. Total: ${cop(o.totalCop)} (contraentrega).${infoEnvio} ${list.length ? `Incluye: ${list.map((i) => `${i.cantidad}× ${i.name}`).join(", ")}.` : ""}`,
+      mensaje: `Tu pedido *${ref}* está ${txt}. Total: ${cop(o.totalCop)}${o.paymentType === "anticipado" ? "" : " (contraentrega)"}.${infoEnvio} ${list.length ? `Incluye: ${list.map((i) => `${i.cantidad}× ${i.name}`).join(", ")}.` : ""}`,
     };
   },
 );

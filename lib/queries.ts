@@ -9,6 +9,7 @@ import {
   promotions, conversations, storeConfig, integrations, adMap, orderAttempts, mpShipments, configEmpresa, mpAddresses, visits,
 } from "@/lib/db/schema";
 import { demoProducts, demoCategories } from "@/lib/demo-data";
+import { getPanelTenantId } from "@/lib/tenant-panel";
 import type { ProductView } from "@/lib/ai/types";
 
 /* ---------- Dashboard ---------- */
@@ -58,20 +59,21 @@ export async function getDashboard(range: string = "hoy", fromISO?: string, toIS
       ultimosPedidos: [],
     };
   }
+  const tid = (await getPanelTenantId())!;
   const startWeek = new Date(Date.now() - 7 * 86400_000);
   const noCancel = sql`coalesce(estado,'') <> 'cancelado'`;
   const enRango = and(gte(orders.createdAt, from), lt(orders.createdAt, to), noCancel);
 
   // Todas en PARALELO.
   const [[hoy], [sem], [ing], [rec], [leads], estados, top, ult] = await Promise.all([
-    db.select({ n: sql<number>`count(*)::int`, s: sql<number>`coalesce(sum(total_cop),0)::int` }).from(orders).where(enRango),
-    db.select({ n: sql<number>`count(*)::int` }).from(orders).where(and(gte(orders.createdAt, startWeek), noCancel)),
-    db.select({ s: sql<number>`coalesce(sum(total_cop),0)::int` }).from(orders).where(and(gte(orders.createdAt, from), lt(orders.createdAt, to), sql`estado in ('entregado','pagado','confirmado')`)),
-    db.select({ s: sql<number>`coalesce(sum(total_cop),0)::int` }).from(orders).where(sql`estado in ('aprobado','guia','despachado') and coalesce(metodo_pago,'contraentrega') <> 'anticipado'`),
-    db.select({ n: sql<number>`count(*)::int` }).from(customers).where(and(gte(customers.createdAt, from), lt(customers.createdAt, to))),
-    db.select({ estado: orders.estado, n: sql<number>`count(*)::int`, monto: sql<number>`coalesce(sum(total_cop),0)::int` }).from(orders).where(noCancel).groupBy(orders.estado),
-    db.select({ name: orderItems.productName, cantidad: sql<number>`sum(cantidad)::int` }).from(orderItems).innerJoin(orders, eq(orderItems.orderId, orders.id)).where(enRango).groupBy(orderItems.productName).orderBy(sql`sum(cantidad) desc`).limit(7),
-    db.select({ ref: orders.ref, nombre: orders.nombre, total: orders.totalCop, estado: orders.estado, createdAt: orders.createdAt, canal: orders.canal }).from(orders).orderBy(desc(orders.createdAt)).limit(8),
+    db.select({ n: sql<number>`count(*)::int`, s: sql<number>`coalesce(sum(total_cop),0)::int` }).from(orders).where(and(eq(orders.tenantId, tid), enRango)),
+    db.select({ n: sql<number>`count(*)::int` }).from(orders).where(and(eq(orders.tenantId, tid), gte(orders.createdAt, startWeek), noCancel)),
+    db.select({ s: sql<number>`coalesce(sum(total_cop),0)::int` }).from(orders).where(and(eq(orders.tenantId, tid), gte(orders.createdAt, from), lt(orders.createdAt, to), sql`estado in ('entregado','pagado','confirmado')`)),
+    db.select({ s: sql<number>`coalesce(sum(total_cop),0)::int` }).from(orders).where(and(eq(orders.tenantId, tid), sql`estado in ('aprobado','guia','despachado') and coalesce(metodo_pago,'contraentrega') <> 'anticipado'`)),
+    db.select({ n: sql<number>`count(*)::int` }).from(customers).where(and(eq(customers.tenantId, tid), gte(customers.createdAt, from), lt(customers.createdAt, to))),
+    db.select({ estado: orders.estado, n: sql<number>`count(*)::int`, monto: sql<number>`coalesce(sum(total_cop),0)::int` }).from(orders).where(and(eq(orders.tenantId, tid), noCancel)).groupBy(orders.estado),
+    db.select({ name: orderItems.productName, cantidad: sql<number>`sum(cantidad)::int` }).from(orderItems).innerJoin(orders, eq(orderItems.orderId, orders.id)).where(and(eq(orderItems.tenantId, tid), enRango)).groupBy(orderItems.productName).orderBy(sql`sum(cantidad) desc`).limit(7),
+    db.select({ ref: orders.ref, nombre: orders.nombre, total: orders.totalCop, estado: orders.estado, createdAt: orders.createdAt, canal: orders.canal }).from(orders).where(eq(orders.tenantId, tid)).orderBy(desc(orders.createdAt)).limit(8),
   ]);
 
   const estMap = new Map(estados.map((e) => [e.estado || "", e]));
@@ -117,6 +119,7 @@ const FUENTES: { key: string; label: string }[] = [
 export async function getAnalytics(): Promise<Analytics> {
   const empty: Analytics = { visitas30d: 0, visitasHoy: 0, visitas7d: 0, visitantes30d: 0, visitantesHoy: 0, pedidosWeb: 0, pedidosWhatsapp: 0, pedidosTotal: 0, porFuente: FUENTES.map((f) => ({ fuente: f.key, label: f.label, visitas: 0, pedidos: 0, conversion: 0 })), ventasPorCanal: [], origenes: [] };
   if (!db) return empty;
+  const tid = (await getPanelTenantId())!;
   const d30 = new Date(Date.now() - 30 * 86400_000);
   const d7 = new Date(Date.now() - 7 * 86400_000);
   const d0 = new Date(); d0.setHours(0, 0, 0, 0);
@@ -127,8 +130,8 @@ export async function getAnalytics(): Promise<Analytics> {
     db.select({ n: sql<number>`count(*)::int` }).from(visits).where(gte(visits.createdAt, d7)),
     db.select({ n: sql<number>`count(distinct session_id)::int` }).from(visits).where(gte(visits.createdAt, d30)),
     db.select({ n: sql<number>`count(distinct session_id)::int` }).from(visits).where(gte(visits.createdAt, d0)),
-    db.select({ canal: orders.canal, n: sql<number>`count(*)::int`, total: sql<number>`coalesce(sum(total_cop),0)::int` }).from(orders).where(gte(orders.createdAt, d30)).groupBy(orders.canal),
-    db.select({ f: orders.fuente, n: sql<number>`count(*)::int` }).from(orders).where(and(eq(orders.canal, "web"), gte(orders.createdAt, d30))).groupBy(orders.fuente),
+    db.select({ canal: orders.canal, n: sql<number>`count(*)::int`, total: sql<number>`coalesce(sum(total_cop),0)::int` }).from(orders).where(and(eq(orders.tenantId, tid), gte(orders.createdAt, d30))).groupBy(orders.canal),
+    db.select({ f: orders.fuente, n: sql<number>`count(*)::int` }).from(orders).where(and(eq(orders.tenantId, tid), eq(orders.canal, "web"), gte(orders.createdAt, d30))).groupBy(orders.fuente),
     db.select({ ref: visits.referrer, utm: visits.utmSource, n: sql<number>`count(*)::int` }).from(visits).where(gte(visits.createdAt, d30)).groupBy(visits.referrer, visits.utmSource),
   ]);
   const origMap = new Map<string, number>();
@@ -170,10 +173,12 @@ export async function listProducts(): Promise<ProductAdminRow[]> {
     shopifyProductId: "", shopifySync: "pending" as const, shopifySyncError: "",
     pesoGr: 1000, altoCm: 15, anchoCm: 12, largoCm: 8,
   }));
+  const tid = (await getPanelTenantId())!;
   const rows = await db
     .select({ p: products, c: categories })
     .from(products)
     .leftJoin(categories, eq(products.categoryId, categories.id))
+    .where(eq(products.tenantId, tid))
     .orderBy(asc(products.name));
   const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://animalsdeluxe.com";
   return rows.map((r) => ({
@@ -201,7 +206,8 @@ export async function listProducts(): Promise<ProductAdminRow[]> {
 
 export async function listCategoriesAdmin() {
   if (!db) return demoCategories;
-  return db.select().from(categories).orderBy(asc(categories.sortOrder), asc(categories.name));
+  const tid = (await getPanelTenantId())!;
+  return db.select().from(categories).where(eq(categories.tenantId, tid)).orderBy(asc(categories.sortOrder), asc(categories.name));
 }
 
 /* ---------- Pedidos ---------- */
@@ -218,16 +224,18 @@ export type OrderRow = {
 
 export async function listOrders(): Promise<OrderRow[]> {
   if (!db) return [];
+  const tid = (await getPanelTenantId())!;
   const rows = await db
     .select({ o: orders, a: advisors })
     .from(orders)
     .leftJoin(advisors, eq(orders.advisorId, advisors.id))
+    .where(eq(orders.tenantId, tid))
     .orderBy(desc(orders.createdAt))
     .limit(200);
   const ids = rows.map((r) => r.o.id);
   const [items, shipments] = ids.length
     ? await Promise.all([
-        db.select().from(orderItems).where(inArray(orderItems.orderId, ids)),
+        db.select().from(orderItems).where(and(eq(orderItems.tenantId, tid), inArray(orderItems.orderId, ids))),
         db.select().from(mpShipments).where(inArray(mpShipments.orderId, ids)),
       ])
     : [[], []];
@@ -265,10 +273,11 @@ export type OrderDetail = {
 
 export async function getOrderDetail(id: string): Promise<OrderDetail | null> {
   if (!db || !id) return null;
-  const [o] = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
+  const tid = (await getPanelTenantId())!;
+  const [o] = await db.select().from(orders).where(and(eq(orders.tenantId, tid), eq(orders.id, id))).limit(1);
   if (!o) return null;
   const [items, ship] = await Promise.all([
-    db.select({ it: orderItems, p: products }).from(orderItems).leftJoin(products, eq(orderItems.productSlug, products.slug)).where(eq(orderItems.orderId, id)),
+    db.select({ it: orderItems, p: products }).from(orderItems).leftJoin(products, eq(orderItems.productSlug, products.slug)).where(and(eq(orderItems.tenantId, tid), eq(orderItems.orderId, id))),
     db.select().from(mpShipments).where(eq(mpShipments.orderId, id)).limit(1),
   ]);
   const s = ship[0];
@@ -303,7 +312,8 @@ export async function getBodegaDefault() {
 /* ---------- Clientes (leads) ---------- */
 export async function listCustomers() {
   if (!db) return [];
-  return db.select().from(customers).orderBy(desc(customers.createdAt)).limit(300);
+  const tid = (await getPanelTenantId())!;
+  return db.select().from(customers).where(eq(customers.tenantId, tid)).orderBy(desc(customers.createdAt)).limit(300);
 }
 
 /* ---------- CRM: clientes con etapa calculada + productos ---------- */
@@ -332,15 +342,16 @@ export function deriveStage(numPedidos: number, interes: number, interacciones: 
 
 export async function listCRM(): Promise<CrmRow[]> {
   if (!db) return [];
+  const tid = (await getPanelTenantId())!;
   // 4 consultas en PARALELO (antes en fila).
   const [custs, prods, aggs, boughtAgg] = await Promise.all([
-    db.select().from(customers).orderBy(desc(customers.ultimoContacto)).limit(2000),
-    db.select({ slug: products.slug, name: products.name }).from(products),
+    db.select().from(customers).where(eq(customers.tenantId, tid)).orderBy(desc(customers.ultimoContacto)).limit(2000),
+    db.select({ slug: products.slug, name: products.name }).from(products).where(eq(products.tenantId, tid)),
     db.select({ cid: orders.customerId, n: sql<number>`count(*)::int`, total: sql<number>`coalesce(sum(total_cop),0)::int`, last: sql<Date>`max(created_at)` })
-      .from(orders).where(sql`customer_id is not null and coalesce(estado,'') <> 'cancelado'`).groupBy(orders.customerId),
+      .from(orders).where(and(eq(orders.tenantId, tid), sql`customer_id is not null and coalesce(estado,'') <> 'cancelado'`)).groupBy(orders.customerId),
     db.select({ cid: orders.customerId, slugs: sql<string[]>`array_agg(distinct ${orderItems.productSlug})` })
       .from(orderItems).innerJoin(orders, eq(orderItems.orderId, orders.id))
-      .where(sql`${orders.customerId} is not null and coalesce(${orders.estado},'') <> 'cancelado'`).groupBy(orders.customerId),
+      .where(and(eq(orderItems.tenantId, tid), sql`${orders.customerId} is not null and coalesce(${orders.estado},'') <> 'cancelado'`)).groupBy(orders.customerId),
   ]);
   const nameOf = new Map(prods.map((p) => [p.slug, p.name]));
   const aggMap = new Map(aggs.map((a) => [a.cid as string, a]));
@@ -387,13 +398,15 @@ export async function listConversations() {
 /* ---------- Promociones ---------- */
 export async function listPromotions() {
   if (!db) return [];
-  return db.select().from(promotions).orderBy(asc(promotions.orden), desc(promotions.createdAt));
+  const tid = (await getPanelTenantId())!;
+  return db.select().from(promotions).where(eq(promotions.tenantId, tid)).orderBy(asc(promotions.orden), desc(promotions.createdAt));
 }
 
 /* ---------- Asesores ---------- */
 export async function listAdvisors() {
   if (!db) return [];
-  return db.select().from(advisors).orderBy(asc(advisors.createdAt));
+  const tid = (await getPanelTenantId())!;
+  return db.select().from(advisors).where(eq(advisors.tenantId, tid)).orderBy(asc(advisors.createdAt));
 }
 
 /* ---------- Config / integraciones ---------- */
@@ -412,10 +425,11 @@ export async function listIntegrations() {
 export type AttemptRow = { id: string; createdAt: Date | null; subId: string; resultado: string; motivo: string; body: Record<string, unknown>; rawText: string };
 export async function listFailedAttempts(): Promise<AttemptRow[]> {
   if (!db) return [];
+  const tid = (await getPanelTenantId())!;
   const rows = await db
     .select()
     .from(orderAttempts)
-    .where(sql`coalesce(resultado,'') <> 'created'`)
+    .where(and(eq(orderAttempts.tenantId, tid), sql`coalesce(resultado,'') <> 'created'`))
     .orderBy(desc(orderAttempts.createdAt))
     .limit(100);
   return rows.map((r) => ({
@@ -434,10 +448,12 @@ export type AdMapGroup = {
 };
 export async function listAdMap(): Promise<AdMapGroup[]> {
   if (!db) return [];
+  const tid = (await getPanelTenantId())!;
   const rows = await db
     .select({ a: adMap, pName: products.name })
     .from(adMap)
     .leftJoin(products, eq(adMap.productSlug, products.slug))
+    .where(eq(adMap.tenantId, tid))
     .orderBy(asc(adMap.adId), asc(adMap.orden));
   const byAd = new Map<string, AdMapGroup>();
   for (const r of rows) {

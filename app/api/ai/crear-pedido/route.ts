@@ -9,6 +9,7 @@ import { createOrder, parsePlainItems } from "@/lib/ai/orders";
 import { pushOrderToShopify } from "@/lib/shopify-sync";
 import { cop } from "@/lib/ai/format";
 import { searchProducts } from "@/lib/ai/search";
+import { DEFAULT_TENANT_SLUG } from "@/lib/ai/tenant";
 import type { ProductView } from "@/lib/ai/types";
 
 export const runtime = "nodejs";
@@ -38,8 +39,9 @@ export const POST = withBridge(
   // Body PERMISIVO (§2.1): NUNCA rechazamos por formato ("faltan datos"). Normalizamos
   // y resolvemos todo dentro; si falta un mínimo real, devolvemos campos_faltantes.
   z.object({}).passthrough(),
-  async ({ customer, body }) => {
+  async ({ customer, body, tenant }) => {
     const b = body as Record<string, unknown>;
+    const esDefaultTenant = tenant.slug === DEFAULT_TENANT_SLUG; // solo AD tiene Shopify/Meta
     const subId = customer.uchatSubId || customer.id;
     // LOG del request crudo + registro del intento (para NO perder ninguna venta).
     await logEvent("crear_pedido_req", { sub_id: subId, body: b });
@@ -59,7 +61,12 @@ export const POST = withBridge(
     const cedula = cedulaRaw.length >= 5 ? cedulaRaw : "";
     const correo = str(b.correo ?? b.email);
     const cupon = str(b.cupon ?? b.codigo ?? b.cupon_codigo);
-    const metodo: "contraentrega" | "anticipado" = str(b.metodo).toLowerCase().startsWith("antic") ? "anticipado" : "contraentrega";
+    // Método: lo que mande el bot; si no, el modo del TENANT (Rooster Deluxe = anticipado).
+    const metodoRaw = str(b.metodo).toLowerCase();
+    const metodo: "contraentrega" | "anticipado" =
+      metodoRaw.startsWith("antic") ? "anticipado"
+      : metodoRaw.startsWith("contra") ? "contraentrega"
+      : (tenant.paymentMode === "anticipado" ? "anticipado" : "contraentrega");
     // Canal de origen (para separar en el panel). El bot puede mandarlo; default whatsapp.
     const canalRaw = str(b.canal ?? b.channel ?? b.origen).toLowerCase();
     const canal = /messen|facebook|\bfb\b|insta/.test(canalRaw) ? "messenger" : canalRaw === "web" ? "web" : "whatsapp";
@@ -161,7 +168,8 @@ export const POST = withBridge(
       metodo,
       canal,
       catalog,
-      estado: sospechoso ? "por_revisar" : undefined,
+      // Anticipado: nace en 'por_verificar_pago' (espera comprobante). COD: default 'remision'.
+      estado: sospechoso ? "por_revisar" : (metodo === "anticipado" ? "por_verificar_pago" : undefined),
       notas: sospechoso
         ? `⚠️ REVISAR CANTIDAD (posible error del bot): pidió ${maxCantidad} unid · total estimado ${cop(totalEstimado)}. Confirmar con el cliente antes de despachar. La cantidad real suele ser 1.`
         : undefined,
@@ -191,7 +199,7 @@ export const POST = withBridge(
 
     // La ref que ve el cliente SIEMPRE es la interna AD-XXXX (con esa consulta
     // estado-pedido, y es idempotente). El nombre de Shopify queda guardado aparte.
-    if (!order.reused && !order.pedido_id.startsWith("demo-")) {
+    if (esDefaultTenant && !order.reused && !order.pedido_id.startsWith("demo-")) {
       const shop = await pushOrderToShopify({
         orderId: order.pedido_id,
         nombre, telefono, ciudad, direccion, cedula,
@@ -209,26 +217,35 @@ export const POST = withBridge(
     if (!order.reused) {
       await audit("crear_pedido", "orders", { ref: order.ref, total: order.total_cop });
       await logEvent("pedido_creado", { ref: order.ref, total: order.total_cop, metodo });
-      // Evento Purchase a Meta CAPI (fail-soft; entrena el pixel con ventas del bot).
-      const meta = await sendMetaPurchase({
-        ref: order.ref, valueCop: order.total_cop, phone: telefono, nombre, ciudad,
-        contentIds: order.items.map((it) => it.slug), actionSource: "business_messaging",
-      });
-      if (!meta.skipped) await logEvent(meta.ok ? "meta_purchase_ok" : "meta_purchase_error", { ref: order.ref, error: meta.error });
+      // Evento Purchase a Meta CAPI (solo AD: es su pixel). Fail-soft.
+      if (esDefaultTenant) {
+        const meta = await sendMetaPurchase({
+          ref: order.ref, valueCop: order.total_cop, phone: telefono, nombre, ciudad,
+          contentIds: order.items.map((it) => it.slug), actionSource: "business_messaging",
+        });
+        if (!meta.skipped) await logEvent(meta.ok ? "meta_purchase_ok" : "meta_purchase_error", { ref: order.ref, error: meta.error });
+      }
     }
     await updateOrderAttempt(attemptId, { resultado: "created", ref: order.ref });
 
     const listaProductos = order.items.map((it) => `${it.cantidad}× ${it.name}`).join(", ");
-    const mensaje =
-      `✅ ¡Listo${nombre ? " " + nombre.split(" ")[0] : ""}! Tu pedido quedó confirmado 🎉 Ref *${ref}*\n` +
-      `${listaProductos}\n` +
-      `Producto: ${cop(order.subtotal_cop)}` +
-      (order.descuento_cop ? ` · Descuento: -${cop(order.descuento_cop)}` : "") + `\n` +
-      `*Total a recaudar: ${cop(order.total_cop)}* (solo el producto)\n` +
-      (order.envio_cop
-        ? `🚚 El flete lo cobra la transportadora al entregar (aprox ${cop(order.envio_cop)}, puede variar).\n`
-        : `🚚 ¡Envío GRATIS! 🎉\n`) +
-      `Te despachamos a ${ciudad} contra entrega. ¡Gracias por confiar en Animals Deluxe! 🐓`;
+    const mensaje = metodo === "anticipado"
+      // --- PAGO ANTICIPADO: nunca menciona contra entrega. Pide comprobante. ---
+      ? `✅ ¡Listo${nombre ? " " + nombre.split(" ")[0] : ""}! Tu pedido quedó registrado 🎉 Ref *${ref}*\n` +
+        `${listaProductos}\n` +
+        `*Total a pagar: ${cop(order.total_cop)}*\n` +
+        `Para despacharlo, realiza el pago por adelantado y envíame el *comprobante*. ` +
+        `Un asesor lo confirma y coordina el envío a ${ciudad}. ¡Gracias! 🐓`
+      // --- CONTRA ENTREGA (Animals Deluxe) ---
+      : `✅ ¡Listo${nombre ? " " + nombre.split(" ")[0] : ""}! Tu pedido quedó confirmado 🎉 Ref *${ref}*\n` +
+        `${listaProductos}\n` +
+        `Producto: ${cop(order.subtotal_cop)}` +
+        (order.descuento_cop ? ` · Descuento: -${cop(order.descuento_cop)}` : "") + `\n` +
+        `*Total a recaudar: ${cop(order.total_cop)}* (solo el producto)\n` +
+        (order.envio_cop
+          ? `🚚 El flete lo cobra la transportadora al entregar (aprox ${cop(order.envio_cop)}, puede variar).\n`
+          : `🚚 ¡Envío GRATIS! 🎉\n`) +
+        `Te despachamos a ${ciudad} contra entrega. ¡Gracias por confiar en Animals Deluxe! 🐓`;
 
     return {
       pedido_id: order.pedido_id,
