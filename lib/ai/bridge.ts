@@ -28,9 +28,10 @@ export interface Ctx<B> {
   req: NextRequest;
 }
 
-/* ---- base body: todo endpoint recibe sub_id (single-tenant: sin uchat_ws) ---- */
+/* ---- base body: sub_id OPCIONAL (100% permisivo). Nunca rechazamos por formato:
+   si falta el sub_id, se usa un cliente sintético y el endpoint responde igual. ---- */
 export const baseSchema = z.object({
-  sub_id: z.union([z.string(), z.number()]).transform((v) => String(v)),
+  sub_id: z.union([z.string(), z.number()]).transform((v) => String(v)).optional().default(""),
 });
 
 /* ---- sanitizador: null/undefined → "" en profundidad ---- */
@@ -141,6 +142,9 @@ export function looseExtract(text: string): Record<string, string> | null {
 function ok(data: Record<string, unknown>) {
   return NextResponse.json(noNulls({ ok: true, ...data }));
 }
+/* Los errores de SISTEMA van SIEMPRE en `error` y NUNCA en `mensaje` (el bot no
+   muestra `mensaje` en errores). `mensaje` se deja "" salvo un error de dominio
+   (mensaje amable intencional para el cliente, vía domainError). */
 function fail(status: number, error: string, mensaje = "") {
   return NextResponse.json({ ok: false, error, mensaje }, { status });
 }
@@ -224,14 +228,14 @@ export function withBridge<S extends z.ZodTypeAny>(
         const sid = raw && typeof raw === "object" ? String((raw as Record<string, unknown>).sub_id || "") : "";
         await logOrderAttempt({ subId: sid, rawBody: raw, rawText, resultado: "rejected", motivo: "body_invalido: " + errores.join("; "), tenantId: tenant.id });
       }
-      return fail(400, "invalid_body", "Faltan datos en la solicitud.");
+      return fail(400, "invalid_body"); // mensaje "" — el error va en `error`, nunca en `mensaje`
     }
     const body = parsed.data as z.infer<S> & { sub_id: string };
 
     // 4) rate limit
     const ip = clientIp(req);
-    if (await isRateLimited(`${ip}:${body.sub_id}`, Date.now())) {
-      return fail(429, "rate_limited", "Estamos recibiendo muchas solicitudes, intenta en un momento.");
+    if (body.sub_id && await isRateLimited(`${ip}:${body.sub_id}`, Date.now())) {
+      return fail(429, "rate_limited");
     }
 
     // Datos de contacto que el bot PUEDE mandar en CUALQUIER request (nombre/teléfono
@@ -253,10 +257,11 @@ export function withBridge<S extends z.ZodTypeAny>(
       };
     })();
 
-    // 5) resolver/crear cliente (lead). En modo demo, cliente sintético.
+    // 5) resolver/crear cliente (lead). Sin DB o sin sub_id → cliente sintético
+    //    (no persiste, pero el endpoint responde igual: 100% permisivo).
     let customer: Customer;
-    if (!db) {
-      customer = demoCustomer(body.sub_id);
+    if (!db || !body.sub_id) {
+      customer = demoCustomer(body.sub_id || "anon");
     } else {
       // Cliente resuelto POR TENANT: el mismo sub_id de WhatsApp puede existir en
       // dos tenants distintos y son leads diferentes.
@@ -282,7 +287,7 @@ export function withBridge<S extends z.ZodTypeAny>(
           .returning();
         customer = created;
       }
-      if (!customer) return fail(500, "customer_error", "Tuvimos un inconveniente, intenta de nuevo.");
+      if (!customer) return fail(500, "customer_error");
     }
 
     // 6) handler de dominio — corre DENTRO del contexto del tenant (AsyncLocalStorage),
@@ -296,7 +301,7 @@ export function withBridge<S extends z.ZodTypeAny>(
         return fail(409, "domain_error", msg.slice(7));
       }
       console.error("withBridge handler error:", err);
-      return fail(500, "internal_error", "Tuvimos un inconveniente. Intenta de nuevo en un momento.");
+      return fail(500, "internal_error");
     }
   };
 }

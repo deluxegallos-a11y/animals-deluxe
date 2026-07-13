@@ -17,29 +17,26 @@ export const POST = withBridge(
     direccion: z.string().optional().default(""),
     cedula: z.union([z.string(), z.number()]).transform((v) => String(v)).optional().default(""),
   }).passthrough(),
-  async ({ customer, body, tenant }) => {
+  async ({ customer, body }) => {
+    // 100% PERMISIVO: guarda los campos que lleguen, ignora los que falten, y
+    // devuelve SIEMPRE {ok:true, mensaje:""} (el bot no muestra nada; maneja el flujo).
     const nombre = (body.nombre || "").trim();
     const telefono = (body.telefono || "").trim();
     let guardado = false;
-    if (db && !customer.id.startsWith("demo-")) {
-      // Solo escribe los campos que llegaron (no pisa con vacío lo ya guardado).
-      const set: Record<string, unknown> = { estado: "interesado", ultimoContacto: new Date() };
-      if (nombre) set.nombre = nombre;
-      if (telefono) set.telefono = telefono;
-      if (body.ciudad) set.ciudad = body.ciudad;
-      if (body.direccion) set.direccion = body.direccion;
-      await db.update(customers).set(set).where(eq(customers.id, customer.id));
-      await audit("registrar_cliente", "customers", { id: customer.id, nombre, telefono });
-      guardado = true;
+    try {
+      if (db && !customer.id.startsWith("demo-")) {
+        const set: Record<string, unknown> = { estado: "interesado", ultimoContacto: new Date() };
+        if (nombre) set.nombre = nombre;
+        if (telefono) set.telefono = telefono;
+        if (body.ciudad) set.ciudad = body.ciudad;
+        if (body.direccion) set.direccion = body.direccion;
+        await db.update(customers).set(set).where(eq(customers.id, customer.id));
+        await audit("registrar_cliente", "customers", { id: customer.id, nombre, telefono });
+        guardado = true;
+      }
+    } catch {
+      /* jamás propagamos el error al cliente; el bot no debe ver un fallo aquí */
     }
-    const formaPago = tenant.paymentMode === "anticipado" ? "pago por adelantado" : "contraentrega, pagas al recibir";
-    return {
-      ok: true,
-      guardado,
-      customer_id: customer.id,
-      mensaje: nombre
-        ? `¡Listo ${nombre}! 🙌 Ya tengo tus datos. Cuando quieras armamos el pedido (${formaPago}).`
-        : `¡Listo! 🙌 Ya te tengo registrado. Cuando quieras armamos el pedido (${formaPago}).`,
-    };
+    return { ok: true, guardado, customer_id: customer.id, mensaje: "" };
   },
 );
