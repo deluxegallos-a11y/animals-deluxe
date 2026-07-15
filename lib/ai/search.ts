@@ -180,8 +180,9 @@ function isRelevant(qStems: string[], p: ProductView, intentCats: Set<string>): 
   const b = buckets(p);
   for (const q of qStems) {
     if (b.name.has(q) || b.kw.has(q) || b.cat.has(q)) return true;
-    for (const h of b.nameArr) { if (h.length >= 4 && (h.includes(q) || q.includes(h))) return true; if (dice(q, h) >= 0.66) return true; }
-    for (const h of b.kwArr) { if (h.length >= 4 && (h.includes(q) || q.includes(h))) return true; if (dice(q, h) >= 0.7) return true; }
+    // substring solo con tokens de ≥4 (evita que "ojo" matchee "piojos"/"rojo").
+    for (const h of b.nameArr) { if (q.length >= 4 && h.length >= 4 && (h.includes(q) || q.includes(h))) return true; if (dice(q, h) >= 0.66) return true; }
+    for (const h of b.kwArr) { if (q.length >= 4 && h.length >= 4 && (h.includes(q) || q.includes(h))) return true; if (dice(q, h) >= 0.7) return true; }
   }
   return false;
 }
@@ -204,11 +205,11 @@ function scoreProduct(qTokens: string[], qNorm: string, p: ProductView, intentCa
     // typo tolerance: fuzzy con más peso contra el NOMBRE que contra keywords.
     let best = 0;
     for (const h of b.nameArr) {
-      if (h.length >= 4 && (h.includes(q) || q.includes(h))) { best = Math.max(best, 3); continue; }
+      if (q.length >= 4 && h.length >= 4 && (h.includes(q) || q.includes(h))) { best = Math.max(best, 3); continue; }
       const d = dice(q, h); if (d * 5 > best) best = d * 5;
     }
     for (const h of b.kwArr) {
-      if (h.length >= 4 && (h.includes(q) || q.includes(h))) { best = Math.max(best, 2.5); continue; }
+      if (q.length >= 4 && h.length >= 4 && (h.includes(q) || q.includes(h))) { best = Math.max(best, 2.5); continue; }
       const d = dice(q, h); if (d * 3.5 > best) best = d * 3.5;
     }
     score += best;
