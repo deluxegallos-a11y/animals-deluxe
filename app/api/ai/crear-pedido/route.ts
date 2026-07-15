@@ -20,6 +20,16 @@ const qty = (x: unknown) => {
   const n = parseInt(String(x ?? "").replace(/[^0-9]/g, ""), 10);
   return n > 0 ? n : 1;
 };
+/** Placeholder del bot ("pendiente", "N/A", "-", "sin dato"…) = dato ausente. */
+const esPlaceholder = (s: string) =>
+  !s || /^(pendiente|pend|n\/?a|na|no\s*(aplica|hay|tiene|se)|ninguno?|sin\s*\w*|desconocid[oa]|\.+|-+|\?+|x+)$/i.test(s.trim());
+/** Celular colombiano válido → 10 dígitos que empiezan en 3 (tolera prefijo 57). "" si inválido. */
+const telValido = (raw: string): string => {
+  let d = String(raw || "").replace(/\D/g, "");
+  if (d.length === 12 && d.startsWith("57")) d = d.slice(2);
+  if (d.length === 11 && d.startsWith("57")) d = d.slice(2);
+  return d.length === 10 && d.startsWith("3") ? d : "";
+};
 
 /** ¿Este texto (con sus dígitos) es un producto real del catálogo? Se usa para
  *  decidir si un número al inicio es cantidad o parte del nombre. */
@@ -111,14 +121,16 @@ export const POST = withBridge(
       else noEncontrados.push(r.name);
     }
 
-    // --- Mínimos → campos_faltantes con NOMBRE (nunca genérico) ---
+    // --- REQUISITOS DUROS (bug AD-7PM7: se creó un pedido sin nombre/cédula/tel/dirección).
+    // NINGÚN pedido se crea sin los 5 datos + 1 ítem. Se validan formato y placeholders.
+    const telOk = telValido(telefono);            // celular CO válido (10 díg, empieza en 3)
+    const nombreOk = !esPlaceholder(nombre) && nombre.replace(/[^a-zA-ZáéíóúñÁÉÍÓÚÑ]/g, "").length >= 3;
     const faltantes: string[] = [];
-    if (!nombre) faltantes.push("nombre");
-    if (!telefono) faltantes.push("telefono");
-    if (!ciudad) faltantes.push("ciudad");
-    if (!direccion) faltantes.push("direccion");
-    // La cédula NO bloquea el pedido (se necesita para la guía, no para capturar la venta).
-    // Se pide después / la completa el asesor antes de generar la guía. Nunca se pierde la venta.
+    if (!nombreOk) faltantes.push("nombre");
+    if (!telOk) faltantes.push("telefono");
+    if (!cedula) faltantes.push("cedula");        // cédula: numérica ≥5 díg (ya validada arriba). Requerida.
+    if (esPlaceholder(ciudad)) faltantes.push("ciudad");
+    if (esPlaceholder(direccion)) faltantes.push("direccion");
     if (!items.length) faltantes.push("producto");
     if (faltantes.length) {
       await logEvent("pedido_no_creado", {
@@ -143,7 +155,7 @@ export const POST = withBridge(
     if (db && !customer.id.startsWith("demo-")) {
       await db
         .update(customers)
-        .set({ nombre, telefono, ciudad, direccion, estado: "cliente", ultimoContacto: new Date() })
+        .set({ nombre, telefono: telOk, ciudad, direccion, estado: "cliente", ultimoContacto: new Date() })
         .where(eq(customers.id, customer.id));
     }
 
@@ -163,7 +175,7 @@ export const POST = withBridge(
       subId: customer.uchatSubId || customer.id,
       customerId: customer.id,
       items,
-      nombre, telefono, ciudad, direccion, cedula,
+      nombre, telefono: telOk, ciudad, direccion, cedula,
       cupon: cupon || undefined,
       metodo,
       canal,

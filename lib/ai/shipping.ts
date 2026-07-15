@@ -30,14 +30,31 @@ export const ZONES: Record<Zona, ZoneRate> = {
   vereda: { kiloInicial: 88000, kiloAdicional: 15200, label: "Veredas" },
 };
 
-/* FLETE POR VALOR (contraentrega Interrapidísimo): $20.000 + 7% del valor total
-   de los productos (recaudo COD). Una sola vez por pedido, sobre el TOTAL (no por ítem).
-   Ej.: 70.000→24.900 · 150.000→30.500 · 180.000→32.600. Excepción: envío incluido → $0. */
-export function calcularFlete(totalProductos: number): number {
-  return Math.round(20000 + Math.max(0, totalProductos || 0) * 0.07);
+/* FLETE + TIEMPOS POR ZONA (Interrapidísimo). El flete y los días hábiles VARÍAN por
+   zona: apartadas (San Andrés, Amazonas, Chocó…) cuestan más y tardan más.
+   flete = base_zona + pct_zona * valor_productos, redondeado a la centena.
+   ⚠️ VALORES PLANTILLA: reemplazar por el tarifario real negociado / cotización por guía. */
+export interface ZoneFlete { base: number; pct: number; diasMin: number; diasMax: number; confirmar: boolean }
+export const ZONE_RATE: Record<Zona, ZoneFlete> = {
+  local:              { base: 12000, pct: 0.05, diasMin: 1, diasMax: 2, confirmar: false },
+  regional:           { base: 15000, pct: 0.06, diasMin: 2, diasMax: 3, confirmar: false },
+  nacional_metro:     { base: 20000, pct: 0.07, diasMin: 2, diasMax: 4, confirmar: false },
+  nacional_municipal: { base: 22000, pct: 0.07, diasMin: 3, diasMax: 5, confirmar: false },
+  dificil:            { base: 32000, pct: 0.10, diasMin: 5, diasMax: 8, confirmar: true },
+  vereda:             { base: 40000, pct: 0.12, diasMin: 6, diasMax: 10, confirmar: true },
+};
+
+/** Flete de la zona: base + pct * valor de los productos, redondeado a la centena. */
+export function calcularFlete(totalProductos: number, zona: Zona = "nacional_municipal"): number {
+  const r = ZONE_RATE[zona];
+  return Math.round((r.base + Math.max(0, totalProductos || 0) * r.pct) / 100) * 100;
+}
+export function tiempoZona(zona: Zona): string {
+  const r = ZONE_RATE[zona];
+  return `${r.diasMin} a ${r.diasMax} días hábiles`;
 }
 const PESO_POR_UNIDAD_KG = 1; // 1 producto liviano ≈ 1 kg (solo informativo)
-export const TIEMPO_ENTREGA = "24 a 72 horas";
+export const TIEMPO_ENTREGA = "2 a 5 días hábiles"; // fallback genérico (zona por defecto)
 
 /* Productos con envío gratis. Slugs reales del catálogo. Además, cualquier
    producto con el flag `envioGratis` activo en el panel también cuenta como
@@ -65,11 +82,16 @@ const CITY_ZONES_RAW: Record<Zona, string[]> = {
     "pereira", "manizales", "armenia", "ibague", "villavicencio",
     "santa marta", "pasto", "monteria", "valledupar", "neiva", "popayan",
     "sincelejo", "riohacha", "tunja", "florencia", "yopal", "quibdo",
-    "san andres", "soacha", "soledad", "dosquebradas", "floridablanca",
+    "soacha", "soledad", "dosquebradas", "floridablanca",
     "giron", "piedecuesta", "palmira", "buenaventura", "tulua",
   ],
   nacional_municipal: [],
-  dificil: [],
+  // Zonas apartadas: flete alto, tiempos largos, requiere confirmar (a veces recogida en oficina).
+  dificil: [
+    "san andres", "providencia", "leticia", "mitu", "inirida", "puerto inirida",
+    "puerto carreno", "bahia solano", "nuqui", "acandi", "capurgana", "unguia",
+    "jurado", "bajo baudo", "pizarro", "timbiqui", "guapi", "bojaya", "murindo",
+  ],
   vereda: [],
 };
 
@@ -81,16 +103,22 @@ const CITY_ZONE_INDEX: Map<string, Zona> = (() => {
   return m;
 })();
 
-/** Resuelve la zona de una ciudad. Default: nacional_municipal. */
-export function resolveZona(ciudad: string): Zona {
+/** Resuelve la zona + si la ciudad se ENCONTRÓ en la tabla (para pedir confirmación
+ *  de cobertura cuando es desconocida). Default: nacional_municipal, encontrada=false. */
+export function resolveZonaInfo(ciudad: string): { zona: Zona; encontrada: boolean } {
   const norm = normalize(ciudad || "");
-  if (!norm) return "nacional_municipal";
-  if (CITY_ZONE_INDEX.has(norm)) return CITY_ZONE_INDEX.get(norm)!;
+  if (!norm) return { zona: "nacional_municipal", encontrada: false };
+  if (CITY_ZONE_INDEX.has(norm)) return { zona: CITY_ZONE_INDEX.get(norm)!, encontrada: true };
   // match parcial (la ciudad puede venir con departamento, p.ej. "cali, valle")
   for (const [city, zona] of CITY_ZONE_INDEX) {
-    if (norm.includes(city) || city.includes(norm)) return zona;
+    if (city.length >= 4 && (norm.includes(city) || city.includes(norm))) return { zona, encontrada: true };
   }
-  return "nacional_municipal";
+  return { zona: "nacional_municipal", encontrada: false };
+}
+
+/** Resuelve la zona de una ciudad. Default: nacional_municipal. */
+export function resolveZona(ciudad: string): Zona {
+  return resolveZonaInfo(ciudad).zona;
 }
 
 export interface ShippingInput {
@@ -113,6 +141,11 @@ export interface ShippingResult {
   envio_gratis: boolean;
   costo_envio: number;
   tiempo: string;
+  dias_min: number;
+  dias_max: number;
+  /** Zona apartada o ciudad desconocida → confirmar cobertura/tiempos con el cliente. */
+  requiere_confirmar: boolean;
+  ciudad_encontrada: boolean;
   desglose: {
     kilos: number;
     base: number;
@@ -124,15 +157,16 @@ export interface ShippingResult {
 /** Flete = $20.000 + 7% del valor de los productos que pagan envío (calcularFlete).
  *  $0 si todo el pedido es envío-incluido. Determinista: mismo valor → misma cifra. */
 export function computeShipping(input: ShippingInput): ShippingResult {
-  const zona = resolveZona(input.ciudad); // solo informativo (cobertura nacional)
+  const { zona, encontrada } = resolveZonaInfo(input.ciudad);
+  const rate = ZONE_RATE[zona];
   const pesoKg = input.pesoKg != null ? input.pesoKg : Math.max(1, input.unidades ?? 1) * PESO_POR_UNIDAD_KG;
   const kilos = Math.max(1, Math.ceil(pesoKg));
 
   // subtotalCop = valor de los productos que SÍ pagan envío (los de envío-incluido
-  // se excluyen; en mezcla, el 7% aplica solo sobre esta base). envioGratis = todo incluido.
+  // se excluyen; en mezcla, el % aplica solo sobre esta base). envioGratis = todo incluido.
   const envioGratis = !!input.envioGratis;
   const base = Math.max(0, input.subtotalCop || 0);
-  const costo = envioGratis ? 0 : calcularFlete(base);
+  const costo = envioGratis ? 0 : calcularFlete(base, zona);
 
   return {
     zona,
@@ -140,8 +174,13 @@ export function computeShipping(input: ShippingInput): ShippingResult {
     cubre: true, // cubrimos todo el país
     envio_gratis: costo === 0,
     costo_envio: costo,
-    tiempo: TIEMPO_ENTREGA,
-    desglose: { kilos, base: 20000, sobreflete: costo ? costo - 20000 : 0, recargo_contraentrega: 0 },
+    tiempo: tiempoZona(zona),
+    dias_min: rate.diasMin,
+    dias_max: rate.diasMax,
+    // Apartada (San Andrés/Amazonas/Chocó…) o ciudad desconocida → confirmar con el cliente.
+    requiere_confirmar: rate.confirmar || !encontrada,
+    ciudad_encontrada: encontrada,
+    desglose: { kilos, base: rate.base, sobreflete: costo ? costo - rate.base : 0, recargo_contraentrega: 0 },
   };
 }
 

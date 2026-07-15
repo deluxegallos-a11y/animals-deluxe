@@ -7,6 +7,8 @@ import { cop } from "@/lib/ai/format";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const cap = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+
 export const POST = withBridge(
   z.object({
     ciudad: z.string().min(1),
@@ -48,14 +50,18 @@ export const POST = withBridge(
       envioGratis,
     });
 
-    // Anticipado (Rooster): NUNCA menciona contra entrega.
-    const mensaje = metodo === "anticipado"
-      ? (c.envio_gratis
-          ? `¡Buenísimo! 🎉 A ${c.ciudad} el envío te sale *GRATIS*. El pago es por adelantado. ¿Te armo el pedido?`
-          : `¡Sí llegamos a ${c.ciudad}! 🚚 Envío: ${cop(c.costo_envio)} · Entrega ${c.tiempo}. El pago es por adelantado. ¿Te armo el pedido?`)
-      : (c.envio_gratis
-          ? `¡Buenísimo! 🎉 A ${c.ciudad} el envío te sale *GRATIS* y es contraentrega (pagas al recibir). ¿Te armo el pedido?`
-          : `¡Sí llegamos a ${c.ciudad}! 🚚 Contraentrega (pagas al recibir). Envío: ${cop(c.costo_envio)} · Entrega ${c.tiempo}. ¿Te armo el pedido?`);
+    const pago = metodo === "anticipado" ? "el pago es por adelantado" : "es contraentrega (pagas al recibir)";
+    const flete = c.envio_gratis ? "el envío te sale *GRATIS* 🎉" : `el envío te sale en *${cop(c.costo_envio)}*`;
+    let mensaje: string;
+    if (!c.ciudad_encontrada) {
+      // Ciudad desconocida → confirmar cobertura (no afirmar que es apartada).
+      mensaje = `${cap(pago)}. A *${c.ciudad}* déjame confirmarte la cobertura exacta 🚚: el envío sería aprox *${cop(c.costo_envio)}* y la entrega *${c.tiempo}*. ¿Me confirmas la dirección y lo revisamos?`;
+    } else if (c.requiere_confirmar) {
+      // Zona apartada (San Andrés/Amazonas/Chocó…): tiempos largos / recogida en oficina.
+      mensaje = `A ${c.ciudad} sí llegamos 🚚, pero es zona apartada: la entrega tarda *${c.tiempo}* y ${flete} (a veces es recogida en oficina). ${cap(pago)}. ¿Te confirmo y lo armamos?`;
+    } else {
+      mensaje = `¡Sí llegamos a ${c.ciudad}! 🚚 ${cap(flete)}, entrega en *${c.tiempo}* y ${pago}. ¿Te armo el pedido?`;
+    }
 
     return {
       // legacy (compat)
@@ -67,6 +73,9 @@ export const POST = withBridge(
       costo_envio: c.costo_envio,
       envio_gratis: c.envio_gratis,
       tiempo: c.tiempo,
+      dias_min: c.dias_min,
+      dias_max: c.dias_max,
+      requiere_confirmar: c.requiere_confirmar,
       mensaje,
     };
   },

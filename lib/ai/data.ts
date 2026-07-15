@@ -11,7 +11,7 @@ import {
 import type { ProductView, CategoryView } from "@/lib/ai/types";
 import { demoProducts, demoCategories, demoStore } from "@/lib/demo-data";
 import { normalize } from "@/lib/ai/format";
-import { computeShipping, resolveZona, TIEMPO_ENTREGA } from "@/lib/ai/shipping";
+import { computeShipping, resolveZonaInfo, tiempoZona, ZONES, ZONE_RATE } from "@/lib/ai/shipping";
 import { currentTenantId, currentTenant } from "@/lib/ai/tenant";
 
 type ProdRow = typeof products.$inferSelect;
@@ -157,6 +157,10 @@ export interface CoberturaResult {
   zona: string;
   zona_label: string;
   tiempo: string;
+  dias_min: number;
+  dias_max: number;
+  requiere_confirmar: boolean;
+  ciudad_encontrada: boolean;
   ciudad: string;
 }
 
@@ -171,11 +175,15 @@ export async function cotizarEnvio(ciudad: string, opts: CotizarOpts = {}): Prom
   //   incluido → $0 (envío gratis)
   //   fijo     → flete_valor fijo
   //   por_ciudad → fórmula por zona desde la ciudad base (comportamiento Animals Deluxe)
+  const zi = resolveZonaInfo(ciudad || cfg.ciudadBase);
   if (tenant.fleteModo === "incluido" || opts.envioGratis) {
     return {
       cobertura: true, cubre: true, contraentrega: metodo === "contraentrega",
       costo_envio: 0, envio_gratis: true,
-      zona: resolveZona(ciudad || cfg.ciudadBase), zona_label: "", tiempo: TIEMPO_ENTREGA,
+      zona: zi.zona, zona_label: ZONES[zi.zona].label, tiempo: tiempoZona(zi.zona),
+      dias_min: ZONE_RATE[zi.zona].diasMin, dias_max: ZONE_RATE[zi.zona].diasMax,
+      requiere_confirmar: ZONE_RATE[zi.zona].confirmar || !zi.encontrada,
+      ciudad_encontrada: zi.encontrada,
       ciudad: ciudad || cfg.ciudadBase,
     };
   }
@@ -183,11 +191,14 @@ export async function cotizarEnvio(ciudad: string, opts: CotizarOpts = {}): Prom
     return {
       cobertura: true, cubre: true, contraentrega: metodo === "contraentrega",
       costo_envio: tenant.fleteValor || 0, envio_gratis: (tenant.fleteValor || 0) === 0,
-      zona: resolveZona(ciudad || cfg.ciudadBase), zona_label: "", tiempo: TIEMPO_ENTREGA,
+      zona: zi.zona, zona_label: ZONES[zi.zona].label, tiempo: tiempoZona(zi.zona),
+      dias_min: ZONE_RATE[zi.zona].diasMin, dias_max: ZONE_RATE[zi.zona].diasMax,
+      requiere_confirmar: ZONE_RATE[zi.zona].confirmar || !zi.encontrada,
+      ciudad_encontrada: zi.encontrada,
       ciudad: ciudad || cfg.ciudadBase,
     };
   }
-  // por_ciudad (default): fórmula por valor/zona desde la ciudad base.
+  // por_ciudad (default): flete + días por ZONA (Interrapidísimo) desde la ciudad base.
   const s = computeShipping({
     ciudad: ciudad || cfg.ciudadBase,
     subtotalCop: opts.subtotalCop ?? 0,
@@ -202,6 +213,8 @@ export async function cotizarEnvio(ciudad: string, opts: CotizarOpts = {}): Prom
     envio_gratis: s.envio_gratis,
     zona: s.zona, zona_label: s.zona_label,
     tiempo: s.tiempo,
+    dias_min: s.dias_min, dias_max: s.dias_max, requiere_confirmar: s.requiere_confirmar,
+    ciudad_encontrada: s.ciudad_encontrada,
     ciudad: ciudad || cfg.ciudadBase,
   };
 }
