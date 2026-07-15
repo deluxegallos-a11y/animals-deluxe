@@ -106,6 +106,25 @@ export function suggestion(p: ProductView) {
   return { name: p.name, slug: p.slug, priceCOP: p.priceCOP };
 }
 
+/** Beneficio corto (≤48 chars) para listar opciones sin frases largas. */
+export function beneficioCorto(p: ProductView): string {
+  let s = (p.shortDesc || (p.benefits && p.benefits[0]) || p.paraQue || p.tagline || "").replace(/\s+/g, " ").trim();
+  if (s.length > 48) {
+    const cut = s.slice(0, 48);
+    const sp = cut.lastIndexOf(" ");
+    s = (sp > 12 ? cut.slice(0, sp) : cut).trim() + "…";
+  }
+  return s;
+}
+
+/** Mensaje de OPCIONES en tono paisa. NUNCA hace eco del query del cliente. */
+export function opcionesMensaje(products: ProductView[]): string {
+  const vistos = new Set<string>();
+  const uniq = products.filter((p) => { const k = p.name.toLowerCase().trim(); if (vistos.has(k)) return false; vistos.add(k); return true; });
+  const lines = uniq.slice(0, 3).map((p) => `🔥 ${p.name} — ${beneficioCorto(p)} · ${cop(p.priceCOP)}`);
+  return `¡De una mi rey! 🐓 Pa eso te sirven estas opciones:\n${lines.join("\n")}\n¿Cuál te muestro?`;
+}
+
 /** Producto "vacío" pero nunca null (regla de oro UChat). */
 export function emptyProduct() {
   return {

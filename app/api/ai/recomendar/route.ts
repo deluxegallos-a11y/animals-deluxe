@@ -2,7 +2,7 @@ import { z } from "zod";
 import { withBridge, logEvent } from "@/lib/ai/bridge";
 import { getProducts } from "@/lib/ai/data";
 import { searchProducts, animalOf, needScore, looksMedical, detectForma } from "@/lib/ai/search";
-import { buildContexto, richMensaje } from "@/lib/ai/present";
+import { buildContexto, richMensaje, opcionesMensaje } from "@/lib/ai/present";
 import { cop } from "@/lib/ai/format";
 
 export const runtime = "nodejs";
@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export const POST = withBridge(
   z.object({ necesidad: z.string().min(1) }),
-  async ({ body }) => {
+  async ({ body, tenant }) => {
     const catalog = await getProducts();
     const r = searchProducts(body.necesidad, catalog);
     // Nunca mezclar animales: las recomendaciones comparten el animal del mejor match.
@@ -19,11 +19,19 @@ export const POST = withBridge(
     // relacionados. Solo entran candidatos con puntaje cercano al mejor (y >= 3).
     const topScore = r.ranked[0]?.score ?? 0;
     const floor = Math.max(3, topScore * 0.45);
-    const candidatos = r.ranked
-      .filter((x) => !firstAnimal || animalOf(x.product) === firstAnimal)
-      .filter((x) => x.score >= floor)
-      .slice(0, 3)
-      .map((x) => x.product);
+    // Candidatos: relevantes, del mismo animal, sobre el piso, DEDUPE por nombre
+    // (dos SKUs "Rooster Deluxe Max" no deben ocupar 2 espacios).
+    const candidatos: typeof catalog = [];
+    const vistosN = new Set<string>();
+    for (const x of r.ranked) {
+      if (firstAnimal && animalOf(x.product) !== firstAnimal) continue;
+      if (x.score < floor) continue;
+      const k = x.product.name.toLowerCase().trim();
+      if (vistosN.has(k)) continue;
+      vistosN.add(k);
+      candidatos.push(x.product);
+      if (candidatos.length >= 3) break;
+    }
 
     // NO FABRICAR (§4.5): solo bloqueamos cuando el query es un PROBLEMA MÉDICO/síntoma
     // (ojo, herida, fractura, bulto…) que ningún producto trata de verdad. Las necesidades
@@ -49,10 +57,13 @@ export const POST = withBridge(
       slug: p.slug, name: p.name, priceCOP: p.priceCOP, pitch: p.pitch || p.shortDesc,
       mensaje: richMensaje(p), producto_contexto: buildContexto(p),
     }));
-    const mensaje =
-      `Para "${body.necesidad}" te recomiendo: ` +
-      productos.map((p) => `${p.name} (${cop(p.priceCOP)})`).join(", ") +
-      `. El que más vende es ${productos[0].name}. ¿Cuál te interesa? 🐓`;
+    // Mensaje HUMANIZADO en tono paisa, SIN eco del query. (Anticipado usa el formato
+    // de opciones; el tenant contra entrega mantiene su voz.)
+    const mensaje = tenant.paymentMode === "anticipado"
+      ? opcionesMensaje(top)
+      : `Para "${body.necesidad}" te recomiendo: ` +
+        productos.map((p) => `${p.name} (${cop(p.priceCOP)})`).join(", ") +
+        `. El que más vende es ${productos[0].name}. ¿Cuál te interesa? 🐓`;
     return { productos, status: "found" as const, requiere_asesor: false, mensaje };
   },
 );

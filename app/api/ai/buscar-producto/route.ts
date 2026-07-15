@@ -2,14 +2,14 @@ import { z } from "zod";
 import { withBridge, audit, logEvent, recordInterest } from "@/lib/ai/bridge";
 import { getProducts } from "@/lib/ai/data";
 import { searchProducts } from "@/lib/ai/search";
-import { publicProduct, suggestion, emptyProduct, richMensaje } from "@/lib/ai/present";
+import { publicProduct, suggestion, emptyProduct, richMensaje, opcionesMensaje } from "@/lib/ai/present";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export const POST = withBridge(
   z.object({ q: z.string().optional().default("") }),
-  async ({ body, customer }) => {
+  async ({ body, customer, tenant }) => {
     const catalog = await getProducts();
     const r = searchProducts(body.q, catalog);
     if (r.product) await recordInterest(customer.id, [r.product.slug]); // CRM: registró interés
@@ -44,9 +44,14 @@ export const POST = withBridge(
 
     const pub = publicProduct(p);
     // Coherencia mensaje↔status (§4.5): si hay producto, el mensaje NUNCA dice "no encontré".
-    // En ambiguous, preguntamos entre las opciones cercanas; en found, presentamos.
-    const mensaje = r.status === "ambiguous" && sugerencias.length
-      ? `Tengo un par de opciones parecidas: *${p.name}*${sugerencias[0] ? ` o *${sugerencias[0].name}*` : ""}. ¿Cuál te muestro? 🐓`
+    // Anticipado + ambiguo → lista de opciones en tono paisa (sin eco del query).
+    const opciones = [p, ...r.ranked.filter((x) => x.relevant && x.product.slug !== p.slug).map((x) => x.product)];
+    const mensaje = r.status === "ambiguous"
+      ? (tenant.paymentMode === "anticipado"
+          ? opcionesMensaje(opciones)
+          : (sugerencias.length
+              ? `Tengo un par de opciones parecidas: *${p.name}*${sugerencias[0] ? ` o *${sugerencias[0].name}*` : ""}. ¿Cuál te muestro? 🐓`
+              : richMensaje(p)))
       : richMensaje(p);
     return {
       status: r.status,
