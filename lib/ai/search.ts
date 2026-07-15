@@ -240,9 +240,15 @@ export function searchProducts(query: string, products: ProductView[]): SearchRe
   const qTokens = qNorm.split(/[^a-z0-9]+/).filter((w) => w.length >= 2 && !STOP.has(w));
   const qStems = qTokens.map(stem);
 
-  // Filtro por animal: si el query menciona un animal, SOLO ese animal (no mezclar).
+  // Filtro por animal: perros/caballos son mundos APARTE (no mezclar). Pero "pollitos"
+  // son gallos jóvenes → gallos y pollos comparten pool (Master Pollito es alimento de gallos).
   const animal = detectAnimal(query);
-  let pool = animal ? products.filter((p) => animalOf(p) === animal) : products;
+  let pool = products;
+  if (animal === "perros" || animal === "caballos") {
+    pool = products.filter((p) => animalOf(p) === animal);
+  } else if (animal === "gallos" || animal === "pollos") {
+    pool = products.filter((p) => animalOf(p) === "gallos" || animalOf(p) === "pollos");
+  }
   // Filtro por presentación (§4.5b): si piden "inyectable", NO ofrecer gotas/otras formas.
   const forma = detectForma(query);
   if (forma) pool = pool.filter((p) => productMatchesForma(p, forma));
