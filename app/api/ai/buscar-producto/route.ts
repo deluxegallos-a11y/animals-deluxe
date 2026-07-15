@@ -14,11 +14,11 @@ export const POST = withBridge(
     const r = searchProducts(body.q, catalog);
     if (r.product) await recordInterest(customer.id, [r.product.slug]); // CRM: registró interés
 
-    // Sugerencias: excluye el producto elegido Y los que tengan su MISMO nombre (SKUs duplicados),
-    // y dedupe por nombre para no repetir "More Muscle Dogs Premium".
+    // Sugerencias: SOLO productos RELEVANTES (comparten palabra/categoría con el query).
+    // Nunca "parecidas" sin relación. Excluye el elegido y dedupe por nombre.
     const vistos = new Set<string>([(r.product?.name || "").toLowerCase().trim()]);
     const sugerencias = r.ranked
-      .filter((x) => x.product.slug !== r.product?.slug)
+      .filter((x) => x.relevant && x.product.slug !== r.product?.slug)
       .filter((x) => { const k = (x.product.name || "").toLowerCase().trim(); if (vistos.has(k)) return false; vistos.add(k); return true; })
       .slice(0, 3)
       .map((x) => suggestion(x.product));
@@ -26,13 +26,15 @@ export const POST = withBridge(
     await logEvent("busqueda_producto", { q: body.q, status: r.status, match: r.product?.slug || "" });
 
     if (!r.product) {
+      // No hay match real → not_found con mensaje "" (el bot maneja el silencio).
+      // Solo si la consulta viene vacía damos un empujón amable (no es un "no encontré").
       return {
         status: r.status,
         match: "",
         producto: emptyProduct(),
-        sugerencias: sugerencias.length ? sugerencias : catalog.slice(0, 3).map(suggestion),
+        sugerencias, // solo relevantes (puede ir vacío)
         mensaje: body.q
-          ? `No tengo exactamente eso, pero mira estas opciones que vuelan 🐓: ${(sugerencias.length ? sugerencias : catalog.slice(0, 3).map(suggestion)).map((s) => s.name).join(", ")}. ¿Cuál te muestro?`
+          ? ""
           : "¿Para qué animal y qué buscas? Tengo energía, vitaminas, respiratorio, desparasitantes y más. 🐓",
       };
     }

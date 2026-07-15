@@ -15,6 +15,12 @@ const STOP = new Set([
   "y", "o", "mi", "me", "le", "se", "su", "lo", "en", "a", "algo", "pa", "tengo", "quiero",
   "necesito", "busco", "dame", "hay", "tienes", "tiene", "es", "como", "cosa", "producto",
   "gallo", "gallos", "ave", "aves",
+  // Muletillas de consulta (así "foto de cada una de las botas" → solo "botas").
+  "foto", "fotos", "imagen", "imagenes", "video", "cada", "ver", "muestrame", "muestra",
+  "mandar", "manda", "mande", "mandas", "enviar", "envia", "enviame", "puede", "puedes",
+  "podria", "cuanto", "cuanta", "cuantos", "cuesta", "cuestan", "vale", "valen", "precio",
+  "precios", "cual", "cuales", "esa", "ese", "esas", "esos", "esta", "este", "estos", "estas",
+  "sobre", "acerca", "info", "informacion", "porfa", "porfavor", "favor", "gracias", "hola",
 ]);
 
 /* intents: término del cliente → categoría objetivo (+ keywords de refuerzo) */
@@ -138,49 +144,79 @@ function dice(a: string, b: string): number {
   return (2 * inter) / (A.size + B.size);
 }
 
-function haystackTokens(p: ProductView): string[] {
-  const text = [
-    p.slug.replace(/-/g, " "),
-    p.name,
-    p.audience,
-    p.tagline,
-    p.shortDesc,
-    p.pitch,
-    p.benefits.join(" "),
-    p.paraQue || "",
-    p.categoryName,
-    p.categorySlug,
-    (p.keywords?.length ? p.keywords : deriveKeywords(p)).join(" "),
-  ].join(" ");
-  return normalize(text).split(/[^a-z0-9]+/).filter((w) => w.length >= 2 && !STOP.has(w));
+/* Stem singular/plural es (botas→bota, monas→mona, comederos→comedero, tijeras→tijera). */
+function stem(w: string): string {
+  if (w.length > 4 && w.endsWith("es")) return w.slice(0, -2);
+  if (w.length > 3 && w.endsWith("s")) return w.slice(0, -1);
+  return w;
+}
+function toks(text: string): string[] {
+  return normalize(text).split(/[^a-z0-9]+/).filter((w) => w.length >= 2 && !STOP.has(w)).map(stem);
+}
+
+/* Buckets de tokens por prioridad: NOMBRE (+slug) > KEYWORDS > DESCRIPCIÓN. + categoría. */
+type Buckets = { name: Set<string>; nameArr: string[]; kw: Set<string>; kwArr: string[]; desc: Set<string>; cat: Set<string> };
+const _bcache = new WeakMap<ProductView, Buckets>();
+function buckets(p: ProductView): Buckets {
+  const c = _bcache.get(p);
+  if (c) return c;
+  const nameArr = toks([p.slug.replace(/-/g, " "), p.name].join(" "));
+  const kwArr = toks((p.keywords?.length ? p.keywords : deriveKeywords(p)).join(" "));
+  const descArr = toks([p.audience, p.tagline, p.shortDesc, p.pitch, p.benefits.join(" "), p.paraQue || "", p.descripcion || ""].join(" "));
+  const catArr = toks([p.categoryName, p.categorySlug].join(" "));
+  const b: Buckets = {
+    name: new Set(nameArr), nameArr,
+    kw: new Set(kwArr), kwArr,
+    desc: new Set(descArr), cat: new Set(catArr),
+  };
+  _bcache.set(p, b);
+  return b;
+}
+
+/** ¿El producto COMPARTE señal real con el query? (token exacto en nombre/keyword/categoría
+ *  o typo fuerte del nombre/keyword, o su categoría es el intent). Sin esto → jamás se sugiere. */
+function isRelevant(qStems: string[], p: ProductView, intentCats: Set<string>): boolean {
+  if (intentCats.has(p.categorySlug)) return true;
+  const b = buckets(p);
+  for (const q of qStems) {
+    if (b.name.has(q) || b.kw.has(q) || b.cat.has(q)) return true;
+    for (const h of b.nameArr) { if (h.length >= 4 && (h.includes(q) || q.includes(h))) return true; if (dice(q, h) >= 0.66) return true; }
+    for (const h of b.kwArr) { if (h.length >= 4 && (h.includes(q) || q.includes(h))) return true; if (dice(q, h) >= 0.7) return true; }
+  }
+  return false;
 }
 
 function scoreProduct(qTokens: string[], qNorm: string, p: ProductView, intentCats: Set<string>, intentKw: string[]): number {
-  const hayTokens = haystackTokens(p);
-  const haySet = new Set(hayTokens);
+  const b = buckets(p);
+  const qStems = qTokens.map(stem);
   let score = 0;
 
   // intent / categoría
-  if (intentCats.has(p.categorySlug)) score += 6;
-  for (const kw of intentKw) if (haySet.has(kw)) score += 1.5;
+  if (intentCats.has(p.categorySlug)) score += 5;
+  for (const kw of intentKw) { const s = stem(kw); if (b.kw.has(s) || b.name.has(s)) score += 1.2; }
 
-  // tokens del query
-  for (const q of qTokens) {
-    if (haySet.has(q)) { score += 4; continue; }
-    // substring dentro de algún token (ej "cobra" en "supercobra")
+  // tokens del query, POR PRIORIDAD: nombre > keyword > categoría > descripción.
+  for (const q of qStems) {
+    if (b.name.has(q)) { score += 6; continue; }
+    if (b.kw.has(q)) { score += 4; continue; }
+    if (b.cat.has(q)) { score += 3; continue; }
+    if (b.desc.has(q)) { score += 2.2; continue; }
+    // typo tolerance: fuzzy con más peso contra el NOMBRE que contra keywords.
     let best = 0;
-    for (const h of hayTokens) {
-      if (h.includes(q) || q.includes(h)) { best = Math.max(best, 2.5); continue; }
-      const d = dice(q, h);
-      if (d > best) best = d * 3.5; // typo tolerance
+    for (const h of b.nameArr) {
+      if (h.length >= 4 && (h.includes(q) || q.includes(h))) { best = Math.max(best, 3); continue; }
+      const d = dice(q, h); if (d * 5 > best) best = d * 5;
+    }
+    for (const h of b.kwArr) {
+      if (h.length >= 4 && (h.includes(q) || q.includes(h))) { best = Math.max(best, 2.5); continue; }
+      const d = dice(q, h); if (d * 3.5 > best) best = d * 3.5;
     }
     score += best;
   }
 
-  // nombre completo muy parecido al query
+  // nombre completo muy parecido al query (frase)
   const nameNorm = normalize(p.name);
-  if (qNorm && (nameNorm.includes(qNorm) || qNorm.includes(nameNorm))) score += 5;
-  score += dice(qNorm, nameNorm) * 2;
+  if (qNorm && (nameNorm.includes(qNorm) || qNorm.includes(nameNorm))) score += 4;
 
   return score;
 }
@@ -190,17 +226,18 @@ export type SearchStatus = "found" | "ambiguous" | "not_found" | "empty_query";
 export interface SearchResult {
   status: SearchStatus;
   product: ProductView | null;
-  ranked: { product: ProductView; score: number }[];
+  ranked: { product: ProductView; score: number; relevant: boolean }[];
 }
 
 /** Busca el mejor match + ranking. `products` = catálogo activo. */
 export function searchProducts(query: string, products: ProductView[]): SearchResult {
   const qNorm = normalize(query);
   if (!qNorm) {
-    return { status: "empty_query", product: null, ranked: products.slice(0, 6).map((p) => ({ product: p, score: 0 })) };
+    return { status: "empty_query", product: null, ranked: products.slice(0, 6).map((p) => ({ product: p, score: 0, relevant: false })) };
   }
 
   const qTokens = qNorm.split(/[^a-z0-9]+/).filter((w) => w.length >= 2 && !STOP.has(w));
+  const qStems = qTokens.map(stem);
 
   // Filtro por animal: si el query menciona un animal, SOLO ese animal (no mezclar).
   const animal = detectAnimal(query);
@@ -217,18 +254,20 @@ export function searchProducts(query: string, products: ProductView[]): SearchRe
   }
 
   const ranked = pool
-    .map((p) => ({ product: p, score: scoreProduct(qTokens, qNorm, p, intentCats, intentKw) }))
+    .map((p) => ({ product: p, score: scoreProduct(qTokens, qNorm, p, intentCats, intentKw), relevant: isRelevant(qStems, p, intentCats) }))
     .sort((a, b) => b.score - a.score);
 
   const top = ranked[0];
   const second = ranked[1];
-  if (!top || top.score < 3) {
+  // El match SOLO vale si comparte señal real (palabra/categoría) con el query.
+  // Sin relevancia o con puntaje bajo → not_found (el bot maneja el silencio).
+  if (!top || !top.relevant || top.score < 3) {
     return { status: "not_found", product: null, ranked };
   }
   const gap = top.score - (second?.score ?? 0);
-  // Si el 1º y 2º son el MISMO producto (mismo nombre, p.ej. dos SKUs "More Muscle Dogs Premium"),
-  // NO es ambiguo: presenta uno. Evita el ridículo "¿*X* o *X*?".
+  // Ambiguo solo si el 2º TAMBIÉN es relevante y está muy cerca (y no es el mismo nombre).
   const mismoNombre = !!second && normalize(second.product.name) === normalize(top.product.name);
-  const status: SearchStatus = !mismoNombre && gap < 2.5 && (second?.score ?? 0) >= 3 ? "ambiguous" : "found";
+  const segOk = !!second && second.relevant && (second.score ?? 0) >= 3;
+  const status: SearchStatus = !mismoNombre && segOk && gap < 2.5 ? "ambiguous" : "found";
   return { status, product: top.product, ranked };
 }
