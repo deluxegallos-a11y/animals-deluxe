@@ -3,7 +3,6 @@ import { withBridge, logEvent } from "@/lib/ai/bridge";
 import { getProducts } from "@/lib/ai/data";
 import { searchProducts, animalOf, needScore, looksMedical, detectForma } from "@/lib/ai/search";
 import { buildContexto, richMensaje, opcionesMensaje } from "@/lib/ai/present";
-import { cop } from "@/lib/ai/format";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -57,13 +56,9 @@ export const POST = withBridge(
       slug: p.slug, name: p.name, priceCOP: p.priceCOP, pitch: p.pitch || p.shortDesc,
       mensaje: richMensaje(p), producto_contexto: buildContexto(p),
     }));
-    // Mensaje HUMANIZADO en tono paisa, SIN eco del query. (Anticipado usa el formato
-    // de opciones; el tenant contra entrega mantiene su voz.)
-    const mensaje = tenant.paymentMode === "anticipado"
-      ? opcionesMensaje(top)
-      : `Para "${body.necesidad}" te recomiendo: ` +
-        productos.map((p) => `${p.name} (${cop(p.priceCOP)})`).join(", ") +
-        `. El que más vende es ${productos[0].name}. ¿Cuál te interesa? 🐓`;
+    // Mensaje HUMANIZADO en tono paisa, SIN eco del query — para AMBOS tenants
+    // (Animals Deluxe y Rooster Deluxe). Cada uno ya ve solo SU catálogo.
+    const mensaje = opcionesMensaje(top);
     return { productos, status: "found" as const, requiere_asesor: false, mensaje };
   },
 );

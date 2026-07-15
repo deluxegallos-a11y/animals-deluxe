@@ -44,14 +44,12 @@ export const POST = withBridge(
 
     const pub = publicProduct(p);
     // Coherencia mensaje↔status (§4.5): si hay producto, el mensaje NUNCA dice "no encontré".
-    // Anticipado + ambiguo → lista de opciones en tono paisa (sin eco del query).
+    // AMBOS tenants, tono paisa:
+    //  - ambiguo → lista de opciones (sin eco del query)
+    //  - match único → presentación humanizada del producto (+ su imageUrl/foto).
     const opciones = [p, ...r.ranked.filter((x) => x.relevant && x.product.slug !== p.slug).map((x) => x.product)];
     const mensaje = r.status === "ambiguous"
-      ? (tenant.paymentMode === "anticipado"
-          ? opcionesMensaje(opciones)
-          : (sugerencias.length
-              ? `Tengo un par de opciones parecidas: *${p.name}*${sugerencias[0] ? ` o *${sugerencias[0].name}*` : ""}. ¿Cuál te muestro? 🐓`
-              : richMensaje(p)))
+      ? opcionesMensaje(opciones)
       : richMensaje(p);
     return {
       status: r.status,

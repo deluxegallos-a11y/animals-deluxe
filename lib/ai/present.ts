@@ -57,7 +57,7 @@ export function richMensaje(p: ProductView): string {
     p.edadMinima ? `📅 Desde: ${p.edadMinima}` : "",
   ].filter(Boolean).join("\n");
   return [
-    `${p.name} 🔥 ${p.pitch || p.tagline || ""}`.trim(),
+    `¡De una! 👉 Este es *${p.name}* 🔥 ${p.pitch || p.tagline || ""}`.trim(),
     benLines,
     ficha,
     cierrePrecio(p),
