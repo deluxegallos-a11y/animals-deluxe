@@ -4,6 +4,7 @@ import { getProducts, getExtraAliases } from "@/lib/ai/data";
 import { searchProducts, animalOf, needScore, looksMedical, detectForma } from "@/lib/ai/search";
 import { buildContexto, richMensaje, opcionesMensaje } from "@/lib/ai/present";
 import { identifyProduct } from "@/lib/ai/brain";
+import { rulesForTenant } from "@/lib/ai/aliases";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,7 +17,7 @@ export const POST = withBridge(
     // CEREBRO primero: si la necesidad está mapeada ("pal moquillo", "que le crezca
     // la cola", "purga"…) o nombra un producto, respondemos con ESO y no con
     // parecidos ortográficos. Solo si el cerebro no resuelve caemos al ranking.
-    const brain = identifyProduct(body.necesidad, catalog, extraAliases);
+    const brain = identifyProduct(body.necesidad, catalog, extraAliases, rulesForTenant(tenant.slug));
     if (brain.status === "category" || brain.status === "ambiguous" || brain.status === "found") {
       const top = (brain.options.length ? brain.options : [brain.product!]).slice(0, 3);
       await logEvent("recomendacion", { necesidad: body.necesidad, productos: top.map((p) => p.slug), matched_by: brain.matchedBy });

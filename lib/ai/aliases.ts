@@ -189,3 +189,109 @@ export const NEED_RULES: NeedRule[] = [
   { id: "afeitar", match: ["afeitar", "motilar", "rapar"], slugs: ["rooster-shave", "tijera-roja"] },
   { id: "vitaminas", match: ["vitamina", "vitaminas", "fortalecer", "cuido", "etapa final", "fortaleza"], categorySlug: "vitaminas-y-suplementos" },
 ];
+
+/* ===========================================================
+   ANIMALS DELUXE — MISMAS reglas, catálogo DISTINTO.
+   Animals-deluxe (tenant por defecto, contra entrega) vende las mismas familias
+   de gallos que Rooster + perros y caballo, pero con SLUGS y CATEGORÍAS propios
+   (ej. `gallo-purga-plus` no `gallo-purga`; categoría `desparasitantes` no
+   `vermifugos-desparasitantes`). No tiene implementos (botas/mona/comederos) ni
+   antibióticos sueltos. Los APODOS que dice el cliente son idénticos; solo cambia
+   a qué producto apuntan. `rulesForTenant()` elige el set según el tenant.
+   =========================================================== */
+
+export const ALIAS_CATALOG_ANIMALS: AliasEntry[] = [
+  /* ---------- DOPING / ENERGÍA ---------- */
+  { slugs: ["red-copping-mamba"], aliases: ["rebamba", "red manba", "red bamba", "la mamba", "mamba roja", "mamba", "red mamba", "red doping mamba", "red dopping mamba", "red copping mamba"] },
+  { slugs: ["dragon-mamba"], aliases: ["dragon mamba", "dragon", "mamba oral", "dragon oral"] },
+  { slugs: ["american-rooster-fury"], aliases: ["furi", "fury", "el furi", "american fury", "american rooster fury", "la furia"] },
+  { slugs: ["atp-fighter-rooster"], aliases: ["atp", "el atp", "fighter", "atp fighter"] },
+  { slugs: ["atp-rooster-gold"], aliases: ["atp gold", "gold", "atp dorado"] },
+  { slugs: ["energy-cobra"], aliases: ["cobra", "la cobra", "energi cobra", "energy cobra"] },
+  { slugs: ["super-energy-77"], aliases: ["la 77", "energy 77", "super 77", "el 77", "77"] },
+  { slugs: ["super-energizante-b15"], aliases: ["b15", "b15 5500", "el b15", "ultra 5500", "super energizante"] },
+  { slugs: ["super-trainer"], aliases: ["trainer", "pre entreno", "preentreno", "super trainer"] },
+  { slugs: ["ultra-gallo"], aliases: ["ultra gallo", "ultragallo", "ultra gallo inyectable"] },
+  { slugs: ["rooster-xt-impulsor"], aliases: ["rooster xt", "xt impulsor", "impulsor", "rooster xt impulsor"] },
+  { slugs: ["black-rooster"], aliases: ["black rooster", "gallo negro"] },
+  { slugs: ["combo-del-mes"], aliases: ["combo del mes", "combo mes", "oferta del mes"] },
+  { slugs: ["combo-potenciador"], aliases: ["combo potenciador", "potenciador"] },
+  { slugs: ["equipo-de-campeones"], aliases: ["equipo de campeones", "kit de campeones", "kit campeones", "equipo campeones", "kit definitivo"] },
+
+  /* ---------- VITAMINAS / SUPLEMENTOS ---------- */
+  { slugs: ["rooster-booster"], aliases: ["booster", "buster", "el buster", "rooster booster"] },
+  { slugs: ["nordic-rooster-vitamins"], aliases: ["nordic", "nordica", "nordico", "nordic rooster"] },
+  { slugs: ["super-b12-max"], aliases: ["b12 max", "super b12", "b12max"] },
+  { slugs: ["cyanomax-b12-5500"], aliases: ["siano max", "cyano", "ciano max", "sianomax", "cianomax", "ciano", "cyanomax"] },
+  { slugs: ["rooscer-b12-complete"], aliases: ["complet", "complete", "b12 complete", "rooster complete", "rooscer"] },
+  { slugs: ["champions-choice"], aliases: ["champions", "choice", "champion choice", "champions choice"] },
+  { slugs: ["dragon-rooster"], aliases: ["dragon rooster", "dragon pastillas"] },
+  { slugs: ["the-avian-pro"], aliases: ["avian pro", "avianpro", "etapa de cuido", "abian pro"] },
+  { slugs: ["vitalmin-rooster"], aliases: ["vitalmin", "bitalmin", "vitalmin rooster"] },
+  { slugs: ["vitapower"], aliases: ["vitapower", "bita power", "vita power"] },
+  { slugs: ["rooster-strength"], aliases: ["strength", "rooster strength"] },
+  { slugs: ["rooster-deluxe-max"], aliases: ["deluxe max", "polvo max", "el polvo rojo", "rooster max"] },
+  { slugs: ["rooster-deluxe-supplement"], aliases: ["supplement", "suplement", "suplemento deluxe", "deluxe supplement"] },
+  { slugs: ["rooster-deluxe-chicks"], aliases: ["chicks", "polvo pollitos", "deluxe chicks", "deluxe pollitos"] },
+
+  /* ---------- DESPARASITANTES ---------- */
+  { slugs: ["gallo-purga-plus"], aliases: ["gallopurga", "purga plus", "gallo purga plus", "gallo purga"] },
+  { slugs: ["purge-beach"], aliases: ["purge beach", "purgebeak", "purge beak", "purgebeack", "purguebeak"] },
+  { slugs: ["rooster-and-worm"], aliases: ["and worm", "end worm", "endworm", "rooster worm", "rooster and worm"] },
+  { slugs: ["super-cobra-500"], aliases: ["cobra 500", "super cobra", "super cobra 500"] },
+
+  /* ---------- RESPIRATORIO ---------- */
+  { slugs: ["cure-chest-rooster"], aliases: ["cure chest", "curechest", "kiur chest", "pecho", "cure chest for rooster"] },
+  { slugs: ["clear-chicks"], aliases: ["clear chick", "clearchicks", "gotas pollitos mocos", "clear chicks"] },
+
+  /* ---------- CUIDADO / PLUMAJE ---------- */
+  { slugs: ["omega-3"], aliases: ["omega", "omega tres", "omega 3"] },
+  { slugs: ["plume-king-shampoo"], aliases: ["plume king", "shampoo", "champu", "shampu", "plum king", "plume king shampoo"] },
+  { slugs: ["rooster-deluxe-shampoo"], aliases: ["rooster deluxe shampoo", "shampoo deluxe", "champu deluxe"] },
+  { slugs: ["red-rooster"], aliases: ["enrojecedor", "red rooster"] },
+  { slugs: ["rooster-smallpox"], aliases: ["smallpox", "viruela", "bubas", "crema viruela", "esmolpox"] },
+
+  /* ---------- ENTRENAMIENTO / RECUPERACIÓN ---------- */
+  { slugs: ["gallo-post-recovery"], aliases: ["recovery", "post recovery", "recuperador", "gallo post recovery"] },
+  { slugs: ["weight-muscle-protein"], aliases: ["weight", "proteina liquida", "wei muscle", "weight muscle", "weight muscle protein"] },
+  { slugs: ["kit-entreno-recovery"], aliases: ["kit entreno", "kit entreno recovery", "entreno y recovery"] },
+
+  /* ---------- POLLOS ---------- */
+  { slugs: ["nutripeep-refoce"], aliases: ["nutripeep", "nutri peep", "refoce", "nutripeep refoce"] },
+  { slugs: ["rooster-deluxe"], aliases: ["rooster deluxe pollos", "deluxe pollos"] },
+  { slugs: ["combo-4-tapas"], aliases: ["combo 4 tapas", "4 tapas", "cuatro tapas", "combo tapas", "combo cuidado total"] },
+
+  /* ---------- PERROS / CABALLOS ---------- */
+  { slugs: ["more-muscle-dogs"], aliases: ["more muscle dogs", "muscle dogs", "more muscle", "musculo perro", "musculo perros", "perros musculo"] },
+  { slugs: ["more-muscle-dogs-3m"], aliases: ["more muscle dogs 3 meses", "muscle dogs 3 meses", "perros 3 meses"] },
+  { slugs: ["horse-deluxe"], aliases: ["horse deluxe", "protein lysine", "caballo deluxe"] },
+];
+
+export const NEED_RULES_ANIMALS: NeedRule[] = [
+  { id: "cola-emplume", match: ["que le crezca la cola", "que les crezca la cola", "crezca la cola", "crecer la cola", "emplumar", "emplume", "que emplume", "cola", "plumaje", "muda"], slugs: ["omega-3", "plume-king-shampoo", "rooster-deluxe-max"] },
+  { id: "respiratorio", match: ["moquillo", "gripa", "mocos", "moco", "respiratorio", "ahogado", "ahogo", "tos", "estornuda", "ronquera", "pal moquillo", "para el moquillo"], categorySlug: "respiratorio" },
+  { id: "purga", match: ["purga", "purgar", "desparasitar", "desparasitante", "desparasitantes", "vermifugo", "vermifugos", "lombriz", "lombrices", "gusano", "gusanos", "parasito", "parasitos", "parasitosis"], slugs: ["gallo-purga-plus", "purge-beach", "rooster-and-worm", "super-cobra-500"] },
+  { id: "doping", match: ["pelea", "peleas", "energia", "dope", "doping", "dopin", "que lo levante", "energizante", "para la pelea", "topada", "careo"], categorySlug: "energia" },
+  { id: "engorde", match: ["engorde", "engordar", "peso", "masa", "musculo", "musculatura", "masa muscular"], slugs: ["rooster-deluxe-max", "weight-muscle-protein", "gallo-post-recovery"] },
+  { id: "pollitos", match: ["pollitos", "pollito", "levante", "cria", "crias", "polluelo"], slugs: ["rooster-deluxe-chicks", "nutripeep-refoce", "rooster-deluxe"] },
+  { id: "piojos", match: ["piojos", "piojo", "pulgas", "pulga", "acaros", "acaro", "garrapata", "garrapatas"], slugs: ["plume-king-shampoo", "rooster-deluxe-shampoo", "omega-3"] },
+  { id: "viruela", match: ["viruela", "bubas", "hongos cara", "hongos en la cara"], slugs: ["rooster-smallpox"] },
+  { id: "recuperacion", match: ["recuperacion", "recuperar", "despues de la pelea", "post pelea"], slugs: ["gallo-post-recovery"] },
+  { id: "entrenar", match: ["entrenar", "entrenamiento", "topar", "topas", "pre entreno", "preentreno"], slugs: ["super-trainer", "gallo-post-recovery", "weight-muscle-protein"] },
+  { id: "perros", match: ["perro", "perros", "canino", "cachorro", "musculo perro", "perro flaco"], slugs: ["more-muscle-dogs"] },
+  { id: "caballos", match: ["caballo", "caballos", "equino", "yegua", "potro"], slugs: ["horse-deluxe"] },
+  { id: "vitaminas", match: ["vitamina", "vitaminas", "minerales", "fortalecer", "cuido", "etapa final", "fortaleza", "apetito", "defensas", "multivitaminico"], categorySlug: "vitaminas" },
+];
+
+/* ===========================================================
+   RESOLVER de reglas por tenant. El brain y las rutas /api/ai/* lo usan para
+   escoger el set correcto según `tenant.slug`. Default = rooster (retrocompat
+   con los tests que llaman identifyProduct sin ruleset).
+   =========================================================== */
+export type Ruleset = { aliases: AliasEntry[]; needs: NeedRule[] };
+export const ROOSTER_RULES: Ruleset = { aliases: ALIAS_CATALOG, needs: NEED_RULES };
+export const ANIMALS_RULES: Ruleset = { aliases: ALIAS_CATALOG_ANIMALS, needs: NEED_RULES_ANIMALS };
+
+export function rulesForTenant(slug?: string): Ruleset {
+  return slug === "animals-deluxe" ? ANIMALS_RULES : ROOSTER_RULES;
+}

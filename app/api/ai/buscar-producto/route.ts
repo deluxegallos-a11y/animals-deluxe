@@ -2,6 +2,7 @@ import { z } from "zod";
 import { withBridge, audit, logEvent, recordInterest } from "@/lib/ai/bridge";
 import { getProducts, getExtraAliases, logSearchMiss } from "@/lib/ai/data";
 import { identifyProduct } from "@/lib/ai/brain";
+import { rulesForTenant } from "@/lib/ai/aliases";
 import { publicProduct, suggestion, emptyProduct, richMensaje, opcionesMensaje, cualMensaje } from "@/lib/ai/present";
 
 export const runtime = "nodejs";
@@ -13,7 +14,7 @@ export const POST = withBridge(
     const [catalog, extraAliases] = await Promise.all([getProducts(), getExtraAliases()]);
 
     // CEREBRO: alias → nombre → keyword única → necesidad fuerte → fuzzy → necesidad → nada.
-    const r = identifyProduct(body.q, catalog, extraAliases);
+    const r = identifyProduct(body.q, catalog, extraAliases, rulesForTenant(tenant.slug));
     if (r.product) await recordInterest(customer.id, [r.product.slug]); // CRM: registró interés
 
     // Sugerencias: SOLO productos RELEVANTES (comparten palabra/categoría con el query).

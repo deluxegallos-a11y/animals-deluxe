@@ -17,7 +17,7 @@
    =========================================================== */
 import type { ProductView } from "@/lib/ai/types";
 import { normalize } from "@/lib/ai/format";
-import { ALIAS_CATALOG, NEED_RULES, type AliasEntry } from "@/lib/ai/aliases";
+import { ALIAS_CATALOG, NEED_RULES, ROOSTER_RULES, type AliasEntry, type NeedRule, type Ruleset } from "@/lib/ai/aliases";
 import { searchProducts } from "@/lib/ai/search";
 
 /* ---------------- PASO 0 — normalización ---------------- */
@@ -41,7 +41,7 @@ export function stripFillers(q: string): string {
   // Conectores: iterar hasta estabilizar. Una sola pasada dejaba tokens pegados
   // ("la que trae vitaminas" → "que vitaminas", y ese "que vitaminas" hacía match
   // ortográfico con "vitamina b12 5500").
-  const conn = /\s+(el|la|los|las|un|una|unos|unas|de|del|para|pa|por|con|que|mi|me|le|su|lo|y|o|en|a)\s+/;
+  const conn = /\s+(el|la|los|las|un|una|unos|unas|de|del|para|pa|pal|por|con|que|mi|me|le|su|lo|y|o|en|a)\s+/;
   let prev = "";
   while (prev !== s) { prev = s; s = s.replace(conn, " "); }
   return s.replace(/\s+/g, " ").trim();
@@ -145,10 +145,11 @@ export function identitySim(a: string, b: string): number {
 
 export type AliasIndex = { alias: string; slugs: string[]; nota?: string }[];
 
-/** Construye el índice (catálogo en código + alias extra de la DB). */
-export function buildAliasIndex(extra: AliasEntry[] = []): AliasIndex {
+/** Construye el índice (catálogo en código + alias extra de la DB).
+ *  `base` = catálogo de alias del tenant (rooster por defecto). */
+export function buildAliasIndex(extra: AliasEntry[] = [], base: AliasEntry[] = ALIAS_CATALOG): AliasIndex {
   const out: AliasIndex = [];
-  for (const e of [...ALIAS_CATALOG, ...extra]) {
+  for (const e of [...base, ...extra]) {
     for (const a of e.aliases) {
       const alias = normalize(a).replace(/\s+/g, " ").trim();
       if (alias) out.push({ alias, slugs: e.slugs, nota: e.nota });
@@ -210,6 +211,9 @@ const FUZZY_STOP = new Set([
   "vitamina", "vitaminas", "mineral", "minerales", "suplemento", "suplementos",
   "parasito", "parasitos", "purga", "desparasitante", "desparasitantes",
   "lombriz", "lombrices", "pulga", "pulgas", "piojo", "piojos",
+  "energia", "energizante", "doping", "dopin", "pelea", "peleas",
+  // genéricas del dominio: aparecen en medio catálogo, no identifican un SKU
+  "gallo", "gallos", "rooster", "ave", "aves", "animal", "animales",
 ]);
 
 /** Dedupe por nombre (el catálogo tiene SKUs repetidos: 2× Mona, 2× Tijera Roja…). */
@@ -255,9 +259,9 @@ type NeedHit = { slugs: string[]; categorySlug?: string; words: number; id: stri
 
 /** Gana la frase MÁS LARGA (no la primera): "pal moquillo" pesa más que "moquillo",
  *  y así una necesidad clara no queda a merced del orden de la lista. */
-function matchNeed(norm: NormalizedQuery): NeedHit | null {
+function matchNeed(norm: NormalizedQuery, needRules: NeedRule[] = NEED_RULES): NeedHit | null {
   let best: NeedHit | null = null;
-  for (const rule of NEED_RULES) {
+  for (const rule of needRules) {
     for (const m of rule.match) {
       const phrase = normalize(m);
       if (!containsPhrase(norm.q, phrase) && !containsPhrase(norm.stripped, phrase)) continue;
@@ -281,19 +285,31 @@ function needProducts(hit: NeedHit, products: ProductView[]): ProductView[] {
 /**
  * Identifica QUÉ producto quiere el cliente.
  * @param extraAliases alias adicionales cargados de la DB (panel), opcional.
+ * @param rules ruleset del tenant (alias + necesidades). Default = rooster.
  */
 export function identifyProduct(
   rawQuery: string,
   products: ProductView[],
   extraAliases: AliasEntry[] = [],
+  rules: Ruleset = ROOSTER_RULES,
 ): BrainResult {
   const norm = normalizeQuery(rawQuery);
-  const index = extraAliases.length ? buildAliasIndex(extraAliases) : DEFAULT_INDEX;
+  // Índice de alias del tenant (+ alias extra de la DB). Se cachea el del set
+  // rooster sin extras (caso más común en los tests) para no reconstruirlo.
+  const index = (rules === ROOSTER_RULES && !extraAliases.length)
+    ? DEFAULT_INDEX
+    : buildAliasIndex(extraAliases, rules.aliases);
   // Motor fuzzy existente: se usa para el RANKING (sugerencias), no para decidir identidad.
   const ranked = searchProducts(norm.stripped || norm.q, products).ranked;
   const empty: BrainResult = { status: "not_found", product: null, options: [], matchedBy: "", score: 0, ranked, norm };
 
   if (!norm.q) return { ...empty, status: "empty_query" };
+
+  // ¿El query tiene algún token que IDENTIFIQUE un SKU? (no forma, no necesidad
+  // amplia, no palabra genérica del dominio como "gallo"). Si no, saltamos los
+  // pasos de identidad (keyword y fuzzy) y deja decidir a la regla de necesidad:
+  // "vitaminas y minerales" es CATEGORÍA, no el único SKU con esa keyword.
+  const hasIdentity = norm.tokens.some((t) => !FUZZY_STOP.has(t));
 
   /* --- PASO 1a: ALIAS contenido en el query (alias más largo gana) ---
      "dragon mamba" gana sobre "mamba"; "atp gold" sobre "gold". */
@@ -344,7 +360,7 @@ export function identifyProduct(
       kwOwners.get(kk)!.add(normalize(p.name));
     }
   }
-  for (const cand of [norm.stripped, norm.q]) {
+  if (hasIdentity) for (const cand of [norm.stripped, norm.q]) {
     const owners = kwOwners.get(cand);
     if (owners && owners.size === 1) {
       const hits = products.filter((p) => (p.keywords || []).some((k) => normalize(k) === cand));
@@ -355,7 +371,7 @@ export function identifyProduct(
   /* --- PASO 3s: NECESIDAD FUERTE (frase de ≥2 palabras) ---
      Va ANTES del fuzzy: "que le crezca la cola" es una necesidad clarísima y no
      debe competir con parecidos ortográficos ("cola"≈"cobra"). */
-  const need = matchNeed(norm);
+  const need = matchNeed(norm, rules.needs);
   if (need && need.words >= 2) {
     const prods = needProducts(need, products);
     if (prods.length) return { status: "category", product: prods[0], options: prods, matchedBy: "need", score: 0, ranked, norm };
@@ -369,7 +385,7 @@ export function identifyProduct(
   // Identidad = query SIN palabras de forma/necesidad amplia. Si no queda nada
   // (ej. "vitaminas y minerales"), no hay señal de SKU → que decida la necesidad.
   const identityStripped = norm.tokens.filter((t) => !FUZZY_STOP.has(t)).join(" ");
-  for (const p of products) {
+  if (hasIdentity) for (const p of products) {
     const name = normalize(p.name);
     let best = identityStripped ? identitySim(identityStripped, name) : 0;
     // por token del nombre y ventanas de 1-2 palabras del query
