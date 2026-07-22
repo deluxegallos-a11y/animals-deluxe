@@ -284,3 +284,53 @@ export async function assignAdvisor() {
   await db.update(advisors).set({ pedidosAsignados: (a.pedidosAsignados ?? 0) + 1 }).where(eq(advisors.id, a.id));
   return { id: a.id, nombre: a.nombre, whatsapp: a.whatsapp || "" };
 }
+
+/* ---------- Cerebro de búsqueda: alias extra (panel/logs) ---------- */
+import { productAliases, searchMisses } from "@/lib/db/schema";
+import type { AliasEntry } from "@/lib/ai/aliases";
+
+/** Alias adicionales del tenant (los del panel). El catálogo base vive en
+ *  lib/ai/aliases.ts; esto permite ampliarlo sin deploy. Fail-soft: si la
+ *  tabla no existe todavía, el cerebro sigue con el catálogo en código. */
+export async function getExtraAliases(): Promise<AliasEntry[]> {
+  if (!db) return [];
+  try {
+    const tid = await currentTenantId();
+    const rows = await db.select().from(productAliases).where(eq(productAliases.tenantId, tid!));
+    // Agrupa por (alias, nota) para respetar alias que apuntan a varios productos.
+    const byAlias = new Map<string, { slugs: string[]; nota: string }>();
+    for (const r of rows) {
+      const k = normalize(r.alias);
+      if (!k) continue;
+      const cur = byAlias.get(k) || { slugs: [], nota: r.nota || "" };
+      cur.slugs.push(r.productSlug);
+      if (r.nota) cur.nota = r.nota;
+      byAlias.set(k, cur);
+    }
+    return [...byAlias.entries()].map(([alias, v]) => ({
+      aliases: [alias], slugs: v.slugs, nota: v.nota || undefined,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/** Registra una búsqueda que no resolvió bien (para sacar alias nuevos). */
+export async function logSearchMiss(data: {
+  query: string; queryNormalizado: string; mejorCandidato?: string; score?: number; status?: string;
+}) {
+  if (!db) return;
+  try {
+    const tid = await currentTenantId();
+    await db.insert(searchMisses).values({
+      tenantId: tid || null,
+      query: (data.query || "").slice(0, 500),
+      queryNormalizado: (data.queryNormalizado || "").slice(0, 500),
+      mejorCandidato: (data.mejorCandidato || "").slice(0, 200),
+      score: data.score ?? 0,
+      status: data.status || "",
+    });
+  } catch {
+    /* fail-soft: nunca romper una búsqueda por no poder loguear */
+  }
+}

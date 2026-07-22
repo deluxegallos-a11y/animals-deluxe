@@ -4,7 +4,7 @@
    RLS + extensiones en supabase/migration.sql.
    =========================================================== */
 import {
-  pgTable, uuid, text, integer, boolean, timestamp, jsonb, index, primaryKey,
+  pgTable, uuid, text, integer, boolean, timestamp, jsonb, index, primaryKey, doublePrecision,
 } from "drizzle-orm/pg-core";
 
 const id = () => uuid("id").primaryKey().defaultRandom();
@@ -482,4 +482,38 @@ export const reviews = pgTable(
     createdAt: now(),
   },
   (t) => ({ bySlug: index("reviews_slug_idx").on(t.productSlug) }),
+);
+
+/* 16. product_aliases — CEREBRO DE BÚSQUEDA: apodos/typos/jerga por producto.
+   Se siembra desde lib/ai/aliases.ts (scripts/seed-aliases.mjs) y se puede
+   ampliar desde el panel sin deploy: el cerebro los mezcla en runtime. */
+export const productAliases = pgTable(
+  "product_aliases",
+  {
+    id: id(),
+    tenantId: tenantId(),
+    productSlug: text("product_slug").notNull(),
+    alias: text("alias").notNull(),
+    nota: text("nota").notNull().default(""),
+    origen: text("origen").notNull().default("seed"), // seed | panel | logs
+    createdAt: now(),
+  },
+  (t) => ({ byTenant: index("product_aliases_tenant_idx").on(t.tenantId) }),
+);
+
+/* 17. search_misses — todo not_found + match flojo (score < 0.5).
+   De aquí salen los alias nuevos cada semana. */
+export const searchMisses = pgTable(
+  "search_misses",
+  {
+    id: id(),
+    tenantId: tenantId(),
+    query: text("query").notNull().default(""),
+    queryNormalizado: text("query_normalizado").notNull().default(""),
+    mejorCandidato: text("mejor_candidato").notNull().default(""),
+    score: doublePrecision("score").notNull().default(0),
+    status: text("status").notNull().default(""),
+    createdAt: now(),
+  },
+  (t) => ({ byTenant: index("search_misses_tenant_fecha_idx").on(t.tenantId) }),
 );

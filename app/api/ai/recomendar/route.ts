@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { withBridge, logEvent } from "@/lib/ai/bridge";
-import { getProducts } from "@/lib/ai/data";
+import { getProducts, getExtraAliases } from "@/lib/ai/data";
 import { searchProducts, animalOf, needScore, looksMedical, detectForma } from "@/lib/ai/search";
 import { buildContexto, richMensaje, opcionesMensaje } from "@/lib/ai/present";
+import { identifyProduct } from "@/lib/ai/brain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,7 +11,26 @@ export const dynamic = "force-dynamic";
 export const POST = withBridge(
   z.object({ necesidad: z.string().min(1) }),
   async ({ body, tenant }) => {
-    const catalog = await getProducts();
+    const [catalog, extraAliases] = await Promise.all([getProducts(), getExtraAliases()]);
+
+    // CEREBRO primero: si la necesidad está mapeada ("pal moquillo", "que le crezca
+    // la cola", "purga"…) o nombra un producto, respondemos con ESO y no con
+    // parecidos ortográficos. Solo si el cerebro no resuelve caemos al ranking.
+    const brain = identifyProduct(body.necesidad, catalog, extraAliases);
+    if (brain.status === "category" || brain.status === "ambiguous" || brain.status === "found") {
+      const top = (brain.options.length ? brain.options : [brain.product!]).slice(0, 3);
+      await logEvent("recomendacion", { necesidad: body.necesidad, productos: top.map((p) => p.slug), matched_by: brain.matchedBy });
+      return {
+        productos: top.map((p) => ({
+          slug: p.slug, name: p.name, priceCOP: p.priceCOP, pitch: p.pitch || p.shortDesc,
+          mensaje: richMensaje(p), producto_contexto: buildContexto(p),
+        })),
+        status: "found" as const,
+        requiere_asesor: false,
+        mensaje: (brain.nota ? `👉 ${brain.nota}\n` : "") + (top.length > 1 ? opcionesMensaje(top) : richMensaje(top[0])),
+      };
+    }
+
     const r = searchProducts(body.necesidad, catalog);
     // Nunca mezclar animales: las recomendaciones comparten el animal del mejor match.
     const firstAnimal = r.ranked[0] ? animalOf(r.ranked[0].product) : null;

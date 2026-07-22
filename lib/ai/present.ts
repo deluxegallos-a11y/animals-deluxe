@@ -125,6 +125,18 @@ export function opcionesMensaje(products: ProductView[]): string {
   return `¡De una mi rey! 🐓 Pa eso te sirven estas opciones:\n${lines.join("\n")}\n¿Cuál te muestro?`;
 }
 
+/** Mensaje de DESAMBIGUACIÓN: el cliente nombró algo que tiene varias versiones
+ *  (botas, tijeras, Cure Chest…). Tono paisa, SIN eco del query. */
+export function cualMensaje(products: ProductView[], nota?: string): string {
+  const vistos = new Set<string>();
+  const uniq = products.filter((p) => { const k = p.name.toLowerCase().trim(); if (vistos.has(k)) return false; vistos.add(k); return true; });
+  const nombres = uniq.slice(0, 4).map((p) => `*${p.name}* (${cop(p.priceCOP)})`);
+  const lista = nombres.length > 1
+    ? `${nombres.slice(0, -1).join(", ")} o ${nombres[nombres.length - 1]}`
+    : nombres[0] || "";
+  return [nota ? `👉 ${nota}` : "", `¡De una mi rey! 🐓 ¿Cuál de estos buscas: ${lista}?`].filter(Boolean).join("\n");
+}
+
 /** Producto "vacío" pero nunca null (regla de oro UChat). */
 export function emptyProduct() {
   return {
