@@ -9,6 +9,8 @@ import { createOrder, parsePlainItems } from "@/lib/ai/orders";
 import { pushOrderToShopify } from "@/lib/shopify-sync";
 import { cop } from "@/lib/ai/format";
 import { searchProducts } from "@/lib/ai/search";
+import { identifyProduct } from "@/lib/ai/brain";
+import { rulesForTenant } from "@/lib/ai/aliases";
 import { DEFAULT_TENANT_SLUG } from "@/lib/ai/tenant";
 import type { ProductView } from "@/lib/ai/types";
 
@@ -107,18 +109,37 @@ export const POST = withBridge(
       for (const x of parsed) raws.push({ name: x.name, cantidad: x.cantidad });
     }
 
-    // resolver cada nombre → slug REAL del catálogo (por slug exacto o búsqueda tolerante)
+    // resolver cada nombre → slug REAL del catálogo. CEREBRO (identifyProduct) con
+    // umbral de CONFIANZA: bug AD-K7QM ("Ultra Gallo B12" quedó como Champions Choice)
+    // = el fuzzy viejo (searchProducts) sustituía por otro producto. Ahora SOLO se
+    // acepta un match seguro (alias/nombre/keyword, o fuzzy con score alto y NO ambiguo).
+    // Cualquier duda → NO se sustituye: se pide aclarar ese producto.
+    const rules = rulesForTenant(tenant.slug);
     const items: { slug: string; presentacion?: string; cantidad: number }[] = [];
-    const noEncontrados: string[] = [];
+    const noEncontrados: string[] = []; // sin match → "no encontré"
+    const aclarar: string[] = [];       // match dudoso/ambiguo → "¿cuál exactamente?"
     for (const r of raws) {
       const bySlug = catalog.find((p) => p.slug === r.name.toLowerCase());
-      let slug = bySlug?.slug;
-      if (!slug) {
-        const res = searchProducts(r.name, catalog);
-        if (res.product) slug = res.product.slug;
-      }
-      if (slug) items.push({ slug, presentacion: r.presentacion, cantidad: r.cantidad });
+      if (bySlug) { items.push({ slug: bySlug.slug, presentacion: r.presentacion, cantidad: r.cantidad }); continue; }
+      const res = identifyProduct(r.name, catalog, [], rules);
+      const seguro =
+        !!res.product && res.status !== "ambiguous" &&
+        (res.matchedBy === "alias" || res.matchedBy === "name" || res.matchedBy === "keyword"
+          || (res.matchedBy === "fuzzy" && res.score >= 0.6));
+      if (seguro) items.push({ slug: res.product!.slug, presentacion: r.presentacion, cantidad: r.cantidad });
+      else if (res.product || res.status === "ambiguous" || res.status === "category") aclarar.push(r.name);
       else noEncontrados.push(r.name);
+    }
+    // Un match DUDOSO nunca crea pedido con otro producto: se pide aclarar (§2 · AD-K7QM).
+    if (aclarar.length) {
+      await logEvent("pedido_no_creado", { motivo: "producto_ambiguo", productos: aclarar, sub_id: subId });
+      await updateOrderAttempt(attemptId, { resultado: "rejected", motivo: `aclarar producto: ${aclarar.join(", ")}` });
+      return {
+        ok: false,
+        campos_faltantes: ["producto"],
+        producto_ambiguo: aclarar,
+        mensaje: `Para no equivocarme, ¿me confirmas exactamente cuál producto es "${aclarar[0]}"? Dime el nombre completo o te paso el catálogo 🐓`,
+      };
     }
 
     // --- REQUISITOS DUROS (bug AD-7PM7: se creó un pedido sin nombre/cédula/tel/dirección).
@@ -201,6 +222,10 @@ export const POST = withBridge(
         ref,
         estado: "por_revisar",
         requiere_revision: true,
+        // Resumen coherente con ESTE pedido (§5): la notificación al asesor no debe
+        // llenarse con variables viejas del bot.
+        producto_resumen: order.items.map((it) => `${it.cantidad}× ${it.name}`).join(", "),
+        total_cop: order.total_cop,
         asesor: order.asesor,
         mensaje:
           `¡Gracias${nombre ? " " + nombre.split(" ")[0] : ""}! 🙏 Antes de cerrar quiero confirmar bien: ` +
@@ -262,6 +287,11 @@ export const POST = withBridge(
     return {
       pedido_id: order.pedido_id,
       ref,
+      // Campos que alimentan la notificación al asesor (§5): SIEMPRE los de ESTE
+      // pedido recién creado (producto, total y ref), para que el bot no llene la
+      // plantilla con variables de un pedido anterior.
+      producto_resumen: listaProductos,
+      subtotal_cop: order.subtotal_cop,
       total_cop: order.total_cop,
       flete: order.envio_cop,
       envio_cop: order.envio_cop,
