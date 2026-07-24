@@ -394,9 +394,11 @@ export function identifyProduct(
       const t = norm.tokens[i], t2 = norm.tokens[i + 1];
       // Una palabra de forma/necesidad amplia por sí sola no identifica → fuera del fuzzy.
       if (!FUZZY_STOP.has(t)) qWins.push(t);
-      // Ventana de 2 palabras: solo si NO es 100% stopwords ("vitaminas minerales"),
-      // que si no hacía match con alias tipo "vitamina b12 5500".
-      if (t2 !== undefined && !(FUZZY_STOP.has(t) && FUZZY_STOP.has(t2))) qWins.push(`${t} ${t2}`);
+      // Ventana de 2 palabras: solo si TIENE un ancla de identidad real (un token
+      // NO-stopword de ≥4 letras). Si no ("red rooster" = color + palabra genérica
+      // "rooster", o "vitaminas minerales" = puras stopwords), la ventana queda
+      // dominada por la palabra común y hacía match falso (red rooster→rooster xt).
+      if (t2 !== undefined && [t, t2].some((w) => !FUZZY_STOP.has(w) && w.length >= 4)) qWins.push(`${t} ${t2}`);
     }
     // El nombre tampoco identifica por su token de forma ("…-pastillas", "…-inyectable").
     const nameToks = name.split(" ").filter((w) => w.length >= 4 && !FUZZY_STOP.has(w));

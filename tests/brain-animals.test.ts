@@ -97,6 +97,15 @@ test("ANIMALS: 'algo para el caballo' → Horse Deluxe", () => {
   assert.ok(slugs("algo para el caballo").includes("horse-deluxe"));
 });
 
+test("ANIMALS: Red Rooster es solo de Rooster Deluxe → NO se ofrece aquí", () => {
+  for (const q of ["enrojecedor", "red rooster", "quiero el red rooster"]) {
+    const r = id(q);
+    assert.ok(!slugs(q).includes("red-rooster"), `'${q}' ofreció red-rooster`);
+    // y no debe sustituirlo por otro producto al azar
+    assert.ok(r.status === "not_found" || r.matchedBy === "alias" || r.matchedBy === "need", `'${q}' → ${r.status}/${r.matchedBy}/${r.product?.slug}`);
+  }
+});
+
 /* ---------- basura ---------- */
 
 test("ANIMALS: queries basura NUNCA devuelven producto", () => {
