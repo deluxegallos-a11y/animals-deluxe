@@ -56,13 +56,14 @@ export function tiempoZona(zona: Zona): string {
 const PESO_POR_UNIDAD_KG = 1; // 1 producto liviano ≈ 1 kg (solo informativo)
 export const TIEMPO_ENTREGA = "2 a 5 días hábiles"; // fallback genérico (zona por defecto)
 
-/* Productos con envío gratis. Slugs reales del catálogo. Además, cualquier
-   producto con el flag `envioGratis` activo en el panel también cuenta como
-   gratis (ver pedidoEnvioGratis), así el dueño lo controla sin tocar código. */
+/* Envío gratis SOLO para More Muscle Dogs y Horse Deluxe (regla del dueño, 24-jul).
+   OJO: Weight Muscle Protein NO es gratis — se confundía por el nombre "muscle" y el
+   bot lo ofrecía gratis (bug M6.1). El flag `envioGratis` de la DB (panel) también
+   activa gratis por producto, así el dueño lo controla sin tocar código. Estos dos
+   slugs son de Animals Deluxe; Rooster (anticipado) no los tiene → no se mezcla. */
 export const FREE_SHIPPING_SLUGS = new Set<string>([
   "horse-deluxe",
   "more-muscle-dogs",
-  "weight-muscle-protein",
 ]);
 
 /* Mapa ciudad → zona. Default = nacional_municipal. Claves normalizadas
