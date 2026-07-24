@@ -1599,7 +1599,7 @@
     "disclaimer": "Producto de bienestar y rendimiento. No cura enfermedades.",
     "stock": 999,
     "activo": true,
-    "envioGratis": false,
+    "envioGratis": true,
     "descripcion": "🐴 HORSE DELUXE — La fórmula definitiva para el éxito equino\r\nLleva a tu caballo al siguiente nivel, con resultados visibles sin afectar su salud.\r\n✅ Aumento de masa muscular, fuerza y resistencia\r\n✅ Probióticos: mejor digestión y absorción de nutrientes\r\n✅ Flora microbiana sana y equilibrio digestivo\r\n✅ Modula el sistema inmunológico (más defensas)\r\n✅ Control del estrés: calma y concentración en alta exigencia\r\n🥄 Modo de uso: 60 a 80 gr por animal al día. Desde los 8 meses.\r\n💵 $160.000 (pote 3 kg) · 🚚 ENVÍO GRATIS · Contra entrega, pagás al recibir.",
     "edadMinima": "8 meses",
     "dosificacion": "60 a 80 gr por animal al día",
@@ -1799,7 +1799,7 @@
     "disclaimer": "Producto de bienestar y rendimiento. No cura enfermedades.",
     "stock": 999,
     "activo": true,
-    "envioGratis": false,
+    "envioGratis": true,
     "descripcion": "🐕💪 MORE MUSCLE DOGS PREMIUM — Masa muscular y salud digestiva\nPara perros de todas las razas, con ingredientes naturales y resultados visibles.\n✅ Aumento de masa muscular\n✅ Reduce diarrea, gases y olor de las heces (semana 1-2)\n✅ Menos caída de pelo y mejor piel (desde la semana 4)\n✅ Ingredientes naturales, sin derivados de pollo\n✅ Se mezcla fácil con el concentrado o la dieta\n✅ Rinde de 3 a 6 meses según peso\n🥄 Modo de uso: según peso (ej. perro de 13 kg ≈ 3 g/día, de lunes a viernes).\n💵 400 gr $100.000 · 1000 gr $180.000 · 🚚 ENVÍO GRATIS · Contra entrega, pagás al recibir.",
     "edadMinima": "",
     "dosificacion": "3 g diarios de lunes a viernes (según peso; perro de ~13 kg ≈ 3 g/día). Rinde de 3 a 6 meses según tipo y peso.",
@@ -2347,105 +2347,6 @@
     "dosificacion": "",
     "presentacion": "",
     "paraQue": ""
-  },
-  {
-    "id": "ccbf367d-744e-4724-ab77-12f83b7520f7",
-    "slug": "red-rooster",
-    "name": "Red Rooster (Enrojecedor)",
-    "categoryId": "1fbe1b59-36ce-4f29-846b-8f02ea808372",
-    "categorySlug": "cuidado",
-    "categoryName": "Piel, Pluma & Cuidado",
-    "audience": "Gallos",
-    "origin": "co",
-    "priceCOP": 35000,
-    "presentations": [
-      {
-        "label": "1 litro",
-        "priceCOP": 35000,
-        "shopifyVariantId": "gid://shopify/ProductVariant/48900416176363"
-      },
-      {
-        "label": "2 litros",
-        "priceCOP": 60000,
-        "shopifyVariantId": "gid://shopify/ProductVariant/48900416209131"
-      },
-      {
-        "label": "4 litros",
-        "priceCOP": 80000,
-        "shopifyVariantId": "gid://shopify/ProductVariant/48900416241899"
-      }
-    ],
-    "image": "red-rooster.jpg",
-    "imageUrl": "https://animals-deluxe.vercel.app/products/red-rooster.jpg",
-    "badges": [
-      "Non Toxic"
-    ],
-    "tagline": "Frota para enrojecer: humecta, desinfecta y enrojece.",
-    "shortDesc": "Humecta y desinfecta la piel, previene hongos, mejora la circulación y enrojece de forma efectiva.",
-    "benefits": [
-      "Enrojece efectivo",
-      "Humecta y desinfecta",
-      "Previene hongos"
-    ],
-    "ingredients": [],
-    "usage": "Frota sobre la piel del ejemplar según necesidad.",
-    "pitch": "Enrojecedor que además humecta, desinfecta y previene hongos. 1, 2 o 4 litros.",
-    "faq": [
-      {
-        "a": "Pa dejar la pluma brillante y la piel sana, y ayudar a prevenir hongos y ácaros.",
-        "q": "¿Pa qué sirve?"
-      },
-      {
-        "a": "Según la presentación: el shampoo en baño, o el producto sobre la zona. Te indico el modo.",
-        "q": "¿Cómo se aplica?"
-      },
-      {
-        "a": "Según necesidad, mi rey. Pa exhibición, dejalo brillante unos días antes.",
-        "q": "¿Cada cuánto?"
-      },
-      {
-        "a": "Claro, deja el ejemplar bien presentado, con pluma sana y brillante.",
-        "q": "¿Sirve pa exhibición?"
-      },
-      {
-        "a": "No, está hecho pa el cuidado del gallo. Seguí el modo de uso y listo.",
-        "q": "¿Es fuerte pa la piel?"
-      }
-    ],
-    "keywords": [
-      "pluma",
-      "piel",
-      "brillo",
-      "muda",
-      "plumaje",
-      "hongos",
-      "cuidado",
-      "escamas",
-      "nacional",
-      "rooster",
-      "enrojecedor",
-      "gallos",
-      "pluma opaca",
-      "piojos",
-      "brillo de pluma"
-    ],
-    "objeciones": {
-      "muy_caro": "Mirá, son $50.000 pero rinde un montón (1 litro) y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
-      "lo_pienso": "Tranquilo parcero, te lo aparto sin compromiso y arrancás cuando querás. Eso sí, es de los que más sale, no te quedés sin él.",
-      "no_confio": "Es original y es contraentrega: pagás cuando lo tenés en la mano. Cero riesgo, mi rey. Miles de galleros ya lo usan.",
-      "ya_lo_uso": "¡Bacano! Entonces ya sabés cómo rinde. ¿Te mando otro pa que no te quedés sin él en el momento clave? 🐓",
-      "no_tengo_plata": "De una te entiendo. Mirá que es contraentrega, no pagás nada ahora; cuando te llegue lo pagás. ¿Te lo aparto pa guardarte el cupo?"
-    },
-    "adIds": [],
-    "disclaimer": "Producto de bienestar y rendimiento. No cura enfermedades.",
-    "stock": 999,
-    "activo": true,
-    "envioGratis": false,
-    "descripcion": "🔴 RED ROOSTER — Enrojecedor de piel\nSe frota para humectar, desinfectar y enrojecer la piel del ejemplar.\n✅ Humecta la piel\n✅ Desinfecta\n✅ Enrojece para presencia de campeón\n✅ Elige el tamaño según tu gallera\n🥄 Modo de uso: frotar sobre la piel según necesidad.\n💵 1 litro $35.000 · 2 litros $60.000 · 4 litros $80.000 · + envío · Contra entrega, pagás al recibir.",
-    "edadMinima": "",
-    "dosificacion": "",
-    "presentacion": "",
-    "paraQue": "Enrojecedor: realza el color rojo de la piel; humecta y desinfecta."
   },
   {
     "id": "979b8d6f-b045-42b8-bd03-dd61ef63592d",

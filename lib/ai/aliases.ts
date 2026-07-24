@@ -248,7 +248,8 @@ export const ALIAS_CATALOG_ANIMALS: AliasEntry[] = [
   { slugs: ["omega-3"], aliases: ["omega", "omega tres", "omega 3"] },
   { slugs: ["plume-king-shampoo"], aliases: ["plume king", "shampoo", "champu", "shampu", "plum king", "plume king shampoo"] },
   { slugs: ["rooster-deluxe-shampoo"], aliases: ["rooster deluxe shampoo", "shampoo deluxe", "champu deluxe"] },
-  { slugs: ["red-rooster"], aliases: ["enrojecedor", "red rooster"] },
+  // Red Rooster (enrojecedor) es SOLO de Rooster Deluxe → NO se ofrece en Animals
+  // (producto desactivado en animals-deluxe). Sin alias aquí para no resolverlo.
   { slugs: ["rooster-smallpox"], aliases: ["smallpox", "viruela", "bubas", "crema viruela", "esmolpox"] },
 
   /* ---------- ENTRENAMIENTO / RECUPERACIÓN ---------- */
