@@ -2,6 +2,7 @@ import { z } from "zod";
 import { withBridge, recordInterest } from "@/lib/ai/bridge";
 import { getProductBySlug, getProducts } from "@/lib/ai/data";
 import { searchProducts } from "@/lib/ai/search";
+import { esQueryBasura } from "@/lib/ai/brain";
 import { publicProduct, emptyProduct, richMensaje } from "@/lib/ai/present";
 
 export const runtime = "nodejs";
@@ -15,7 +16,9 @@ export const POST = withBridge(
     // 2) fallback: el bot a veces manda un slug derivado del NOMBRE que no coincide
     //    (p.ej. "combo-cuidado-total-4-tapas" en vez de "combo-4-tapas"). Antes de rendirnos,
     //    buscamos por texto. Así NUNCA decimos "No encontré" con el producto existiendo.
-    if (!p) {
+    //    OJO: el fallback NO corre si el "slug" es basura (URL de audio/foto, id):
+    //    ese texto normalizado se volvía palabras y pescaba cualquier producto.
+    if (!p && !esQueryBasura(body.slug)) {
       const catalog = await getProducts();
       const r = searchProducts(body.slug.replace(/[-_]+/g, " "), catalog);
       if (r.product) p = r.product;

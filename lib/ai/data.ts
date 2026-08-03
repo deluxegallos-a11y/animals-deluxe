@@ -12,7 +12,8 @@ import type { ProductView, CategoryView } from "@/lib/ai/types";
 import { demoProducts, demoCategories, demoStore } from "@/lib/demo-data";
 import { normalize } from "@/lib/ai/format";
 import { computeShipping, resolveZonaInfo, tiempoZona, ZONES, ZONE_RATE } from "@/lib/ai/shipping";
-import { currentTenantId, currentTenant } from "@/lib/ai/tenant";
+import { currentTenantId, currentTenant, DEFAULT_TENANT_SLUG } from "@/lib/ai/tenant";
+import { filtrarCatalogo, esBloqueado } from "@/lib/ai/catalog-rules";
 
 type ProdRow = typeof products.$inferSelect;
 type CatRow = typeof categories.$inferSelect;
@@ -72,13 +73,18 @@ export async function getCategories(): Promise<CategoryView[]> {
   return rows.map((c) => ({ id: c.id, slug: c.slug, name: c.name, color: c.color || "#FF4D2E" }));
 }
 
-/* ---------- Productos ---------- */
+/* ---------- Productos ----------
+   ÚNICO punto de entrada del catálogo (bot + web). Aquí se aplican las reglas de
+   `catalog-rules.ts`: los productos que son SOLO de Rooster Deluxe (anticipado)
+   nunca salen del tenant de contra entrega. Filtrar aquí cubre /buscar-producto,
+   /catalogo, /recomendar, /producto y /crear-pedido de una sola vez. */
 export async function getProducts(opts: { categorySlug?: string; limit?: number } = {}): Promise<ProductView[]> {
   if (!db) {
-    let list = demoProducts.filter((p) => p.activo);
+    let list = filtrarCatalogo(DEFAULT_TENANT_SLUG, demoProducts.filter((p) => p.activo));
     if (opts.categorySlug) list = list.filter((p) => p.categorySlug === opts.categorySlug);
     return opts.limit ? list.slice(0, opts.limit) : list;
   }
+  const tenant = await currentTenant();
   const tid = await currentTenantId();
   const rows = await db
     .select({ p: products, c: categories })
@@ -86,14 +92,20 @@ export async function getProducts(opts: { categorySlug?: string; limit?: number 
     .leftJoin(categories, eq(products.categoryId, categories.id))
     .where(and(eq(products.tenantId, tid!), eq(products.activo, true)))
     .orderBy(asc(products.name));
-  let list = rows.map((r) => toView(r.p, r.c));
+  let list = filtrarCatalogo(tenant.slug, rows.map((r) => toView(r.p, r.c)));
   if (opts.categorySlug) list = list.filter((p) => p.categorySlug === opts.categorySlug);
   return opts.limit ? list.slice(0, opts.limit) : list;
 }
 
 export async function getProductBySlug(slug: string): Promise<ProductView | null> {
   if (!slug) return null;
-  if (!db) return demoProducts.find((p) => p.slug === slug) || null;
+  if (!db) {
+    if (esBloqueado(DEFAULT_TENANT_SLUG, slug)) return null;
+    return demoProducts.find((p) => p.slug === slug) || null;
+  }
+  const tenant = await currentTenant();
+  // Bloqueado para este tenant → se comporta como si no existiera (ni ficha, ni pedido).
+  if (esBloqueado(tenant.slug, slug)) return null;
   const tid = await currentTenantId();
   const [row] = await db
     .select({ p: products, c: categories })

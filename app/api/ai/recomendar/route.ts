@@ -1,9 +1,9 @@
 import { z } from "zod";
 import { withBridge, logEvent } from "@/lib/ai/bridge";
 import { getProducts, getExtraAliases } from "@/lib/ai/data";
-import { searchProducts, animalOf, needScore, looksMedical, detectForma } from "@/lib/ai/search";
+import { searchProducts, animalOf, needScore, looksMedical, detectForma, speciesPool } from "@/lib/ai/search";
 import { buildContexto, richMensaje, opcionesMensaje } from "@/lib/ai/present";
-import { identifyProduct } from "@/lib/ai/brain";
+import { identifyProduct, esQueryBasura } from "@/lib/ai/brain";
 import { rulesForTenant } from "@/lib/ai/aliases";
 
 export const runtime = "nodejs";
@@ -12,6 +12,12 @@ export const dynamic = "force-dynamic";
 export const POST = withBridge(
   z.object({ necesidad: z.string().min(1) }),
   async ({ body, tenant }) => {
+    // Mismo candado que /buscar-producto: una URL de audio/foto no es una necesidad.
+    if (esQueryBasura(body.necesidad)) {
+      await logEvent("recomendacion_descartada", { necesidad: body.necesidad });
+      return { productos: [], status: "not_found" as const, requiere_asesor: false, mensaje: "" };
+    }
+
     const [catalog, extraAliases] = await Promise.all([getProducts(), getExtraAliases()]);
 
     // CEREBRO primero: si la necesidad está mapeada ("pal moquillo", "que le crezca
@@ -32,7 +38,10 @@ export const POST = withBridge(
       };
     }
 
-    const r = searchProducts(body.necesidad, catalog);
+    // Fallback al ranking. Sobre el pool de la ESPECIE: si el cliente no nombró
+    // perro ni caballo, esos productos ni siquiera compiten (antes "polvo" o
+    // "masa muscular" sacaba More Muscle Dogs / Horse Deluxe para un gallero).
+    const r = searchProducts(body.necesidad, speciesPool(body.necesidad, catalog));
     // Nunca mezclar animales: las recomendaciones comparten el animal del mejor match.
     const firstAnimal = r.ranked[0] ? animalOf(r.ranked[0].product) : null;
     // Piso de relevancia (§4.5): recomienda por PROPÓSITO, no padees con productos flojos/no

@@ -18,7 +18,7 @@
 import type { ProductView } from "@/lib/ai/types";
 import { normalize } from "@/lib/ai/format";
 import { ALIAS_CATALOG, NEED_RULES, ROOSTER_RULES, type AliasEntry, type NeedRule, type Ruleset } from "@/lib/ai/aliases";
-import { searchProducts } from "@/lib/ai/search";
+import { searchProducts, speciesPool, detectForma, productMatchesForma } from "@/lib/ai/search";
 
 /* ---------------- PASO 0 — normalización ---------------- */
 
@@ -90,6 +90,30 @@ export type NormalizedQuery = {
   tokens: string[];
 };
 
+/* ---------------- PASO -1 — candado de entrada ----------------
+   BUG DE PROD (2-ago-2026, 13 casos): cuando el cliente manda una NOTA DE VOZ o una
+   FOTO, UChat reenvía la URL del media como `q`:
+     "https://www.uchat.com.au/media/whatsapp/1179721351895048/…/-VNwT.mp3"
+   Al normalizar, la URL se vuelve palabras sueltas y el token "media" hacía match
+   EXACTO (score 1.0) con "Comedero MEDIA Luna" → el bot le mandaba un comedero a
+   alguien que solo había mandado un audio.
+   Una URL, un archivo o un id no son una consulta: se cortan ANTES de tocar el
+   catálogo. */
+const EXT_MEDIA = /\.(png|jpe?g|jpg|gif|webp|bmp|svg|mp3|mp4|ogg|oga|opus|wav|m4a|aac|amr|3gp|mov|webm|pdf|docx?|xlsx?)(\?|#|$)/i;
+
+/** ¿Este texto NO es una consulta de producto? (URL, archivo, id, puro número). */
+export function esQueryBasura(raw: string): boolean {
+  const s = (raw || "").trim();
+  if (!s) return true;
+  if (/^(https?:)?\/\//i.test(s) || /^www\./i.test(s)) return true;   // URL
+  if (/\b(?:https?:\/\/|www\.)\S+/i.test(s)) return true;             // URL embebida
+  if (EXT_MEDIA.test(s)) return true;                                  // nombre de archivo
+  if (/^[a-f0-9]{16,}$/i.test(s)) return true;                         // hash / id
+  if (/^[a-f0-9]{8}-[a-f0-9]{4}-/i.test(s)) return true;               // uuid
+  if (!/[a-záéíóúñ]/i.test(s)) return true;                            // sin una sola letra
+  return false;
+}
+
 export function normalizeQuery(raw: string): NormalizedQuery {
   const q = normalize(raw).replace(/[^a-z0-9\s+]/g, " ").replace(/\s+/g, " ").trim();
   const stripped = stripFillers(q);
@@ -136,7 +160,11 @@ export function simPhon(a: string, b: string): number {
  */
 export function identitySim(a: string, b: string): number {
   const s = simPhon(a, b);
-  if (s >= 0.55) return s;
+  // La exención por parecido alto era 0.55 y dejaba pasar cruces absurdos:
+  // "goticas" (gotas) vs "boticas" (alias de BOTAS) da 0.80 y el bot le ofrecía
+  // botas a quien pedía goticas para dopar. Un typo casi nunca cambia la primera
+  // letra, así que el primer fonema es obligatorio salvo parecido casi total.
+  if (s >= 0.9) return s;
   const pa = phonetic(a), pb = phonetic(b);
   return pa[0] && pa[0] === pb[0] ? s : 0;
 }
@@ -214,6 +242,10 @@ const FUZZY_STOP = new Set([
   "energia", "energizante", "doping", "dopin", "pelea", "peleas",
   // genéricas del dominio: aparecen en medio catálogo, no identifican un SKU
   "gallo", "gallos", "rooster", "ave", "aves", "animal", "animales",
+  // "media" es forma/tamaño ("Comedero MEDIA Luna"), nunca lo que busca el cliente.
+  // Cinturón y tirantes junto al candado de URLs: si "media" vuelve a colarse por
+  // otra vía, ya no puede identificar un producto por sí sola.
+  "media", "luna",
 ]);
 
 /** Dedupe por nombre (el catálogo tiene SKUs repetidos: 2× Mona, 2× Tijera Roja…). */
@@ -274,10 +306,22 @@ function matchNeed(norm: NormalizedQuery, needRules: NeedRule[] = NEED_RULES): N
   return best;
 }
 
-function needProducts(hit: NeedHit, products: ProductView[]): ProductView[] {
-  if (hit.slugs.length) return bySlugs(hit.slugs, products).slice(0, 3);
-  if (hit.categorySlug) return dedupe(products.filter((p) => p.categorySlug === hit.categorySlug)).slice(0, 3);
-  return [];
+/** Productos de la necesidad. Si el cliente pidió una FORMA ("goticas",
+ *  "inyectable", "pastillas"), los de esa forma van primero: "goticas para dopar"
+ *  devolvía los 3 primeros de la categoría por orden alfabético y salían tres
+ *  INYECTABLES, justo lo contrario de lo que pidió. */
+function needProducts(hit: NeedHit, products: ProductView[], forma?: string | null): ProductView[] {
+  const base = hit.slugs.length
+    ? bySlugs(hit.slugs, products)
+    : hit.categorySlug
+      ? dedupe(products.filter((p) => p.categorySlug === hit.categorySlug))
+      : [];
+  if (!base.length) return [];
+  if (forma) {
+    const enForma = base.filter((p) => productMatchesForma(p, forma));
+    if (enForma.length) return enForma.slice(0, 3);
+  }
+  return base.slice(0, 3);
 }
 
 /* ---------------- pipeline ---------------- */
@@ -294,13 +338,32 @@ export function identifyProduct(
   rules: Ruleset = ROOSTER_RULES,
 ): BrainResult {
   const norm = normalizeQuery(rawQuery);
+
+  /* --- PASO -1: CANDADO. Query vacío o basura (URL de audio/foto, archivo, id)
+     → not_found seco, SIN mirar el catálogo. Nunca un producto "por si acaso". */
+  if (esQueryBasura(rawQuery)) {
+    return { status: "not_found", product: null, options: [], matchedBy: "", score: 0, ranked: [], norm };
+  }
+
   // Índice de alias del tenant (+ alias extra de la DB). Se cachea el del set
   // rooster sin extras (caso más común en los tests) para no reconstruirlo.
   const index = (rules === ROOSTER_RULES && !extraAliases.length)
     ? DEFAULT_INDEX
     : buildAliasIndex(extraAliases, rules.aliases);
-  // Motor fuzzy existente: se usa para el RANKING (sugerencias), no para decidir identidad.
-  const ranked = searchProducts(norm.stripped || norm.q, products).ranked;
+  // FILTRO POR ESPECIE — se aplica de PASO 1b en adelante. Un producto de perro o
+  // de caballo solo entra si el cliente nombró ese animal; si no, el pool es
+  // gallos+pollos. Bug real: "algo para el músculo" resolvía More Muscle Dogs
+  // (perros) y "proteína para subir masa" resolvía Horse Deluxe (caballos), y el
+  // bot terminaba ofreciéndoselos a un gallero.
+  // El PASO 1a (alias EXPLÍCITO) queda fuera del filtro a propósito: si el cliente
+  // escribe "more muscle dogs" ya nombró al perro y debe resolver igual.
+  const pool = speciesPool(rawQuery, products);
+  // FORMA pedida ("goticas", "inyectable", "pastillas"…): la usa la etapa de
+  // necesidad para no ofrecer inyectables a quien pidió gotas.
+  const forma = detectForma(rawQuery);
+  // Motor fuzzy existente: se usa para el RANKING (sugerencias), no para decidir
+  // identidad. Corre sobre el pool para que las sugerencias tampoco mezclen animales.
+  const ranked = searchProducts(norm.stripped || norm.q, pool).ranked;
   const empty: BrainResult = { status: "not_found", product: null, options: [], matchedBy: "", score: 0, ranked, norm };
 
   if (!norm.q) return { ...empty, status: "empty_query" };
@@ -331,13 +394,15 @@ export function identifyProduct(
   if (norm.stripped.length >= 4) {
     for (const e of [...index].sort((a, b) => a.alias.length - b.alias.length)) {
       if (!containsPhrase(e.alias, norm.stripped)) continue;
-      const hits = bySlugs(e.slugs, products);
+      // Contra `pool`: "musculo" es parte del alias "musculo perro", y sin este
+      // filtro un gallero pidiendo músculo recibía el producto de perros.
+      const hits = bySlugs(e.slugs, pool);
       if (hits.length) return pack(hits, "alias", 1, norm, ranked, e.nota);
     }
   }
 
   /* --- PASO 2: NOMBRE del producto (exacto o contenido) --- */
-  const nameHits = products.filter((p) => {
+  const nameHits = pool.filter((p) => {
     const n = normalize(p.name);
     return containsPhrase(norm.q, n) || containsPhrase(norm.stripped, n) || n === norm.stripped;
   });
@@ -352,7 +417,7 @@ export function identifyProduct(
      Una keyword genérica ("moquillo") la comparten varios productos → NO
      identifica; se deja para la etapa de necesidad. */
   const kwOwners = new Map<string, Set<string>>();
-  for (const p of products) {
+  for (const p of pool) {
     for (const k of p.keywords || []) {
       const kk = normalize(k);
       if (!kk) continue;
@@ -363,7 +428,7 @@ export function identifyProduct(
   if (hasIdentity) for (const cand of [norm.stripped, norm.q]) {
     const owners = kwOwners.get(cand);
     if (owners && owners.size === 1) {
-      const hits = products.filter((p) => (p.keywords || []).some((k) => normalize(k) === cand));
+      const hits = pool.filter((p) => (p.keywords || []).some((k) => normalize(k) === cand));
       if (hits.length) return pack(hits, "keyword", 1, norm, ranked);
     }
   }
@@ -373,7 +438,7 @@ export function identifyProduct(
      debe competir con parecidos ortográficos ("cola"≈"cobra"). */
   const need = matchNeed(norm, rules.needs);
   if (need && need.words >= 2) {
-    const prods = needProducts(need, products);
+    const prods = needProducts(need, pool, forma);
     if (prods.length) return { status: "category", product: prods[0], options: prods, matchedBy: "need", score: 0, ranked, norm };
   }
 
@@ -385,7 +450,7 @@ export function identifyProduct(
   // Identidad = query SIN palabras de forma/necesidad amplia. Si no queda nada
   // (ej. "vitaminas y minerales"), no hay señal de SKU → que decida la necesidad.
   const identityStripped = norm.tokens.filter((t) => !FUZZY_STOP.has(t)).join(" ");
-  if (hasIdentity) for (const p of products) {
+  if (hasIdentity) for (const p of pool) {
     const name = normalize(p.name);
     let best = identityStripped ? identitySim(identityStripped, name) : 0;
     // por token del nombre y ventanas de 1-2 palabras del query
@@ -428,7 +493,7 @@ export function identifyProduct(
 
   /* --- PASO 4: NECESIDAD DÉBIL (palabra suelta) --- */
   if (need) {
-    const prods = needProducts(need, products);
+    const prods = needProducts(need, pool, forma);
     if (prods.length) return { status: "category", product: prods[0], options: prods, matchedBy: "need", score: 0, ranked, norm };
   }
 

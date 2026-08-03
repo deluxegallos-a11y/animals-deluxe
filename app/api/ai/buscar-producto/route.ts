@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { withBridge, audit, logEvent, recordInterest } from "@/lib/ai/bridge";
 import { getProducts, getExtraAliases, logSearchMiss } from "@/lib/ai/data";
-import { identifyProduct } from "@/lib/ai/brain";
+import { identifyProduct, esQueryBasura } from "@/lib/ai/brain";
 import { rulesForTenant } from "@/lib/ai/aliases";
 import { publicProduct, suggestion, emptyProduct, richMensaje, opcionesMensaje, cualMensaje } from "@/lib/ai/present";
 
@@ -11,6 +11,24 @@ export const dynamic = "force-dynamic";
 export const POST = withBridge(
   z.object({ q: z.string().optional().default("") }),
   async ({ body, customer, tenant }) => {
+    // CANDADO DURO (antes de tocar la DB): query vacío, o basura que no es una
+    // consulta (UChat manda la URL del audio/foto como `q` cuando el cliente
+    // manda una nota de voz). Nunca se devuelve un producto "por si acaso".
+    if (esQueryBasura(body.q)) {
+      await logEvent("busqueda_producto", { q: body.q, status: "not_found", match: "", matched_by: "descartado", score: 0 });
+      return {
+        status: "not_found" as const,
+        match: "",
+        matched_by: "descartado",
+        producto: emptyProduct(),
+        opciones: [],
+        sugerencias: [],
+        // SIEMPRE "": sin match confiable el backend NO inventa texto; el silencio
+        // lo maneja el flujo del bot (mismo contrato que el resto del cerebro).
+        mensaje: "",
+      };
+    }
+
     const [catalog, extraAliases] = await Promise.all([getProducts(), getExtraAliases()]);
 
     // CEREBRO: alias → nombre → keyword única → necesidad fuerte → fuzzy → necesidad → nada.
@@ -45,18 +63,16 @@ export const POST = withBridge(
     }
 
     if (!r.product) {
-      // No hay match real → not_found con mensaje "" (el bot maneja el silencio).
-      // Solo si la consulta viene vacía damos un empujón amable (no es un "no encontré").
+      // Sin match real → not_found con mensaje "" (el bot maneja el silencio).
+      // El caso de q vacío ya se cortó arriba, antes de tocar la DB.
       return {
-        status: r.status,
+        status: "not_found" as const,
         match: "",
         matched_by: r.matchedBy,
         producto: emptyProduct(),
         opciones: [],
         sugerencias, // solo relevantes (puede ir vacío)
-        mensaje: body.q
-          ? ""
-          : "¿Para qué animal y qué buscas? Tengo energía, vitaminas, respiratorio, desparasitantes y más. 🐓",
+        mensaje: "",
       };
     }
 

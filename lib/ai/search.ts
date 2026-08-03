@@ -31,8 +31,9 @@ const INTENTS: { match: RegExp; category: string; kw: string[] }[] = [
   { match: /\b(moco|respir|gripa|estornud|tos|pecho|pulmon|ronqu|tupid|congestion)\w*/i, category: "respiratorio", kw: ["respiratorio", "pecho"] },
   { match: /\b(pluma|piel|plumaj|brillo|muda|emplum|cuidado|hongo|escama)\w*/i, category: "cuidado", kw: ["pluma", "piel"] },
   { match: /\b(polvo|suplement|mezcla|formula)\w*/i, category: "suplementos", kw: ["suplemento", "polvo"] },
-  { match: /\b(entren|musculo|musculatura|masa|recuper|fuerza|trainer|gym|peso)\w*/i, category: "entrenamiento", kw: ["entrenamiento", "musculo", "recuperacion"] },
-  { match: /\b(pollo|levante|polluel|pollito|cria|engord)\w*/i, category: "pollos", kw: ["pollo", "levante"] },
+  { match: /\b(entren|musculo|musculatura|masa|recuper|fuerza|trainer|gym|peso|engord)\w*/i, category: "entrenamiento", kw: ["entrenamiento", "musculo", "recuperacion"] },
+  // "engord" NO enruta a pollos: engordar es necesidad de gallo tanto como de pollo.
+  { match: /\b(pollo|levante|polluel|pollito|cria)\w*/i, category: "pollos", kw: ["pollo", "levante"] },
   { match: /\b(perro|canino|cachorro|dog|mascota)\w*/i, category: "perros", kw: ["perro"] },
   { match: /\b(caballo|equino|yegua|potro|horse)\w*/i, category: "caballos", kw: ["caballo"] },
 ];
@@ -50,17 +51,43 @@ export function animalOf(p: ProductView): Animal {
   return "gallos";
 }
 
-/* Detecta el animal mencionado en el query. null si no es claro. */
+/* Detecta el animal mencionado en el query. null si no es claro.
+   Dos pasadas a propósito: primero el animal NOMBRADO, después las palabras de
+   ETAPA. Si "engordar"/"levante" competían de tú a tú con "gallo", un
+   "quiero engordar mi gallo" caía en pollos y el bot recomendaba cuido de pollitos. */
 const ANIMAL_Q: { animal: Animal; re: RegExp }[] = [
   { animal: "caballos", re: /\b(caball|equin|yegua|potr|horse)\w*/ },
   { animal: "perros", re: /\b(perr|canin|cachorr|dog|mascota)\w*/ },
-  { animal: "pollos", re: /\b(pollo|polluel|pollit|levante|engord)\w*/ },
   { animal: "gallos", re: /\b(gallo|gallin|rooster)\w*/ },
+  { animal: "pollos", re: /\b(pollo|polluel|pollit)\w*/ },
+];
+/* Palabras de ETAPA: no nombran al animal, solo deciden cuando NADIE lo nombró.
+   "engordar" NO está aquí: se engorda igual un gallo que un pollo. */
+const ETAPA_Q: { animal: Animal; re: RegExp }[] = [
+  { animal: "pollos", re: /\b(levante|cria|crias)\b/ },
 ];
 export function detectAnimal(query: string): Animal | null {
   const q = normalize(query);
   for (const a of ANIMAL_Q) if (a.re.test(q)) return a.animal;
+  for (const a of ETAPA_Q) if (a.re.test(q)) return a.animal;
   return null;
+}
+
+/* Especies EXCLUSIVAS: mundos aparte del gallo. Un producto de perro o de caballo
+   SOLO puede salir si el cliente nombró a ese animal. */
+const EXCLUSIVAS = new Set<Animal>(["perros", "caballos"]);
+
+/**
+ * Pool de productos permitido para ese query (§ "nunca mezclar animales").
+ *  · nombra perro/caballo → SOLO ese animal
+ *  · nombra gallo/pollo, o no nombra ninguno → gallos + pollos, JAMÁS perro ni caballo
+ * Sin esto, "músculo"/"masa"/"polvo"/"proteína" sacaban More Muscle Dogs o
+ * Horse Deluxe para clientes de gallos.
+ */
+export function speciesPool(query: string, products: ProductView[]): ProductView[] {
+  const a = detectAnimal(query);
+  if (a && EXCLUSIVAS.has(a)) return products.filter((p) => animalOf(p) === a);
+  return products.filter((p) => !EXCLUSIVAS.has(animalOf(p)));
 }
 
 /* Palabras de animal (para medir si el match es por la NECESIDAD y no solo por el animal). */
@@ -74,7 +101,9 @@ const ANIMAL_WORDS = new Set([
 /* ---- Presentación / forma (§4.5b): si piden "inyectable", NO ofrecer gotas ---- */
 const FORMAS: { forma: string; q: RegExp; prod: RegExp }[] = [
   { forma: "inyectable", q: /\b(inyect|ampoll|jeringa|intramuscular)\w*/, prod: /\b(inyect|ampoll|intramuscular)\w*/ },
-  { forma: "gotas", q: /\b(gota|gotero|goteo)\w*/, prod: /\b(gota|gotero)\w*/ },
+  // "goticas"/"gotitas" son el diminutivo que usa el gallero; sin ellos, quien
+  // pedía goticas recibía inyectables.
+  { forma: "gotas", q: /\b(gota|gotita|gotic|gotero|goteo)\w*/, prod: /\b(gota|gotero)\w*/ },
   { forma: "polvo", q: /\b(polvo|polvos)\w*/, prod: /\b(polvo)\w*/ },
   { forma: "pastillas", q: /\b(pastilla|tableta|capsul|caps|comprimid|pildora)\w*/, prod: /\b(pastilla|tableta|capsul|caps|comprimid)\w*/ },
   { forma: "shampoo", q: /\b(shampoo|champu)\w*/, prod: /\b(shampoo|champu)\w*/ },

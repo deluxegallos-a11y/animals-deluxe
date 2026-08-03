@@ -84,7 +84,8 @@ test("ANIMALS: 'para la pelea' / 'energía' → categoría energia", () => {
 
 test("ANIMALS: 'para las pulgas' → shampoo/omega (no lice-free, que no existe aquí)", () => {
   const s = slugs("para las pulgas");
-  assert.ok(s.includes("plume-king-shampoo"), `fue ${s.join(", ")}`);
+  // Plume King es solo de Rooster Deluxe: el shampoo de contra entrega es el Deluxe.
+  assert.ok(s.includes("rooster-deluxe-shampoo"), `fue ${s.join(", ")}`);
 });
 
 /* ---------- productos exclusivos de animals ---------- */

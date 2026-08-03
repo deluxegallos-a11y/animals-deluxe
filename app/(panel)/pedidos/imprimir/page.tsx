@@ -8,8 +8,13 @@ const fecha = (d: Date | null) => (d ? new Date(d).toLocaleDateString("es-CO", {
 export default async function ImprimirPage({ searchParams }: { searchParams: Promise<{ tipo?: string; refs?: string; sticker?: string }> }) {
   const { tipo = "factura", refs = "", sticker = "" } = await searchParams;
   const wanted = refs.split(",").map((s) => s.trim().toUpperCase()).filter(Boolean);
-  const [all, cfg, bod] = await Promise.all([listOrders(), getConfigEmpresa(), getBodegaDefault()]);
-  const pedidos = wanted.length ? all.filter((o) => wanted.includes(o.ref.toUpperCase())) : [];
+  // Se piden por REF directo a la DB: así imprime igual un pedido de hace meses
+  // (antes se traía una ventana de los últimos pedidos y los viejos salían vacíos).
+  const [pedidos, cfg, bod] = await Promise.all([
+    wanted.length ? listOrders({ refs: wanted }) : Promise.resolve([]),
+    getConfigEmpresa(),
+    getBodegaDefault(),
+  ]);
 
   const marca = cfg?.nombreMarca || "Animals Deluxe";
   const esSticker = tipo === "sticker" || sticker === "1";

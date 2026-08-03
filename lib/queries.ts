@@ -222,16 +222,40 @@ export type OrderRow = {
   envioGuia: string; envioStatus: string; envioPdf: string; envioImpreso: boolean; envioFlete: number;
 };
 
-export async function listOrders(): Promise<OrderRow[]> {
+/** Ventana por defecto del panel. El board filtra en el cliente (hoy/ayer/todos +
+ *  buscador), así que la ventana tiene que ser MUY superior al volumen del mes:
+ *  con el tope viejo de 200 los pedidos más antiguos no aparecían ni buscando por
+ *  cédula o referencia, y los totales de "Todos" salían cortados. */
+export const ORDERS_PAGE = 500;
+
+/** Total de pedidos del tenant (para saber si la ventana se quedó corta). */
+export async function countOrders(): Promise<number> {
+  if (!db) return 0;
+  const tid = (await getPanelTenantId())!;
+  const [r] = await db.select({ n: sql<number>`count(*)::int` }).from(orders).where(eq(orders.tenantId, tid));
+  return r?.n ?? 0;
+}
+
+export async function listOrders(opts: { limit?: number; refs?: string[] } = {}): Promise<OrderRow[]> {
   if (!db) return [];
   const tid = (await getPanelTenantId())!;
+  // Clamp: nunca 0/negativo, y techo duro para no reventar la página por un ?limit= absurdo.
+  const limit = Math.min(Math.max(Math.trunc(opts.limit ?? ORDERS_PAGE), 1), 20_000);
+  // `refs`: trae EXACTAMENTE esas referencias sin depender de la ventana (lo usa
+  // la impresión de facturas/guías, que antes no encontraba un pedido viejo
+  // porque quedaba fuera del tope y salía en blanco).
+  const refs = (opts.refs || []).map((r) => r.trim().toUpperCase()).filter(Boolean);
+  if (opts.refs && !refs.length) return [];
+  const where = refs.length
+    ? and(eq(orders.tenantId, tid), inArray(orders.ref, refs))
+    : eq(orders.tenantId, tid);
   const rows = await db
     .select({ o: orders, a: advisors })
     .from(orders)
     .leftJoin(advisors, eq(orders.advisorId, advisors.id))
-    .where(eq(orders.tenantId, tid))
+    .where(where)
     .orderBy(desc(orders.createdAt))
-    .limit(200);
+    .limit(refs.length ? Math.max(refs.length, 1) : limit);
   const ids = rows.map((r) => r.o.id);
   const [items, shipments] = ids.length
     ? await Promise.all([

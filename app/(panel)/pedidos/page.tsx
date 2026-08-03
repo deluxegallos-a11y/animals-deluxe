@@ -1,4 +1,5 @@
-import { listOrders, listFailedAttempts, listProducts } from "@/lib/queries";
+import Link from "next/link";
+import { listOrders, listFailedAttempts, listProducts, countOrders, ORDERS_PAGE } from "@/lib/queries";
 import { PageHead, Card } from "@/components/ui";
 import { PedidosBoard, type BoardOrder, type CatProd } from "./pedidos-board";
 
@@ -9,8 +10,16 @@ function dato(b: Record<string, unknown>, ...keys: string[]): string {
   return "—";
 }
 
-export default async function PedidosPage() {
-  const [pedidos, intentos, prods] = await Promise.all([listOrders(), listFailedAttempts(), listProducts()]);
+export default async function PedidosPage({ searchParams }: { searchParams: Promise<{ limit?: string }> }) {
+  // Ventana de pedidos cargados. El board filtra en el cliente, así que si la
+  // ventana se queda corta hay pedidos que NO se pueden ni buscar → "Ver más".
+  const sp = await searchParams;
+  const pedido = parseInt(sp?.limit || "", 10);
+  const limit = Number.isFinite(pedido) && pedido > 0 ? pedido : ORDERS_PAGE;
+  const [pedidos, intentos, prods, total] = await Promise.all([
+    listOrders({ limit }), listFailedAttempts(), listProducts(), countOrders(),
+  ]);
+  const hayMas = total > pedidos.length;
   const catalog: CatProd[] = prods.filter((p) => p.activo).map((p) => ({
     slug: p.slug, name: p.name,
     presentaciones: (p.presentations || []).map((x) => ({ label: x.label, precio: x.priceCOP })),
@@ -29,9 +38,29 @@ export default async function PedidosPage() {
   }));
   return (
     <>
-      <PageHead title="Pedidos" subtitle={`${pedidos.length} pedidos · flujo remisión → aprobado → guía`} />
+      <PageHead
+        title="Pedidos"
+        subtitle={
+          hayMas
+            ? `Mostrando ${pedidos.length} de ${total} pedidos · flujo remisión → aprobado → guía`
+            : `${total} pedidos · flujo remisión → aprobado → guía`
+        }
+      />
       <Card>
         <PedidosBoard orders={board} catalog={catalog} />
+        {hayMas ? (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginTop: 14 }}>
+            <span className="t-mut" style={{ fontSize: 12 }}>
+              Faltan {total - pedidos.length} pedidos más antiguos por cargar.
+            </span>
+            <Link href={`/pedidos?limit=${pedidos.length + ORDERS_PAGE}`} className="pbctrl-new" style={{ textDecoration: "none" }}>
+              Ver más
+            </Link>
+            <Link href={`/pedidos?limit=${total}`} className="t-mut" style={{ fontSize: 12 }}>
+              Cargar todos ({total})
+            </Link>
+          </div>
+        ) : null}
       </Card>
 
       {intentos.length ? (
