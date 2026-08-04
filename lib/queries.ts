@@ -21,6 +21,11 @@ export type DashboardKpis = {
   ingresosCop: number;        // $ entregados/pagados DEL RANGO
   aRecaudarCop: number;       // $ de contra entrega en camino (aún no entregado, vivo)
   leadsNuevos: number;        // leads nuevos DEL RANGO
+  conversionPct: number;      // pedidos DEL RANGO / leads DEL RANGO * 100 (1 decimal)
+  pedidosWhatsapp: number;    // pedidos DEL RANGO con canal = whatsapp
+  ventasWhatsappCop: number;  // $ DEL RANGO por whatsapp
+  whatsappPct: number;        // % de las VENTAS ($) que entró por whatsapp (1 decimal)
+  porCanal: { canal: string; label: string; n: number; monto: number }[]; // reparto del rango
   porEstado: { estado: string; label: string; n: number; monto: number }[]; // pipeline
   topProductos: { name: string; cantidad: number }[];
   ultimosPedidos: { ref: string; nombre: string; total: number; estado: string; createdAt: string | null; canal: string }[];
@@ -53,7 +58,9 @@ export async function getDashboard(range: string = "hoy", fromISO?: string, toIS
   const { from, to, label } = rangoFechas(range, fromISO, toISO);
   if (!db) {
     return {
-      rangoLabel: label, pedidosHoy: 0, pedidosSemana: 0, ventasHoyCop: 0, ingresosCop: 0, aRecaudarCop: 0, leadsNuevos: 0,
+      rangoLabel: label, pedidosHoy: 0, pedidosSemana: 0, ventasHoyCop: 0, ingresosCop: 0, aRecaudarCop: 0,
+      leadsNuevos: 0, conversionPct: 0,
+      pedidosWhatsapp: 0, ventasWhatsappCop: 0, whatsappPct: 0, porCanal: [],
       porEstado: EST_ORDER.map((e) => ({ estado: e, label: EST_LABEL[e], n: 0, monto: 0 })),
       topProductos: demoProducts.slice(0, 5).map((p) => ({ name: p.name, cantidad: 0 })),
       ultimosPedidos: [],
@@ -65,18 +72,34 @@ export async function getDashboard(range: string = "hoy", fromISO?: string, toIS
   const enRango = and(gte(orders.createdAt, from), lt(orders.createdAt, to), noCancel);
 
   // Todas en PARALELO.
-  const [[hoy], [sem], [ing], [rec], [leads], estados, top, ult] = await Promise.all([
+  const [[hoy], [sem], [ing], [rec], [leads], canales, estados, top, ult] = await Promise.all([
     db.select({ n: sql<number>`count(*)::int`, s: sql<number>`coalesce(sum(total_cop),0)::int` }).from(orders).where(and(eq(orders.tenantId, tid), enRango)),
     db.select({ n: sql<number>`count(*)::int` }).from(orders).where(and(eq(orders.tenantId, tid), gte(orders.createdAt, startWeek), noCancel)),
     db.select({ s: sql<number>`coalesce(sum(total_cop),0)::int` }).from(orders).where(and(eq(orders.tenantId, tid), gte(orders.createdAt, from), lt(orders.createdAt, to), sql`estado in ('entregado','pagado','confirmado')`)),
     db.select({ s: sql<number>`coalesce(sum(total_cop),0)::int` }).from(orders).where(and(eq(orders.tenantId, tid), sql`estado in ('aprobado','guia','despachado') and coalesce(metodo_pago,'contraentrega') <> 'anticipado'`)),
     db.select({ n: sql<number>`count(*)::int` }).from(customers).where(and(eq(customers.tenantId, tid), gte(customers.createdAt, from), lt(customers.createdAt, to))),
+    // Reparto por CANAL del rango. `canal` es confiable: la web escribe "web",
+    // el panel "asesor" y el bot "whatsapp" (default sólo si el bot no lo manda).
+    db.select({
+      canal: sql<string>`coalesce(nullif(${orders.canal},''),'whatsapp')`,
+      n: sql<number>`count(*)::int`,
+      monto: sql<number>`coalesce(sum(total_cop),0)::int`,
+    }).from(orders).where(and(eq(orders.tenantId, tid), enRango)).groupBy(sql`1`),
     db.select({ estado: orders.estado, n: sql<number>`count(*)::int`, monto: sql<number>`coalesce(sum(total_cop),0)::int` }).from(orders).where(and(eq(orders.tenantId, tid), noCancel)).groupBy(orders.estado),
     db.select({ name: orderItems.productName, cantidad: sql<number>`sum(cantidad)::int` }).from(orderItems).innerJoin(orders, eq(orderItems.orderId, orders.id)).where(and(eq(orderItems.tenantId, tid), enRango)).groupBy(orderItems.productName).orderBy(sql`sum(cantidad) desc`).limit(7),
     db.select({ ref: orders.ref, nombre: orders.nombre, total: orders.totalCop, estado: orders.estado, createdAt: orders.createdAt, canal: orders.canal }).from(orders).where(eq(orders.tenantId, tid)).orderBy(desc(orders.createdAt)).limit(8),
   ]);
 
   const estMap = new Map(estados.map((e) => [e.estado || "", e]));
+  const nLeads = leads?.n ?? 0;
+  const nPedidos = hoy?.n ?? 0;
+  const totalVentas = hoy?.s ?? 0;
+
+  const CANAL_LABEL: Record<string, string> = { whatsapp: "WhatsApp", messenger: "Messenger", web: "Página web", asesor: "Asesor" };
+  const wpp = canales.find((c) => c.canal === "whatsapp");
+  const nWpp = wpp?.n ?? 0;
+  const sWpp = wpp?.monto ?? 0;
+
   return {
     rangoLabel: label,
     pedidosHoy: hoy?.n ?? 0,
@@ -84,7 +107,19 @@ export async function getDashboard(range: string = "hoy", fromISO?: string, toIS
     ventasHoyCop: hoy?.s ?? 0,
     ingresosCop: ing?.s ?? 0,
     aRecaudarCop: rec?.s ?? 0,
-    leadsNuevos: leads?.n ?? 0,
+    leadsNuevos: nLeads,
+    // Conversión OPERATIVA del rango: TODOS los pedidos del rango sobre los leads
+    // del rango. Cuenta la venta de hoy aunque el cliente haya escrito ayer — que
+    // es como el dueño lee el número ("hoy van 19 ventas"). Puede pasar del 100%
+    // si compran más clientes viejos que leads nuevos entraron.
+    conversionPct: nLeads ? Math.round((nPedidos / nLeads) * 1000) / 10 : 0,
+    pedidosWhatsapp: nWpp,
+    ventasWhatsappCop: sWpp,
+    // % sobre el DINERO, no sobre el conteo (es "porcentaje de las ventas").
+    whatsappPct: totalVentas ? Math.round((sWpp / totalVentas) * 1000) / 10 : 0,
+    porCanal: canales
+      .map((c) => ({ canal: c.canal, label: CANAL_LABEL[c.canal] || c.canal, n: c.n, monto: c.monto }))
+      .sort((a, b) => b.monto - a.monto),
     porEstado: EST_ORDER.map((e) => ({ estado: e, label: EST_LABEL[e], n: estMap.get(e)?.n ?? 0, monto: estMap.get(e)?.monto ?? 0 })),
     topProductos: top.map((t) => ({ name: t.name || "—", cantidad: t.cantidad ?? 0 })),
     ultimosPedidos: ult.map((o) => ({ ref: o.ref, nombre: o.nombre || "—", total: o.total ?? 0, estado: o.estado || "", createdAt: o.createdAt ? o.createdAt.toISOString() : null, canal: o.canal || "whatsapp" })),

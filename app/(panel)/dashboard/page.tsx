@@ -21,7 +21,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const { label } = rangoFechas(range, from, to);
 
   const dashFb: DashboardKpis = {
-    rangoLabel: label, pedidosHoy: 0, pedidosSemana: 0, ventasHoyCop: 0, ingresosCop: 0, aRecaudarCop: 0, leadsNuevos: 0,
+    rangoLabel: label, pedidosHoy: 0, pedidosSemana: 0, ventasHoyCop: 0, ingresosCop: 0, aRecaudarCop: 0,
+    leadsNuevos: 0, conversionPct: 0,
+    pedidosWhatsapp: 0, ventasWhatsappCop: 0, whatsappPct: 0, porCanal: [],
     porEstado: EST.map((e) => ({ ...e, n: 0, monto: 0 })), topProductos: [], ultimosPedidos: [],
   };
   const anaFb: Analytics = {

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   DollarSign, ShoppingBag, Users, ArrowRight, MoreHorizontal,
-  TrendingUp, Package, Search, Filter, CheckCircle2, Trophy,
+  TrendingUp, Package, Search, Filter, CheckCircle2, Trophy, Percent, MessageCircle,
 } from "lucide-react";
 import { cop } from "@/lib/ai/format";
 import type { Analytics } from "@/lib/queries";
@@ -13,6 +13,9 @@ import type { Analytics } from "@/lib/queries";
 type Dash = {
   rangoLabel: string;
   pedidosHoy: number; pedidosSemana: number; ventasHoyCop: number; ingresosCop: number; aRecaudarCop: number; leadsNuevos: number;
+  conversionPct: number;
+  pedidosWhatsapp: number; ventasWhatsappCop: number; whatsappPct: number;
+  porCanal: { canal: string; label: string; n: number; monto: number }[];
   porEstado: { estado: string; label: string; n: number; monto: number }[];
   topProductos: { name: string; cantidad: number }[];
   ultimosPedidos: { ref: string; nombre: string; total: number; estado: string; createdAt: string | null; canal: string }[];
@@ -23,6 +26,14 @@ const RANGOS: { k: string; label: string }[] = [
 ];
 const CANAL_IC: Record<string, string> = { whatsapp: "📱", messenger: "💬", web: "🌐", asesor: "🎧" };
 const EST_COLOR: Record<string, string> = { remision: "#B54708", aprobado: "#067647", guia: "#1E50E6", despachado: "#6941C6", entregado: "#067647" };
+/** Porcentaje con 1 decimal y coma decimal (es-CO): 14.5 → "14,5%". */
+const pct = (n: number) => `${(Math.round(n * 10) / 10).toLocaleString("es-CO")}%`;
+/** Semáforo de la conversión de leads (verde ≥15%, ámbar ≥7%, rojo por debajo). */
+function convColor(pct: number): string {
+  if (pct >= 15) return "#067647";
+  if (pct >= 7) return "#B54708";
+  return "#B42318";
+}
 
 const ESTADO: Record<string, { cls: string; txt: string }> = {
   remision: { cls: "pend", txt: "Remisión" }, aprobado: { cls: "blue", txt: "Orden de venta" },
@@ -88,12 +99,63 @@ export function DashboardView({ d, a, range, from, to }: { d: Dash; a: Analytics
         <div className="sumc">
           <div className="top">
             <span className="ic" style={{ background: "#F4EBFF", color: "#6941C6" }}><Users size={20} /></span>
-            <div className="lbl">Leads nuevos<small>Últimos 7 días</small></div>
+            <div className="lbl">Leads nuevos<small>{d.rangoLabel}</small></div>
           </div>
           <div className="big"><Count to={d.leadsNuevos} /></div>
           <Link href="/clientes" className="foot">Ver clientes <ArrowRight size={16} /></Link>
         </div>
+
+        {/* Ventas por WhatsApp: qué parte de la PLATA del rango entró por el bot.
+            Distinta de la "Conversión web" del bloque de analítica. */}
+        <div className="sumc">
+          <div className="top">
+            <span className="ic" style={{ background: "#E6F7EF", color: "#067647" }}><MessageCircle size={20} /></span>
+            <div className="lbl">Ventas por WhatsApp<small>{d.rangoLabel}</small></div>
+          </div>
+          <div className="big" style={{ color: "#067647" }}>
+            <Count to={d.whatsappPct} fmt={pct} />
+          </div>
+          <div className="foot" style={{ color: "#475467" }}>
+            {d.pedidosHoy
+              ? `${d.pedidosWhatsapp} de ${d.pedidosHoy} pedidos · ${cop(d.ventasWhatsappCop)}`
+              : `Sin ventas en ${d.rangoLabel.toLowerCase()}`}
+          </div>
+        </div>
+
+        {/* Conversión: TODOS los pedidos del rango sobre los leads del rango. */}
+        <div className="sumc">
+          <div className="top">
+            <span className="ic" style={{ background: "#F0F9FF", color: "#026AA2" }}><Percent size={20} /></span>
+            <div className="lbl">Conversión<small>Leads → pedidos</small></div>
+          </div>
+          <div className="big" style={{ color: convColor(d.conversionPct) }}>
+            <Count to={d.conversionPct} fmt={pct} />
+          </div>
+          <div className="foot" style={{ color: "#475467" }}>
+            {d.leadsNuevos
+              ? `${d.pedidosHoy} pedidos de ${d.leadsNuevos} leads · ${d.rangoLabel}`
+              : `Sin leads nuevos en ${d.rangoLabel.toLowerCase()}`}
+          </div>
+        </div>
       </div>
+
+      {/* ---- Reparto de las ventas por canal ---- */}
+      {d.porCanal.length > 1 ? (
+        <div className="panel" style={{ marginTop: 18 }}>
+          <div className="ph"><div><h3>De dónde entraron las ventas</h3><div className="sub">{d.rangoLabel} · por canal</div></div></div>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 4 }}>
+            {d.porCanal.map((c) => (
+              <div key={c.canal} style={{ flex: "1 1 150px", minWidth: 130, border: "1px solid var(--line, #E4E7EC)", borderRadius: 14, padding: "13px 15px", background: "#fff" }}>
+                <div style={{ fontSize: 12.5, color: "#667085", fontWeight: 700 }}>{CANAL_IC[c.canal] || "•"} {c.label}</div>
+                <div style={{ fontSize: 26, fontWeight: 800, color: "#101828", lineHeight: 1.1, margin: "3px 0" }}>
+                  {d.ventasHoyCop ? pct((c.monto / d.ventasHoyCop) * 100) : "0%"}
+                </div>
+                <div style={{ fontSize: 12, color: "#475467", fontWeight: 600 }}>{c.n} pedidos · {cop(c.monto)}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       {/* ---- Pipeline por estados ---- */}
       <div className="panel" style={{ marginTop: 18 }}>
