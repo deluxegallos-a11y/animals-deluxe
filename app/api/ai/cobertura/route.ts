@@ -30,17 +30,24 @@ export const POST = withBridge(
     let subtotalCop = 0;
     let unidades = 0;
     let envioGratis = false;
+    let desconocidos: string[] = [];
     if (body.items.length) {
       const catalog = await getProducts();
       const resolved = body.items.map((it) => {
         const p = catalog.find((x) => x.slug === it.slug);
         const precio = p?.presentations[0]?.priceCOP ?? p?.priceCOP ?? 0;
-        return { slug: it.slug, cantidad: it.cantidad, precio, envioGratis: p?.envioGratis };
+        return { slug: it.slug, cantidad: it.cantidad, precio, envioGratis: p?.envioGratis, existe: !!p };
       });
+      // Un slug que NO está en el catálogo de ESTE tenant vale $0, y un pedido que
+      // suma $0 parecía "todo envío-incluido" → el bot prometía ENVÍO GRATIS por un
+      // simple slug mal escrito (o de otro tenant: red-dopping-mamba es de Rooster,
+      // en Animals es red-copping-mamba). Nunca se regala el envío por no reconocer
+      // un producto: si algo no resuelve, se cobra flete y se avisa cuáles fueron.
+      desconocidos = resolved.filter((r) => !r.existe).map((r) => r.slug);
       // Base del 7% = solo los productos que SÍ pagan envío (excluye envío-incluido).
       subtotalCop = resolved.reduce((s, r) => s + ((r.envioGratis || FREE_SHIPPING_SLUGS.has(r.slug)) ? 0 : r.precio * r.cantidad), 0);
       unidades = resolved.reduce((s, r) => s + r.cantidad, 0);
-      envioGratis = subtotalCop <= 0; // todos los items son envío-incluido
+      envioGratis = !desconocidos.length && subtotalCop <= 0; // todos los items son envío-incluido
     }
 
     const c = await cotizarEnvio(body.ciudad, {
@@ -76,6 +83,9 @@ export const POST = withBridge(
       dias_min: c.dias_min,
       dias_max: c.dias_max,
       requiere_confirmar: c.requiere_confirmar,
+      // Slugs que no existen en el catálogo de este tenant: el flete de arriba es
+      // un estimado sin ellos. El bot debe volver a identificar esos productos.
+      productos_desconocidos: desconocidos,
       mensaje,
     };
   },
