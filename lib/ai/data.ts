@@ -55,6 +55,9 @@ function toView(p: ProdRow, cat?: CatRow | null): ProductView {
     stock: p.stock ?? 999,
     activo: p.activo ?? true,
     envioGratis: p.envioGratis ?? false,
+    controlStock: p.controlStock ?? false,
+    soloAnticipado: p.soloAnticipado ?? false,
+    minUnidades: Math.max(1, p.minUnidades ?? 1),
     descripcion: p.descripcion || "",
     edadMinima: p.edadMinima || "",
     dosificacion: p.dosificacion || "",
@@ -186,7 +189,7 @@ export async function cotizarEnvio(ciudad: string, opts: CotizarOpts = {}): Prom
   // FLETE según flete_modo del TENANT:
   //   incluido → $0 (envío gratis)
   //   fijo     → flete_valor fijo
-  //   por_ciudad → fórmula por zona desde la ciudad base (comportamiento Animals Deluxe)
+  //   por_ciudad → tarifa única $20.000 + 7% (comportamiento Animals Deluxe)
   const zi = resolveZonaInfo(ciudad || cfg.ciudadBase);
   if (tenant.fleteModo === "incluido" || opts.envioGratis) {
     return {
@@ -210,7 +213,8 @@ export async function cotizarEnvio(ciudad: string, opts: CotizarOpts = {}): Prom
       ciudad: ciudad || cfg.ciudadBase,
     };
   }
-  // por_ciudad (default): flete + días por ZONA (Interrapidísimo) desde la ciudad base.
+  // por_ciudad (default): flete con la tarifa ÚNICA ($20.000 + 7%) y días por ZONA
+  // (Interrapidísimo) desde la ciudad base. El precio NO varía por zona; los tiempos sí.
   const s = computeShipping({
     ciudad: ciudad || cfg.ciudadBase,
     subtotalCop: opts.subtotalCop ?? 0,

@@ -230,6 +230,10 @@ export async function listProducts(): Promise<ProductAdminRow[]> {
     objeciones: (r.p.objeciones as Record<string, string>) || {}, adIds: (r.p.adIds as string[]) || [],
     disclaimer: r.p.disclaimer || "", stock: r.p.stock ?? 999, activo: r.p.activo ?? true,
     envioGratis: r.p.envioGratis ?? false,
+    // Reglas de negocio por producto (M4 · M6.2 · M6.3) — editables en el panel.
+    controlStock: r.p.controlStock ?? false,
+    soloAnticipado: r.p.soloAnticipado ?? false,
+    minUnidades: Math.max(1, r.p.minUnidades ?? 1),
     descripcion: r.p.descripcion || "", edadMinima: r.p.edadMinima || "",
     dosificacion: r.p.dosificacion || "", presentacion: r.p.presentacion || "", paraQue: r.p.paraQue || "",
     shopifyProductId: r.p.shopifyProductId || "",

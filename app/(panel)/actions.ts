@@ -119,6 +119,11 @@ export async function saveProduct(formData: FormData) {
     largoCm: Math.max(1, parseInt(String(formData.get("largoCm") || "8").replace(/\D/g, ""), 10) || 8),
     activo: formData.get("activo") === "on" || formData.get("activo") === "true",
     envioGratis: formData.get("envioGratis") === "on" || formData.get("envioGratis") === "true",
+    // --- Reglas de negocio por producto (M4 · M6.2 · M6.3) ---
+    // Sin control_stock, el `stock` de arriba es informativo y NUNCA tumba una venta.
+    controlStock: formData.get("controlStock") === "on" || formData.get("controlStock") === "true",
+    soloAnticipado: formData.get("soloAnticipado") === "on" || formData.get("soloAnticipado") === "true",
+    minUnidades: Math.max(1, parseInt(String(formData.get("minUnidades") || "1").replace(/\D/g, ""), 10) || 1),
     // Ficha enriquecida (§4.6)
     descripcion: String(formData.get("descripcion") || "").trim(),
     edadMinima: String(formData.get("edadMinima") || "").trim(),

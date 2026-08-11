@@ -142,6 +142,39 @@ export const POST = withBridge(
       };
     }
 
+    // --- SOLO ANTICIPADO (M6.2): productos que NO se venden contra entrega en este bot.
+    // Se remite al canal de pago anticipado — NUNCA se crea un pedido COD con ellos.
+    if (metodo === "contraentrega") {
+      const soloAnt = items
+        .map((it) => catalog.find((p) => p.slug === it.slug))
+        .filter((p): p is ProductView => !!p?.soloAnticipado);
+      if (soloAnt.length) {
+        const nombres = soloAnt.map((p) => p.name).join(", ");
+        await logEvent("pedido_no_creado", { motivo: "solo_anticipado", productos: soloAnt.map((p) => p.slug), sub_id: subId });
+        await updateOrderAttempt(attemptId, { resultado: "rejected", motivo: `solo anticipado: ${nombres}` });
+        return {
+          ok: false,
+          solo_anticipado: soloAnt.map((p) => p.slug),
+          requiere_asesor: true,
+          mensaje:
+            `${soloAnt.length > 1 ? "Esos productos se manejan" : `El *${nombres}* se maneja`} con *pago anticipado*, ` +
+            `no contra entrega. Te paso con un asesor para coordinarlo por ese canal y te despachamos enseguida 🐓`,
+        };
+      }
+    }
+
+    // --- MÍNIMO DE UNIDADES (M6.3): ciertos goteros solo se despachan de a 2+.
+    // Se ajusta la cantidad al mínimo (resolveItems hace lo mismo) y se le avisa al cliente.
+    const subidos: string[] = [];
+    for (const it of items) {
+      const p = catalog.find((x) => x.slug === it.slug);
+      const minU = Math.max(1, p?.minUnidades ?? 1);
+      if (p && it.cantidad < minU) {
+        subidos.push(`${p.name} (mínimo ${minU})`);
+        it.cantidad = minU;
+      }
+    }
+
     // --- REQUISITOS DUROS (bug AD-7PM7: se creó un pedido sin nombre/cédula/tel/dirección).
     // NINGÚN pedido se crea sin los 5 datos + 1 ítem. Se validan formato y placeholders.
     const telOk = telValido(telefono);            // celular CO válido (10 díg, empieza en 3)
@@ -266,16 +299,20 @@ export const POST = withBridge(
     await updateOrderAttempt(attemptId, { resultado: "created", ref: order.ref });
 
     const listaProductos = order.items.map((it) => `${it.cantidad}× ${it.name}`).join(", ");
+    // Aviso de mínimo por envío (M6.3): el total ya viene recalculado con la cantidad subida.
+    const avisoMinimo = subidos.length
+      ? `ℹ️ De ${subidos.join(" y ")} se envían mínimo esas unidades, así que ajusté la cantidad.\n`
+      : "";
     const mensaje = metodo === "anticipado"
       // --- PAGO ANTICIPADO: nunca menciona contra entrega. Pide comprobante. ---
       ? `✅ ¡Listo${nombre ? " " + nombre.split(" ")[0] : ""}! Tu pedido quedó registrado 🎉 Ref *${ref}*\n` +
-        `${listaProductos}\n` +
+        `${listaProductos}\n` + avisoMinimo +
         `*Total a pagar: ${cop(order.total_cop)}*\n` +
         `Para despacharlo, realiza el pago por adelantado y envíame el *comprobante*. ` +
         `Un asesor lo confirma y coordina el envío a ${ciudad}. ¡Gracias! 🐓`
       // --- CONTRA ENTREGA (Animals Deluxe) ---
       : `✅ ¡Listo${nombre ? " " + nombre.split(" ")[0] : ""}! Tu pedido quedó confirmado 🎉 Ref *${ref}*\n` +
-        `${listaProductos}\n` +
+        `${listaProductos}\n` + avisoMinimo +
         `Producto: ${cop(order.subtotal_cop)}` +
         (order.descuento_cop ? ` · Descuento: -${cop(order.descuento_cop)}` : "") + `\n` +
         `*Total a recaudar: ${cop(order.total_cop)}* (solo el producto)\n` +

@@ -14,6 +14,7 @@ type P = {
   audience: string; origin: string; priceCOP: number; presentations: Presentacion[]; imageUrl: string;
   badges: string[]; tagline: string; shortDesc: string; benefits: string[]; ingredients: Ingrediente[];
   usage: string; pitch: string; faq: FaqItem[]; keywords: string[]; objeciones: Record<string, string>; adIds: string[]; disclaimer: string; stock: number; activo: boolean; envioGratis?: boolean;
+  controlStock?: boolean; soloAnticipado?: boolean; minUnidades?: number;
   descripcion?: string; edadMinima?: string; dosificacion?: string; presentacion?: string; paraQue?: string;
   shopifyProductId: string; shopifySync: "synced" | "pending" | "error"; shopifySyncError: string;
   pesoGr?: number; altoCm?: number; anchoCm?: number; largoCm?: number;
@@ -367,6 +368,39 @@ function ProductModal({ editing, categorias, onClose }: { editing: P | null; cat
                   <input type="checkbox" name="envioGratis" defaultChecked={editing ? editing.envioGratis : false} />
                   <span className="switch-track"><span className="switch-knob" /></span>
                 </span>
+              </label>
+              {/* Reglas de negocio que el bot obedece (M4 · M6.2 · M6.3). */}
+              <label className="switch-row">
+                <span className="switch-label">
+                  📦 Controlar inventario
+                  <small style={{ display: "block", opacity: 0.7 }}>
+                    Apagado (recomendado): el stock nunca bloquea una venta. Encendido: si el stock llega a 0, el bot deja de venderlo.
+                  </small>
+                </span>
+                <span className="switch">
+                  <input type="checkbox" name="controlStock" defaultChecked={editing ? !!editing.controlStock : false} />
+                  <span className="switch-track"><span className="switch-knob" /></span>
+                </span>
+              </label>
+              <label className="switch-row">
+                <span className="switch-label">
+                  💳 Solo pago anticipado
+                  <small style={{ display: "block", opacity: 0.7 }}>
+                    El bot NO lo vende contra entrega: remite al asesor del canal de pago anticipado.
+                  </small>
+                </span>
+                <span className="switch">
+                  <input type="checkbox" name="soloAnticipado" defaultChecked={editing ? !!editing.soloAnticipado : false} />
+                  <span className="switch-track"><span className="switch-knob" /></span>
+                </span>
+              </label>
+              <label className="field">
+                <span>🔢 Mínimo de unidades por envío</span>
+                <input
+                  type="number" name="minUnidades" min={1} step={1}
+                  defaultValue={editing?.minUnidades ?? 1}
+                />
+                <small style={{ opacity: 0.7 }}>1 = sin mínimo. Ej.: goteros que solo se despachan de a 2.</small>
               </label>
               <div className="modal-actions">
                 <button type="button" className="btn soft" onClick={onClose}>Cancelar</button>

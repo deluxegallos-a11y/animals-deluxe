@@ -30,24 +30,35 @@ export const ZONES: Record<Zona, ZoneRate> = {
   vereda: { kiloInicial: 88000, kiloAdicional: 15200, label: "Veredas" },
 };
 
-/* FLETE + TIEMPOS POR ZONA (Interrapidísimo). El flete y los días hábiles VARÍAN por
-   zona: apartadas (San Andrés, Amazonas, Chocó…) cuestan más y tardan más.
-   flete = base_zona + pct_zona * valor_productos, redondeado a la centena.
-   ⚠️ VALORES PLANTILLA: reemplazar por el tarifario real negociado / cotización por guía. */
-export interface ZoneFlete { base: number; pct: number; diasMin: number; diasMax: number; confirmar: boolean }
+/* TARIFA ÚNICA DEL FLETE (tabla del dueño): $20.000 de base + 7% del valor de los
+   productos, IGUAL para todo el país. Comprobada contra los casos reales:
+     $50.000  → $23.500   ·  $150.000 → $30.500   ·  $25.000 → $21.750
+   ⚠️ NO volver a hacer que el flete varíe por zona. Ese fue el bug M3: una versión
+   "por zona" cobraba $3.500 (solo el 7%, sin la base) o $25.600 en vez de $21.750,
+   y el asesor tenía que corregir a mano. La ZONA solo define TIEMPOS y si hay que
+   CONFIRMAR cobertura — nunca el precio. */
+export const FLETE_BASE = 20000;
+export const FLETE_PCT = 0.07;
+
+/* TIEMPOS POR ZONA (Interrapidísimo). Solo días hábiles + si requiere confirmar:
+   las zonas apartadas (San Andrés, Amazonas, Chocó…) tardan más y a veces son
+   recogida en oficina. El FLETE no depende de esto. */
+export interface ZoneFlete { diasMin: number; diasMax: number; confirmar: boolean }
 export const ZONE_RATE: Record<Zona, ZoneFlete> = {
-  local:              { base: 12000, pct: 0.05, diasMin: 1, diasMax: 2, confirmar: false },
-  regional:           { base: 15000, pct: 0.06, diasMin: 2, diasMax: 3, confirmar: false },
-  nacional_metro:     { base: 20000, pct: 0.07, diasMin: 2, diasMax: 4, confirmar: false },
-  nacional_municipal: { base: 22000, pct: 0.07, diasMin: 3, diasMax: 5, confirmar: false },
-  dificil:            { base: 32000, pct: 0.10, diasMin: 5, diasMax: 8, confirmar: true },
-  vereda:             { base: 40000, pct: 0.12, diasMin: 6, diasMax: 10, confirmar: true },
+  local:              { diasMin: 1, diasMax: 2, confirmar: false },
+  regional:           { diasMin: 2, diasMax: 3, confirmar: false },
+  nacional_metro:     { diasMin: 2, diasMax: 4, confirmar: false },
+  nacional_municipal: { diasMin: 3, diasMax: 5, confirmar: false },
+  dificil:            { diasMin: 5, diasMax: 8, confirmar: true },
+  vereda:             { diasMin: 6, diasMax: 10, confirmar: true },
 };
 
-/** Flete de la zona: base + pct * valor de los productos, redondeado a la centena. */
-export function calcularFlete(totalProductos: number, zona: Zona = "nacional_municipal"): number {
-  const r = ZONE_RATE[zona];
-  return Math.round((r.base + Math.max(0, totalProductos || 0) * r.pct) / 100) * 100;
+/** ÚNICA fórmula del flete en todo el sistema: $20.000 + 7% del valor de los
+ *  productos que pagan envío, redondeado a la centena. La usan cobertura,
+ *  crear-pedido y cualquier mensaje — no debe existir ningún otro cálculo.
+ *  `zona` se acepta por compatibilidad de firma pero NO altera el precio. */
+export function calcularFlete(totalProductos: number, _zona: Zona = "nacional_municipal"): number {
+  return Math.round((FLETE_BASE + Math.max(0, totalProductos || 0) * FLETE_PCT) / 100) * 100;
 }
 export function tiempoZona(zona: Zona): string {
   const r = ZONE_RATE[zona];
@@ -181,7 +192,7 @@ export function computeShipping(input: ShippingInput): ShippingResult {
     // Apartada (San Andrés/Amazonas/Chocó…) o ciudad desconocida → confirmar con el cliente.
     requiere_confirmar: rate.confirmar || !encontrada,
     ciudad_encontrada: encontrada,
-    desglose: { kilos, base: rate.base, sobreflete: costo ? costo - rate.base : 0, recargo_contraentrega: 0 },
+    desglose: { kilos, base: FLETE_BASE, sobreflete: costo ? costo - FLETE_BASE : 0, recargo_contraentrega: 0 },
   };
 }
 

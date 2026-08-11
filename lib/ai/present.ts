@@ -3,6 +3,7 @@
 import type { ProductView } from "@/lib/ai/types";
 import { cop } from "@/lib/ai/format";
 import { peekTenant } from "@/lib/ai/tenant";
+import { formaDe } from "@/lib/ai/search";
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://animalsdeluxe.com";
 
@@ -13,6 +14,7 @@ function esAnticipado(): boolean {
 
 /** Bloque de contexto que el LLM del bot (Victor) usa pa asesorar a fondo. */
 export function buildContexto(p: ProductView): string {
+  const forma = formaDe(p);
   const pres = p.presentations?.length ? p.presentations.map((x) => `${x.label}: ${x.priceCOP}`).join(" | ") : "presentación única";
   const benefits = p.benefits?.length ? p.benefits.join(" · ") : "";
   const faqs = p.faq?.length ? p.faq.map((f) => `${f.q} ${f.a}`).join(" | ") : "";
@@ -24,7 +26,13 @@ export function buildContexto(p: ProductView): string {
     `PARA: ${p.audience || "gallos"} · CATEGORÍA: ${p.categoryName} · ORIGEN: ${p.origin}`,
     `GANCHO: ${p.pitch || p.tagline || ""}`,
     benefits ? `BENEFICIOS: ${benefits}` : "",
+    // La FORMA va explícita y en mayúsculas: es el dato que el bot inventaba
+    // (mandó dar en gotas un inyectable). Si no la sabemos, se lo decimos.
+    forma
+      ? `FORMA: ${forma.toUpperCase()} — NO ofrezcas otra vía de administración.`
+      : `FORMA: no registrada — NO afirmes si es inyectable, gotas o polvo; confirma con el asesor.`,
     p.usage ? `MODO DE USO: ${p.usage}` : "",
+    p.dosificacion ? `DOSIS: ${p.dosificacion}` : "",
     faqs ? `FAQS: ${faqs}` : "",
     obj ? `OBJECIONES: ${obj}` : "",
     `NOTA: ${p.disclaimer || "Producto de bienestar y rendimiento. No cura enfermedades."}`,
@@ -51,9 +59,16 @@ export function cierrePrecio(p: ProductView): string {
 /** Mensaje WhatsApp-ready en voz Victor (nunca vacío). Enriquecido con ficha. */
 export function richMensaje(p: ProductView): string {
   const benLines = (p.benefits || []).slice(0, 5).map((x) => `✅ ${x}`).join("\n");
+  // Ícono por forma: que el cliente vea de una si es 💉 inyectable o 💧 gotas (M7).
+  const forma = formaDe(p);
+  const ICONO: Record<string, string> = {
+    inyectable: "💉", gotas: "💧", polvo: "🥄", pastillas: "💊", shampoo: "🧴", topico: "🧴",
+  };
   const ficha = [
+    forma ? `${ICONO[forma] || "📌"} Se aplica: *${forma}*` : "",
     p.presentacion ? `📦 Presentación: ${p.presentacion}` : "",
     p.dosificacion ? `🥄 Dosis: ${p.dosificacion}` : "",
+    p.usage && !p.dosificacion ? `🥄 Uso: ${p.usage}` : "",
     p.edadMinima ? `📅 Desde: ${p.edadMinima}` : "",
   ].filter(Boolean).join("\n");
   return [
@@ -93,7 +108,16 @@ export function publicProduct(p: ProductView) {
     edad_minima: p.edadMinima || "",
     dosificacion: p.dosificacion || "",
     presentacion: p.presentacion || p.presentations?.[0]?.label || "",
+    // FORMA de administración (M7). "" = la ficha no lo dice → el bot NO debe adivinar
+    // (el CyanoMax es inyectable y el bot lo mandaba dar en gotas).
+    forma: formaDe(p),
+    // La dosis concreta manda sobre el `usage` genérico ("aplica la dosis recomendada").
+    uso: p.dosificacion || p.usage || "",
     envio_gratis: !!p.envioGratis,
+    // Reglas de negocio (M6.2 · M6.3): el bot no debe ofrecer contra entrega un
+    // producto solo-anticipado, ni 1 unidad de uno que va de a 2+.
+    solo_anticipado: !!p.soloAnticipado,
+    min_unidades: Math.max(1, p.minUnidades ?? 1),
     precio_cop: p.priceCOP,
     cierre_precio: cierrePrecio(p),
     producto_contexto: buildContexto(p),
@@ -143,7 +167,9 @@ export function emptyProduct() {
     slug: "", name: "", category: "", categoria: "", audience: "", origin: "", priceCOP: 0,
     presentations: [], image: "", imageUrl: "", badges: [], tagline: "", shortDesc: "",
     benefits: [], ingredients: [], usage: "", pitch: "", faq: [], keywords: [], objeciones: {},
-    descripcion: "", para_que: "", edad_minima: "", dosificacion: "", presentacion: "", envio_gratis: false, precio_cop: 0, cierre_precio: "",
+    descripcion: "", para_que: "", edad_minima: "", dosificacion: "", presentacion: "",
+    forma: "", uso: "", solo_anticipado: false, min_unidades: 1,
+    envio_gratis: false, precio_cop: 0, cierre_precio: "",
     producto_contexto: "", disclaimer: "", url: "",
   };
 }

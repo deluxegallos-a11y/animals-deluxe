@@ -99,11 +99,16 @@ const ANIMAL_WORDS = new Set([
 ]);
 
 /* ---- Presentación / forma (§4.5b): si piden "inyectable", NO ofrecer gotas ---- */
+/* `prod` reconoce además las señales que usan las descripciones redactadas a mano:
+   el emoji 💉/💧 y la VÍA de aplicación ("0.5 ml en la pechuga"). El CyanoMax B12 5500
+   nunca escribe la palabra "inyectable" —solo 💉 y la dosis en la pechuga— y por eso
+   el bot lo daba por gotas (M7). El 🥄 NO sirve como señal: esas fichas lo usan para
+   encabezar "Modo de uso" incluso en inyectables. */
 const FORMAS: { forma: string; q: RegExp; prod: RegExp }[] = [
-  { forma: "inyectable", q: /\b(inyect|ampoll|jeringa|intramuscular)\w*/, prod: /\b(inyect|ampoll|intramuscular)\w*/ },
+  { forma: "inyectable", q: /\b(inyect|ampoll|jeringa|intramuscular)\w*/, prod: /(\b(inyect|ampoll|intramuscular)\w*|💉|\d+[.,]?\d*\s*(ml|cc)\b[^.\n]{0,30}\bpechuga\b)/ },
   // "goticas"/"gotitas" son el diminutivo que usa el gallero; sin ellos, quien
   // pedía goticas recibía inyectables.
-  { forma: "gotas", q: /\b(gota|gotita|gotic|gotero|goteo)\w*/, prod: /\b(gota|gotero)\w*/ },
+  { forma: "gotas", q: /\b(gota|gotita|gotic|gotero|goteo)\w*/, prod: /(\b(gota|gotero)\w*|💧)/ },
   { forma: "polvo", q: /\b(polvo|polvos)\w*/, prod: /\b(polvo)\w*/ },
   { forma: "pastillas", q: /\b(pastilla|tableta|capsul|caps|comprimid|pildora)\w*/, prod: /\b(pastilla|tableta|capsul|caps|comprimid)\w*/ },
   { forma: "shampoo", q: /\b(shampoo|champu)\w*/, prod: /\b(shampoo|champu)\w*/ },
@@ -125,6 +130,30 @@ function formaText(p: ProductView): string {
 export function productMatchesForma(p: ProductView, forma: string): boolean {
   const f = FORMAS.find((x) => x.forma === forma);
   return f ? f.prod.test(formaText(p)) : true;
+}
+
+/**
+ * FORMA DE ADMINISTRACIÓN del producto (M7) — inyectable | gotas | polvo | pastillas |
+ * shampoo | topico, o "" si no se puede afirmar.
+ *
+ * Existe porque el bot le dijo a clientes que el CyanoMax B12 5500 se da "en gotas"
+ * cuando es INYECTABLE (0.5 ml en la pechuga): mandar a inyectar por vía oral —o al
+ * revés— es peligroso. Si no hay evidencia en la ficha devolvemos "" para que el bot
+ * diga "te confirmo con el asesor" en vez de ADIVINAR.
+ *
+ * Se leen primero los campos EXPLÍCITOS (presentación, dosificación, modo de uso):
+ * el nombre y el gancho de venta mienten más ("Gotas de Campeón" en polvo).
+ */
+export function formaDe(p: ProductView): string {
+  const explicito = normalize([p.presentacion, p.dosificacion || "", p.usage].filter(Boolean).join(" "));
+  for (const f of FORMAS) if (f.prod.test(explicito)) return f.forma;
+  // Sin campo explícito: la descripción larga (redactada a mano) es la mejor fuente.
+  const desc = normalize(p.descripcion || "");
+  for (const f of FORMAS) if (f.prod.test(desc)) return f.forma;
+  // Último recurso: nombre/tagline. Si tampoco dice nada → "" (no inventar).
+  const resto = normalize([p.name, p.tagline, p.shortDesc, (p.presentations || []).map((x) => x.label).join(" ")].filter(Boolean).join(" "));
+  for (const f of FORMAS) if (f.prod.test(resto)) return f.forma;
+  return "";
 }
 
 /* ¿El query describe un problema médico/síntoma/lesión? (no lo tratan los
@@ -207,13 +236,27 @@ function buckets(p: ProductView): Buckets {
 function isRelevant(qStems: string[], p: ProductView, intentCats: Set<string>): boolean {
   if (intentCats.has(p.categorySlug)) return true;
   const b = buckets(p);
+  /* Typos DÉBILES contra el nombre: uno solo no basta (sería adivinar), pero DOS
+     tokens distintos que caen cada uno cerca de una palabra distinta del nombre sí
+     es señal real. Caso "enrgy kobra" → "Energy Cobra": con trigramas padded da
+     0.615 y 0.50, ambos bajo el 0.66 de un token suelto, y el cliente se quedaba
+     sin respuesta. Se exige emparejar palabras DISTINTAS para no contar dos veces
+     la misma. */
+  const casiName = new Map<string, string>(); // token del query → palabra del nombre
   for (const q of qStems) {
     if (b.name.has(q) || b.kw.has(q) || b.cat.has(q)) return true;
     // substring solo con tokens de ≥4 (evita que "ojo" matchee "piojos"/"rojo").
     for (const h of b.nameArr) { if (q.length >= 4 && h.length >= 4 && (h.includes(q) || q.includes(h))) return true; if (dice(q, h) >= 0.66) return true; }
     for (const h of b.kwArr) { if (q.length >= 4 && h.length >= 4 && (h.includes(q) || q.includes(h))) return true; if (dice(q, h) >= 0.7) return true; }
+    // no llegó al umbral fuerte: guardamos el mejor "casi" contra el nombre.
+    let mejor = "", mejorS = 0;
+    for (const h of b.nameArr) {
+      const s = dice(q, h);
+      if (s >= 0.5 && s > mejorS && q.length >= 4 && h.length >= 4) { mejor = h; mejorS = s; }
+    }
+    if (mejor) casiName.set(q, mejor);
   }
-  return false;
+  return new Set(casiName.values()).size >= 2;
 }
 
 function scoreProduct(qTokens: string[], qNorm: string, p: ProductView, intentCats: Set<string>, intentKw: string[]): number {

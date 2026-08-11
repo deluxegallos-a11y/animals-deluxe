@@ -98,6 +98,13 @@ export const products = pgTable(
     salesPrompt: text("sales_prompt").default(""),
     disclaimer: text("disclaimer").default(""),
     stock: integer("stock").default(999),
+    // --- Reglas de negocio por producto (M4 · M6.2 · M6.3) ---
+    // Solo si es true se respeta `stock`. Default false: el stock NUNCA tumba una venta.
+    controlStock: boolean("control_stock").notNull().default(false),
+    // true = no se vende contra entrega en este bot; se remite al canal anticipado.
+    soloAnticipado: boolean("solo_anticipado").notNull().default(false),
+    // Mínimo de unidades por envío (goteros de a 2+). 1 = sin mínimo.
+    minUnidades: integer("min_unidades").notNull().default(1),
     // Dimensiones para el flete/guía MiPaquete (afectan el precio del envío)
     pesoGr: integer("peso_gr").default(1000), // peso en gramos
     altoCm: integer("alto_cm").default(15),

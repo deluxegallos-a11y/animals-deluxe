@@ -11,6 +11,7 @@ type RawProd = {
   priceCOP: number; presentations?: Presentacion[]; image?: string; badges?: string[];
   tagline?: string; shortDesc?: string; benefits?: string[]; usage?: string; pitch?: string; keywords?: string[];
   envioGratis?: boolean; descripcion?: string; edadMinima?: string; dosificacion?: string; presentacion?: string; paraQue?: string;
+  soloAnticipado?: boolean; minUnidades?: number;
 };
 
 const cats = (catalogo.categories || []) as RawCat[];
@@ -55,6 +56,9 @@ export const demoProducts: ProductView[] = prods.map((p) => {
     stock: 999,
     activo: true,
     envioGratis: p.envioGratis ?? false,
+    controlStock: false,
+    soloAnticipado: p.soloAnticipado ?? false,
+    minUnidades: Math.max(1, p.minUnidades ?? 1),
     descripcion: p.descripcion || "",
     edadMinima: p.edadMinima || "",
     dosificacion: p.dosificacion || "",

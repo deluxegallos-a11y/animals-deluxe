@@ -64,14 +64,21 @@ export function resolveItems(items: ItemInput[], catalog: ProductView[]): Resolv
   if (!items?.length) domainError("No veo productos en el pedido. ¿Cuál te empaco? 🐓");
   const out: ResolvedItem[] = [];
   for (const it of items) {
-    const cantidad = Math.max(1, Math.floor(it.cantidad || 1));
+    let cantidad = Math.max(1, Math.floor(it.cantidad || 1));
     const p = catalog.find((x) => x.slug === it.slug);
     if (!p) domainError(`No encontré "${it.slug}" en el catálogo. ¿Lo buscamos de nuevo?`);
     const prod = p!;
     // Animals Deluxe vende bajo demanda (contra entrega), NO lleva inventario unitario.
     // El catálogo ya solo incluye productos activos → si está aquí, está disponible.
-    // NO se bloquea por stock (antes: stock 0/null tumbaba ventas cerradas). Si algún día se
-    // quiere control de inventario, hacerlo con una bandera por producto (default: sin control).
+    // El stock SOLO bloquea si el dueño activó `controlStock` en ese producto (M4).
+    // Sin esa bandera, un stock 0/null jamás tumba una venta cerrada.
+    if (prod.controlStock && (prod.stock ?? 0) <= 0) {
+      domainError(`Justo se me agotó el ${prod.name} 😕 ¿Te muestro una alternativa parecida?`);
+    }
+    // Mínimo de unidades por envío (M6.3): ciertos goteros solo se despachan de a 2+.
+    // Se SUBE la cantidad al mínimo (no se rechaza el pedido) y el total se recalcula solo.
+    const minU = Math.max(1, prod.minUnidades ?? 1);
+    if (cantidad < minU) cantidad = minU;
     // precio por presentación (si se indicó y existe)
     let label = prod.presentations[0]?.label || "Unidad";
     let precio = prod.presentations[0]?.priceCOP ?? prod.priceCOP;
