@@ -52,6 +52,17 @@ export function rangoFechas(range: string, fromISO?: string, toISO?: string): { 
   }
 }
 
+/**
+ * Igual que `rangoFechas` pero para el panel de Pedidos, donde "todos" es un
+ * rango válido (sin límite de fechas) porque el asesor a veces quiere el
+ * histórico completo, no un periodo.
+ */
+export function rangoPedidos(range: string, fromISO?: string, toISO?: string): { desde?: Date; hasta?: Date; label: string } {
+  if (range === "todos") return { label: "Todos" };
+  const { from, to, label } = rangoFechas(range, fromISO, toISO);
+  return { desde: from, hasta: to, label };
+}
+
 export async function getDashboard(range: string = "hoy", fromISO?: string, toISO?: string): Promise<DashboardKpis> {
   const EST_LABEL: Record<string, string> = { remision: "Remisión", aprobado: "Orden de venta", guia: "Con guía", despachado: "Despachado", entregado: "Entregado", cancelado: "Cancelado" };
   const EST_ORDER = ["remision", "aprobado", "guia", "despachado", "entregado"];
@@ -267,15 +278,23 @@ export type OrderRow = {
  *  cédula o referencia, y los totales de "Todos" salían cortados. */
 export const ORDERS_PAGE = 500;
 
-/** Total de pedidos del tenant (para saber si la ventana se quedó corta). */
-export async function countOrders(): Promise<number> {
+/** Filtro de rango de fechas para pedidos (mismo criterio que el dashboard: [desde, hasta)). */
+function rangoOrders(tid: string, desde?: Date, hasta?: Date) {
+  const cond = [eq(orders.tenantId, tid)];
+  if (desde) cond.push(gte(orders.createdAt, desde));
+  if (hasta) cond.push(lt(orders.createdAt, hasta));
+  return cond.length === 1 ? cond[0] : and(...cond);
+}
+
+/** Total de pedidos del tenant (opcionalmente dentro de un rango de fechas). */
+export async function countOrders(opts: { desde?: Date; hasta?: Date } = {}): Promise<number> {
   if (!db) return 0;
   const tid = (await getPanelTenantId())!;
-  const [r] = await db.select({ n: sql<number>`count(*)::int` }).from(orders).where(eq(orders.tenantId, tid));
+  const [r] = await db.select({ n: sql<number>`count(*)::int` }).from(orders).where(rangoOrders(tid, opts.desde, opts.hasta));
   return r?.n ?? 0;
 }
 
-export async function listOrders(opts: { limit?: number; refs?: string[] } = {}): Promise<OrderRow[]> {
+export async function listOrders(opts: { limit?: number; refs?: string[]; desde?: Date; hasta?: Date } = {}): Promise<OrderRow[]> {
   if (!db) return [];
   const tid = (await getPanelTenantId())!;
   // Clamp: nunca 0/negativo, y techo duro para no reventar la página por un ?limit= absurdo.
@@ -285,9 +304,12 @@ export async function listOrders(opts: { limit?: number; refs?: string[] } = {})
   // porque quedaba fuera del tope y salía en blanco).
   const refs = (opts.refs || []).map((r) => r.trim().toUpperCase()).filter(Boolean);
   if (opts.refs && !refs.length) return [];
+  // Sin `refs`, la ventana se recorta al rango de fechas pedido (Hoy / Ayer /
+  // personalizado). Antes se traían los N más recientes y el filtro se hacía en
+  // el cliente: al elegir una fecha vieja fuera de la ventana salía vacío.
   const where = refs.length
     ? and(eq(orders.tenantId, tid), inArray(orders.ref, refs))
-    : eq(orders.tenantId, tid);
+    : rangoOrders(tid, opts.desde, opts.hasta);
   const rows = await db
     .select({ o: orders, a: advisors })
     .from(orders)

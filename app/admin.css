@@ -961,8 +961,16 @@
   box-shadow: 0 8px 16px -8px rgba(47,107,255,.5); transition: filter .15s ease;
 }
 .pbctrl-new:hover { filter: brightness(1.05); }
+.pbctrl-dl {
+  border: 1px solid #B9CCFF; border-radius: 11px; padding: 10px 14px; font-size: 13.5px; font-weight: 700;
+  color: #1E50E6; background: #fff; cursor: pointer; font-family: inherit; white-space: nowrap;
+  transition: background .15s ease, border-color .15s ease;
+}
+.pbctrl-dl:hover:not(:disabled) { background: #EAF0FF; }
+.pbctrl-dl:focus-visible { outline: 2px solid #1E50E6; outline-offset: 2px; }
+.pbctrl-dl:disabled { opacity: .5; cursor: default; color: #98A2B3; border-color: #E4E7EC; }
 .pbctrl-new:focus-visible { outline: 2px solid #1E50E6; outline-offset: 2px; }
-@media (prefers-reduced-motion: reduce) { .pbflow-tab, .pbctrl-search, .pbctrl-new { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .pbflow-tab, .pbctrl-search, .pbctrl-new, .pbctrl-dl { transition: none; } }
 
 /* ---- Indicadores de estado en la fila + botón copiar ---- */
 .pb-tag { display: inline-flex; align-items: center; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 999px; letter-spacing: .2px; vertical-align: middle; flex: 0 0 auto; white-space: nowrap; }

@@ -1,23 +1,38 @@
 import Link from "next/link";
-import { listOrders, listFailedAttempts, listProducts, countOrders, ORDERS_PAGE } from "@/lib/queries";
+import { listOrders, listFailedAttempts, listProducts, countOrders, rangoPedidos, ORDERS_PAGE } from "@/lib/queries";
 import { PageHead, Card } from "@/components/ui";
 import { PedidosBoard, type BoardOrder, type CatProd } from "./pedidos-board";
 
 export const dynamic = "force-dynamic";
+
+/** Conserva el rango de fechas activo al pedir más pedidos de esa ventana. */
+function qs(sp: PedidosSP, limit: number): string {
+  const p = new URLSearchParams({ limit: String(limit) });
+  if (sp?.range) p.set("range", sp.range);
+  if (sp?.from) p.set("from", sp.from);
+  if (sp?.to) p.set("to", sp.to);
+  return p.toString();
+}
 
 function dato(b: Record<string, unknown>, ...keys: string[]): string {
   for (const k of keys) { const v = b?.[k]; if (v != null && String(v).trim()) return String(v); }
   return "—";
 }
 
-export default async function PedidosPage({ searchParams }: { searchParams: Promise<{ limit?: string }> }) {
+type PedidosSP = { limit?: string; range?: string; from?: string; to?: string };
+
+export default async function PedidosPage({ searchParams }: { searchParams: Promise<PedidosSP> }) {
   // Ventana de pedidos cargados. El board filtra en el cliente, así que si la
   // ventana se queda corta hay pedidos que NO se pueden ni buscar → "Ver más".
   const sp = await searchParams;
   const pedido = parseInt(sp?.limit || "", 10);
   const limit = Number.isFinite(pedido) && pedido > 0 ? pedido : ORDERS_PAGE;
+  // El rango de fechas se resuelve en el servidor: así "Aplicar" sobre una
+  // fecha vieja trae esos pedidos aunque queden fuera de la ventana reciente.
+  const range = sp?.range || "hoy";
+  const { desde, hasta, label: rangoLabel } = rangoPedidos(range, sp?.from, sp?.to);
   const [pedidos, intentos, prods, total] = await Promise.all([
-    listOrders({ limit }), listFailedAttempts(), listProducts(), countOrders(),
+    listOrders({ limit, desde, hasta }), listFailedAttempts(), listProducts(), countOrders({ desde, hasta }),
   ]);
   const hayMas = total > pedidos.length;
   const catalog: CatProd[] = prods.filter((p) => p.activo).map((p) => ({
@@ -42,21 +57,21 @@ export default async function PedidosPage({ searchParams }: { searchParams: Prom
         title="Pedidos"
         subtitle={
           hayMas
-            ? `Mostrando ${pedidos.length} de ${total} pedidos · flujo remisión → aprobado → guía`
-            : `${total} pedidos · flujo remisión → aprobado → guía`
+            ? `${rangoLabel} · mostrando ${pedidos.length} de ${total} pedidos`
+            : `${rangoLabel} · ${total} pedido${total === 1 ? "" : "s"} · flujo remisión → aprobado → guía`
         }
       />
       <Card>
-        <PedidosBoard orders={board} catalog={catalog} />
+        <PedidosBoard orders={board} catalog={catalog} range={range} from={sp?.from} to={sp?.to} rangoLabel={rangoLabel} />
         {hayMas ? (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginTop: 14 }}>
             <span className="t-mut" style={{ fontSize: 12 }}>
               Faltan {total - pedidos.length} pedidos más antiguos por cargar.
             </span>
-            <Link href={`/pedidos?limit=${pedidos.length + ORDERS_PAGE}`} className="pbctrl-new" style={{ textDecoration: "none" }}>
+            <Link href={`/pedidos?${qs(sp, pedidos.length + ORDERS_PAGE)}`} className="pbctrl-new" style={{ textDecoration: "none" }}>
               Ver más
             </Link>
-            <Link href={`/pedidos?limit=${total}`} className="t-mut" style={{ fontSize: 12 }}>
+            <Link href={`/pedidos?${qs(sp, total)}`} className="t-mut" style={{ fontSize: 12 }}>
               Cargar todos ({total})
             </Link>
           </div>

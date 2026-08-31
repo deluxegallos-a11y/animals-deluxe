@@ -66,16 +66,84 @@ function faltantes(o: BoardOrder): string[] {
   return f;
 }
 
-function sameDay(iso: string | null, ref: Date) {
-  if (!iso) return false;
-  const d = new Date(iso);
-  return d.getFullYear() === ref.getFullYear() && d.getMonth() === ref.getMonth() && d.getDate() === ref.getDate();
+const RANGOS: { k: string; label: string }[] = [
+  { k: "hoy", label: "Hoy" }, { k: "ayer", label: "Ayer" }, { k: "semana", label: "7 días" },
+  { k: "mes", label: "Este mes" }, { k: "30d", label: "30 días" }, { k: "todos", label: "Todos" },
+];
+
+/* ---------- Descarga de la lista filtrada (CSV que Excel abre bien) ---------- */
+const CSV_COLS: { h: string; v: (o: BoardOrder) => string | number }[] = [
+  { h: "Referencia", v: (o) => o.ref },
+  { h: "Fecha", v: (o) => (o.createdAt ? new Date(o.createdAt).toLocaleDateString("es-CO") : "") },
+  { h: "Hora", v: (o) => (o.createdAt ? new Date(o.createdAt).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }) : "") },
+  { h: "Estado", v: (o) => est(o.estado).label },
+  { h: "Canal", v: (o) => chan(o.canal).label },
+  { h: "Cliente", v: (o) => o.nombre },
+  { h: "Teléfono", v: (o) => o.telefono },
+  { h: "Cédula", v: (o) => o.cedula },
+  { h: "Ciudad", v: (o) => o.ciudad },
+  { h: "Dirección", v: (o) => o.direccion },
+  { h: "Productos", v: (o) => o.items.map((i) => `${i.cantidad} x ${i.name}`).join(" | ") },
+  { h: "Unidades", v: (o) => o.items.reduce((n, i) => n + (i.cantidad || 0), 0) },
+  { h: "Método de pago", v: (o) => (o.metodoPago === "anticipado" ? "Anticipado" : "Contraentrega") },
+  { h: "Total", v: (o) => o.total || 0 },
+  { h: "Flete", v: (o) => o.envio || 0 },
+  { h: "Guía", v: (o) => o.envioGuia || o.guia || "" },
+  { h: "Transportadora", v: (o) => o.transportadora || "" },
+  { h: "Despachado", v: (o) => (o.despachadoAt ? new Date(o.despachadoAt).toLocaleString("es-CO") : "") },
+  { h: "Factura", v: (o) => (o.facturaNumero != null ? String(o.facturaNumero) : "") },
+  { h: "Asesor", v: (o) => o.advisor || "" },
+];
+/** Excel en es-CO usa `;`. Se escapa con comillas y se antepone BOM para las tildes. */
+function aCSV(rows: BoardOrder[]): string {
+  const cel = (x: string | number) => `"${String(x ?? "").replace(/"/g, '""')}"`;
+  const lineas = [CSV_COLS.map((c) => cel(c.h)).join(";")];
+  for (const o of rows) lineas.push(CSV_COLS.map((c) => cel(c.v(o))).join(";"));
+  return "\uFEFF" + lineas.join("\r\n");
+}
+function descargarCSV(rows: BoardOrder[], nombre: string) {
+  const url = URL.createObjectURL(new Blob([aCSV(rows)], { type: "text/csv;charset=utf-8;" }));
+  const a = document.createElement("a");
+  a.href = url; a.download = nombre; document.body.appendChild(a); a.click();
+  a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+/** Nombre de archivo legible: pedidos-2026-08-31.csv / pedidos-2026-08-01_a_2026-08-31.csv */
+function nombreArchivo(range: string, from?: string, to?: string) {
+  const hoyISO = new Date().toISOString().slice(0, 10);
+  if (range === "custom" && from) return `pedidos-${from}${to && to !== from ? `_a_${to}` : ""}.csv`;
+  return `pedidos-${range || "hoy"}-${hoyISO}.csv`;
 }
 async function copy(text: string) { try { await navigator.clipboard.writeText(text); return true; } catch { return false; } }
 
-export function PedidosBoard({ orders, catalog }: { orders: BoardOrder[]; catalog: CatProd[] }) {
+/* ============ Selector de rango de fechas (mismo patrón que el dashboard) ============ */
+function RangoPedidos({ range, from, to }: { range: string; from?: string; to?: string }) {
   const router = useRouter();
-  const [dia, setDia] = React.useState<"hoy" | "ayer" | "todos">("hoy");
+  const [f, setF] = React.useState(from || "");
+  const [t, setT] = React.useState(to || "");
+  // Si el rango llega por URL (volver atrás, recargar), los inputs lo reflejan.
+  React.useEffect(() => { setF(from || ""); setT(to || ""); }, [from, to]);
+  const aplicar = () => { if (f) router.push(`/pedidos?range=custom&from=${f}${t ? `&to=${t}` : ""}`); };
+  return (
+    <div className="dash-range">
+      {RANGOS.map((r) => (
+        <button key={r.k} type="button" className={"dash-rbtn" + (range === r.k ? " on" : "")} onClick={() => router.push(`/pedidos?range=${r.k}`)}>
+          {r.label}
+        </button>
+      ))}
+      <div className="dash-custom">
+        <input type="date" value={f} max={t || undefined} onChange={(e) => setF(e.target.value)} onKeyDown={(e) => e.key === "Enter" && aplicar()} aria-label="Desde" />
+        <span className="sep">→</span>
+        <input type="date" value={t} min={f || undefined} onChange={(e) => setT(e.target.value)} onKeyDown={(e) => e.key === "Enter" && aplicar()} aria-label="Hasta" />
+        <button type="button" className={"dash-rbtn apply" + (range === "custom" ? " on" : "")} disabled={!f} onClick={aplicar}>Aplicar</button>
+      </div>
+    </div>
+  );
+}
+
+export function PedidosBoard({ orders, catalog, range, from, to, rangoLabel }: {
+  orders: BoardOrder[]; catalog: CatProd[]; range: string; from?: string; to?: string; rangoLabel: string;
+}) {
+  const router = useRouter();
   const [canal, setCanal] = React.useState<"todos" | "whatsapp" | "messenger" | "web" | "asesor">("todos");
   const [q, setQ] = React.useState("");
   const [sel, setSel] = React.useState<Set<string>>(new Set());
@@ -86,11 +154,9 @@ export function PedidosBoard({ orders, catalog }: { orders: BoardOrder[]; catalo
   const [bulkBusy, setBulkBusy] = React.useState(false);
   const [toast, setToast] = React.useState("");
 
-  const hoy = new Date(); const ayer = new Date(); ayer.setDate(ayer.getDate() - 1);
-  const inDia = (o: BoardOrder) => dia === "todos" || sameDay(o.createdAt, dia === "hoy" ? hoy : ayer);
-
+  // El rango de fechas ya lo aplicó el servidor; aquí solo se filtra dentro de él.
   const conGuia = (o: BoardOrder) => !!o.envioGuia || o.envioStatus === "guia_generada";
-  const delDia = orders.filter(inDia);
+  const delDia = orders;
   const filtrados = delDia.filter((o) => {
     if (canal !== "todos" && o.canal !== canal) return false;
     if (estadoF !== "todos") {
@@ -161,14 +227,12 @@ export function PedidosBoard({ orders, catalog }: { orders: BoardOrder[]; catalo
         ))}
       </div>
 
+      {/* Rango de fechas — lo resuelve el servidor, así que también trae pedidos viejos */}
+      <RangoPedidos range={range} from={from} to={to} />
+
       {/* Controles */}
       <div className="pbctrl">
         <input className="pbctrl-search" placeholder="Buscar por nombre, ref, teléfono o cédula…" value={q} onChange={(e) => setQ(e.target.value)} />
-        <div className="pb-seg">
-          {(["hoy", "ayer", "todos"] as const).map((d) => (
-            <button key={d} className={dia === d ? "on" : ""} onClick={() => { setDia(d); setSel(new Set()); }}>{d === "hoy" ? "Hoy" : d === "ayer" ? "Ayer" : "Todos"}</button>
-          ))}
-        </div>
         <select className="pbctrl-canal" value={canal} onChange={(e) => setCanal(e.target.value as typeof canal)}>
           <option value="todos">Todos los canales</option>
           <option value="whatsapp">WhatsApp</option>
@@ -176,6 +240,14 @@ export function PedidosBoard({ orders, catalog }: { orders: BoardOrder[]; catalo
           <option value="web">Página web</option>
           <option value="asesor">Asesor</option>
         </select>
+        <button
+          className="pbctrl-dl"
+          disabled={!filtrados.length}
+          title={filtrados.length ? `Descargar ${filtrados.length} pedido(s) de ${rangoLabel} en Excel/CSV` : "No hay pedidos que descargar"}
+          onClick={() => { descargarCSV(filtrados, nombreArchivo(range, from, to)); flash(`⬇️ ${filtrados.length} pedido(s) descargado(s)`); }}
+        >
+          ⬇️ Descargar lista{filtrados.length ? ` (${filtrados.length})` : ""}
+        </button>
         <button className="pbctrl-new" onClick={() => setManualOpen(true)}>+ Crear pedido</button>
       </div>
 
@@ -231,7 +303,7 @@ export function PedidosBoard({ orders, catalog }: { orders: BoardOrder[]; catalo
           </div>
         </>
       ) : (
-        <div className="empty"><div className="ico">🧾</div><h4>Sin pedidos {dia === "hoy" ? "hoy" : dia === "ayer" ? "ayer" : ""}{canal !== "todos" ? ` por ${chan(canal).label}` : ""}</h4><p>Cuando entren pedidos por el bot o la web, aparecen aquí.</p></div>
+        <div className="empty"><div className="ico">🧾</div><h4>Sin pedidos · {rangoLabel}{canal !== "todos" ? ` por ${chan(canal).label}` : ""}</h4><p>Cuando entren pedidos por el bot o la web, aparecen aquí.</p></div>
       )}
 
       {toast && <div style={{ position: "fixed", bottom: 22, left: "50%", transform: "translateX(-50%)", background: "#101828", color: "#fff", padding: "11px 20px", borderRadius: 12, fontWeight: 700, fontSize: 13.5, zIndex: 80, boxShadow: "var(--shadow)" }}>{toast}</div>}
