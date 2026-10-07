@@ -68,7 +68,7 @@ export function DashboardView({ d, a, w, range, from, to }: { d: Dash; a: Analyt
 
       {/* Neo AI · WhatsApp: los MISMOS números que el Live Chat (lib/livechat/resumen.ts). */}
       <Link href="/livechat" className="neo-franja">
-        <span className="neo-franja-cara"><CaraNeo tamano={34} /></span>
+        <span className="neo-franja-cara"><CaraNeo tamano={48} /></span>
         <span className="neo-franja-txt">
           <span className="neo-franja-tit"><b>Neo AI en WhatsApp</b><EnVivo texto="en vivo" className="neo-franja-vivo" /></span>
           <small>Lo que pasó {d.rangoLabel.toLowerCase()} en el Live Chat</small>

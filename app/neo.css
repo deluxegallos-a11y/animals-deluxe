@@ -66,14 +66,14 @@
 .adm.neo .sb-neo{margin-left:auto;display:grid;place-items:center;opacity:.9}
 .adm.neo .sb-pie{display:grid;gap:8px;padding-top:8px;border-top:1px solid var(--line)}
 .adm.neo .neo-tarjeta{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:18px;color:#fff;text-decoration:none;position:relative;overflow:hidden;
-  background:radial-gradient(120% 120% at 0% 0%,rgba(79,127,255,.35),transparent 55%),linear-gradient(160deg,#0B1640,#020A26);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 14px 28px -14px rgba(2,10,38,.7)}
+  background:var(--neo-fondo);border:1px solid rgba(34,197,94,.22);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 14px 28px -14px rgba(5,6,5,.8),0 0 24px -12px rgba(34,197,94,.45)}
 .adm.neo .neo-tarjeta::after{content:"";position:absolute;inset:0;background:radial-gradient(rgba(255,255,255,.10) 1px,transparent 1.4px) 0 0/10px 10px;
   -webkit-mask-image:linear-gradient(90deg,transparent 30%,#000);mask-image:linear-gradient(90deg,transparent 30%,#000);pointer-events:none}
-.adm.neo .neo-tarjeta .neo-cara{color:#8FB2FF;flex:none}
+.adm.neo .neo-tarjeta .neo-cara{flex:none}
 .adm.neo .neo-tarjeta-txt{display:grid;gap:1px;min-width:0;position:relative;z-index:1}
 .adm.neo .neo-tarjeta-txt b{font-size:14px;font-weight:650;letter-spacing:-.01em}
-.adm.neo .neo-tarjeta .neo-vivo{color:#B9CCFF}
+.adm.neo .neo-tarjeta .neo-vivo{color:var(--neo-verde-2)}
 .adm.neo .sb-tienda{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:12px;color:var(--ink-2);font-size:13px;font-weight:600}
 .adm.neo .sb-tienda:hover{background:rgba(10,10,10,.045);color:var(--ink)}
 .adm.neo .sb-tienda svg:last-child{margin-left:auto;opacity:.6}
@@ -235,25 +235,54 @@ html[data-riel="1"] .adm.neo .sb-tienda{justify-content:center;width:46px;paddin
 .adm.neo .demo-banner{background:var(--card);color:var(--ink-2);border:1px dashed var(--line-2);border-radius:14px;font-weight:500}
 .adm.neo .marca-banner{border-radius:16px}
 
-/* ---------- 13. NEO AI ---------- */
-.neo-cara{display:inline-grid;place-items:center;flex:none;color:var(--m500,#1A5CFF)}
-.neo-cara svg{display:block;fill:currentColor}
-.neo-cara .neo-ojos{transform-origin:50% 44%;animation:neo-parpadeo 4.5s infinite}
-@keyframes neo-parpadeo{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.12)}}
+/* ---------- 13. NEO AI (identidad oficial: halcón negro + neón verde) ---------- */
+:root{--neo-verde:#22C55E;--neo-verde-2:#86EFAC;--neo-negro:#070908;
+  --neo-fondo:radial-gradient(120% 120% at 0% 0%,rgba(34,197,94,.30),transparent 55%),linear-gradient(160deg,#141A16,#050605)}
+.neo-cara{display:inline-block;flex:none;border-radius:50%;overflow:hidden;background:#050605;box-shadow:0 0 0 1.5px rgba(34,197,94,.75),0 0 10px rgba(34,197,94,.35)}
+.neo-cara img{display:block;width:100%;height:100%;object-fit:cover}
 .neo-vivo{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:500}
-.neo-vivo i{width:7px;height:7px;border-radius:50%;background:#22C55E;box-shadow:0 0 0 0 rgba(34,197,94,.6);animation:neo-latido 1.8s infinite}
+.neo-vivo i{width:7px;height:7px;border-radius:50%;background:var(--neo-verde);box-shadow:0 0 0 0 rgba(34,197,94,.6);animation:neo-latido 1.8s infinite}
 @keyframes neo-latido{0%{box-shadow:0 0 0 0 rgba(34,197,94,.55)}70%{box-shadow:0 0 0 7px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
-.neo-firma{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px 0 3px;border-radius:999px;font-size:11px;font-weight:650;color:var(--m700,#0038CC);
-  background:var(--card,#fff);box-shadow:0 0 0 1px rgba(26,92,255,.22)}
+.neo-firma{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px 0 3px;border-radius:999px;font-size:11px;font-weight:700;color:#fff;
+  background:linear-gradient(180deg,#1B211D,#0C0F0D);border:1px solid rgba(34,197,94,.35)}
 .neo-escribe{display:flex;align-items:center;gap:8px;margin:6px 0 2px}
-.neo-escribe-burbuja{display:inline-flex;gap:4px;padding:10px 12px;border-radius:16px 16px 16px 6px;background:linear-gradient(180deg,#EEF3FF,#E5ECFF)}
-.neo-escribe-burbuja i{width:6px;height:6px;border-radius:50%;background:var(--m500,#1A5CFF);opacity:.5;animation:neo-salta 1.1s ease-in-out infinite}
+.neo-escribe-burbuja{display:inline-flex;gap:4px;padding:11px 13px;border-radius:16px 16px 16px 6px;background:#ECEFEC;box-shadow:inset 0 0 0 1px rgba(34,197,94,.18)}
+.neo-escribe-burbuja i{width:6px;height:6px;border-radius:50%;background:#16A34A;opacity:.5;animation:neo-salta 1.1s ease-in-out infinite}
 .neo-escribe-burbuja i:nth-child(2){animation-delay:.14s}
 .neo-escribe-burbuja i:nth-child(3){animation-delay:.28s}
 @keyframes neo-salta{0%,60%,100%{transform:translateY(0);opacity:.45}30%{transform:translateY(-4px);opacity:1}}
 .neo-escribe-txt{font-size:12px;color:var(--muted,#6E6E73)}
-.neo-powered{display:flex;align-items:center;justify-content:center;gap:6px;margin:0;font-size:11px;color:var(--muted,#6E6E73)}
-.neo-powered b{color:var(--ink,#0A0A0A);font-weight:650}
+.neo-powered{display:flex;align-items:center;justify-content:center;gap:7px;margin:0;font-size:11px;color:var(--muted,#6E6E73)}
+.neo-powered b{color:#16A34A;font-weight:700}
+[data-theme="dark"] .neo-escribe-burbuja{background:#0F1A13}
+[data-theme="dark"] .neo-powered b{color:var(--neo-verde-2)}
+
+/* Pantalla de entrada del Live Chat (igual que Motos Colombia) */
+.neo-inicio{position:fixed;inset:0;z-index:100;display:grid;place-items:center;overflow:hidden;color:#E8EFE9;
+  background:radial-gradient(120% 90% at 50% 38%,#0F1A13 0%,#070908 55%,#030403 100%);transition:opacity .6s cubic-bezier(.4,0,.2,1),transform .6s cubic-bezier(.4,0,.2,1)}
+.neo-inicio.is-saliendo{opacity:0;transform:scale(1.03);pointer-events:none}
+.neo-inicio:not(.is-saliendo){animation:neo-aparece .2s ease-out both,neo-auto-fuera .6s ease-in 6s forwards}
+@keyframes neo-aparece{from{opacity:0}to{opacity:1}}
+@keyframes neo-auto-fuera{to{opacity:0;visibility:hidden;pointer-events:none}}
+.neo-inicio-halo{position:absolute;left:50%;top:40%;width:560px;height:560px;margin:-280px 0 0 -280px;border-radius:50%;
+  background:radial-gradient(circle,rgba(34,197,94,.28) 0%,rgba(34,197,94,.08) 38%,transparent 68%);animation:neo-respira 2.4s ease-in-out infinite}
+.neo-inicio-centro{position:relative;display:grid;justify-items:center;gap:18px;padding:0 16px}
+.neo-inicio-logo{width:min(300px,68vw);animation:neo-entra .9s cubic-bezier(.16,1,.3,1) both,neo-flota 3.2s ease-in-out .9s infinite}
+.neo-inicio-logo img{display:block;width:100%;height:auto;filter:drop-shadow(0 18px 40px rgba(34,197,94,.25))}
+.neo-inicio-texto{margin:0;font-size:14px;font-weight:500;letter-spacing:.02em;color:rgba(232,239,233,.78);animation:neo-sube .6s ease-out .45s both}
+.neo-inicio-barra{width:160px;height:3px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;animation:neo-sube .6s ease-out .6s both}
+.neo-inicio-barra span{display:block;width:40%;height:100%;border-radius:inherit;background:linear-gradient(90deg,transparent,#22C55E,#86EFAC);animation:neo-recorre 1.1s cubic-bezier(.4,0,.2,1) infinite}
+.neo-inicio-pie{position:absolute;bottom:max(20px,env(safe-area-inset-bottom));left:16px;right:16px;margin:0;text-align:center;font-size:11.5px;letter-spacing:.02em;color:rgba(232,239,233,.5)}
+.neo-inicio-pie b{color:#86EFAC;font-weight:650}
+@keyframes neo-entra{from{opacity:0;transform:scale(.9) translateY(10px)}to{opacity:1;transform:none}}
+@keyframes neo-sube{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes neo-respira{0%,100%{transform:scale(.92);opacity:.75}50%{transform:scale(1.06);opacity:1}}
+@keyframes neo-flota{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes neo-recorre{from{transform:translateX(-110%)}to{transform:translateX(260%)}}
+@media (prefers-reduced-motion:reduce){
+  .neo-inicio,.neo-inicio-halo,.neo-inicio-logo,.neo-inicio-barra span,.neo-inicio-texto,.neo-inicio-barra{animation:none}
+  .neo-inicio:not(.is-saliendo){animation:neo-auto-fuera 1ms linear 6s forwards}
+}
 
 /* Rango de fechas del dashboard */
 .adm.neo .dash-rbtn{min-height:36px;border-radius:11px;font-weight:600;background:var(--card);color:var(--ink-2);border:1px solid var(--line-2);box-shadow:var(--realce),0 1px 2px rgba(10,10,10,.04)}
@@ -264,22 +293,22 @@ html[data-riel="1"] .adm.neo .sb-tienda{justify-content:center;width:46px;paddin
 
 /* Franja Neo AI (dashboard) */
 .adm.neo .neo-franja{display:flex;align-items:center;gap:16px;margin:0 0 18px;padding:14px 18px;border-radius:24px;color:#fff;text-decoration:none;position:relative;overflow:hidden;
-  background:radial-gradient(80% 140% at 0% 0%,rgba(79,127,255,.38),transparent 60%),linear-gradient(160deg,#0B1640,#020A26);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 24px 48px -28px rgba(2,10,38,.8);transition:transform .25s var(--ease)}
+  background:radial-gradient(80% 160% at 0% 0%,rgba(34,197,94,.26),transparent 60%),linear-gradient(160deg,#141A16,#050605);border:1px solid rgba(34,197,94,.2);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 24px 48px -28px rgba(5,6,5,.85),0 0 40px -20px rgba(34,197,94,.5);transition:transform .25s var(--ease)}
 .adm.neo .neo-franja:hover{transform:translateY(-2px)}
 .adm.neo .neo-franja::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(rgba(255,255,255,.09) 1px,transparent 1.4px) 0 0/12px 12px;
   -webkit-mask-image:linear-gradient(90deg,transparent 35%,#000);mask-image:linear-gradient(90deg,transparent 35%,#000)}
 .adm.neo .neo-franja > *{position:relative;z-index:1}
-.adm.neo .neo-franja-cara{width:48px;height:48px;border-radius:15px;display:grid;place-items:center;background:rgba(255,255,255,.07);box-shadow:inset 0 1px 0 rgba(255,255,255,.12);flex:none}
-.adm.neo .neo-franja-cara .neo-cara{color:#8FB2FF}
+.adm.neo .neo-franja-cara{width:52px;height:52px;display:grid;place-items:center;flex:none}
+
 .adm.neo .neo-franja-txt{display:grid;gap:3px;min-width:0}
 .adm.neo .neo-franja-tit{display:flex;align-items:center;gap:10px}
 .adm.neo .neo-franja-tit b{font-size:15px;font-weight:600;letter-spacing:-.015em}
-.adm.neo .neo-franja-txt small{font-size:12.5px;color:#B9CCFF}
-.adm.neo .neo-franja-vivo{color:#B9CCFF;font-size:11px}
+.adm.neo .neo-franja-txt small{font-size:12.5px;color:rgba(232,239,233,.65)}
+.adm.neo .neo-franja-vivo{color:var(--neo-verde-2);font-size:11px}
 .adm.neo .neo-franja-datos{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .adm.neo .neo-franja-datos span{display:grid;gap:1px;min-width:84px;padding:7px 12px;border-radius:14px;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(255,255,255,.09);
-  font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#9FB4E8}
+  font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:rgba(134,239,172,.75)}
 .adm.neo .neo-franja-datos b{font-family:var(--sans);font-size:17px;font-weight:600;letter-spacing:-.03em;text-transform:none;color:#fff;font-variant-numeric:tabular-nums}
 .adm.neo .neo-franja-datos span.alerta{background:rgba(251,191,36,.12);box-shadow:inset 0 0 0 1px rgba(251,191,36,.28)}
 .adm.neo .neo-franja-datos span.alerta b{color:#FCD34D}

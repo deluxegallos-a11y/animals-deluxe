@@ -3,6 +3,7 @@ import { db } from "@/lib/db/client";
 import { livechatRespuestasRapidas, products } from "@/lib/db/schema";
 import { asesoresDelTenant, contexto, espaciosVisibles, SinAcceso } from "@/lib/livechat/datos";
 import { LivechatUI } from "./livechat-ui";
+import { InicioNeo } from "@/components/neo";
 import "./livechat.css";
 
 export const dynamic = "force-dynamic";
@@ -27,6 +28,8 @@ export default async function LivechatPage() {
       .from(products).where(and(eq(products.tenantId, ctx.tenantId), eq(products.activo, true))).orderBy(asc(products.name)),
   ]);
   return (
+    <>
+    <InicioNeo />
     <LivechatUI
       rol={ctx.rol}
       yo={{ asesorId: ctx.asesorId, nombre: ctx.asesorNombre }}
@@ -38,6 +41,7 @@ export default async function LivechatPage() {
         imagen: p.imageUrl || (p.image ? (/^https?:\/\//.test(p.image) ? p.image : `${SITE}/products/${p.image}`) : ""),
       }))}
     />
+    </>
   );
 }
 

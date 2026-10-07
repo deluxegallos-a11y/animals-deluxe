@@ -218,7 +218,7 @@ export function LivechatUI(props: {
     <div className={`lc ${sel ? "con-hilo" : ""}`}>
       <aside className="lc-lista">
         <div className="lc-cab">
-          <span className="lc-cab-neo"><CaraNeo tamano={24} /></span>
+          <span className="lc-cab-neo"><CaraNeo tamano={44} /></span>
           <div className="lc-cab-txt">
             <span className="lc-ante">WhatsApp · {esp.conIa ? "Neo AI" : "asesores"}</span>
             <h1>Live Chat</h1>
@@ -312,7 +312,7 @@ export function LivechatUI(props: {
       ) : (
         <section className="lc-hilo lc-hilo-vacio">
           <div className="lc-bienv">
-            <span className="lc-bienv-neo"><CaraNeo tamano={46} /></span>
+            <span className="lc-bienv-neo"><img src="/brand/neo/neo-logo.webp" alt="Neo AI" width={360} height={300} /></span>
             <h2>Elige una conversación</h2>
             <p>{esp.conIa ? "Neo AI atiende solo. Tú entras cuando quieras: tomas el chat y respondes." : "Chats de la línea de asesores, repartidos de forma equitativa."}</p>
             <div className="lc-bienv-neo-card">
@@ -695,8 +695,8 @@ function Burbuja({ m, primero, onFoto }: { m: Msg; primero: boolean; onFoto: (ur
   return (
     <div className={`lc-fila ${delCliente ? "izq" : "der"} ${primero ? "primero" : ""}`}>
       {primero && !delCliente ? (
-        <span className="lc-quien">
-          {m.emisor === "ia" ? <><span className="lc-quien-neo"><CaraNeo tamano={12} /></span>Neo AI</> : <><UserRound size={12} />{m.autor || "Equipo"}</>}
+        <span className={`lc-quien ${m.emisor === "ia" ? "es-neo" : ""}`}>
+          {m.emisor === "ia" ? <><span className="lc-quien-neo"><CaraNeo tamano={18} /></span>Neo AI</> : <><UserRound size={12} />{m.autor || "Equipo"}</>}
         </span>
       ) : null}
       <div className={`lc-b ${m.emisor} ${soloFoto ? "foto" : ""} ${pendiente ? "pend" : ""}`}>

@@ -1,37 +1,30 @@
-/* Neo AI · la persona de la IA que vende por WhatsApp (sistema visual de
-   Tienda Core / Motos Colombia). Todo en SVG/CSS: sin imágenes, hereda el color.
-   Estilos en app/neo.css (.neo-cara, .neo-vivo, .neo-escribe, .neo-powered). */
+"use client";
 
-/** Cara de puntos: anillo + ojos cuadrados que parpadean + boca de puntos. */
+/* Neo AI · la IA que vende por WhatsApp. Identidad oficial (la misma de Motos
+   Colombia): halcón negro con neón verde, logo «NEO AI» plata y verde.
+   Assets en public/brand/neo/. El panel conserva su azul para las acciones;
+   todo lo que hace Neo AI se firma en negro + verde. Estilos en app/neo.css. */
+import { useEffect, useState } from "react";
+
+/** Cara del halcón en círculo, con aro verde neón. */
 export function CaraNeo({ tamano = 28, className = "" }: { tamano?: number; className?: string }) {
-  const puntos = Array.from({ length: 26 }, (_, i) => {
-    const a = (i / 26) * Math.PI * 2;
-    return { x: 50 + Math.cos(a) * 42, y: 50 + Math.sin(a) * 42, o: 0.35 + 0.65 * Math.abs(Math.sin(a * 1.5)) };
-  });
   return (
     <span className={`neo-cara ${className}`} style={{ width: tamano, height: tamano }} aria-hidden>
-      <svg viewBox="0 0 100 100" width={tamano} height={tamano}>
-        {puntos.map((p, i) => <circle key={i} cx={p.x.toFixed(2)} cy={p.y.toFixed(2)} r="3.4" opacity={p.o.toFixed(2)} />)}
-        <g className="neo-ojos">
-          <rect x="31" y="36" width="12" height="15" rx="3" />
-          <rect x="57" y="36" width="12" height="15" rx="3" />
-        </g>
-        {[40, 50, 60].map((x) => <circle key={x} cx={x} cy="66" r="3" opacity=".8" />)}
-      </svg>
+      <img src="/brand/neo/neo-avatar.webp" alt="" width={tamano} height={tamano} loading="lazy" decoding="async" />
     </span>
   );
 }
 
-/** Punto «en vivo» con latido. */
+/** Punto «en vivo» con latido verde. */
 export function EnVivo({ texto = "en vivo", className = "" }: { texto?: string; className?: string }) {
   return <span className={`neo-vivo ${className}`}><i aria-hidden />{texto}</span>;
 }
 
-/** «Neo AI está escribiendo…» con tres puntos que saltan. */
+/** «Neo AI está escribiendo…» con tres puntos verdes que saltan. */
 export function NeoEscribiendo({ texto = "Neo AI está escribiendo" }: { texto?: string }) {
   return (
     <div className="neo-escribe" role="status" aria-live="polite">
-      <CaraNeo tamano={18} />
+      <CaraNeo tamano={20} />
       <span className="neo-escribe-burbuja" aria-hidden><i /><i /><i /></span>
       <span className="neo-escribe-txt">{texto}…</span>
     </div>
@@ -44,5 +37,42 @@ export function FirmaNeo({ texto = "Neo AI" }: { texto?: string }) {
 }
 
 export function PoweredNeo({ className = "" }: { className?: string }) {
-  return <p className={`neo-powered ${className}`}><CaraNeo tamano={14} /><span>Powered by <b>Neo AI</b></span></p>;
+  return <p className={`neo-powered ${className}`}><CaraNeo tamano={16} /><span>Powered by <b>Neo AI</b></span></p>;
+}
+
+/** Pantalla de entrada del Live Chat: logo de Neo AI con halo verde que respira.
+ *  Mínimo 1,6 s para que luzca, se va con desvanecido; tope de 3,5 s. */
+export function InicioNeo({ marca = "Animals Deluxe" }: { marca?: string }) {
+  const [fase, setFase] = useState<"visible" | "saliendo" | "fuera">("visible");
+  useEffect(() => {
+    const inicio = performance.now();
+    let salida: ReturnType<typeof setTimeout> | undefined;
+    let fin: ReturnType<typeof setTimeout> | undefined;
+    const quitar = () => {
+      if (salida) return;
+      const falta = Math.max(0, 1600 - (performance.now() - inicio));
+      salida = setTimeout(() => { setFase("saliendo"); fin = setTimeout(() => setFase("fuera"), 600); }, falta);
+    };
+    if (document.readyState === "complete") quitar();
+    else window.addEventListener("load", quitar, { once: true });
+    const tope = setTimeout(quitar, 3500);
+    return () => {
+      window.removeEventListener("load", quitar);
+      clearTimeout(tope);
+      if (salida) clearTimeout(salida);
+      if (fin) clearTimeout(fin);
+    };
+  }, []);
+  if (fase === "fuera") return null;
+  return (
+    <div className={`neo-inicio${fase === "saliendo" ? " is-saliendo" : ""}`} role="status" aria-live="polite">
+      <div className="neo-inicio-halo" aria-hidden />
+      <div className="neo-inicio-centro">
+        <div className="neo-inicio-logo"><img src="/brand/neo/neo-logo.webp" alt="Neo AI" width={360} height={300} /></div>
+        <p className="neo-inicio-texto">Preparando tus chats…</p>
+        <div className="neo-inicio-barra" aria-hidden><span /></div>
+      </div>
+      <p className="neo-inicio-pie">Live Chat · {marca} · Powered by <b>Neo AI</b></p>
+    </div>
+  );
 }
