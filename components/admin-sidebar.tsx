@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutGrid, Package, ShoppingBag, Users, MessageSquare,
-  BadgePercent, Headphones, Settings, Search, Store, ArrowUpRight, Star, Megaphone,
+  BadgePercent, Headphones, Settings, Search, Store, ArrowUpRight, Star, Megaphone, MessagesSquare,
 } from "lucide-react";
 
 const GROUPS: { label: string; items: { href: string; label: string; icon: any }[] }[] = [
@@ -21,6 +21,7 @@ const GROUPS: { label: string; items: { href: string; label: string; icon: any }
   {
     label: "Gestión",
     items: [
+      { href: "/livechat", label: "Live Chat", icon: MessagesSquare },
       { href: "/conversaciones", label: "Conversaciones", icon: MessageSquare },
       { href: "/resenas", label: "Reseñas", icon: Star },
       { href: "/promociones", label: "Promociones", icon: BadgePercent },

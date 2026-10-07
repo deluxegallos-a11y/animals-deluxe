@@ -524,3 +524,64 @@ export const searchMisses = pgTable(
   },
   (t) => ({ byTenant: index("search_misses_tenant_fecha_idx").on(t.tenantId) }),
 );
+
+/* 18. Live Chat — espejo local de UChat (supabase/06-livechat.sql).
+   OJO: tenants.livechat y advisors.email/recibe_chats NO están en las tablas de
+   arriba a propósito: se leen con SQL en lib/livechat/ para que el panel no se
+   rompa si el código se despliega antes que la migración.
+   Una fila por suscriptor de UChat (user_ns) por tenant; los mensajes se
+   deduplican por (tenant_id, provider_msg_id). */
+export const livechatConversaciones = pgTable("livechat_conversaciones", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull(),
+  espacio: text("espacio").notNull().default("bot"),
+  userNs: text("user_ns").notNull(),
+  nombre: text("nombre").notNull().default(""),
+  telefono: text("telefono").notNull().default(""),
+  canal: text("canal").notNull().default("whatsapp"),
+  ultimoTexto: text("ultimo_texto").notNull().default(""),
+  ultimoEmisor: text("ultimo_emisor").notNull().default(""),
+  ultimoAt: timestamp("ultimo_at", { withTimezone: true }),
+  ultimoClienteAt: timestamp("ultimo_cliente_at", { withTimezone: true }),
+  sinLeer: integer("sin_leer").notNull().default(0),
+  owner: text("owner").$type<"bot" | "humano">().notNull().default("bot"),
+  asesorId: uuid("asesor_id"),
+  asignadoEn: timestamp("asignado_en", { withTimezone: true }),
+  botPausadoHasta: timestamp("bot_pausado_hasta", { withTimezone: true }),
+  customerId: uuid("customer_id"),
+  ventanaAbierta: boolean("ventana_abierta"),
+  mensajesSyncAt: timestamp("mensajes_sync_at", { withTimezone: true }),
+  createdAt: now(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+});
+
+export const livechatMensajes = pgTable("livechat_mensajes", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull(),
+  conversacionId: uuid("conversacion_id").notNull(),
+  providerMsgId: text("provider_msg_id").notNull(),
+  direccion: text("direccion").$type<"in" | "out" | "event">().notNull(),
+  emisor: text("emisor").$type<"cliente" | "ia" | "asesor_uchat" | "asesor_panel" | "sistema" | "nota">().notNull(),
+  tipo: text("tipo").notNull().default("text"),
+  texto: text("texto").notNull().default(""),
+  mediaUrl: text("media_url").notNull().default(""),
+  autor: text("autor").notNull().default(""),
+  providerTs: timestamp("provider_ts", { withTimezone: true }).notNull().defaultNow(),
+  raw: jsonb("raw"),
+  createdAt: now(),
+});
+
+export const livechatSync = pgTable("livechat_sync", {
+  tenantId: uuid("tenant_id").notNull(),
+  espacio: text("espacio").notNull(),
+  ultimoSyncAt: timestamp("ultimo_sync_at", { withTimezone: true }),
+  ultimoError: text("ultimo_error").notNull().default(""),
+}, (t) => ({ pk: primaryKey({ columns: [t.tenantId, t.espacio] }) }));
+
+export const livechatRespuestasRapidas = pgTable("livechat_respuestas_rapidas", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull(),
+  atajo: text("atajo").notNull(),
+  texto: text("texto").notNull(),
+  createdAt: now(),
+});
