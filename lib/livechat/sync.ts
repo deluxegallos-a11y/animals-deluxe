@@ -18,7 +18,7 @@ import {
 import { clienteUchat, infoSuscriptor, listarSuscriptores, mensajesDe, ErrorLivechat } from "./uchat";
 import { configDeTenant, filas } from "./datos";
 
-const MAX_HILOS = 8;
+const MAX_HILOS = 16; // por pasada, en segundo plano (after) y de a 4 en paralelo
 const limites = (e: Espacio) => (e.con_ia ? { espacio: 12, chat: 3 } : { espacio: 60, chat: 30 });
 const prefijo = (e: Espacio) => (e.codigo === "bot" ? "" : `${e.codigo}:`);
 

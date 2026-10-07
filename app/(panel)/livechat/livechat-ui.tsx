@@ -27,7 +27,7 @@ type Conv = {
   sinLeer: number; owner: "bot" | "humano"; asesorId: string | null; botPausadoHasta: string | null;
   ventanaAbierta: boolean | null; customerId: string | null;
   etiquetas: string[]; pedidoId: string | null; pedidoRef: string; pedidoEstado: string; pedidoTotal: number;
-  pedidoAt: string | null; pedidosNum: number;
+  pedidoAt: string | null; pedidosNum: number; mensajesSyncAt: string | null;
 };
 type Msg = {
   id: string; providerMsgId: string; direccion: "in" | "out" | "event";
@@ -288,7 +288,7 @@ export function LivechatUI(props: {
                       <time>{hace(c.ultimoAt)}</time>
                     </span>
                     <span className="lc-item-fila">
-                      <span className="lc-prev"><span>{prefijo(c)}</span>{c.ultimoTexto || "Cargando mensajes…"}</span>
+                      <span className="lc-prev"><span>{prefijo(c)}</span>{c.ultimoTexto || (c.mensajesSyncAt ? "Sin mensajes en UChat" : "Se descarga al abrir")}</span>
                       {pide ? <Hand size={14} className="lc-pide" aria-label="Pidió un asesor" /> : null}
                       {c.sinLeer > 0 ? <span className="lc-badge" title="Mensajes sin responder">{c.sinLeer}</span> : null}
                     </span>
@@ -352,6 +352,8 @@ function Hilo(props: {
   const [cliente, setCliente] = useState<Cliente>(null);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [cargando, setCargando] = useState(true);
+  // true mientras se trae el hilo de UChat por primera vez en esta apertura.
+  const [trayendo, setTrayendo] = useState(true);
   const [texto, setTexto] = useState("");
   const [modoNota, setModoNota] = useState(false);
   const [ocupado, setOcupado] = useState(false);
@@ -373,7 +375,12 @@ function Hilo(props: {
     setCargando(false);
   }, [conv.id]);
 
-  useEffect(() => { cargar(false).then(() => cargar()); }, [cargar]);
+  // Primero lo guardado (instantáneo), luego lo nuevo de UChat. Mientras llega,
+  // un chat que nunca se descargó muestra «Trayendo…» en vez de «sin mensajes».
+  useEffect(() => {
+    setTrayendo(true);
+    cargar(false).then(() => cargar()).finally(() => setTrayendo(false));
+  }, [cargar]);
   useEffect(() => {
     if (!visible) return;
     const t = setInterval(() => cargar(), esp.conIa ? 4000 : 10000);
@@ -477,10 +484,19 @@ function Hilo(props: {
         ) : null}
 
         <div className="lc-msgs">
-          {cargando && !mensajes.length ? (
-            <div className="lc-msgs-sk" aria-hidden>{["i 56", "d 72", "d 40", "i 48", "d 64"].map((x, i) => <span key={i} className={x[0] === "i" ? "izq" : "der"} style={{ width: `${x.slice(2)}%` }} />)}</div>
+          {(cargando || trayendo) && !mensajes.length ? (
+            <div className="lc-msgs-trayendo" role="status">
+              <p><CaraNeo tamano={16} /> Trayendo la conversación de UChat…</p>
+              <div className="lc-msgs-sk" aria-hidden>{["i 56", "d 72", "d 40", "i 48", "d 64"].map((x, i) => <span key={i} className={x[0] === "i" ? "izq" : "der"} style={{ width: `${x.slice(2)}%` }} />)}</div>
+            </div>
           ) : null}
-          {!cargando && !mensajes.length ? <p className="lc-msgs-vacio">Todavía no hay mensajes guardados de este chat.</p> : null}
+          {!cargando && !trayendo && !mensajes.length ? (
+            <div className="lc-msgs-vacio">
+              <b>UChat no tiene mensajes de este chat</b>
+              <p>El contacto existe (entró por un anuncio o un comentario) pero no hay historial de WhatsApp guardado en UChat.</p>
+              <button className="lc-btn soft" disabled={ocupado} onClick={() => correr(() => refrescarHilo(conv.id), "Actualizado")}><RefreshCw size={14} /> Volver a intentar</button>
+            </div>
+          ) : null}
           {bloques.map((b) => (
             <section key={b.dia} aria-label={b.dia}>
               <p className="lc-dia"><span>{b.dia}</span></p>
