@@ -551,6 +551,14 @@ export const livechatConversaciones = pgTable("livechat_conversaciones", {
   customerId: uuid("customer_id"),
   ventanaAbierta: boolean("ventana_abierta"),
   mensajesSyncAt: timestamp("mensajes_sync_at", { withTimezone: true }),
+  // Etapa de venta (supabase/07-livechat-etapas.sql): etiquetas de UChat + último pedido.
+  etiquetas: jsonb("etiquetas").$type<string[]>().notNull().default([]),
+  pedidoId: uuid("pedido_id"),
+  pedidoRef: text("pedido_ref").notNull().default(""),
+  pedidoEstado: text("pedido_estado").notNull().default(""),
+  pedidoTotal: integer("pedido_total").notNull().default(0),
+  pedidoAt: timestamp("pedido_at", { withTimezone: true }),
+  pedidosNum: integer("pedidos_num").notNull().default(0),
   createdAt: now(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });

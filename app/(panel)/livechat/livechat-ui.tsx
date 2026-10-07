@@ -2,15 +2,18 @@
 
 /* Live Chat · bandeja (lista + hilo + ficha). Sondeo: lista cada 15 s, hilo
    abierto cada 4 s (línea IA) o 10 s (sin IA); se pausa con la pestaña oculta.
-   Todo permiso se valida en el servidor; aquí solo se esconde lo que no aplica. */
+   Todo permiso se valida en el servidor; aquí solo se esconde lo que no aplica.
+   Etapa de venta (etiqueta): pedido real de la plataforma + etiquetas del bot. */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowLeft, Bot, FileText, Image as ImageIcon, Package, RefreshCw, Search, Send, Settings, StickyNote, UserRound, X,
+  ArrowLeft, Bot, Check, Copy, ExternalLink, FileText, Image as ImageIcon, Info, MessageCircle, Package,
+  RefreshCw, Search, Send, Settings, StickyNote, UserRound, X, Zap,
 } from "lucide-react";
 import {
   asignarAsesor, borrarRespuestaRapida, configurarAsesor, devolverAlBot, enviarImagen, enviarMensaje, enviarPlantilla,
-  enviarProducto, guardarRespuestaRapida, marcarLeido, notaInterna, plantillasDe, refrescarHilo, tomarChat, type Res,
+  enviarProducto, guardarRespuestaRapida, notaInterna, plantillasDe, refrescarHilo, tomarChat, type Res,
 } from "./acciones";
+import { ETAPAS, esConfirmado, etapaDe, pidioAsesor, type Etapa } from "@/lib/livechat/puro";
 
 type EspacioUI = { codigo: string; nombre: string; conIa: boolean; reparto: boolean };
 type Asesor = { id: string; nombre: string; email: string; activo: boolean; recibe_chats: boolean };
@@ -21,19 +24,39 @@ type Conv = {
   ultimoTexto: string; ultimoEmisor: string; ultimoAt: string | null; ultimoClienteAt: string | null;
   sinLeer: number; owner: "bot" | "humano"; asesorId: string | null; botPausadoHasta: string | null;
   ventanaAbierta: boolean | null; customerId: string | null;
+  etiquetas: string[]; pedidoId: string | null; pedidoRef: string; pedidoEstado: string; pedidoTotal: number;
+  pedidoAt: string | null; pedidosNum: number;
 };
 type Msg = {
   id: string; providerMsgId: string; direccion: "in" | "out" | "event";
   emisor: "cliente" | "ia" | "asesor_uchat" | "asesor_panel" | "sistema" | "nota";
   tipo: string; texto: string; mediaUrl: string; autor: string; providerTs: string;
 };
-type Cliente = { nombre: string | null; ciudad: string | null; departamento: string | null; estado: string | null; totalGastado: number | null; numPedidos: number | null; tags: unknown; notas: string | null } | null;
-type Pedido = { ref: string; estado: string | null; totalCop: number | null; createdAt: string | null; guia: string | null; transportadora: string | null };
+type Cliente = {
+  nombre: string | null; ciudad: string | null; departamento: string | null; direccion: string | null; estado: string | null;
+  totalGastado: number | null; numPedidos: number | null; tags: unknown; notas: string | null; ultimoProductoVisto: string | null;
+} | null;
+type Pedido = {
+  id: string; ref: string; estado: string | null; totalCop: number | null; createdAt: string | null; guia: string | null;
+  transportadora: string | null; ciudad: string | null; direccion: string | null; paymentType: string | null; items: string[];
+};
 type Plantilla = { nombre: string; cuerpo: string; variables: number; noCompatible: string | null };
-type Filtro = "todos" | "sin_leer" | "humano" | "mios" | "sin_asignar";
+type Filtro = "todos" | "sin_leer" | "confirmados" | "asesor" | "humano" | "mios" | "sin_asignar";
+type Contadores = Record<Filtro, number>;
 
 const cop = (n: number | null | undefined) => "$" + new Intl.NumberFormat("es-CO").format(n || 0);
 const VENTANA_MS = 24 * 3600 * 1000;
+const ESTADO_PEDIDO: Record<string, { label: string; tono: string }> = {
+  remision: { label: "En remisión", tono: "verde" },
+  por_revisar: { label: "Por revisar", tono: "ambar" },
+  aprobado: { label: "Aprobado", tono: "teal" },
+  guia: { label: "Con guía", tono: "azul" },
+  despachado: { label: "Despachado", tono: "azul" },
+  entregado: { label: "Entregado", tono: "azul" },
+  cancelado: { label: "Cancelado", tono: "rojo" },
+};
+const ETAPA_ICO: Record<Etapa, string> = { despachado: "🚚", aprobado: "✔️", confirmado: "✅", datos: "📝", interesado: "👀", nuevo: "" };
+const PASOS: Etapa[] = ["nuevo", "interesado", "datos", "confirmado", "aprobado", "despachado"];
 
 function hace(iso: string | null): string {
   if (!iso) return "";
@@ -41,31 +64,28 @@ function hace(iso: string | null): string {
   const s = (Date.now() - d.getTime()) / 1000;
   if (s < 60) return "ahora";
   if (s < 3600) return `${Math.floor(s / 60)} min`;
-  if (s < 86400) return d.toLocaleTimeString("es-CO", { hour: "numeric", minute: "2-digit" });
+  if (s < 86400 && d.getDate() === new Date().getDate()) return d.toLocaleTimeString("es-CO", { hour: "numeric", minute: "2-digit" });
   if (s < 7 * 86400) return d.toLocaleDateString("es-CO", { weekday: "short" });
   return d.toLocaleDateString("es-CO", { day: "numeric", month: "short" });
 }
-function hora(iso: string) {
-  return new Date(iso).toLocaleTimeString("es-CO", { hour: "numeric", minute: "2-digit" });
-}
+const hora = (iso: string) => new Date(iso).toLocaleTimeString("es-CO", { hour: "numeric", minute: "2-digit" });
+const fecha = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" }) : "");
 function dia(iso: string) {
   const d = new Date(iso);
-  const hoy = new Date();
-  const ayer = new Date(Date.now() - 86400000);
-  if (d.toDateString() === hoy.toDateString()) return "Hoy";
-  if (d.toDateString() === ayer.toDateString()) return "Ayer";
+  if (d.toDateString() === new Date().toDateString()) return "Hoy";
+  if (d.toDateString() === new Date(Date.now() - 86400000).toDateString()) return "Ayer";
   return d.toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" });
 }
 function iniciales(n: string) {
-  return (n || "?").trim().split(/\s+/).slice(0, 2).map((p) => p[0]?.toUpperCase() || "").join("") || "?";
+  const limpio = (n || "").replace(/[^\p{L}\p{N}\s]/gu, "").trim();
+  return limpio.split(/\s+/).slice(0, 2).map((p) => p[0]?.toUpperCase() || "").join("") || "👤";
 }
 function telLegible(t: string) {
-  const d = t.replace(/\D/g, "");
-  return d.startsWith("57") && d.length === 12 ? `+57 ${d.slice(2, 5)} ${d.slice(5, 8)} ${d.slice(8)}` : t ? `+${d}` : "";
+  const d = (t || "").replace(/\D/g, "");
+  if (d.startsWith("57") && d.length === 12) return `+57 ${d.slice(2, 5)} ${d.slice(5, 8)} ${d.slice(8)}`;
+  return d ? `+${d}` : "";
 }
-function tomado(c: Conv) {
-  return c.owner === "humano" && (!c.botPausadoHasta || new Date(c.botPausadoHasta) > new Date());
-}
+const tomado = (c: Conv) => c.owner === "humano" && (!c.botPausadoHasta || new Date(c.botPausadoHasta) > new Date());
 function ventana(c: Conv) {
   if (c.ventanaAbierta !== null && c.ventanaAbierta !== undefined) return c.ventanaAbierta;
   return !!c.ultimoClienteAt && Date.now() - new Date(c.ultimoClienteAt).getTime() < VENTANA_MS;
@@ -74,7 +94,8 @@ function rellenar(t: string, v: { nombre: string; asesor: string }) {
   const primer = v.nombre.trim().split(/\s+/)[0] || "";
   return t.replace(/\{nombre\}/gi, primer).replace(/\{asesor\}/gi, v.asesor).replace(/\s+([,.!?])/g, "$1").replace(/ {2,}/g, " ").trim();
 }
-const ICONO_EMISOR: Record<string, string> = { cliente: "", ia: "🤖 ", asesor_uchat: "🧑‍💼 ", asesor_panel: "🧑‍💼 " };
+const etapaConv = (c: Conv) => etapaDe({ pedidoEstado: c.pedidoEstado, etiquetas: c.etiquetas });
+const ICONO_EMISOR: Record<string, string> = { ia: "🤖 ", asesor_uchat: "🧑‍💼 ", asesor_panel: "🧑‍💼 " };
 
 function useVisible() {
   const [v, setV] = useState(true);
@@ -85,6 +106,19 @@ function useVisible() {
   }, []);
   return v;
 }
+
+function EtapaBadge({ c, compacto = false }: { c: Conv; compacto?: boolean }) {
+  const e = etapaConv(c);
+  if (e === "nuevo") return null;
+  return (
+    <span className={`lc-etapa e-${e}`} title={ETAPAS[e].label}>
+      {ETAPA_ICO[e]} {compacto ? ETAPAS[e].corto : ETAPAS[e].label}
+      {c.pedidoRef && esConfirmado(e) ? <b>{c.pedidoRef}</b> : null}
+    </span>
+  );
+}
+
+/* ================================================================== */
 
 export function LivechatUI(props: {
   rol: "admin" | "asesor";
@@ -100,8 +134,10 @@ export function LivechatUI(props: {
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [q, setQ] = useState("");
   const [lista, setLista] = useState<Conv[]>([]);
+  const [cont, setCont] = useState<Contadores | null>(null);
   const [cargandoLista, setCargandoLista] = useState(true);
   const [errorSync, setErrorSync] = useState("");
+  const [actualizando, setActualizando] = useState(false);
   const [sel, setSel] = useState<string | null>(null);
   const [respuestas, setRespuestas] = useState(props.respuestas);
   const [ajustes, setAjustes] = useState(false);
@@ -115,107 +151,157 @@ export function LivechatUI(props: {
     try {
       const r = await fetch(`/api/livechat/bandeja?${p}`, { cache: "no-store" });
       const j = await r.json();
-      if (j.ok) { setLista(j.conversaciones); setErrorSync(j.error || ""); }
+      if (j.ok) { setLista(j.conversaciones); setCont(j.contadores || null); setErrorSync(j.error || ""); }
       else setErrorSync(j.error || "Error leyendo la bandeja");
     } catch { setErrorSync("Sin conexión"); }
     setCargandoLista(false);
   }, [espacio, filtro, q]);
 
-  // Al cambiar de pestaña/filtro: pinta lo guardado ya y luego sincroniza.
   useEffect(() => {
     setCargandoLista(true);
-    cargarLista({ sync: false }).then(() => cargarLista());
-  }, [cargarLista]);
+    const t = setTimeout(() => cargarLista({ sync: false }).then(() => cargarLista()), q ? 250 : 0);
+    return () => clearTimeout(t);
+  }, [cargarLista, q]);
   useEffect(() => {
     if (!visible) return;
     const t = setInterval(() => cargarLista(), 15000);
     return () => clearInterval(t);
   }, [visible, cargarLista]);
+  // Pestaña del navegador con los no leídos.
+  useEffect(() => {
+    const n = cont?.sin_leer || 0;
+    document.title = n ? `(${n}) Live Chat · Animals Deluxe` : "Live Chat · Animals Deluxe";
+  }, [cont?.sin_leer]);
 
   const convSel = lista.find((c) => c.id === sel) || null;
+  const chips: [Filtro, string][] = [
+    ["todos", "Todos"], ["sin_leer", "Sin responder"], ["confirmados", "✅ Confirmados"], ["asesor", "🙋 Pidieron asesor"],
+    ["humano", esp.conIa ? "Tomados" : "Atendidos"],
+    rol === "admin" ? ["sin_asignar", "Sin asignar"] : ["mios", "Míos"],
+  ];
 
   return (
     <div className={`lc ${sel ? "con-hilo" : ""}`}>
-      <aside className="lc-lista">
-        <div className="lc-lista-top">
+      <header className="lc-top">
+        <div className="lc-top-tit">
+          <MessageCircle size={20} />
+          <div>
+            <b>Live Chat</b>
+            <small>WhatsApp · {esp.conIa ? "bot IA + equipo" : "asesores"}</small>
+          </div>
+        </div>
+        {espacios.length > 1 ? (
           <div className="lc-tabs">
             {espacios.map((e) => (
               <button key={e.codigo} className={`lc-tab ${e.codigo === espacio ? "on" : ""}`} onClick={() => { setEspacio(e.codigo); setSel(null); }}>
                 {e.conIa ? <Bot size={15} /> : <UserRound size={15} />} {e.nombre}
               </button>
             ))}
-            {rol === "admin" ? <button className="lc-ico" title="Ajustes del Live Chat" onClick={() => setAjustes(true)}><Settings size={16} /></button> : null}
           </div>
-          <div className="lc-buscar">
-            <Search size={15} />
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar nombre, teléfono o texto" />
-            <button className="lc-ico" title="Actualizar desde UChat" onClick={() => cargarLista({ forzar: true })}><RefreshCw size={15} /></button>
-          </div>
-          <div className="lc-filtros">
-            {([
-              ["todos", "Todos"], ["sin_leer", "Sin leer"], ["humano", esp.conIa ? "Tomados" : "Atendidos"],
-              ...(rol === "admin" ? [["sin_asignar", "Sin asignar"]] : [["mios", "Míos"]]),
-            ] as [Filtro, string][]).map(([k, l]) => (
-              <button key={k} className={`lc-chip ${filtro === k ? "on" : ""}`} onClick={() => setFiltro(k)}>{l}</button>
-            ))}
-          </div>
-          {errorSync ? <div className="lc-error" title={errorSync}>⚠️ {errorSync}</div> : null}
+        ) : null}
+        <div className="lc-kpis">
+          <div className="lc-kpi"><span>Chats</span><b>{cont?.todos ?? "—"}</b></div>
+          <div className="lc-kpi k-verde"><span>Sin responder</span><b>{cont?.sin_leer ?? "—"}</b></div>
+          <div className="lc-kpi k-ok"><span>Confirmaron</span><b>{cont?.confirmados ?? "—"}</b></div>
+          <div className="lc-kpi k-ambar"><span>Piden asesor</span><b>{cont?.asesor ?? "—"}</b></div>
         </div>
-        <div className="lc-items">
-          {cargandoLista && !lista.length ? <div className="lc-vacio">Cargando…</div> : null}
-          {!cargandoLista && !lista.length ? <div className="lc-vacio">No hay conversaciones aquí.</div> : null}
-          {lista.map((c) => (
-            <button key={c.id} className={`lc-item ${c.id === sel ? "on" : ""}`} onClick={() => setSel(c.id)}>
-              <span className={`lc-av ${tomado(c) ? "humano" : ""}`}>{iniciales(c.nombre || c.telefono)}</span>
-              <span className="lc-item-cuerpo">
-                <span className="lc-item-fila">
-                  <b>{c.nombre || telLegible(c.telefono) || "Cliente"}</b>
-                  <small>{hace(c.ultimoAt)}</small>
-                </span>
-                <span className="lc-item-fila">
-                  <span className="lc-prev">{ICONO_EMISOR[c.ultimoEmisor] || ""}{c.ultimoTexto || <i>Sin mensajes cargados</i>}</span>
-                  {c.sinLeer > 0 ? <span className="lc-badge">{c.sinLeer}</span> : null}
-                </span>
-                <span className="lc-item-tags">
-                  {esp.conIa ? (tomado(c) ? <em className="t-hum">Humano</em> : <em className="t-bot">Bot</em>) : null}
-                  {c.asesorId ? <em>{nombreAsesor[c.asesorId] || "Asesor"}</em> : null}
-                  {c.canal && c.canal !== "whatsapp" ? <em>{c.canal}</em> : null}
-                  {!ventana(c) ? <em className="t-cerr">24 h cerrada</em> : null}
-                </span>
-              </span>
-            </button>
-          ))}
+        <div className="lc-top-acc">
+          <button className="lc-ico" title="Actualizar desde UChat" disabled={actualizando}
+            onClick={async () => { setActualizando(true); await cargarLista({ forzar: true }); setActualizando(false); }}>
+            <RefreshCw size={16} className={actualizando ? "lc-gira" : ""} />
+          </button>
+          {rol === "admin" ? <button className="lc-ico" title="Ajustes del Live Chat" onClick={() => setAjustes(true)}><Settings size={16} /></button> : null}
         </div>
-      </aside>
+      </header>
 
-      {convSel ? (
-        <Hilo
-          key={convSel.id}
-          conv={convSel}
-          esp={esp}
-          rol={rol}
-          yo={yo}
-          asesores={asesores}
-          respuestas={respuestas}
-          productos={productos}
-          visible={visible}
-          onVolver={() => setSel(null)}
-          onCambio={() => cargarLista({ sync: false })}
-        />
-      ) : (
-        <section className="lc-hilo lc-hilo-vacio">
-          <div className="empty"><div className="ico">💬</div><h4>Elige una conversación</h4>
-            <p>{esp.conIa ? "Aquí ves lo que el bot habla con cada cliente. Escribe o «Toma» el chat para atenderlo tú; el bot queda en pausa." : "Chats de la línea de asesores, repartidos de forma equitativa."}</p>
+      <div className="lc-cuerpo">
+        <aside className="lc-lista">
+          <div className="lc-lista-top">
+            <label className="lc-buscar">
+              <Search size={15} />
+              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar nombre, teléfono o mensaje" />
+              {q ? <button className="lc-x" onClick={() => setQ("")} title="Limpiar"><X size={14} /></button> : null}
+            </label>
+            <div className="lc-filtros">
+              {chips.map(([k, l]) => (
+                <button key={k} className={`lc-chip ${filtro === k ? "on" : ""} ${k === "confirmados" ? "c-ok" : k === "asesor" ? "c-ambar" : ""}`} onClick={() => setFiltro(k)}>
+                  {l}{cont && k !== "todos" ? <i>{cont[k]}</i> : null}
+                </button>
+              ))}
+            </div>
+            {errorSync ? <div className="lc-error" title={errorSync}>⚠️ {errorSync}</div> : null}
           </div>
-        </section>
-      )}
+          <div className="lc-items">
+            {cargandoLista && !lista.length ? Array.from({ length: 6 }, (_, i) => <div key={i} className="lc-sk" />) : null}
+            {!cargandoLista && !lista.length ? <div className="lc-vacio">{q ? "Nada coincide con la búsqueda." : "No hay conversaciones en este filtro."}</div> : null}
+            {lista.map((c) => {
+              const e = etapaConv(c);
+              return (
+                <button key={c.id} className={`lc-item ${c.id === sel ? "on" : ""} ${c.sinLeer ? "nuevo" : ""}`} onClick={() => setSel(c.id)}>
+                  <span className={`lc-av e-${e} ${tomado(c) ? "humano" : ""}`}>{iniciales(c.nombre)}</span>
+                  <span className="lc-item-cuerpo">
+                    <span className="lc-item-fila">
+                      <b>{c.nombre || telLegible(c.telefono) || "Cliente"}</b>
+                      <small>{hace(c.ultimoAt)}</small>
+                    </span>
+                    <span className="lc-item-fila">
+                      <span className="lc-prev">{ICONO_EMISOR[c.ultimoEmisor] || ""}{c.ultimoTexto || <i>Cargando mensajes…</i>}</span>
+                      {c.sinLeer > 0 ? <span className="lc-badge" title="Mensajes sin responder">{c.sinLeer}</span> : null}
+                    </span>
+                    <span className="lc-item-tags">
+                      <EtapaBadge c={c} compacto />
+                      {pidioAsesor(c.etiquetas) && !tomado(c) && !esConfirmado(e) ? <em className="t-ambar">🙋 Pide asesor</em> : null}
+                      {esp.conIa && tomado(c) ? <em className="t-hum">🧑‍💼 Humano</em> : null}
+                      {c.asesorId ? <em>{nombreAsesor[c.asesorId] || "Asesor"}</em> : null}
+                      {c.canal && c.canal !== "whatsapp" ? <em>{c.canal}</em> : null}
+                      {!ventana(c) ? <em className="t-cerr">24 h cerrada</em> : null}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </aside>
+
+        {convSel ? (
+          <Hilo
+            key={convSel.id}
+            conv={convSel}
+            esp={esp}
+            rol={rol}
+            yo={yo}
+            asesores={asesores}
+            respuestas={respuestas}
+            productos={productos}
+            visible={visible}
+            onVolver={() => setSel(null)}
+            onCambio={() => cargarLista({ sync: false })}
+          />
+        ) : (
+          <section className="lc-hilo lc-hilo-vacio">
+            <div className="lc-bienvenida">
+              <div className="lc-bienvenida-ico"><MessageCircle size={30} /></div>
+              <h4>Elige una conversación</h4>
+              <p>{esp.conIa
+                ? "Aquí ves en vivo lo que el bot habla con cada cliente. Cuando quieras atender tú, toma el chat: el bot queda en pausa."
+                : "Chats de la línea de asesores, repartidos de forma equitativa."}</p>
+              <ul>
+                <li><span className="lc-etapa e-confirmado">✅ Confirmado</span> ya hizo el pedido</li>
+                <li><span className="lc-etapa e-datos">📝 Datos</span> está dando sus datos</li>
+                <li><span className="lc-etapa e-interesado">👀 Interesado</span> vio un producto</li>
+                <li><em className="t-ambar">🙋 Pide asesor</em> quiere hablar con una persona</li>
+              </ul>
+            </div>
+          </section>
+        )}
+      </div>
 
       {ajustes ? <Ajustes asesores={asesores} respuestas={respuestas} setRespuestas={setRespuestas} onCerrar={() => setAjustes(false)} /> : null}
     </div>
   );
 }
 
-/* ------------------------------------------------------------------ */
+/* ================================================================== */
 
 function Hilo(props: {
   conv: Conv; esp: EspacioUI; rol: "admin" | "asesor"; yo: { asesorId: string | null; nombre: string };
@@ -232,27 +318,25 @@ function Hilo(props: {
   const [modoNota, setModoNota] = useState(false);
   const [ocupado, setOcupado] = useState(false);
   const [aviso, setAviso] = useState<{ tipo: "ok" | "err"; t: string } | null>(null);
-  const [panel, setPanel] = useState<"" | "producto" | "imagen" | "plantilla">("");
+  const [panel, setPanel] = useState<"" | "producto" | "imagen" | "plantilla" | "respuestas">("");
   const [verFicha, setVerFicha] = useState(false);
   const finRef = useRef<HTMLDivElement>(null);
+  const areaRef = useRef<HTMLTextAreaElement>(null);
   const ultimoId = useRef("");
 
   const cargar = useCallback(async (sync = true) => {
     try {
       const r = await fetch(`/api/livechat/hilo?id=${conv.id}${sync ? "" : "&sync=0"}`, { cache: "no-store" });
       const j = await r.json();
-      if (j.ok) {
-        setMensajes(j.mensajes); setConv(j.conversacion); setCliente(j.cliente); setPedidos(j.pedidos || []);
-      } else setAviso({ tipo: "err", t: j.error });
+      if (j.ok) { setMensajes(j.mensajes); setConv(j.conversacion); setCliente(j.cliente); setPedidos(j.pedidos || []); }
+      else setAviso({ tipo: "err", t: j.error });
     } catch { /* reintenta en el siguiente ciclo */ }
     setCargando(false);
   }, [conv.id]);
 
   useEffect(() => {
     cargar(false).then(() => cargar());
-    marcarLeido(conv.id).then(() => onCambio());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conv.id]);
+  }, [cargar]);
   useEffect(() => {
     if (!visible) return;
     const t = setInterval(() => cargar(), esp.conIa ? 4000 : 10000);
@@ -260,10 +344,7 @@ function Hilo(props: {
   }, [visible, cargar, esp.conIa]);
   useEffect(() => {
     const u = mensajes[mensajes.length - 1]?.id || "";
-    if (u !== ultimoId.current) {
-      ultimoId.current = u;
-      finRef.current?.scrollIntoView({ block: "end" });
-    }
+    if (u !== ultimoId.current) { ultimoId.current = u; finRef.current?.scrollIntoView({ block: "end" }); }
   }, [mensajes]);
   useEffect(() => {
     if (!aviso) return;
@@ -282,53 +363,74 @@ function Hilo(props: {
 
   const abierta = ventana(conv);
   const esTomado = tomado(conv);
+  const etapa = etapaConv(conv);
+  const confirmado = esConfirmado(etapa);
+  const pideAsesor = pidioAsesor(conv.etiquetas);
   const sugerencias = texto.startsWith("/") && !texto.includes(" ")
     ? respuestas.filter((r) => r.atajo.startsWith(texto.slice(1).toLowerCase())).slice(0, 6) : [];
+  const usar = (t: string) => { setTexto(rellenar(t, { nombre: conv.nombre, asesor: yo.nombre })); setPanel(""); areaRef.current?.focus(); };
 
   async function enviar() {
     const t = texto.trim();
     if (!t || ocupado) return;
-    const ok = modoNota ? await correr(() => notaInterna(conv.id, t)) : await correr(() => enviarMensaje(conv.id, t));
+    const ok = modoNota ? await correr(() => notaInterna(conv.id, t), "Nota guardada") : await correr(() => enviarMensaje(conv.id, t));
     if (ok) setTexto("");
   }
 
-  // Agrupa por día para los separadores.
   const bloques: { dia: string; items: Msg[] }[] = [];
   for (const m of mensajes) {
     const d = dia(m.providerTs);
     if (!bloques.length || bloques[bloques.length - 1].dia !== d) bloques.push({ dia: d, items: [] });
     bloques[bloques.length - 1].items.push(m);
   }
+  const ultimoPedido = pedidos.find((p) => p.estado !== "cancelado");
 
   return (
     <>
       <section className="lc-hilo">
         <header className="lc-hilo-top">
           <button className="lc-ico lc-solo-movil" onClick={onVolver} title="Volver"><ArrowLeft size={18} /></button>
-          <span className={`lc-av ${esTomado ? "humano" : ""}`}>{iniciales(conv.nombre || conv.telefono)}</span>
-          <div className="lc-hilo-quien" onClick={() => setVerFicha((v) => !v)}>
-            <b>{conv.nombre || "Cliente"}</b>
-            <small>{telLegible(conv.telefono)} · {conv.canal}{esp.conIa ? (esTomado ? ` · 🧑‍💼 tomado${conv.botPausadoHasta ? ` hasta ${hora(conv.botPausadoHasta)}` : ""}` : " · 🤖 bot activo") : ""}</small>
+          <span className={`lc-av grande e-${etapa} ${esTomado ? "humano" : ""}`}>{iniciales(conv.nombre)}</span>
+          <div className="lc-hilo-quien">
+            <div className="lc-hilo-nombre"><b title={conv.nombre}>{conv.nombre || "Cliente"}</b><EtapaBadge c={conv} /></div>
+            <small>
+              {telLegible(conv.telefono)}
+              {esp.conIa ? (esTomado
+                ? <span className="lc-estado humano">🧑‍💼 Atiende el equipo{conv.botPausadoHasta ? ` · bot vuelve ${hora(conv.botPausadoHasta)}` : ""}</span>
+                : <span className="lc-estado bot">🤖 Responde el bot</span>) : null}
+              {!abierta ? <span className="lc-estado cerr">24 h cerrada</span> : null}
+            </small>
           </div>
           <div className="lc-hilo-acc">
-            {rol === "admin" ? (
-              <select value={conv.asesorId || ""} disabled={ocupado} onChange={(e) => correr(() => asignarAsesor(conv.id, e.target.value || null), "Asignado")}>
-                <option value="">Sin asesor</option>
-                {asesores.filter((a) => a.activo).map((a) => <option key={a.id} value={a.id}>{a.nombre}</option>)}
-              </select>
-            ) : null}
             {esp.conIa ? (
               esTomado
-                ? <button className="lc-btn soft" disabled={ocupado} onClick={() => correr(() => devolverAlBot(conv.id), "El bot vuelve a responder")}><Bot size={15} /> Devolver al bot</button>
-                : <button className="lc-btn" disabled={ocupado} onClick={() => correr(() => tomarChat(conv.id), "Chat tomado: el bot queda en pausa")}><UserRound size={15} /> Tomar chat</button>
+                ? <button className="lc-btn soft" disabled={ocupado} onClick={() => correr(() => devolverAlBot(conv.id), "El bot vuelve a responder")}><Bot size={15} /> <span>Devolver al bot</span></button>
+                : <button className="lc-btn" disabled={ocupado} onClick={() => correr(() => tomarChat(conv.id), "Chat tomado: el bot queda en pausa")}><UserRound size={15} /> <span>Tomar chat</span></button>
             ) : null}
             <button className="lc-ico" title="Traer de UChat ahora" disabled={ocupado} onClick={() => correr(() => refrescarHilo(conv.id))}><RefreshCw size={15} /></button>
-            <button className="lc-ico" title="Ficha del cliente" onClick={() => setVerFicha((v) => !v)}><FileText size={15} /></button>
+            <button className={`lc-ico lc-solo-estrecho ${verFicha ? "on-azul" : ""}`} title="Ficha del cliente" onClick={() => setVerFicha((v) => !v)}><Info size={15} /></button>
           </div>
         </header>
 
+        {confirmado && ultimoPedido ? (
+          <a className="lc-banda ok" href={`/pedidos/${ultimoPedido.id}`}>
+            <span>{ETAPA_ICO[etapa]} <b>{ETAPAS[etapa].label}</b> · {ultimoPedido.ref} · {cop(ultimoPedido.totalCop)}
+              {ultimoPedido.items.length ? <> · {ultimoPedido.items.join(", ")}</> : null}
+              {conv.pedidosNum > 1 ? <> · {conv.pedidosNum} pedidos</> : null}</span>
+            <em>Ver pedido <ExternalLink size={13} /></em>
+          </a>
+        ) : confirmado ? (
+          <div className="lc-banda ok"><span>✅ <b>El bot marcó este chat como «Pedido creado»</b> · no se encontró el pedido por teléfono; búscalo en Pedidos.</span></div>
+        ) : pideAsesor && !esTomado && esp.conIa ? (
+          <div className="lc-banda ambar">
+            <span>🙋 <b>Este cliente pidió hablar con un asesor.</b></span>
+            <button className="lc-btn" disabled={ocupado} onClick={() => correr(() => tomarChat(conv.id), "Chat tomado")}>Atender ahora</button>
+          </div>
+        ) : null}
+
         <div className="lc-msgs">
           {cargando && !mensajes.length ? <div className="lc-vacio">Cargando conversación…</div> : null}
+          {!cargando && !mensajes.length ? <div className="lc-vacio">Todavía no hay mensajes guardados de este chat. Pulsa ↻ para traerlos de UChat.</div> : null}
           {bloques.map((b) => (
             <div key={b.dia}>
               <div className="lc-dia"><span>{b.dia}</span></div>
@@ -338,55 +440,65 @@ function Hilo(props: {
           <div ref={finRef} />
         </div>
 
-        {aviso ? <div className={`lc-aviso ${aviso.tipo}`}>{aviso.t}</div> : null}
+        {aviso ? <div className={`lc-aviso ${aviso.tipo}`}>{aviso.tipo === "ok" ? <Check size={14} /> : "⚠️"} {aviso.t}</div> : null}
 
         {panel === "producto" ? <PanelProducto productos={productos} onCerrar={() => setPanel("")} onElegir={async (p) => { if (await correr(() => enviarProducto(conv.id, p.id), `${p.nombre} enviado`)) setPanel(""); }} /> : null}
         {panel === "imagen" ? <PanelImagen onCerrar={() => setPanel("")} onEnviar={async (u, pie) => { if (await correr(() => enviarImagen(conv.id, u, pie), "Imagen enviada")) setPanel(""); }} /> : null}
         {panel === "plantilla" ? <PanelPlantilla convId={conv.id} nombre={conv.nombre} onCerrar={() => setPanel("")} onEnviar={async (n, v) => { if (await correr(() => enviarPlantilla(conv.id, n, v), "Plantilla enviada")) setPanel(""); }} /> : null}
+        {panel === "respuestas" ? (
+          <div className="lc-panel">
+            <div className="lc-panel-top"><b>Respuestas rápidas</b><button className="lc-ico" onClick={() => setPanel("")}><X size={15} /></button></div>
+            <div className="lc-plantillas">
+              {respuestas.map((r) => <button key={r.id} onClick={() => usar(r.texto)}><b>/{r.atajo}</b><span>{rellenar(r.texto, { nombre: conv.nombre, asesor: yo.nombre })}</span></button>)}
+              {!respuestas.length ? <p className="lc-mut">Aún no hay respuestas rápidas. Créalas en ⚙️ Ajustes.</p> : null}
+            </div>
+          </div>
+        ) : null}
 
         <footer className={`lc-comp ${modoNota ? "nota" : ""}`}>
           {!abierta && !modoNota ? (
             <div className="lc-cerrada">
               <span>⏰ Pasaron más de 24 h desde el último mensaje del cliente. WhatsApp solo deja enviar <b>plantillas aprobadas</b>.</span>
-              <button className="lc-btn" onClick={() => setPanel("plantilla")}><FileText size={15} /> Enviar plantilla</button>
-              <button className="lc-btn soft" onClick={() => setModoNota(true)}><StickyNote size={15} /> Nota interna</button>
+              <div>
+                <button className="lc-btn" onClick={() => setPanel("plantilla")}><FileText size={15} /> Enviar plantilla</button>
+                <button className="lc-btn soft" onClick={() => setModoNota(true)}><StickyNote size={15} /> Nota interna</button>
+              </div>
             </div>
           ) : (
             <>
+              <div className="lc-herr">
+                <button className={`lc-herr-b ${modoNota ? "on" : ""}`} onClick={() => setModoNota((v) => !v)} title="El cliente no la ve"><StickyNote size={14} /> Nota</button>
+                {!modoNota ? <>
+                  <button className={`lc-herr-b ${panel === "respuestas" ? "on-azul" : ""}`} onClick={() => setPanel(panel === "respuestas" ? "" : "respuestas")}><Zap size={14} /> Respuestas</button>
+                  <button className={`lc-herr-b ${panel === "producto" ? "on-azul" : ""}`} onClick={() => setPanel(panel === "producto" ? "" : "producto")}><Package size={14} /> Producto</button>
+                  <button className={`lc-herr-b ${panel === "imagen" ? "on-azul" : ""}`} onClick={() => setPanel(panel === "imagen" ? "" : "imagen")}><ImageIcon size={14} /> Imagen</button>
+                  <button className={`lc-herr-b ${panel === "plantilla" ? "on-azul" : ""}`} onClick={() => setPanel(panel === "plantilla" ? "" : "plantilla")}><FileText size={14} /> Plantilla</button>
+                </> : null}
+                {esp.conIa && !esTomado && !modoNota ? <span className="lc-nota-bot">Al enviar, el bot queda en pausa 12 h</span> : null}
+                {modoNota ? <span className="lc-nota-bot">Modo nota interna: solo la ve el equipo</span> : null}
+              </div>
               {sugerencias.length ? (
                 <div className="lc-sug">
-                  {sugerencias.map((r) => (
-                    <button key={r.id} onClick={() => setTexto(rellenar(r.texto, { nombre: conv.nombre, asesor: yo.nombre }))}>
-                      <b>/{r.atajo}</b> <span>{r.texto}</span>
-                    </button>
-                  ))}
+                  {sugerencias.map((r) => <button key={r.id} onClick={() => usar(r.texto)}><b>/{r.atajo}</b> <span>{r.texto}</span></button>)}
                 </div>
               ) : null}
-              {esp.conIa && !esTomado && !modoNota ? <div className="lc-nota-bot">Al enviar, el chat queda <b>tomado</b> y el bot en pausa 12 h. Para devolvérselo usa «Devolver al bot».</div> : null}
               <div className="lc-comp-fila">
-                <div className="lc-herr">
-                  <button className={`lc-ico ${modoNota ? "on" : ""}`} title="Nota interna (el cliente no la ve)" onClick={() => setModoNota((v) => !v)}><StickyNote size={16} /></button>
-                  {!modoNota ? <>
-                    <button className="lc-ico" title="Enviar producto" onClick={() => setPanel(panel === "producto" ? "" : "producto")}><Package size={16} /></button>
-                    <button className="lc-ico" title="Enviar imagen" onClick={() => setPanel(panel === "imagen" ? "" : "imagen")}><ImageIcon size={16} /></button>
-                    <button className="lc-ico" title="Plantilla de WhatsApp" onClick={() => setPanel(panel === "plantilla" ? "" : "plantilla")}><FileText size={16} /></button>
-                  </> : null}
-                </div>
                 <textarea
+                  ref={areaRef}
                   value={texto}
                   rows={1}
-                  placeholder={modoNota ? "Nota interna para el equipo…" : "Escribe un mensaje · «/» respuestas rápidas"}
+                  placeholder={modoNota ? "Escribe una nota para el equipo…" : "Escribe un mensaje…  (/ para respuestas rápidas)"}
                   onChange={(e) => setTexto(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
-                      if (sugerencias.length && texto.startsWith("/")) setTexto(rellenar(sugerencias[0].texto, { nombre: conv.nombre, asesor: yo.nombre }));
+                      if (sugerencias.length && texto.startsWith("/")) usar(sugerencias[0].texto);
                       else enviar();
                     }
                   }}
                 />
-                <button className="lc-enviar" disabled={ocupado || !texto.trim()} onClick={enviar} title={modoNota ? "Guardar nota" : "Enviar"}>
-                  {modoNota ? <StickyNote size={17} /> : <Send size={17} />}
+                <button className={`lc-enviar ${modoNota ? "nota" : ""}`} disabled={ocupado || !texto.trim()} onClick={enviar} title={modoNota ? "Guardar nota" : "Enviar (Enter)"}>
+                  {modoNota ? <StickyNote size={18} /> : <Send size={18} />}
                 </button>
               </div>
             </>
@@ -394,45 +506,110 @@ function Hilo(props: {
         </footer>
       </section>
 
-      <aside className={`lc-ficha ${verFicha ? "abierta" : ""}`}>
-        <div className="lc-ficha-top"><b>Ficha</b><button className="lc-ico lc-solo-movil" onClick={() => setVerFicha(false)}><X size={16} /></button></div>
-        <dl>
-          <dt>Cliente</dt><dd>{conv.nombre || "—"}</dd>
-          <dt>WhatsApp</dt><dd>{conv.telefono ? <a href={`https://wa.me/${conv.telefono}`} target="_blank" rel="noreferrer">{telLegible(conv.telefono)}</a> : "—"}</dd>
-          <dt>Ventana 24 h</dt><dd>{abierta ? <span className="t-ok">Abierta</span> : <span className="t-cerr">Cerrada</span>}</dd>
-          {esp.conIa ? <><dt>Quién responde</dt><dd>{esTomado ? "Humano (bot en pausa)" : "Bot IA"}</dd></> : null}
-          <dt>Asesor</dt><dd>{asesores.find((a) => a.id === conv.asesorId)?.nombre || "Sin asignar"}</dd>
-        </dl>
-        <h5>CRM</h5>
-        {cliente ? (
-          <dl>
-            <dt>Ciudad</dt><dd>{[cliente.ciudad, cliente.departamento].filter(Boolean).join(", ") || "—"}</dd>
-            <dt>Estado</dt><dd>{cliente.estado || "—"}</dd>
-            <dt>Compras</dt><dd>{cliente.numPedidos || 0} · {cop(cliente.totalGastado)}</dd>
-            {Array.isArray(cliente.tags) && cliente.tags.length ? <><dt>Etiquetas</dt><dd>{(cliente.tags as string[]).join(", ")}</dd></> : null}
-            {cliente.notas ? <><dt>Notas</dt><dd>{cliente.notas}</dd></> : null}
-          </dl>
-        ) : <p className="lc-mut">Todavía no está en el CRM (se crea cuando el bot registra al cliente o hace un pedido).</p>}
-        <h5>Pedidos</h5>
-        {pedidos.length ? (
-          <ul className="lc-pedidos">
-            {pedidos.map((p) => (
-              <li key={p.ref}>
-                <a href={`/pedidos?q=${encodeURIComponent(p.ref)}`}><b>{p.ref}</b></a> · {cop(p.totalCop)}
-                <small>{p.estado}{p.guia ? ` · ${p.transportadora || "guía"} ${p.guia}` : ""}{p.createdAt ? ` · ${new Date(p.createdAt).toLocaleDateString("es-CO")}` : ""}</small>
-              </li>
-            ))}
-          </ul>
-        ) : <p className="lc-mut">Sin pedidos.</p>}
-        <p className="lc-mut lc-ns">UChat: {conv.userNs}</p>
-      </aside>
+      <Ficha conv={conv} esp={esp} rol={rol} asesores={asesores} cliente={cliente} pedidos={pedidos} abierta={verFicha}
+        ocupado={ocupado} onCerrar={() => setVerFicha(false)}
+        onAsignar={(id) => correr(() => asignarAsesor(conv.id, id), "Asignado")} />
     </>
   );
 }
 
+/* ================================================================== */
+
+function Ficha({ conv, esp, rol, asesores, cliente, pedidos, abierta, ocupado, onCerrar, onAsignar }: {
+  conv: Conv; esp: EspacioUI; rol: "admin" | "asesor"; asesores: Asesor[]; cliente: Cliente; pedidos: Pedido[];
+  abierta: boolean; ocupado: boolean; onCerrar: () => void; onAsignar: (id: string | null) => void;
+}) {
+  const [copiado, setCopiado] = useState(false);
+  const etapa = etapaConv(conv);
+  const paso = PASOS.indexOf(etapa);
+  const tags = Array.isArray(cliente?.tags) ? (cliente!.tags as string[]) : [];
+  return (
+    <aside className={`lc-ficha ${abierta ? "abierta" : ""}`}>
+      <button className="lc-ico lc-ficha-x lc-solo-estrecho" onClick={onCerrar}><X size={16} /></button>
+      <div className="lc-ficha-cab">
+        <span className={`lc-av xl e-${etapa}`}>{iniciales(conv.nombre)}</span>
+        <b>{conv.nombre || "Cliente"}</b>
+        {conv.telefono ? (
+          <div className="lc-ficha-tel">
+            <span>{telLegible(conv.telefono)}</span>
+            <button className="lc-ico mini" title="Copiar número" onClick={() => { navigator.clipboard?.writeText(conv.telefono); setCopiado(true); setTimeout(() => setCopiado(false), 1500); }}>
+              {copiado ? <Check size={13} /> : <Copy size={13} />}
+            </button>
+            <a className="lc-ico mini" title="Abrir en WhatsApp" href={`https://wa.me/${conv.telefono}`} target="_blank" rel="noreferrer"><ExternalLink size={13} /></a>
+          </div>
+        ) : null}
+        <EtapaBadge c={conv} />
+      </div>
+
+      <section className="lc-card">
+        <h5>Etapa de venta</h5>
+        <ol className="lc-pasos">
+          {PASOS.map((p, i) => (
+            <li key={p} className={`${i <= paso ? "hecho" : ""} ${i === paso ? "actual" : ""}`} title={ETAPAS[p].label}>
+              <span />{ETAPAS[p].corto}
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section className="lc-card">
+        <h5>Pedidos {pedidos.length ? <i>{pedidos.length}</i> : null}</h5>
+        {pedidos.length ? pedidos.map((p) => {
+          const est = ESTADO_PEDIDO[p.estado || ""] || { label: p.estado || "—", tono: "gris" };
+          return (
+            <a key={p.id} className="lc-pedido" href={`/pedidos/${p.id}`}>
+              <div className="lc-pedido-fila"><b>{p.ref}</b><span className={`lc-pill t-${est.tono}`}>{est.label}</span></div>
+              {p.items.length ? <div className="lc-pedido-items">{p.items.join(" · ")}</div> : null}
+              <div className="lc-pedido-fila lc-mut">
+                <span>{fecha(p.createdAt)}{p.ciudad ? ` · ${p.ciudad}` : ""}</span><b className="lc-total">{cop(p.totalCop)}</b>
+              </div>
+              {p.guia ? <div className="lc-mut">🚚 {p.transportadora || "Guía"} {p.guia}</div> : null}
+            </a>
+          );
+        }) : <p className="lc-mut">Sin pedidos con este cliente o teléfono.</p>}
+      </section>
+
+      <section className="lc-card">
+        <h5>Conversación</h5>
+        <dl>
+          <dt>Ventana 24 h</dt><dd>{ventana(conv) ? <span className="lc-pill t-verde">Abierta</span> : <span className="lc-pill t-rojo">Cerrada</span>}</dd>
+          {esp.conIa ? <><dt>Responde</dt><dd>{tomado(conv) ? "Equipo (bot en pausa)" : "Bot IA"}</dd></> : null}
+          <dt>Asesor</dt>
+          <dd>
+            {rol === "admin" ? (
+              <select value={conv.asesorId || ""} disabled={ocupado} onChange={(e) => onAsignar(e.target.value || null)}>
+                <option value="">Sin asignar</option>
+                {asesores.filter((a) => a.activo).map((a) => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+              </select>
+            ) : asesores.find((a) => a.id === conv.asesorId)?.nombre || "Sin asignar"}
+          </dd>
+          <dt>Canal</dt><dd>{conv.canal}</dd>
+        </dl>
+        {conv.etiquetas.length ? <div className="lc-tags">{conv.etiquetas.map((t) => <span key={t}>{t}</span>)}</div> : null}
+      </section>
+
+      <section className="lc-card">
+        <h5>Cliente (CRM)</h5>
+        {cliente ? (
+          <dl>
+            <dt>Ciudad</dt><dd>{[cliente.ciudad, cliente.departamento].filter(Boolean).join(", ") || "—"}</dd>
+            {cliente.direccion ? <><dt>Dirección</dt><dd>{cliente.direccion}</dd></> : null}
+            <dt>Estado</dt><dd>{cliente.estado || "—"}</dd>
+            <dt>Compras</dt><dd>{cliente.numPedidos || 0} · {cop(cliente.totalGastado)}</dd>
+            {cliente.ultimoProductoVisto ? <><dt>Vio</dt><dd>{cliente.ultimoProductoVisto}</dd></> : null}
+            {cliente.notas ? <><dt>Notas</dt><dd>{cliente.notas}</dd></> : null}
+          </dl>
+        ) : <p className="lc-mut">Aún no está en el CRM: se crea cuando el bot lo registra o hace un pedido.</p>}
+        {tags.length ? <div className="lc-tags">{tags.map((t) => <span key={t}>{t}</span>)}</div> : null}
+      </section>
+      <p className="lc-mut lc-ns">UChat · {conv.userNs}</p>
+    </aside>
+  );
+}
+
 function Burbuja({ m }: { m: Msg }) {
-  if (m.emisor === "sistema") return <div className="lc-evento">{m.texto} · {hora(m.providerTs)}</div>;
-  if (m.emisor === "nota") return <div className="lc-notai"><b>📝 Nota de {m.autor || "equipo"}</b><p>{m.texto}</p><small>{hora(m.providerTs)}</small></div>;
+  if (m.emisor === "sistema") return <div className="lc-evento"><span>{m.texto} · {hora(m.providerTs)}</span></div>;
+  if (m.emisor === "nota") return <div className="lc-notai"><b>📝 Nota interna · {m.autor || "equipo"}</b><p>{m.texto}</p><small>{hora(m.providerTs)}</small></div>;
   const lado = m.emisor === "cliente" ? "izq" : "der";
   const pendiente = m.providerMsgId.startsWith("panel:");
   const quien = m.emisor === "ia" ? "🤖 Bot IA" : m.emisor === "cliente" ? "" : `🧑‍💼 ${m.autor || "Asesor"}`;
@@ -443,8 +620,8 @@ function Burbuja({ m }: { m: Msg }) {
       {m.tipo === "video" && m.mediaUrl ? <video src={m.mediaUrl} controls preload="none" /> : null}
       {m.tipo === "audio" && m.mediaUrl ? <audio src={m.mediaUrl} controls preload="none" /> : null}
       {m.tipo === "file" && m.mediaUrl ? <a className="lc-archivo" href={m.mediaUrl} target="_blank" rel="noreferrer">📎 Abrir archivo</a> : null}
-      {m.texto ? <p className={m.tipo === "audio" ? "lc-transc" : ""}>{m.tipo === "audio" ? `«${m.texto}»` : m.texto}</p> : null}
-      <small>{hora(m.providerTs)}{pendiente ? " · enviando…" : m.direccion === "out" ? " ✓" : ""}</small>
+      {m.texto ? <p className={m.tipo === "audio" ? "lc-transc" : ""}>{m.tipo === "audio" ? <><small className="lc-transc-et">Transcripción</small>«{m.texto}»</> : m.texto}</p> : null}
+      <small className="lc-b-hora">{hora(m.providerTs)}{pendiente ? " · enviando…" : m.direccion === "out" ? " ✓✓" : ""}</small>
     </div>
   );
 }
@@ -452,13 +629,14 @@ function Burbuja({ m }: { m: Msg }) {
 function PanelProducto({ productos, onElegir, onCerrar }: { productos: Producto[]; onElegir: (p: Producto) => void; onCerrar: () => void }) {
   const [q, setQ] = useState("");
   const t = q.trim().toLowerCase();
-  const lista = productos.filter((p) => !t || p.nombre.toLowerCase().includes(t)).slice(0, 40);
+  const lista = productos.filter((p) => !t || p.nombre.toLowerCase().includes(t)).slice(0, 60);
   return (
     <div className="lc-panel">
-      <div className="lc-panel-top"><b>Enviar producto</b><input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar…" /><button className="lc-ico" onClick={onCerrar}><X size={15} /></button></div>
+      <div className="lc-panel-top"><b>Enviar producto</b><input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar producto…" /><button className="lc-ico" onClick={onCerrar}><X size={15} /></button></div>
+      <p className="lc-mut lc-panel-nota">Se envía la foto y la ficha con precio y forma de pago.</p>
       <div className="lc-prods">
         {lista.map((p) => (
-          <button key={p.id} onClick={() => onElegir(p)} title="Envía la foto + la ficha con precio y forma de pago">
+          <button key={p.id} onClick={() => onElegir(p)}>
             {p.imagen ? <img src={p.imagen} alt="" loading="lazy" /> : <span className="lc-noimg">📦</span>}
             <span>{p.nombre}</span><small>{cop(p.precio)}</small>
           </button>
@@ -477,8 +655,9 @@ function PanelImagen({ onEnviar, onCerrar }: { onEnviar: (url: string, pie: stri
       <div className="lc-panel-top"><b>Enviar imagen</b><button className="lc-ico" onClick={onCerrar}><X size={15} /></button></div>
       <div className="lc-form">
         <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://… (enlace público de la imagen)" />
+        {/^https:\/\/\S+\.(png|jpe?g|webp|gif)(\?.*)?$/i.test(url) ? <img className="lc-prev-img" src={url} alt="" /> : null}
         <input value={pie} onChange={(e) => setPie(e.target.value)} placeholder="Texto que va después (opcional)" />
-        <button className="lc-btn" disabled={!/^https:\/\//.test(url)} onClick={() => onEnviar(url, pie)}><Send size={14} /> Enviar</button>
+        <button className="lc-btn" disabled={!/^https:\/\//.test(url)} onClick={() => onEnviar(url, pie)}><Send size={14} /> Enviar imagen</button>
       </div>
     </div>
   );
@@ -501,8 +680,8 @@ function PanelPlantilla({ convId, nombre, onEnviar, onCerrar }: { convId: string
   return (
     <div className="lc-panel">
       <div className="lc-panel-top"><b>Plantillas de WhatsApp</b><button className="lc-ico" onClick={onCerrar}><X size={15} /></button></div>
-      {err ? <p className="lc-error">{err}</p> : null}
-      {!lista && !err ? <p className="lc-mut">Cargando plantillas de UChat…</p> : null}
+      {err ? <p className="lc-error" style={{ margin: 12 }}>{err}</p> : null}
+      {!lista && !err ? <p className="lc-mut lc-panel-nota">Cargando plantillas de UChat…</p> : null}
       {lista && !elegida ? (
         <div className="lc-plantillas">
           {lista.map((p) => (
@@ -519,7 +698,7 @@ function PanelPlantilla({ convId, nombre, onEnviar, onCerrar }: { convId: string
           {vals.map((v, i) => (
             <input key={i} value={v} placeholder={`Variable {{${i + 1}}}`} onChange={(e) => setVals(vals.map((x, j) => (j === i ? e.target.value : x)))} />
           ))}
-          <div style={{ display: "flex", gap: 8 }}>
+          <div className="lc-fila-btns">
             <button className="lc-btn soft" onClick={() => setElegida(null)}>Atrás</button>
             <button className="lc-btn" disabled={vals.some((v) => !v.trim())} onClick={() => onEnviar(elegida.nombre, vals)}><Send size={14} /> Enviar plantilla</button>
           </div>
@@ -547,7 +726,7 @@ function Ajustes({ asesores, respuestas, setRespuestas, onCerrar }: {
     <div className="lc-modal-ov" onClick={onCerrar}>
       <div className="lc-modal" onClick={(e) => e.stopPropagation()}>
         <div className="lc-panel-top"><b>Ajustes del Live Chat</b><button className="lc-ico" onClick={onCerrar}><X size={16} /></button></div>
-        {msg ? <div className="lc-aviso ok" style={{ position: "static" }}>{msg}</div> : null}
+        {msg ? <div className="lc-aviso ok estatico"><Check size={14} /> {msg}</div> : null}
         <h5>Asesores</h5>
         <p className="lc-mut">El correo es con el que el asesor entra al panel: verá solo sus chats de la línea de asesores. «Recibe chats» lo incluye en el reparto equitativo.</p>
         <div className="lc-ases">
@@ -562,7 +741,7 @@ function Ajustes({ asesores, respuestas, setRespuestas, onCerrar }: {
           {!asesores.length ? <p className="lc-mut">Crea asesores en la sección Asesores.</p> : null}
         </div>
         <h5>Respuestas rápidas</h5>
-        <p className="lc-mut">Se usan escribiendo «/atajo» en el chat. Puedes usar {"{nombre}"} y {"{asesor}"}.</p>
+        <p className="lc-mut">Se usan escribiendo «/atajo» en el chat o con el botón Respuestas. Puedes usar {"{nombre}"} y {"{asesor}"}.</p>
         <div className="lc-rr">
           {respuestas.map((r) => (
             <div key={r.id} className="lc-rr-fila">

@@ -67,16 +67,48 @@ function filtroAcceso(ctx: Contexto): SQL {
   return and(base, eq(conv.asesorId, ctx.asesorId), inArray(conv.espacio, espacios))!;
 }
 
-export type FiltroBandeja = "todos" | "sin_leer" | "humano" | "mios" | "sin_asignar";
+export type FiltroBandeja = "todos" | "sin_leer" | "confirmados" | "asesor" | "humano" | "mios" | "sin_asignar";
+export const FILTROS: FiltroBandeja[] = ["todos", "sin_leer", "confirmados", "asesor", "humano", "mios", "sin_asignar"];
 
-export async function leerBandeja(ctx: Contexto, espacio: string, filtro: FiltroBandeja = "todos", q = "", limite = 80) {
+// «Confirmado» = pedido real no cancelado o etiqueta «Pedido creado» del bot (ver etapaDe en puro.ts).
+const SQL_CONFIRMADO = sql`(${conv.pedidoRef} <> '' or ${conv.etiquetas}::text ilike '%pedido creado%')`;
+const SQL_ASESOR = sql`(${conv.etiquetas}::text ilike '%asesor humano%')`;
+const SQL_HUMANO = sql`(${conv.owner} = 'humano' and coalesce(${conv.botPausadoHasta}, now()) >= now())`;
+
+function condFiltro(ctx: Contexto, filtro: FiltroBandeja): SQL | null {
+  switch (filtro) {
+    case "sin_leer": return sql`${conv.sinLeer} > 0`;
+    case "confirmados": return SQL_CONFIRMADO;
+    case "asesor": return SQL_ASESOR;
+    case "humano": return SQL_HUMANO;
+    case "mios": return ctx.asesorId ? eq(conv.asesorId, ctx.asesorId) : sql`false`;
+    case "sin_asignar": return sql`${conv.asesorId} is null`;
+    default: return null;
+  }
+}
+
+/** Cuántos chats hay en cada filtro (para los chips de la bandeja). */
+export async function contadores(ctx: Contexto, espacio: string): Promise<Record<FiltroBandeja, number>> {
+  const vacio = Object.fromEntries(FILTROS.map((f) => [f, 0])) as Record<FiltroBandeja, number>;
+  if (!db || !espaciosVisibles(ctx).some((e) => e.codigo === espacio)) return vacio;
+  const [r] = await db.select({
+    todos: sql<number>`count(*)::int`,
+    sin_leer: sql<number>`count(*) filter (where ${conv.sinLeer} > 0)::int`,
+    confirmados: sql<number>`count(*) filter (where ${SQL_CONFIRMADO})::int`,
+    asesor: sql<number>`count(*) filter (where ${SQL_ASESOR})::int`,
+    humano: sql<number>`count(*) filter (where ${SQL_HUMANO})::int`,
+    mios: ctx.asesorId ? sql<number>`count(*) filter (where ${conv.asesorId} = ${ctx.asesorId})::int` : sql<number>`0`,
+    sin_asignar: sql<number>`count(*) filter (where ${conv.asesorId} is null)::int`,
+  }).from(conv).where(and(filtroAcceso(ctx), eq(conv.espacio, espacio)));
+  return { ...vacio, ...(r || {}) };
+}
+
+export async function leerBandeja(ctx: Contexto, espacio: string, filtro: FiltroBandeja = "todos", q = "", limite = 120) {
   if (!db) return [];
   if (!espaciosVisibles(ctx).some((e) => e.codigo === espacio)) return [];
   const conds: SQL[] = [filtroAcceso(ctx), eq(conv.espacio, espacio)];
-  if (filtro === "sin_leer") conds.push(sql`${conv.sinLeer} > 0`);
-  if (filtro === "humano") conds.push(sql`${conv.owner} = 'humano' and coalesce(${conv.botPausadoHasta}, now()) >= now()`);
-  if (filtro === "mios" && ctx.asesorId) conds.push(eq(conv.asesorId, ctx.asesorId));
-  if (filtro === "sin_asignar") conds.push(sql`${conv.asesorId} is null`);
+  const f = condFiltro(ctx, filtro);
+  if (f) conds.push(f);
   const t = q.trim();
   if (t) {
     const like = `%${t.replace(/[%_]/g, "")}%`;

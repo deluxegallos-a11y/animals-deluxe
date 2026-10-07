@@ -12,7 +12,7 @@ import { and, eq, inArray, like, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { livechatConversaciones as conv, livechatMensajes as msg } from "@/lib/db/schema";
 import {
-  clasificarMensaje, ecoDelPanel, elegirAsesor, fechaUchat, normalizarTelefono, vistaPrevia,
+  clasificarMensaje, ecoDelPanel, elegirAsesor, fechaUchat, nombresEtiquetas, normalizarTelefono, vistaPrevia,
   type Espacio, type PendientePanel,
 } from "./puro";
 import { clienteUchat, infoSuscriptor, listarSuscriptores, mensajesDe, ErrorLivechat } from "./uchat";
@@ -63,6 +63,7 @@ export async function sincronizarEspacio(
         canal: String(sub.channel || "whatsapp").replace("_cloud", ""),
         ultimoAt: fechaUchat(sub.last_message_at) ?? fechaUchat(sub.last_interaction),
         ventanaAbierta: typeof sub.allow_send_message === "boolean" ? sub.allow_send_message : null,
+        etiquetas: nombresEtiquetas(sub.tags),
       }))
       // Sin repetidos: ON CONFLICT DO UPDATE no puede tocar la misma fila dos veces.
       .filter((f, i, todas) => f.userNs.startsWith(e.flow_ns + "u") && todas.findIndex((x) => x.userNs === f.userNs) === i);
@@ -70,13 +71,14 @@ export async function sincronizarEspacio(
 
     // Solo se escriben los chats nuevos o que cambiaron (último mensaje o ventana): 1 lectura + 1 upsert en lote.
     const previas = new Map(
-      (await db.select({ userNs: conv.userNs, ultimoAt: conv.ultimoAt, ventana: conv.ventanaAbierta, sync: conv.mensajesSyncAt, id: conv.id })
+      (await db.select({ userNs: conv.userNs, ultimoAt: conv.ultimoAt, ventana: conv.ventanaAbierta, sync: conv.mensajesSyncAt, id: conv.id, etiquetas: conv.etiquetas })
         .from(conv).where(and(eq(conv.tenantId, tenantId), inArray(conv.userNs, filasSub.map((f) => f.userNs)))))
         .map((r) => [r.userNs, r]),
     );
     const cambiadas = filasSub.filter((f) => {
       const p = previas.get(f.userNs);
-      return !p || (f.ultimoAt && (!p.ultimoAt || f.ultimoAt > p.ultimoAt)) || f.ventanaAbierta !== p.ventana;
+      return !p || (f.ultimoAt && (!p.ultimoAt || f.ultimoAt > p.ultimoAt)) || f.ventanaAbierta !== p.ventana
+        || JSON.stringify(f.etiquetas) !== JSON.stringify(p.etiquetas ?? []);
     });
     const tocadas = cambiadas.length
       ? await db.insert(conv).values(cambiadas).onConflictDoUpdate({
@@ -86,11 +88,13 @@ export async function sincronizarEspacio(
             telefono: sql`case when excluded.telefono <> '' then excluded.telefono else ${conv.telefono} end`,
             canal: sql`excluded.canal`,
             ventanaAbierta: sql`excluded.ventana_abierta`,
+            etiquetas: sql`excluded.etiquetas`,
             ultimoAt: sql`greatest(${conv.ultimoAt}, excluded.ultimo_at)`,
             updatedAt: sql`now()`,
           },
         }).returning()
       : [];
+    if (cambiadas.length || opts.forzar) await enlazarClientesYPedidos(tenantId, e.codigo);
     // Pendientes de bajar mensajes: los que se movieron después de su última
     // sincronización (incluye el atraso de chats nunca bajados), más recientes primero.
     const estado = new Map<string, { id: string; ultimoAt: Date | null; sync: Date | null }>();
@@ -171,7 +175,7 @@ export async function sincronizarConversacion(tenantId: string, e: Espacio, c: C
 }
 
 /** Último mensaje, último del cliente, no leídos y enlace al cliente del CRM. */
-export async function actualizarResumen(conversacionId: string, nuevosDelCliente = 0) {
+export async function actualizarResumen(conversacionId: string, _nuevosDelCliente = 0) {
   if (!db) return;
   const [ult] = await db.select().from(msg)
     .where(and(eq(msg.conversacionId, conversacionId), sql`${msg.emisor} not in ('nota','sistema')`))
@@ -182,16 +186,16 @@ export async function actualizarResumen(conversacionId: string, nuevosDelCliente
   await db.update(conv).set({
     ...(ult ? { ultimoTexto: vistaPrevia(ult), ultimoEmisor: ult.emisor, ultimoAt: sql`greatest(${conv.ultimoAt}, ${new Date(ult.providerTs).toISOString()}::timestamptz)` } : {}),
     ultimoClienteAt: cli?.t ? new Date(cli.t) : null,
-    sinLeer: sql`${conv.sinLeer} + ${nuevosDelCliente}`,
+    // «Sin responder»: mensajes del cliente después de la última respuesta (bot o equipo).
+    // Se recalcula (no se acumula) para que bajar el historial no infle el contador.
+    sinLeer: sql`(select count(*)::int from livechat_mensajes m
+                   where m.conversacion_id = ${conversacionId} and m.emisor = 'cliente'
+                     and m.provider_ts > coalesce((select max(o.provider_ts) from livechat_mensajes o
+                                                    where o.conversacion_id = ${conversacionId} and o.direccion = 'out'), 'epoch'::timestamptz))`,
     updatedAt: new Date(),
   }).where(eq(conv.id, conversacionId));
-  // Enlace con el cliente del CRM (por sub_id de UChat o por teléfono).
-  await db.execute(sql`
-    update livechat_conversaciones lc set customer_id = cu.id
-      from customers cu
-     where lc.id = ${conversacionId} and lc.customer_id is null and cu.tenant_id = lc.tenant_id
-       and (cu.uchat_sub_id = lc.user_ns
-            or (lc.telefono <> '' and regexp_replace(coalesce(cu.telefono,''), '[^0-9]', '', 'g') in (lc.telefono, right(lc.telefono, 10))))`);
+  const [c] = await db.select({ t: conv.tenantId, e: conv.espacio }).from(conv).where(eq(conv.id, conversacionId)).limit(1);
+  if (c) await enlazarClientesYPedidos(c.t, c.e, conversacionId);
 }
 
 /** Reparto equitativo y fijo (solo líneas con reparto). Escribe solo si sigue sin asesor. */
@@ -258,4 +262,36 @@ export async function ingresarPorUserNs(tenantId: string, e: Espacio, userNs: st
   // Después del teléfono: el reparto usa el teléfono para la continuidad.
   await sincronizarConversacion(tenantId, e, fila, { forzar: true });
   return fila.id;
+}
+
+/** Enlaza cada chat con su cliente del CRM (sub_id de UChat o teléfono) y con su
+ *  último pedido NO cancelado (por cliente o por los últimos 10 dígitos del
+ *  teléfono). Una sola sentencia por espacio: de aquí sale la etiqueta
+ *  «Pedido confirmado» de la bandeja. */
+export async function enlazarClientesYPedidos(tenantId: string, espacio: string, soloConversacion?: string) {
+  if (!db) return;
+  const filtro = soloConversacion ? sql`and lc.id = ${soloConversacion}` : sql``;
+  await db.execute(sql`
+    update livechat_conversaciones lc set customer_id = cu.id
+      from customers cu
+     where lc.tenant_id = ${tenantId} and lc.espacio = ${espacio} ${filtro}
+       and lc.customer_id is null and cu.tenant_id = lc.tenant_id
+       and (cu.uchat_sub_id = lc.user_ns
+            or (lc.telefono <> '' and right(regexp_replace(coalesce(cu.telefono,''), '[^0-9]', '', 'g'), 10) = right(lc.telefono, 10)))`);
+  await db.execute(sql`
+    update livechat_conversaciones lc
+       set pedido_id = p.id, pedido_ref = p.ref, pedido_estado = coalesce(p.estado, ''),
+           pedido_total = coalesce(p.total_cop, 0), pedido_at = p.created_at, pedidos_num = p.n
+      from (
+        select distinct on (lc2.id) lc2.id conv_id, o.id, o.ref, o.estado, o.total_cop, o.created_at,
+               count(*) over (partition by lc2.id) n
+          from livechat_conversaciones lc2
+          join orders o on o.tenant_id = lc2.tenant_id and coalesce(o.estado, '') <> 'cancelado'
+           and ((lc2.customer_id is not null and o.customer_id = lc2.customer_id)
+                or (lc2.telefono <> '' and right(regexp_replace(coalesce(o.telefono, ''), '[^0-9]', '', 'g'), 10) = right(lc2.telefono, 10)))
+         where lc2.tenant_id = ${tenantId} and lc2.espacio = ${espacio} ${soloConversacion ? sql`and lc2.id = ${soloConversacion}` : sql``}
+         order by lc2.id, o.created_at desc
+      ) p
+     where lc.id = p.conv_id
+       and (lc.pedido_id is distinct from p.id or lc.pedido_estado is distinct from coalesce(p.estado, '') or lc.pedidos_num <> p.n)`);
 }

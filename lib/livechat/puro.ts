@@ -262,3 +262,48 @@ export function leerPlantillas(crudo: unknown): Plantilla[] {
   }
   return out;
 }
+
+/* ---------- etapa de venta (etiqueta de la bandeja) ---------- */
+
+export type Etapa = "despachado" | "aprobado" | "confirmado" | "datos" | "interesado" | "nuevo";
+export const ETAPAS: Record<Etapa, { label: string; corto: string }> = {
+  despachado: { label: "Pedido despachado", corto: "Despachado" },
+  aprobado: { label: "Pedido aprobado", corto: "Aprobado" },
+  confirmado: { label: "Pedido confirmado", corto: "Confirmado" },
+  datos: { label: "Dando datos del pedido", corto: "Datos" },
+  interesado: { label: "Vio producto", corto: "Interesado" },
+  nuevo: { label: "Nuevo", corto: "Nuevo" },
+};
+
+/** Nombres de las etiquetas de UChat de un suscriptor (vienen como {name, tag_ns}). */
+export function nombresEtiquetas(tags: unknown): string[] {
+  if (!Array.isArray(tags)) return [];
+  const out = tags
+    .map((t) => (t && typeof t === "object" ? s((t as { name?: unknown }).name) : s(t)).trim())
+    .filter(Boolean);
+  return [...new Set(out)].slice(0, 30);
+}
+
+const tieneEtiqueta = (etiquetas: string[], frase: string) => etiquetas.some((e) => comparable(e).includes(frase));
+
+/** Pidió hablar con una persona (etiqueta «ASESOR HUMANO» del bot). */
+export function pidioAsesor(etiquetas: string[]): boolean {
+  return tieneEtiqueta(etiquetas, "asesor humano");
+}
+
+/** El pedido real de la plataforma manda; si no hay, las etiquetas del bot.
+ *  Estados de orders: remision | por_revisar | aprobado | guia | despachado | cancelado. */
+export function etapaDe(c: { pedidoEstado?: string | null; etiquetas?: string[] | null }): Etapa {
+  const e = (c.pedidoEstado || "").toLowerCase();
+  const tags = c.etiquetas || [];
+  if (e === "guia" || e === "despachado" || e === "entregado") return "despachado";
+  if (e === "aprobado") return "aprobado";
+  if (e === "remision" || e === "por_revisar" || tieneEtiqueta(tags, "pedido creado")) return "confirmado";
+  if (tieneEtiqueta(tags, "datos pedido")) return "datos";
+  if (tieneEtiqueta(tags, "vio producto")) return "interesado";
+  return "nuevo";
+}
+
+export function esConfirmado(etapa: Etapa): boolean {
+  return etapa === "confirmado" || etapa === "aprobado" || etapa === "despachado";
+}

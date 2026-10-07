@@ -147,3 +147,19 @@ test("plantillas: solo las aprobadas de texto se pueden mandar desde la bandeja"
   assert.match(ps[1].noCompatible || "", /imagen/);
   assert.match(ps[2].noCompatible || "", /aprobada/);
 });
+
+test("etapa de venta: el pedido real manda, luego las etiquetas del bot", async () => {
+  const { etapaDe, nombresEtiquetas, pidioAsesor, esConfirmado } = await import("@/lib/livechat/puro");
+  const tags = nombresEtiquetas([{ name: "2 Vio producto", tag_ns: "t1" }, { name: "ASESOR HUMANO", tag_ns: "t2" }, { name: "2 Vio producto" }]);
+  assert.deepEqual(tags, ["2 Vio producto", "ASESOR HUMANO"]);
+  assert.equal(pidioAsesor(tags), true);
+  assert.equal(etapaDe({ etiquetas: tags }), "interesado");
+  assert.equal(etapaDe({ etiquetas: ["4 Datos pedidos"] }), "datos");
+  assert.equal(etapaDe({ etiquetas: ["5 Pedido creado"] }), "confirmado"); // el bot lo marcó aunque no enlace pedido
+  assert.equal(etapaDe({ pedidoEstado: "remision", etiquetas: [] }), "confirmado");
+  assert.equal(etapaDe({ pedidoEstado: "aprobado" }), "aprobado");
+  assert.equal(etapaDe({ pedidoEstado: "guia", etiquetas: ["2 Vio producto"] }), "despachado");
+  assert.equal(etapaDe({}), "nuevo");
+  assert.equal(esConfirmado("despachado"), true);
+  assert.equal(esConfirmado("datos"), false);
+});
