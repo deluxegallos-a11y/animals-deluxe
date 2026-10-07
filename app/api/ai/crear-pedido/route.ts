@@ -11,6 +11,7 @@ import { cop } from "@/lib/ai/format";
 import { searchProducts } from "@/lib/ai/search";
 import { identifyProduct } from "@/lib/ai/brain";
 import { rulesForTenant } from "@/lib/ai/aliases";
+import { detectarOtraMarcaEnItems, telLegible } from "@/lib/ai/marcas";
 import { DEFAULT_TENANT_SLUG } from "@/lib/ai/tenant";
 import type { ProductView } from "@/lib/ai/types";
 
@@ -130,6 +131,39 @@ export const POST = withBridge(
       else if (res.product || res.status === "ambiguous" || res.status === "category") aclarar.push(r.name);
       else noEncontrados.push(r.name);
     }
+    // --- OTRA MARCA (M-CERO): un ítem que no está en este catálogo puede ser del
+    // OTRO negocio (botas, canilleras, comederos…). No se crea el pedido: se
+    // redirige al canal que sí lo despacha, con su número y su forma de pago.
+    // Va ANTES de "aclarar"/"faltan datos" para que el cliente no dé vueltas.
+    if (noEncontrados.length) {
+      const otras = await detectarOtraMarcaEnItems(noEncontrados);
+      if (otras.length) {
+        const primera = otras[0];
+        const nombres = otras.map((o) => `*${o.producto_nombre}*`).join(", ");
+        await logEvent("pedido_no_creado", {
+          motivo: "otra_marca", marca: primera.marca,
+          productos: otras.map((o) => o.producto_slug), sub_id: subId,
+        });
+        await updateOrderAttempt(attemptId, { resultado: "rejected", motivo: `otra marca (${primera.marca}): ${otras.map((o) => o.producto_slug).join(", ")}` });
+        return {
+          ok: false,
+          status: "otra_marca",
+          requiere_asesor: true,
+          otra_marca: {
+            marca: primera.marca,
+            marca_nombre: primera.marca_nombre,
+            politica_pago: primera.politica_pago,
+            whatsapp: primera.whatsapp,
+            whatsapp_link: primera.whatsapp_link,
+            productos: otras.map((o) => o.producto_nombre),
+          },
+          mensaje: otras.length === 1
+            ? primera.mensaje
+            : `👉 ${nombres} no los manejamos en este canal.\nEsos los despacha *${primera.marca_nombre}* 📲\nEscribile al *${telLegible(primera.whatsapp)}* y te los despachan de una 🐓`,
+        };
+      }
+    }
+
     // Un match DUDOSO nunca crea pedido con otro producto: se pide aclarar (§2 · AD-K7QM).
     if (aclarar.length) {
       await logEvent("pedido_no_creado", { motivo: "producto_ambiguo", productos: aclarar, sub_id: subId });

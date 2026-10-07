@@ -3,6 +3,7 @@ import { withBridge, audit, logEvent, recordInterest } from "@/lib/ai/bridge";
 import { getProducts, getExtraAliases, logSearchMiss } from "@/lib/ai/data";
 import { identifyProduct, esQueryBasura } from "@/lib/ai/brain";
 import { rulesForTenant } from "@/lib/ai/aliases";
+import { detectarOtraMarca } from "@/lib/ai/marcas";
 import { publicProduct, suggestion, emptyProduct, richMensaje, opcionesMensaje, cualMensaje } from "@/lib/ai/present";
 
 export const runtime = "nodejs";
@@ -63,6 +64,32 @@ export const POST = withBridge(
     }
 
     if (!r.product) {
+      // OTRA MARCA (M-CERO): antes de dar por perdida la consulta, miramos si lo que
+      // pidió es un producto EXCLUSIVO del otro negocio (botas, canilleras, comederos,
+      // antibióticos…). Si lo es, redirigimos a ese canal en vez de callar.
+      const otra = await detectarOtraMarca(body.q);
+      if (otra) {
+        await logEvent("otra_marca", {
+          q: body.q, marca: otra.marca, producto: otra.producto_slug, sub_id: customer.uchatSubId || "",
+        });
+        return {
+          status: otra.status, // "otra_marca"
+          match: "",
+          matched_by: "otra_marca",
+          producto: emptyProduct(),
+          opciones: [],
+          sugerencias: [], // no ofrecemos sustitutos: es del otro canal, no de este
+          otra_marca: {
+            marca: otra.marca,
+            marca_nombre: otra.marca_nombre,
+            politica_pago: otra.politica_pago,
+            whatsapp: otra.whatsapp,
+            whatsapp_link: otra.whatsapp_link,
+            producto: otra.producto_nombre,
+          },
+          mensaje: otra.mensaje,
+        };
+      }
       // Sin match real → not_found con mensaje "" (el bot maneja el silencio).
       // El caso de q vacío ya se cortó arriba, antes de tocar la DB.
       return {

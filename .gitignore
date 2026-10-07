@@ -12,3 +12,4 @@ next-env.d.ts
 drizzle
 .gstack/
 .image-backups/
+.env*

@@ -4,12 +4,19 @@ import type { ProductView } from "@/lib/ai/types";
 import { cop } from "@/lib/ai/format";
 import { peekTenant } from "@/lib/ai/tenant";
 import { formaDe } from "@/lib/ai/search";
+import { politicaDe, politicaTexto, type PoliticaPago } from "@/lib/ai/marcas";
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://animalsdeluxe.com";
 
+/** Política de pago de la MARCA del request. Es el tenant quien la define, no el
+ *  producto: así el bot nunca ofrece contra entrega algo del canal anticipado. */
+function politicaPago(): PoliticaPago {
+  return politicaDe(peekTenant());
+}
+
 /** ¿El tenant del request cobra por adelantado? (anticipado → nunca "contra entrega"). */
 function esAnticipado(): boolean {
-  return peekTenant()?.paymentMode === "anticipado";
+  return politicaPago() === "anticipado";
 }
 
 /** Bloque de contexto que el LLM del bot (Victor) usa pa asesorar a fondo. */
@@ -118,6 +125,13 @@ export function publicProduct(p: ProductView) {
     // producto solo-anticipado, ni 1 unidad de uno que va de a 2+.
     solo_anticipado: !!p.soloAnticipado,
     min_unidades: Math.max(1, p.minUnidades ?? 1),
+    // POLÍTICA DE PAGO de la marca (M-CERO): el backend la manda explícita para que
+    // el bot no la adivine. Un producto solo-anticipado dentro del bot de contra
+    // entrega reporta 'anticipado', que es como realmente se cobra.
+    politica_pago: (p.soloAnticipado ? "anticipado" : politicaPago()) as PoliticaPago,
+    politica_pago_texto: politicaTexto(p.soloAnticipado ? "anticipado" : politicaPago()),
+    marca: peekTenant()?.slug || "",
+    marca_nombre: peekTenant()?.nombre || "",
     precio_cop: p.priceCOP,
     cierre_precio: cierrePrecio(p),
     producto_contexto: buildContexto(p),
@@ -169,6 +183,9 @@ export function emptyProduct() {
     benefits: [], ingredients: [], usage: "", pitch: "", faq: [], keywords: [], objeciones: {},
     descripcion: "", para_que: "", edad_minima: "", dosificacion: "", presentacion: "",
     forma: "", uso: "", solo_anticipado: false, min_unidades: 1,
+    // Misma forma que publicProduct: el bot mapea siempre los mismos campos.
+    politica_pago: politicaPago(), politica_pago_texto: politicaTexto(politicaPago()),
+    marca: peekTenant()?.slug || "", marca_nombre: peekTenant()?.nombre || "",
     envio_gratis: false, precio_cop: 0, cierre_precio: "",
     producto_contexto: "", disclaimer: "", url: "",
   };

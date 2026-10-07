@@ -55,6 +55,21 @@ export async function currentTenantId(): Promise<string | null> {
   return t.id?.startsWith("demo-") ? null : t.id;
 }
 
+/* --- caché de tenants por slug (para la detección cross-marca, que consulta al
+   tenant "contraparte" en cada búsqueda fallida) --- */
+const bySlugCache = new Map<string, { at: number; tenant: Tenant | null }>();
+
+/** Tenant por slug (activo o no). null si no existe o en modo demo. Cacheado 60 s. */
+export async function getTenantBySlug(slug: string): Promise<Tenant | null> {
+  if (!db || !slug) return null;
+  const hit = bySlugCache.get(slug);
+  if (hit && Date.now() - hit.at < 60_000) return hit.tenant;
+  const [row] = await db.select().from(tenants).where(eq(tenants.slug, slug)).limit(1);
+  const tenant = row ?? null;
+  bySlugCache.set(slug, { at: Date.now(), tenant });
+  return tenant;
+}
+
 /** Resuelve el tenant por su bridge_token (comparación en tiempo constante).
  *  Devuelve null si el token no corresponde a ningún tenant activo. */
 export async function resolveTenantByToken(token: string): Promise<Tenant | null> {

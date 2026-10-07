@@ -13,6 +13,7 @@ import { db } from "@/lib/db/client";
 import { orders, orderItems, mpShipments, mpAddresses, configEmpresa, products } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth";
 import { mpBuscarDane, mpCotizar, mpCrearGuia, mpGetSendingInfo, MP_COMPANIES } from "@/lib/mipaquete";
+import { getConfigEmpresa } from "@/lib/queries";
 
 export interface GuiaResult { ok: boolean; ref?: string; guideNumber?: string; status?: string; pending?: boolean; pdfUrl?: string; error?: string }
 
@@ -71,7 +72,7 @@ export async function asignarFactura(orderId: string): Promise<{ ok: boolean; nu
   if (!db || !orderId) return { ok: false };
   const [o] = await db.select({ n: orders.facturaNumero }).from(orders).where(eq(orders.id, orderId)).limit(1);
   if (o?.n) return { ok: true, numero: o.n };
-  const [cfg] = await db.select().from(configEmpresa).limit(1);
+  const cfg = await getConfigEmpresa(); // perfil de empresa DE LA MARCA (NIT + consecutivo propios)
   const numero = (cfg?.siguienteFactura ?? 1);
   await db.update(orders).set({ facturaNumero: numero }).where(eq(orders.id, orderId));
   await db.update(configEmpresa).set({ siguienteFactura: numero + 1 }).where(eq(configEmpresa.id, cfg?.id || "default"));
@@ -142,7 +143,7 @@ export async function crearGuia(orderId: string, force?: boolean, deliveryCompan
   const pkg = await paqueteDeOrden(orderId);
   const qty = pkg.qty;
   const bod = await bodegaOrigen();
-  const [cfg] = await db.select().from(configEmpresa).limit(1);
+  const cfg = await getConfigEmpresa(); // perfil de empresa DE LA MARCA (NIT + consecutivo propios)
   const dane = await mpBuscarDane(o.ciudad || "");
 
   const paymentType = (o.metodoPago === "anticipado") ? 101 : 102;

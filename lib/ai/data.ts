@@ -5,7 +5,7 @@
 import { and, eq, asc, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import {
-  products, categories, promotions, coupons, advisors, storeConfig,
+  products, categories, promotions, coupons, advisors, storeConfig, tenants,
   type CiudadCobertura, type CuentaBancaria, type CodFormConfig,
 } from "@/lib/db/schema";
 import type { ProductView, CategoryView } from "@/lib/ai/types";
@@ -100,6 +100,28 @@ export async function getProducts(opts: { categorySlug?: string; limit?: number 
   return opts.limit ? list.slice(0, opts.limit) : list;
 }
 
+/* Catálogo activo de OTRO tenant, resuelto por slug EXPLÍCITO (no por el contexto
+   ALS del request). Lo usa `marcas.ts` para detectar que el cliente está pidiendo
+   algo del otro negocio y redirigirlo, en vez de responder "no encontré".
+   Cacheado 5 min: se consulta en cada búsqueda que falla y el catálogo casi no cambia. */
+const otroCatalogoCache = new Map<string, { at: number; list: ProductView[] }>();
+
+export async function getProductsDeTenant(tenantSlug: string): Promise<ProductView[]> {
+  if (!db || !tenantSlug) return [];
+  const hit = otroCatalogoCache.get(tenantSlug);
+  if (hit && Date.now() - hit.at < 300_000) return hit.list;
+  const rows = await db
+    .select({ p: products, c: categories })
+    .from(products)
+    .innerJoin(tenants, eq(products.tenantId, tenants.id))
+    .leftJoin(categories, eq(products.categoryId, categories.id))
+    .where(and(eq(tenants.slug, tenantSlug), eq(products.activo, true)))
+    .orderBy(asc(products.name));
+  const list = filtrarCatalogo(tenantSlug, rows.map((r) => toView(r.p, r.c)));
+  otroCatalogoCache.set(tenantSlug, { at: Date.now(), list });
+  return list;
+}
+
 export async function getProductBySlug(slug: string): Promise<ProductView | null> {
   if (!slug) return null;
   if (!db) {
@@ -141,15 +163,38 @@ export async function getStoreConfig(): Promise<StoreCfg> {
     };
   }
   const [row] = await db.select().from(storeConfig).limit(1);
+  const tenant = await currentTenant();
+  const esDefault = tenant.slug === DEFAULT_TENANT_SLUG;
+
+  // PERFIL POR MARCA (M-CERO). `store_config` es todavía UNA fila compartida por
+  // las dos marcas (separarla necesita DDL: supabase/05-perfiles-por-marca.sql).
+  // Mientras tanto, la IDENTIDAD de cada negocio se toma del tenant, que ya la
+  // tiene y es la fuente de verdad. Sin esto, el bot de Rooster Deluxe se
+  // presentaba como "Animals Deluxe", daba el WhatsApp de Animals y saludaba
+  // ofreciendo contra entrega en un canal de pago anticipado.
+  // El tenant por defecto (Animals) sigue leyendo la fila tal cual: cero cambios.
+  const anticipado = tenant.paymentMode === "anticipado";
+  const cuentasTenant = (tenant.cuentasPago || "").trim();
+
   return {
-    nombre: row?.nombre || "Animals Deluxe",
-    whatsapp: row?.whatsapp || process.env.NEXT_PUBLIC_WHATSAPP || "",
+    nombre: (esDefault ? row?.nombre : tenant.nombre) || row?.nombre || "Animals Deluxe",
+    whatsapp: (esDefault ? row?.whatsapp : tenant.asesorWa) || row?.whatsapp || process.env.NEXT_PUBLIC_WHATSAPP || "",
     ciudadBase: row?.ciudadBase || "",
     envioDefaultCop: row?.envioDefaultCop ?? 12000,
     ciudadesCobertura: (row?.ciudadesCobertura as CiudadCobertura[]) || [],
-    mensajeBienvenida: row?.mensajeBienvenida || "",
-    cuentasBancarias: (row?.cuentasBancarias as CuentaBancaria[]) || [],
-    codForm: (row?.codForm as CodFormConfig) || {},
+    mensajeBienvenida: esDefault
+      ? row?.mensajeBienvenida || ""
+      : `¡Bienvenido a ${tenant.nombre}! 🐓 ${anticipado
+          ? "Suplementos e implementos para tus campeones. Pago anticipado y despacho a todo el país."
+          : "Suplementos premium para tus campeones, contraentrega en toda Colombia."}`,
+    // Las cuentas de una marca que no es la dueña del store_config viven en
+    // `tenants.cuentas_pago` (texto libre, lo usa asignar-asesor). Nunca se
+    // heredan las de Animals: mandar a un cliente a la cuenta equivocada es plata
+    // que se pierde.
+    cuentasBancarias: esDefault ? ((row?.cuentasBancarias as CuentaBancaria[]) || []) : [],
+    // El formulario de contraentrega (upsell COD) no aplica en una marca que
+    // cobra por adelantado: se apaga en vez de heredar el de Animals.
+    codForm: anticipado ? {} : ((row?.codForm as CodFormConfig) || {}),
   };
 }
 

@@ -9,7 +9,8 @@ import {
   promotions, conversations, storeConfig, integrations, adMap, orderAttempts, mpShipments, configEmpresa, mpAddresses, visits,
 } from "@/lib/db/schema";
 import { demoProducts, demoCategories } from "@/lib/demo-data";
-import { getPanelTenantId } from "@/lib/tenant-panel";
+import { getPanelTenantId, getPanelTenant } from "@/lib/tenant-panel";
+import { DEFAULT_TENANT_SLUG } from "@/lib/ai/tenant";
 import type { ProductView } from "@/lib/ai/types";
 
 /* ---------- Dashboard ---------- */
@@ -383,10 +384,46 @@ export async function getOrderDetail(id: string): Promise<OrderDetail | null> {
 }
 
 /* ---------- Despacho: config de empresa (factura) + bodega ---------- */
+
+/** id de la fila de `config_empresa` de una marca.
+ *  Animals Deluxe conserva la fila histórica 'default'; las demás marcas usan su
+ *  slug. El PK ya es `text`, así que esto NO necesita migración. */
+export function configEmpresaId(tenantSlug: string): string {
+  return tenantSlug === DEFAULT_TENANT_SLUG ? "default" : tenantSlug;
+}
+
+/** Prefijo de factura por marca ("Rooster Deluxe" → "RD"). */
+function prefijoDe(nombre: string): string {
+  const w = (nombre || "").trim().split(/\s+/).filter(Boolean);
+  return (((w[0]?.[0] || "") + (w[1]?.[0] || "")).toUpperCase()) || "FA";
+}
+
+/**
+ * Datos de empresa (NIT, razón social, consecutivo de factura) DE LA MARCA del
+ * panel. Antes era una sola fila para las dos: las guías y facturas de Rooster
+ * Deluxe salían con el NIT de Animals Deluxe y compartiendo el consecutivo, lo
+ * que rompe la contabilidad de ambas.
+ * Si la marca aún no tiene fila, se crea vacía con su PROPIO consecutivo — nunca
+ * se cae a la de Animals.
+ */
 export async function getConfigEmpresa() {
   if (!db) return null;
-  const [c] = await db.select().from(configEmpresa).limit(1);
-  return c || null;
+  const t = await getPanelTenant();
+  const rowId = configEmpresaId(t?.slug || DEFAULT_TENANT_SLUG);
+  const [c] = await db.select().from(configEmpresa).where(eq(configEmpresa.id, rowId)).limit(1);
+  if (c) return c;
+  try {
+    const [creado] = await db.insert(configEmpresa).values({
+      id: rowId,
+      nombreMarca: t?.nombre || "",
+      whatsapp: (t?.asesorWa || "").replace(/\D/g, ""),
+      prefijoFactura: prefijoDe(t?.nombre || ""),
+      siguienteFactura: 1,
+    }).returning();
+    return creado || null;
+  } catch {
+    return null; // fail-soft: el panel no se cae por no poder sembrar el perfil
+  }
 }
 export async function getBodegaDefault() {
   if (!db) return null;
