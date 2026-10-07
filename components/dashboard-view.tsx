@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { cop } from "@/lib/ai/format";
 import type { Analytics } from "@/lib/queries";
+import { CaraNeo, EnVivo } from "@/components/neo";
 
 type Dash = {
   rangoLabel: string;
@@ -57,11 +58,23 @@ export function DashboardView({ d, a, range, from, to }: { d: Dash; a: Analytics
     <div>
       <div className="pagehead">
         <div>
+          <span className="antetitulo">Centro de mando · {d.rangoLabel}</span>
           <h1>Resumen general</h1>
-          <p>Pedidos, ingresos y leads · <b>{d.rangoLabel}</b></p>
+          <p>Pedidos, ingresos y leads de la tienda y de WhatsApp.</p>
         </div>
         <Link href="/pedidos" className="chip-btn"><ShoppingBag size={15} /> Ver pedidos</Link>
       </div>
+
+      {/* Neo AI: lo que vendió la IA por WhatsApp en el rango (dato real de pedidos). */}
+      <Link href="/livechat" className="neo-franja">
+        <span className="neo-franja-cara"><CaraNeo tamano={34} /></span>
+        <span className="neo-franja-txt">
+          <b>Neo AI · {d.pedidosWhatsapp} {d.pedidosWhatsapp === 1 ? "pedido" : "pedidos"} por WhatsApp {d.rangoLabel.toLowerCase()}</b>
+          <small>{cop(d.ventasWhatsappCop)} vendidos por el bot · {pct(d.whatsappPct)} de la plata del rango</small>
+        </span>
+        <EnVivo texto="atendiendo ahora" className="neo-franja-vivo" />
+        <span className="neo-franja-ir">Abrir Live Chat <ArrowRight size={15} /></span>
+      </Link>
 
       {/* Selector de rango de fechas */}
       <RangeSelector range={range} from={from} to={to} />
@@ -163,9 +176,9 @@ export function DashboardView({ d, a, range, from, to }: { d: Dash; a: Analytics
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 4 }}>
           {d.porEstado.map((s, i) => (
             <React.Fragment key={s.estado}>
-              <Link href="/pedidos" style={{ flex: "1 1 150px", minWidth: 130, textDecoration: "none", border: "1px solid var(--line, #E4E7EC)", borderRadius: 14, padding: "13px 15px", background: "#fff", display: "block", borderLeft: `4px solid ${EST_COLOR[s.estado] || "#475467"}` }}>
-                <div style={{ fontSize: 12.5, color: "#667085", fontWeight: 700 }}>{s.label}</div>
-                <div style={{ fontSize: 26, fontWeight: 800, color: "#101828", lineHeight: 1.1, margin: "3px 0" }}>{s.n}</div>
+              <Link href="/pedidos" style={{ flex: "1 1 150px", minWidth: 130, textDecoration: "none", border: "1px solid var(--line, #E4E7EC)", borderRadius: 16, padding: "13px 15px", background: "var(--card, #fff)", display: "block", borderLeft: `4px solid ${EST_COLOR[s.estado] || "#475467"}` }}>
+                <div style={{ fontSize: 12.5, color: "var(--muted, #667085)", fontWeight: 600 }}>{s.label}</div>
+                <div style={{ fontSize: 26, fontWeight: 600, letterSpacing: "-.03em", color: "var(--ink, #101828)", lineHeight: 1.1, margin: "3px 0", fontVariantNumeric: "tabular-nums" }}>{s.n}</div>
                 <div style={{ fontSize: 12, color: EST_COLOR[s.estado] || "#475467", fontWeight: 600 }}>{cop(s.monto)}</div>
               </Link>
               {i < d.porEstado.length - 1 ? <div style={{ alignSelf: "center", color: "#D0D5DD", fontSize: 18, fontWeight: 700 }}>→</div> : null}
@@ -243,7 +256,7 @@ export function DashboardView({ d, a, range, from, to }: { d: Dash; a: Analytics
                     <td><div className="cust"><span className="av">{ini(o.nombre)}</span>{o.nombre}</div></td>
                     <td>{CANAL_IC[o.canal] || "📱"}</td>
                     <td>{o.ref}</td>
-                    <td style={{ fontSize: 12, color: "#667085" }}>{o.createdAt ? new Date(o.createdAt).toLocaleString("es-CO", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—"}</td>
+                    <td style={{ fontSize: 12, color: "#667085" }}>{o.createdAt ? new Date(o.createdAt).toLocaleString("es-CO", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "America/Bogota" }).replace(/[\u202f\u00a0]/g, " ") : "—"}</td>
                     <td><b>{cop(o.total)}</b></td>
                     <td><span className={`stat ${e.cls}`}>{e.cls === "ok" ? <CheckCircle2 size={13} /> : null}{e.txt}</span></td>
                     <td style={{ textAlign: "right" }}><Link href="/pedidos" className="tbtn" style={{ display: "inline-grid", width: 32, height: 32 }}><MoreHorizontal size={16} /></Link></td>

@@ -6,7 +6,7 @@
    Etapa de venta (etiqueta): pedido real de la plataforma + etiquetas del bot. */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowLeft, Bot, Check, Copy, ExternalLink, FileText, Image as ImageIcon, Info, MessageCircle, Package,
+  ArrowLeft, Bot, Check, Copy, ExternalLink, FileText, Image as ImageIcon, Info, Package,
   RefreshCw, Search, Send, Settings, StickyNote, UserRound, X, Zap,
 } from "lucide-react";
 import {
@@ -14,6 +14,7 @@ import {
   enviarProducto, guardarRespuestaRapida, notaInterna, plantillasDe, refrescarHilo, tomarChat, type Res,
 } from "./acciones";
 import { ETAPAS, esConfirmado, etapaDe, pidioAsesor, type Etapa } from "@/lib/livechat/puro";
+import { CaraNeo, EnVivo, FirmaNeo, NeoEscribiendo, PoweredNeo } from "@/components/neo";
 
 type EspacioUI = { codigo: string; nombre: string; conIa: boolean; reparto: boolean };
 type Asesor = { id: string; nombre: string; email: string; activo: boolean; recibe_chats: boolean };
@@ -95,7 +96,7 @@ function rellenar(t: string, v: { nombre: string; asesor: string }) {
   return t.replace(/\{nombre\}/gi, primer).replace(/\{asesor\}/gi, v.asesor).replace(/\s+([,.!?])/g, "$1").replace(/ {2,}/g, " ").trim();
 }
 const etapaConv = (c: Conv) => etapaDe({ pedidoEstado: c.pedidoEstado, etiquetas: c.etiquetas });
-const ICONO_EMISOR: Record<string, string> = { ia: "🤖 ", asesor_uchat: "🧑‍💼 ", asesor_panel: "🧑‍💼 " };
+const ICONO_EMISOR: Record<string, string> = { ia: "Neo: ", asesor_uchat: "Equipo: ", asesor_panel: "Equipo: " };
 
 function useVisible() {
   const [v, setV] = useState(true);
@@ -184,10 +185,10 @@ export function LivechatUI(props: {
     <div className={`lc ${sel ? "con-hilo" : ""}`}>
       <header className="lc-top">
         <div className="lc-top-tit">
-          <MessageCircle size={20} />
+          <span className="lc-top-neo"><CaraNeo tamano={26} /></span>
           <div>
             <b>Live Chat</b>
-            <small>WhatsApp · {esp.conIa ? "bot IA + equipo" : "asesores"}</small>
+            <small>{esp.conIa ? <EnVivo texto="Neo AI atendiendo WhatsApp" /> : "WhatsApp · asesores"}</small>
           </div>
         </div>
         {espacios.length > 1 ? (
@@ -251,7 +252,7 @@ export function LivechatUI(props: {
                     <span className="lc-item-tags">
                       <EtapaBadge c={c} compacto />
                       {pidioAsesor(c.etiquetas) && !tomado(c) && !esConfirmado(e) ? <em className="t-ambar">🙋 Pide asesor</em> : null}
-                      {esp.conIa && tomado(c) ? <em className="t-hum">🧑‍💼 Humano</em> : null}
+                      {esp.conIa && tomado(c) ? <em className="t-hum">Equipo</em> : null}
                       {c.asesorId ? <em>{nombreAsesor[c.asesorId] || "Asesor"}</em> : null}
                       {c.canal && c.canal !== "whatsapp" ? <em>{c.canal}</em> : null}
                       {!ventana(c) ? <em className="t-cerr">24 h cerrada</em> : null}
@@ -280,10 +281,10 @@ export function LivechatUI(props: {
         ) : (
           <section className="lc-hilo lc-hilo-vacio">
             <div className="lc-bienvenida">
-              <div className="lc-bienvenida-ico"><MessageCircle size={30} /></div>
+              <div className="lc-bienvenida-ico"><CaraNeo tamano={44} /></div>
               <h4>Elige una conversación</h4>
               <p>{esp.conIa
-                ? "Aquí ves en vivo lo que el bot habla con cada cliente. Cuando quieras atender tú, toma el chat: el bot queda en pausa."
+                ? "Aquí ves en vivo lo que Neo AI habla con cada cliente. Cuando quieras atender tú, toma el chat: Neo queda en pausa."
                 : "Chats de la línea de asesores, repartidos de forma equitativa."}</p>
               <ul>
                 <li><span className="lc-etapa e-confirmado">✅ Confirmado</span> ya hizo el pedido</li>
@@ -291,6 +292,7 @@ export function LivechatUI(props: {
                 <li><span className="lc-etapa e-interesado">👀 Interesado</span> vio un producto</li>
                 <li><em className="t-ambar">🙋 Pide asesor</em> quiere hablar con una persona</li>
               </ul>
+              <PoweredNeo className="lc-powered-bienv" />
             </div>
           </section>
         )}
@@ -384,6 +386,9 @@ function Hilo(props: {
     bloques[bloques.length - 1].items.push(m);
   }
   const ultimoPedido = pedidos.find((p) => p.estado !== "cancelado");
+  // «Neo AI está escribiendo…»: el cliente escribió hace menos de 90 s, Neo está activo y aún no contesta.
+  const ultimo = mensajes[mensajes.length - 1];
+  const neoEscribe = esp.conIa && !esTomado && ultimo?.emisor === "cliente" && Date.now() - new Date(ultimo.providerTs).getTime() < 90_000;
 
   return (
     <>
@@ -396,30 +401,32 @@ function Hilo(props: {
             <small>
               {telLegible(conv.telefono)}
               {esp.conIa ? (esTomado
-                ? <span className="lc-estado humano">🧑‍💼 Atiende el equipo{conv.botPausadoHasta ? ` · bot vuelve ${hora(conv.botPausadoHasta)}` : ""}</span>
-                : <span className="lc-estado bot">🤖 Responde el bot</span>) : null}
+                ? <span className="lc-estado humano">Atiende el equipo{conv.botPausadoHasta ? ` · Neo vuelve ${hora(conv.botPausadoHasta)}` : ""}</span>
+                : <span className="lc-estado bot"><CaraNeo tamano={13} /> Responde Neo AI</span>) : null}
               {!abierta ? <span className="lc-estado cerr">24 h cerrada</span> : null}
             </small>
           </div>
           <div className="lc-hilo-acc">
             {esp.conIa ? (
               esTomado
-                ? <button className="lc-btn soft" disabled={ocupado} onClick={() => correr(() => devolverAlBot(conv.id), "El bot vuelve a responder")}><Bot size={15} /> <span>Devolver al bot</span></button>
-                : <button className="lc-btn" disabled={ocupado} onClick={() => correr(() => tomarChat(conv.id), "Chat tomado: el bot queda en pausa")}><UserRound size={15} /> <span>Tomar chat</span></button>
+                ? <button className="lc-btn soft" disabled={ocupado} onClick={() => correr(() => devolverAlBot(conv.id), "Neo AI vuelve a responder")}><Bot size={15} /> <span>Devolver a Neo</span></button>
+                : <button className="lc-btn" disabled={ocupado} onClick={() => correr(() => tomarChat(conv.id), "Chat tomado: Neo AI queda en pausa")}><UserRound size={15} /> <span>Tomar chat</span></button>
             ) : null}
             <button className="lc-ico" title="Traer de UChat ahora" disabled={ocupado} onClick={() => correr(() => refrescarHilo(conv.id))}><RefreshCw size={15} /></button>
             <button className={`lc-ico lc-solo-estrecho ${verFicha ? "on-azul" : ""}`} title="Ficha del cliente" onClick={() => setVerFicha((v) => !v)}><Info size={15} /></button>
           </div>
         </header>
 
-        {confirmado && ultimoPedido ? (
-          <a className="lc-banda ok" href={`/pedidos/${ultimoPedido.id}`}>
-            <span>{ETAPA_ICO[etapa]} <b>{ETAPAS[etapa].label}</b> · {ultimoPedido.ref} · {cop(ultimoPedido.totalCop)}
-              {ultimoPedido.items.length ? <> · {ultimoPedido.items.join(", ")}</> : null}
+        {confirmado && (ultimoPedido || conv.pedidoId) ? (
+          // El chat ya trae su último pedido (pedido_id/ref/total): la banda sale al instante;
+          // los productos se suman cuando llega el detalle.
+          <a className="lc-banda ok" href={`/pedidos/${ultimoPedido?.id || conv.pedidoId}`}>
+            <span>{ETAPA_ICO[etapa]} <b>{ETAPAS[etapa].label}</b> · {ultimoPedido?.ref || conv.pedidoRef} · {cop(ultimoPedido?.totalCop ?? conv.pedidoTotal)}
+              {ultimoPedido?.items.length ? <> · {ultimoPedido.items.join(", ")}</> : null}
               {conv.pedidosNum > 1 ? <> · {conv.pedidosNum} pedidos</> : null}</span>
             <em>Ver pedido <ExternalLink size={13} /></em>
           </a>
-        ) : confirmado ? (
+        ) : confirmado && !cargando ? (
           <div className="lc-banda ok"><span>✅ <b>El bot marcó este chat como «Pedido creado»</b> · no se encontró el pedido por teléfono; búscalo en Pedidos.</span></div>
         ) : pideAsesor && !esTomado && esp.conIa ? (
           <div className="lc-banda ambar">
@@ -437,6 +444,7 @@ function Hilo(props: {
               {b.items.map((m) => <Burbuja key={m.id} m={m} />)}
             </div>
           ))}
+          {neoEscribe ? <NeoEscribiendo /> : null}
           <div ref={finRef} />
         </div>
 
@@ -474,7 +482,7 @@ function Hilo(props: {
                   <button className={`lc-herr-b ${panel === "imagen" ? "on-azul" : ""}`} onClick={() => setPanel(panel === "imagen" ? "" : "imagen")}><ImageIcon size={14} /> Imagen</button>
                   <button className={`lc-herr-b ${panel === "plantilla" ? "on-azul" : ""}`} onClick={() => setPanel(panel === "plantilla" ? "" : "plantilla")}><FileText size={14} /> Plantilla</button>
                 </> : null}
-                {esp.conIa && !esTomado && !modoNota ? <span className="lc-nota-bot">Al enviar, el bot queda en pausa 12 h</span> : null}
+                {esp.conIa && !esTomado && !modoNota ? <span className="lc-nota-bot">Al enviar, Neo AI queda en pausa 12 h</span> : null}
                 {modoNota ? <span className="lc-nota-bot">Modo nota interna: solo la ve el equipo</span> : null}
               </div>
               {sugerencias.length ? (
@@ -550,6 +558,7 @@ function Ficha({ conv, esp, rol, asesores, cliente, pedidos, abierta, ocupado, o
             </li>
           ))}
         </ol>
+        <p className="lc-paso-actual"><b>{ETAPAS[etapa].label}</b><span>Paso {paso + 1} de {PASOS.length}</span></p>
       </section>
 
       <section className="lc-card">
@@ -573,7 +582,7 @@ function Ficha({ conv, esp, rol, asesores, cliente, pedidos, abierta, ocupado, o
         <h5>Conversación</h5>
         <dl>
           <dt>Ventana 24 h</dt><dd>{ventana(conv) ? <span className="lc-pill t-verde">Abierta</span> : <span className="lc-pill t-rojo">Cerrada</span>}</dd>
-          {esp.conIa ? <><dt>Responde</dt><dd>{tomado(conv) ? "Equipo (bot en pausa)" : "Bot IA"}</dd></> : null}
+          {esp.conIa ? <><dt>Responde</dt><dd>{tomado(conv) ? "Equipo (Neo en pausa)" : <FirmaNeo />}</dd></> : null}
           <dt>Asesor</dt>
           <dd>
             {rol === "admin" ? (
@@ -603,6 +612,7 @@ function Ficha({ conv, esp, rol, asesores, cliente, pedidos, abierta, ocupado, o
         {tags.length ? <div className="lc-tags">{tags.map((t) => <span key={t}>{t}</span>)}</div> : null}
       </section>
       <p className="lc-mut lc-ns">UChat · {conv.userNs}</p>
+      <PoweredNeo />
     </aside>
   );
 }
@@ -612,7 +622,7 @@ function Burbuja({ m }: { m: Msg }) {
   if (m.emisor === "nota") return <div className="lc-notai"><b>📝 Nota interna · {m.autor || "equipo"}</b><p>{m.texto}</p><small>{hora(m.providerTs)}</small></div>;
   const lado = m.emisor === "cliente" ? "izq" : "der";
   const pendiente = m.providerMsgId.startsWith("panel:");
-  const quien = m.emisor === "ia" ? "🤖 Bot IA" : m.emisor === "cliente" ? "" : `🧑‍💼 ${m.autor || "Asesor"}`;
+  const quien = m.emisor === "ia" ? <FirmaNeo /> : m.emisor === "cliente" ? null : `${m.autor || "Asesor"} · equipo`;
   return (
     <div className={`lc-b ${lado} ${m.emisor}`}>
       {quien ? <span className="lc-b-quien">{quien}</span> : null}

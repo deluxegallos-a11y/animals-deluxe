@@ -4,6 +4,8 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { updateOrderStatus, bulkUpdateStatus, despacharPedido, crearPedidoManual } from "../actions";
 import { crearGuia, crearGuiasBulk, obtenerPdfGuia, obtenerPdfGuiasBulk, cancelarGuia, pasarAOrdenDeVenta, cotizarPedido, marcarCopiado, type Transportadora } from "./mp-actions";
+import { fechaCO, soloFechaCO, horaCO } from "@/lib/fecha";
+import { Download, Copy } from "lucide-react";
 
 export type BoardOrder = {
   id: string; ref: string; nombre: string; telefono: string; cedula: string; ciudad: string; direccion: string;
@@ -74,8 +76,8 @@ const RANGOS: { k: string; label: string }[] = [
 /* ---------- Descarga de la lista filtrada (CSV que Excel abre bien) ---------- */
 const CSV_COLS: { h: string; v: (o: BoardOrder) => string | number }[] = [
   { h: "Referencia", v: (o) => o.ref },
-  { h: "Fecha", v: (o) => (o.createdAt ? new Date(o.createdAt).toLocaleDateString("es-CO") : "") },
-  { h: "Hora", v: (o) => (o.createdAt ? new Date(o.createdAt).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }) : "") },
+  { h: "Fecha", v: (o) => (o.createdAt ? soloFechaCO(o.createdAt) : "") },
+  { h: "Hora", v: (o) => (o.createdAt ? horaCO(o.createdAt) : "") },
   { h: "Estado", v: (o) => est(o.estado).label },
   { h: "Canal", v: (o) => chan(o.canal).label },
   { h: "Cliente", v: (o) => o.nombre },
@@ -90,7 +92,7 @@ const CSV_COLS: { h: string; v: (o: BoardOrder) => string | number }[] = [
   { h: "Flete", v: (o) => o.envio || 0 },
   { h: "Guía", v: (o) => o.envioGuia || o.guia || "" },
   { h: "Transportadora", v: (o) => o.transportadora || "" },
-  { h: "Despachado", v: (o) => (o.despachadoAt ? new Date(o.despachadoAt).toLocaleString("es-CO") : "") },
+  { h: "Despachado", v: (o) => (o.despachadoAt ? fechaCO(o.despachadoAt, { dateStyle: "short", timeStyle: "short" }) : "") },
   { h: "Factura", v: (o) => (o.facturaNumero != null ? String(o.facturaNumero) : "") },
   { h: "Asesor", v: (o) => o.advisor || "" },
 ];
@@ -246,7 +248,7 @@ export function PedidosBoard({ orders, catalog, range, from, to, rangoLabel }: {
           title={filtrados.length ? `Descargar ${filtrados.length} pedido(s) de ${rangoLabel} en Excel/CSV` : "No hay pedidos que descargar"}
           onClick={() => { descargarCSV(filtrados, nombreArchivo(range, from, to)); flash(`⬇️ ${filtrados.length} pedido(s) descargado(s)`); }}
         >
-          ⬇️ Descargar lista{filtrados.length ? ` (${filtrados.length})` : ""}
+          <Download size={15} aria-hidden /> Descargar lista{filtrados.length ? ` (${filtrados.length})` : ""}
         </button>
         <button className="pbctrl-new" onClick={() => setManualOpen(true)}>+ Crear pedido</button>
       </div>
@@ -285,16 +287,16 @@ export function PedidosBoard({ orders, catalog, range, from, to, rangoLabel }: {
                     <div className="nm">
                       <span className="nmt">{o.nombre || "— sin nombre —"}</span>
                       {falta ? <span title={`Faltan: ${faltantes(o).join(", ")}`} style={{ color: "#F79009", flex: "0 0 auto" }}>⚠</span> : null}
-                      {o.copiadoAt ? <span className="pb-tag ok" title={`Copiado a WhatsApp ${new Date(o.copiadoAt).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}`}>✓ copiado</span> : null}
+                      {o.copiadoAt ? <span className="pb-tag ok" title={`Copiado a WhatsApp ${horaCO(o.copiadoAt)}`}>✓ copiado</span> : null}
                       {o.despachadoAt ? <span className="pb-tag ship">🚚 despachado</span> : null}
                     </div>
                     <div className="meta">{o.ref} · {o.telefono || "sin tel"} · {o.ciudad || "sin ciudad"}{o.envioGuia ? <span style={{ color: "#1E50E6", fontWeight: 700 }}> · guía {o.envioGuia}</span> : null}</div>
                   </span>
                   <span><span className="pb-pill" style={{ color: e.color, background: e.bg }}>{e.label}</span></span>
-                  <span className="pb-time">{o.createdAt ? new Date(o.createdAt).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }) : "—"}<div className="d">{o.createdAt ? new Date(o.createdAt).toLocaleDateString("es-CO", { day: "2-digit", month: "2-digit" }) : ""}</div></span>
+                  <span className="pb-time">{o.createdAt ? horaCO(o.createdAt) : "—"}<div className="d">{o.createdAt ? soloFechaCO(o.createdAt, { day: "2-digit", month: "2-digit" }) : ""}</div></span>
                   <span className="pb-total">{COP(o.total)}<div className="e">flete aparte{o.envio ? ` ~${COP(o.envio)}` : ""}</div></span>
                   <span className="pb-chev" style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
-                    <button className="pb-copybtn" onClick={async (ev) => { ev.stopPropagation(); const ok = await copy(mensajeGuia(o)); if (ok) await marcarCopiado([o.id]); flash(ok ? "📋 Copiado a WhatsApp" : "No se pudo copiar"); }} title="Copiar datos para WhatsApp">📋</button>
+                    <button className="pb-copybtn" onClick={async (ev) => { ev.stopPropagation(); const ok = await copy(mensajeGuia(o)); if (ok) await marcarCopiado([o.id]); flash(ok ? "📋 Copiado a WhatsApp" : "No se pudo copiar"); }} title="Copiar datos para WhatsApp" aria-label="Copiar datos para WhatsApp"><Copy size={15} aria-hidden /></button>
                     ›
                   </span>
                 </div>
@@ -533,7 +535,7 @@ function DetailModal({ o, onClose, onToast, onGuia }: { o: BoardOrder; onClose: 
           <div className="tags">
             <span className="tag">{c.ic} {c.label}</span>
             <span className="tag" style={{ background: "rgba(255,255,255,.32)" }}>{e.label}</span>
-            <span className="tag">{o.createdAt ? new Date(o.createdAt).toLocaleString("es-CO", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}</span>
+            <span className="tag">{o.createdAt ? fechaCO(o.createdAt, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}</span>
           </div>
         </div>
 

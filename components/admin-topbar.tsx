@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, Bell, Store, LogOut } from "lucide-react";
+import { Search, Store, LogOut, ChevronRight } from "lucide-react";
 import { logout } from "@/app/(auth)/actions";
 import { ThemeToggle, CommandPalette } from "@/components/admin-tools";
 
 function openPalette() { window.dispatchEvent(new Event("adm-open-cmdk")); }
 
 const TITLES: Record<string, string> = {
-  "/dashboard": "Dashboard", "/productos": "Productos", "/pedidos": "Pedidos",
+  "/dashboard": "Dashboard", "/productos": "Productos", "/pedidos": "Pedidos", "/livechat": "Live Chat",
   "/clientes": "Clientes", "/conversaciones": "Conversaciones", "/anuncios": "Anuncios",
   "/promociones": "Promociones", "/resenas": "Reseñas", "/asesores": "Asesores", "/configuracion": "Configuración",
 };
@@ -31,23 +31,28 @@ export function AdminTopbar({ marca }: { marca?: MarcaPanel }) {
   const anticipado = !!marca?.anticipado;
   const key = Object.keys(TITLES).find((k) => path.startsWith(k)) || "/dashboard";
   const title = TITLES[key];
+  const detalle = path !== key && path.startsWith(key + "/");
   return (
     <header className="top">
-      <div className="pagetitle">Hola, Victor 👋</div>
-      <div className="crumbtag">{title}</div>
+      <nav className="migas" aria-label="Ubicación">
+        <span>{nombre}</span>
+        <ChevronRight size={14} aria-hidden />
+        {detalle ? <><Link href={key}>{title}</Link><ChevronRight size={14} aria-hidden /><b>Detalle</b></> : <b>{title}</b>}
+      </nav>
       <div className="tr">
-        <button className="ticon" title="Buscar / ir a (⌘K)" onClick={openPalette}><Search size={17} /></button>
+        <button className="t-buscar" onClick={openPalette} title="Buscar o ir a (⌘K)">
+          <Search size={16} /> <span>Buscar o ir a…</span> <kbd>⌘K</kbd>
+        </button>
         <ThemeToggle />
-        <button className="ticon" title="Notificaciones"><Bell size={17} /><span className="dot" /></button>
-        <Link href="/" target="_blank" className="plat blue" title="Ver tienda"><Store size={15} /> <span>Ver tienda</span></Link>
+        <Link href="/" target="_blank" className="ticon" title="Ver tienda" aria-label="Ver tienda"><Store size={17} /></Link>
         <span className={"marca-tag" + (anticipado ? " antic" : "")} title={anticipado ? "Esta marca cobra por adelantado" : "Esta marca cobra al recibir"}>
-          {anticipado ? "PAGO ANTICIPADO" : "CONTRA ENTREGA"}
+          <i aria-hidden />{anticipado ? "Pago anticipado" : "Contra entrega"}
         </span>
         <div className="mepill" title={nombre}>
           <div className="av">{iniciales(nombre)}</div>
           <div><b>{nombre}</b><small>Admin</small></div>
         </div>
-        <form action={logout}><button type="submit" className="ticon danger" title="Salir"><LogOut size={16} /></button></form>
+        <form action={logout}><button type="submit" className="ticon danger" title="Salir" aria-label="Salir"><LogOut size={16} /></button></form>
       </div>
       <CommandPalette />
     </header>

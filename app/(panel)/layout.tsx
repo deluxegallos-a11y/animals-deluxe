@@ -1,8 +1,15 @@
 import "../admin.css";
+import "../neo.css";
+import { Inter, Geist_Mono } from "next/font/google";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { AdminTopbar, type MarcaPanel } from "@/components/admin-topbar";
 import { demoMode } from "@/lib/auth";
 import { getPanelTenant } from "@/lib/tenant-panel";
+
+// Sistema visual «Neo AI Pro» (docs/diseno-neo/prompt-maestro.md): Inter para la UI,
+// Geist Mono para antetítulos, encabezados de tabla y teclas.
+const inter = Inter({ subsets: ["latin"], variable: "--font-neo", display: "swap" });
+const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-neo-mono", display: "swap" });
 
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   // MARCA activa del panel (M-CERO). El panel ya aísla los datos por tenant; esto
@@ -16,8 +23,8 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   };
   return (
     <>
-    <script dangerouslySetInnerHTML={{ __html: `try{if(localStorage.getItem('adm-theme')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}` }} />
-    <div className="adm">
+    <script dangerouslySetInnerHTML={{ __html: `try{var d=document.documentElement;if(localStorage.getItem('adm-theme')==='dark')d.setAttribute('data-theme','dark');if(localStorage.getItem('adm-riel')==='1')d.setAttribute('data-riel','1')}catch(e){}` }} />
+    <div className={`adm neo ${inter.variable} ${mono.variable}`}>
       <AdminSidebar />
       <div className="main">
         <AdminTopbar marca={marca} />

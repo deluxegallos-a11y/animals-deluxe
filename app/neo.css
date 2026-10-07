@@ -1,0 +1,353 @@
+/* ===================================================================
+   NEO AI PRO — capa final del panel (.adm.neo). Gana sobre admin.css.
+   Sistema de Tienda Core «Pro v2» + persona Neo AI de Motos Colombia.
+   Fuente de verdad: docs/diseno-neo/prompt-maestro.md
+   =================================================================== */
+
+/* ---------- 1. TOKENS ---------- */
+.adm.neo{
+  --sans:var(--font-neo),-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+  --mono:var(--font-neo-mono),ui-monospace,SFMono-Regular,Menlo,monospace;
+  --m50:#EEF3FF; --m100:#DCE6FF; --m200:#B9CCFF; --m400:#4F7FFF; --m500:#1A5CFF; --m600:#0047FF; --m700:#0038CC; --noche:#020A26;
+  --bg:#F2F3F6; --card:#FFFFFF; --card-2:#FAFAFB; --ink:#0A0A0A; --ink-2:#3A3A3F; --muted:#6E6E73;
+  --line:rgba(10,10,10,.07); --line-2:rgba(10,10,10,.11); --input:rgba(10,10,10,.14);
+  --blue:var(--m500); --blue-2:var(--m700); --blue2:var(--m700); --blue-3:var(--m400); --blue-soft:var(--m50);
+  --green:#187A43; --green-soft:#E6F6EC; --amber:#A06200; --amber-soft:#FFF4D6; --red:#C2281D; --red-soft:#FDECEA;
+  --up:var(--m600); --down:#C2281D;
+  --radius:24px; --radius-sm:18px; --r-ctrl:13px;
+  --sombra:0 1px 2px rgba(10,10,10,.05),0 6px 16px -8px rgba(10,10,10,.08),0 24px 48px -28px rgba(10,10,10,.14);
+  --sombra-flot:0 1px 2px rgba(10,10,10,.06),0 12px 32px -12px rgba(10,10,10,.16),0 48px 90px -36px rgba(0,56,204,.28);
+  --realce:inset 0 1px 0 rgba(255,255,255,.9);
+  --shadow:var(--realce),var(--sombra); --shadow-sm:0 1px 2px rgba(10,10,10,.05),0 4px 12px -6px rgba(10,10,10,.08);
+  --vidrio:rgba(255,255,255,.72);
+  --ease:cubic-bezier(.16,1,.3,1);
+  --foco:0 0 0 4px rgba(26,92,255,.16);
+  grid-template-columns:284px minmax(0,1fr);
+  font-family:var(--sans); font-feature-settings:"cv11","ss01"; letter-spacing:-.006em; color:var(--ink);
+  background:
+    radial-gradient(900px 520px at 100% -8%, rgba(26,92,255,.10), transparent 62%),
+    radial-gradient(760px 460px at -8% 108%, rgba(26,92,255,.06), transparent 60%),
+    var(--bg);
+}
+.adm.neo, .adm.neo *{font-family:var(--sans)}
+.adm.neo ::selection{background:var(--m500);color:#fff}
+.adm.neo :focus-visible{outline:2px solid var(--m500);outline-offset:2px}
+.adm.neo .cifra,.adm.neo .big,.adm.neo .num,.adm.neo td,.adm.neo .pb-total,.adm.neo .pb-time{font-variant-numeric:tabular-nums}
+
+/* ---------- 2. BARRA LATERAL (cápsula de vidrio) ---------- */
+.adm.neo .sb{
+  position:sticky; top:12px; height:calc(100vh - 24px); margin:12px 0 12px 12px; padding:16px 12px 12px;
+  background:var(--vidrio); backdrop-filter:saturate(1.6) blur(18px); -webkit-backdrop-filter:saturate(1.6) blur(18px);
+  border:1px solid rgba(255,255,255,.6); border-radius:26px; box-shadow:var(--realce),var(--sombra);
+  display:flex; flex-direction:column; gap:6px; overflow:hidden;
+}
+.adm.neo .sb-cab{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 4px 8px}
+.adm.neo .sb .brand{display:flex;align-items:center;gap:10px;padding:0;font-size:16px;font-weight:700;letter-spacing:-.02em;min-width:0}
+.adm.neo .sb .brand b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adm.neo .sb .brand .mk-img{width:36px;height:36px;border-radius:11px;object-fit:cover;flex:none;background:#fff;box-shadow:0 0 0 1px var(--line),0 6px 14px -6px rgba(10,10,10,.35)}
+.adm.neo .sb-plegar{width:30px;height:30px;border-radius:9px;border:0;background:transparent;color:var(--muted);display:grid;place-items:center;cursor:pointer;flex:none}
+.adm.neo .sb-plegar:hover{background:rgba(10,10,10,.05);color:var(--ink)}
+.adm.neo .sb .search{display:flex;align-items:center;gap:9px;width:100%;margin:0 0 4px;padding:10px 12px;border-radius:var(--r-ctrl);
+  background:rgba(255,255,255,.75);border:1px solid var(--line);color:var(--muted);font-size:13.5px;cursor:pointer;text-align:left;box-shadow:var(--realce)}
+.adm.neo .sb .search:hover{border-color:var(--line-2);color:var(--ink-2)}
+.adm.neo .sb .search .kbd{margin-left:auto;font-family:var(--mono);font-size:10.5px;font-weight:600;color:var(--muted);background:var(--card);border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:1px 6px}
+.adm.neo .sb-nav{flex:1;overflow-y:auto;overflow-x:hidden;margin:0 -4px;padding:0 4px;scrollbar-width:none}
+.adm.neo .sb-nav::-webkit-scrollbar{display:none}
+.adm.neo .sb .seclabel{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:14px 10px 6px;white-space:nowrap}
+.adm.neo .sb .nav{display:flex;flex-direction:column;align-items:stretch;gap:2px;margin:0;background:none;box-shadow:none;border:0;padding:0;border-radius:0}
+.adm.neo .sb a.item{display:flex;align-items:center;gap:11px;padding:6px 8px 6px 6px;border-radius:14px;color:var(--ink-2);font-weight:500;font-size:14px;
+  background:transparent !important;box-shadow:none !important;transition:background .2s var(--ease),color .2s;width:auto;justify-content:flex-start}
+.adm.neo .sb a.item:hover{background:rgba(10,10,10,.045) !important;color:var(--ink)}
+.adm.neo .sb-ico{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;flex:none;color:#7C7C83;transition:background .2s,color .2s,box-shadow .2s}
+.adm.neo .sb a.item svg{color:inherit}
+.adm.neo .sb a.item.on{color:var(--ink) !important;font-weight:650;background:var(--card) !important;box-shadow:var(--realce),0 1px 2px rgba(10,10,10,.06),0 6px 14px -8px rgba(10,10,10,.18) !important}
+.adm.neo .sb a.item.on .sb-ico{color:#fff;background:linear-gradient(180deg,var(--m500),var(--m700));box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 6px 16px -6px rgba(0,71,255,.7)}
+.adm.neo .sb-txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adm.neo .sb-neo{margin-left:auto;display:grid;place-items:center;opacity:.9}
+.adm.neo .sb-pie{display:grid;gap:8px;padding-top:8px;border-top:1px solid var(--line)}
+.adm.neo .neo-tarjeta{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:18px;color:#fff;text-decoration:none;position:relative;overflow:hidden;
+  background:radial-gradient(120% 120% at 0% 0%,rgba(79,127,255,.35),transparent 55%),linear-gradient(160deg,#0B1640,#020A26);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 14px 28px -14px rgba(2,10,38,.7)}
+.adm.neo .neo-tarjeta::after{content:"";position:absolute;inset:0;background:radial-gradient(rgba(255,255,255,.10) 1px,transparent 1.4px) 0 0/10px 10px;
+  -webkit-mask-image:linear-gradient(90deg,transparent 30%,#000);mask-image:linear-gradient(90deg,transparent 30%,#000);pointer-events:none}
+.adm.neo .neo-tarjeta .neo-cara{color:#8FB2FF;flex:none}
+.adm.neo .neo-tarjeta-txt{display:grid;gap:1px;min-width:0;position:relative;z-index:1}
+.adm.neo .neo-tarjeta-txt b{font-size:14px;font-weight:650;letter-spacing:-.01em}
+.adm.neo .neo-tarjeta .neo-vivo{color:#B9CCFF}
+.adm.neo .sb-tienda{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:12px;color:var(--ink-2);font-size:13px;font-weight:600}
+.adm.neo .sb-tienda:hover{background:rgba(10,10,10,.045);color:var(--ink)}
+.adm.neo .sb-tienda svg:last-child{margin-left:auto;opacity:.6}
+.adm.neo .sb .promo{display:none}
+
+/* Riel colapsado (92px) */
+html[data-riel="1"] .adm.neo{grid-template-columns:104px minmax(0,1fr)}
+html[data-riel="1"] .adm.neo .sb{padding:16px 10px 12px;align-items:center}
+html[data-riel="1"] .adm.neo .sb-cab{flex-direction:column;padding:0 0 6px}
+html[data-riel="1"] .adm.neo .sb .brand b,
+html[data-riel="1"] .adm.neo .sb-txt,
+html[data-riel="1"] .adm.neo .sb .search span,
+html[data-riel="1"] .adm.neo .sb-neo,
+html[data-riel="1"] .adm.neo .neo-tarjeta-txt{display:none}
+html[data-riel="1"] .adm.neo .sb .search{width:46px;justify-content:center;padding:10px}
+html[data-riel="1"] .adm.neo .sb .seclabel{font-size:0;padding:10px 0 4px;text-align:center}
+html[data-riel="1"] .adm.neo .sb .seclabel::after{content:"";display:block;width:18px;height:1px;margin:0 auto;background:var(--line-2)}
+html[data-riel="1"] .adm.neo .sb a.item{justify-content:center;padding:4px}
+html[data-riel="1"] .adm.neo .sb-ico{width:44px;height:44px;border-radius:15px}
+html[data-riel="1"] .adm.neo .sb a.item.on{background:transparent !important;box-shadow:none !important}
+html[data-riel="1"] .adm.neo .neo-tarjeta{padding:8px;justify-content:center;width:56px}
+html[data-riel="1"] .adm.neo .sb-tienda{justify-content:center;width:46px;padding:10px}
+
+/* ---------- 3. BARRA SUPERIOR ---------- */
+.adm.neo .main{min-width:0}
+.adm.neo .main > .top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:16px;min-height:68px;padding:12px 28px 8px;background:transparent;border:0}
+.adm.neo .migas{display:flex;align-items:center;gap:7px;font-size:13.5px;color:var(--muted);min-width:0;white-space:nowrap}
+.adm.neo .migas svg{opacity:.55;flex:none}
+.adm.neo .migas b{color:var(--ink);font-weight:600}
+.adm.neo .migas a:hover{color:var(--ink)}
+.adm.neo .main > .top .tr{margin-left:auto;display:flex;align-items:center;gap:8px}
+.adm.neo .t-buscar{display:flex;align-items:center;gap:9px;height:44px;width:clamp(220px,26vw,360px);padding:0 10px 0 14px;border-radius:14px;
+  border:1px solid var(--line);background:var(--vidrio);backdrop-filter:blur(14px);color:var(--muted);font-size:13.5px;cursor:pointer;box-shadow:var(--realce),0 1px 2px rgba(10,10,10,.04)}
+.adm.neo .t-buscar:hover{border-color:var(--line-2);color:var(--ink-2)}
+.adm.neo .t-buscar kbd{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--card);border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:1px 6px}
+.adm.neo .main > .top .ticon,.adm.neo .main > .top .tbtn{width:44px;height:44px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--ink-2);
+  display:grid;place-items:center;box-shadow:var(--realce),0 1px 2px rgba(10,10,10,.04);transition:transform .2s var(--ease),border-color .2s}
+.adm.neo .main > .top .ticon:hover,.adm.neo .main > .top .tbtn:hover{transform:translateY(-1px);border-color:var(--line-2);color:var(--ink)}
+.adm.neo .main > .top .ticon.danger:hover{color:var(--red)}
+.adm.neo .marca-tag{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px;border-radius:999px;font-size:12px;font-weight:600;letter-spacing:0;
+  background:var(--m50);color:var(--m700);border:1px solid rgba(26,92,255,.18);text-transform:none}
+.adm.neo .marca-tag i{width:6px;height:6px;border-radius:50%;background:var(--m500);box-shadow:0 0 0 3px rgba(26,92,255,.15)}
+.adm.neo .marca-tag.antic{background:var(--amber-soft);color:var(--amber);border-color:rgba(160,98,0,.2)}
+.adm.neo .marca-tag.antic i{background:var(--amber);box-shadow:0 0 0 3px rgba(160,98,0,.15)}
+.adm.neo .main > .top .mepill{display:flex;align-items:center;gap:9px;height:44px;padding:0 14px 0 5px;border-radius:999px;background:var(--card);border:1px solid var(--line);box-shadow:var(--realce),0 1px 2px rgba(10,10,10,.04)}
+.adm.neo .main > .top .mepill .av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:12.5px;font-weight:700;color:#fff;background:linear-gradient(180deg,#23252C,#0A0A0A)}
+.adm.neo .main > .top .mepill b{font-size:13px;font-weight:600;line-height:1.1}
+.adm.neo .main > .top .mepill small{font-size:11px;color:var(--muted)}
+.adm.neo .content{max-width:1320px;padding:12px 28px 48px}
+/* El .top de las tarjetas (CRM, KPI) NO es la barra superior: se neutraliza lo heredado de admin.css */
+.adm.neo .crm-card .top{position:static;min-height:0;padding:0;background:none;gap:12px}
+
+/* ---------- 4. ENCABEZADOS DE PÁGINA ---------- */
+.adm.neo .page-head,.adm.neo .pagehead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:6px 0 22px}
+.adm.neo .page-head h1,.adm.neo .pagehead h1{font-size:32px;font-weight:600;letter-spacing:-.035em;line-height:1.06;color:var(--ink);
+  background:none !important;-webkit-text-fill-color:currentColor !important}
+.adm.neo .page-head p,.adm.neo .pagehead p,.adm.neo .pagehead .sub{font-size:14px;color:var(--muted);margin-top:6px}
+.adm.neo .antetitulo{display:block;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--m700);margin-bottom:8px}
+
+/* ---------- 5. SUPERFICIES ---------- */
+.adm.neo .card,.adm.neo .panel,.adm.neo .tablewrap,.adm.neo .sumc,.adm.neo .pb-kpi,.adm.neo .crm-stage,.adm.neo .crm-card,.adm.neo .od-card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--realce),var(--sombra)}
+.adm.neo .panel,.adm.neo .card{padding:22px 24px}
+.adm.neo .panel .ph h3,.adm.neo .tablewrap .ph h3,.adm.neo .card-h .t{font-size:16px;font-weight:600;letter-spacing:-.02em}
+.adm.neo .panel .ph .sub{font-size:13px;color:var(--muted)}
+.adm.neo .pb-row,.adm.neo .wrow{background:var(--card);border-color:var(--line);border-radius:16px;box-shadow:none}
+.adm.neo .pbctrl-dl{display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:8px 14px;border-radius:var(--r-ctrl);font-weight:600;font-size:13.5px;
+  color:var(--ink);background:var(--card);border:1px solid var(--line-2);box-shadow:var(--realce),0 1px 2px rgba(10,10,10,.05);cursor:pointer}
+.adm.neo .pbctrl-dl:hover:not(:disabled){border-color:rgba(26,92,255,.35);color:var(--m700)}
+.adm.neo .pb-copybtn{width:34px;height:34px;display:inline-grid;place-items:center;border-radius:10px;border:1px solid var(--line-2);background:var(--card);color:var(--ink-2);cursor:pointer}
+.adm.neo .pb-copybtn:hover{color:var(--m700);border-color:rgba(26,92,255,.35)}
+.adm.neo .pb-row:hover,.adm.neo .wrow:hover{border-color:rgba(26,92,255,.28);box-shadow:0 1px 2px rgba(10,10,10,.04),0 8px 20px -14px rgba(0,56,204,.35)}
+.adm.neo .pb-row.sel{border-color:var(--m500);background:var(--m50)}
+
+/* KPI */
+.adm.neo .sumgrid{gap:16px}
+@media (min-width:1180px){.adm.neo .sumgrid{grid-template-columns:repeat(3,minmax(0,1fr)) !important}}
+.adm.neo .sumc{padding:20px 22px;display:flex;flex-direction:column;transition:transform .25s var(--ease),box-shadow .25s var(--ease)}
+.adm.neo .sumc:hover{transform:translateY(-2px)}
+.adm.neo .sumc .top{display:flex;align-items:center;gap:12px;margin-bottom:18px;min-height:0;padding:0;position:static;background:none}
+.adm.neo .sumc .ic{width:40px;height:40px;border-radius:12px;flex:none;box-shadow:var(--realce)}
+.adm.neo .sumc .lbl{font-size:13.5px;font-weight:600;color:var(--ink-2);line-height:1.25}
+.adm.neo .sumc .lbl small{font-size:12px;font-weight:450;color:var(--muted);margin-top:2px}
+.adm.neo .sumc .big{font-size:32px;font-weight:600;letter-spacing:-.04em;line-height:1.05;margin-top:auto}
+.adm.neo .sumc .foot{margin-top:16px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;font-weight:600;color:var(--m700)}
+/* el protagonista: grafito con rejilla de puntos */
+.adm.neo .sumc.hot{color:#fff;border:0;position:relative;overflow:hidden;border-radius:28px !important;
+  background:radial-gradient(120% 90% at 100% 0%,rgba(26,92,255,.45),transparent 55%),linear-gradient(160deg,#1B1D24,#0B0C10) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 24px 48px -24px rgba(10,10,10,.55) !important}
+.adm.neo .sumc.hot::before{content:"";position:absolute;inset:0;width:auto;height:auto;border-radius:0;background:radial-gradient(rgba(255,255,255,.09) 1px,transparent 1.4px) 0 0/12px 12px;
+  -webkit-mask-image:linear-gradient(200deg,#000 10%,transparent 70%);mask-image:linear-gradient(200deg,#000 10%,transparent 70%);pointer-events:none}
+.adm.neo .sumc.hot > *{position:relative}
+.adm.neo .sumc.hot .ic{background:rgba(255,255,255,.1) !important;color:#fff !important;box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}
+.adm.neo .sumc.hot .lbl{color:#fff !important}
+.adm.neo .sumc.hot .lbl small{color:rgba(255,255,255,.62) !important}
+.adm.neo .sumc.hot .foot{border-color:rgba(255,255,255,.12);color:#B9CCFF !important;-webkit-text-fill-color:#B9CCFF}
+
+/* números «metálicos» → tinta limpia */
+.adm.neo .pb-kpi .num,.adm.neo .crm-stage .n,.adm.neo .kpi-big,.adm.neo .chart .amt{background:none !important;-webkit-text-fill-color:currentColor !important;color:var(--ink);letter-spacing:-.04em;font-weight:600}
+.adm.neo .pb-kpi{padding:16px 18px}
+.adm.neo .pb-kpi::after{width:3px;border-radius:0 3px 3px 0;top:14px;bottom:14px}
+
+/* ---------- 6. BOTONES ---------- */
+.adm.neo .btn,.adm.neo .primary,.adm.neo .pb-btn.bl,.adm.neo .pb-btn.gp,.adm.neo .plat.blue,.adm.neo .od-btn.primary{
+  min-height:40px;padding:9px 16px;border-radius:var(--r-ctrl) !important;font-weight:600 !important;font-size:13.5px;color:#fff !important;border:0 !important;
+  background:linear-gradient(180deg,#4F7FFF 0%,#1A5CFF 45%,#0047FF 100%) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -1px 0 rgba(0,0,0,.18),0 8px 20px -8px rgba(0,56,204,.55) !important;
+  transition:transform .2s var(--ease),filter .2s !important}
+.adm.neo .btn:hover,.adm.neo .primary:hover,.adm.neo .pb-btn.bl:hover,.adm.neo .pb-btn.gp:hover,.adm.neo .od-btn.primary:hover{transform:translateY(-1px);filter:brightness(1.05)}
+.adm.neo .btn:active,.adm.neo .primary:active,.adm.neo .pb-btn:active,.adm.neo .od-btn:active{transform:scale(.98)}
+.adm.neo .btn.soft,.adm.neo .chip-btn,.adm.neo .pb-btn.dk,.adm.neo .plat:not(.blue),.adm.neo .od-btn:not(.primary):not(.ghost):not(.danger){
+  min-height:40px;padding:8px 14px;border-radius:var(--r-ctrl) !important;font-weight:600 !important;font-size:13.5px;
+  color:var(--ink) !important;background:var(--card) !important;border:1px solid var(--line-2) !important;box-shadow:var(--realce),0 1px 2px rgba(10,10,10,.05) !important}
+.adm.neo .btn.soft:hover,.adm.neo .chip-btn:hover,.adm.neo .pb-btn.dk:hover{border-color:rgba(26,92,255,.35) !important;color:var(--m700) !important}
+.adm.neo .btn:disabled,.adm.neo .primary:disabled{opacity:.5;transform:none;filter:none}
+
+/* ---------- 7. CONTROLES ---------- */
+.adm.neo input:not([type=checkbox]):not([type=radio]):not([type=range]),.adm.neo select,.adm.neo textarea{
+  border-radius:var(--r-ctrl);border:1px solid var(--input);background:var(--card);color:var(--ink);font-size:14px;transition:border-color .2s,box-shadow .2s}
+.adm.neo input:not([type=checkbox]):not([type=radio]):focus,.adm.neo select:focus,.adm.neo textarea:focus{border-color:var(--m500);box-shadow:var(--foco);outline:none}
+.adm.neo .lc input,.adm.neo .lc textarea,.adm.neo .lc select{border-color:var(--line)}
+.adm.neo .lc .lc-buscar input{border:0 !important;box-shadow:none !important;background:transparent !important;padding:8px 0}
+.adm.neo .lc .lc-comp textarea{border-color:transparent;background:var(--bg)}
+/* Inputs sueltos del panel (buscadores y selects con clases heredadas) */
+.adm.neo .cobro-monto,.adm.neo select.field,.adm.neo .pb-search,.adm.neo .pbctrl-search,.adm.neo .pbctrl-canal,.adm.neo .crm-input{min-height:40px;padding:8px 12px !important;border:1px solid var(--input) !important;border-radius:var(--r-ctrl) !important;background:var(--card) !important;font-size:14px !important}
+.adm.neo .field label,.adm.neo .od-field label{font-size:12.5px;font-weight:600;color:var(--ink-2);letter-spacing:0;text-transform:none}
+.adm.neo .seg,.adm.neo .pb-seg,.adm.neo .chart .toggle,.adm.neo .od-pago{background:rgba(10,10,10,.045);border:0;border-radius:14px;padding:4px;box-shadow:inset 0 1px 2px rgba(10,10,10,.06)}
+.adm.neo .pb-seg button.on,.adm.neo .seg .on,.adm.neo .od-pago button.on{background:var(--card);color:var(--ink);box-shadow:var(--realce),0 1px 3px rgba(10,10,10,.10)}
+.adm.neo .chart .toggle span.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(10,10,10,.10)}
+.adm.neo .pbflow-tab{border-radius:12px;font-weight:600}
+.adm.neo .pbflow-tab.on{border-color:var(--line);box-shadow:var(--realce),0 1px 3px rgba(10,10,10,.08)}
+.adm.neo .pbflow-tab.on .n{background:var(--m50);color:var(--m700)}
+.adm.neo .pb-chip{border-radius:999px;border:1px solid var(--line-2);font-weight:600}
+
+/* ---------- 8. CHIPS / ESTADOS ---------- */
+.adm.neo .tag,.adm.neo .badge,.adm.neo .stat,.adm.neo .pb-pill{border-radius:999px;font-size:11.5px;font-weight:600;padding:3px 10px;letter-spacing:0}
+.adm.neo .tag.ok,.adm.neo .stat.ok,.adm.neo .b-done{background:var(--green-soft);color:var(--green)}
+.adm.neo .tag.pend,.adm.neo .stat.pend,.adm.neo .b-ship{background:var(--amber-soft);color:var(--amber)}
+.adm.neo .tag.fail,.adm.neo .stat.fail{background:var(--red-soft);color:var(--red)}
+.adm.neo .tag.blue,.adm.neo .stat.blue,.adm.neo .b-ok,.adm.neo .b-new{background:var(--m50);color:var(--m700)}
+
+/* ---------- 9. TABLAS ---------- */
+.adm.neo table th,.adm.neo .pb-headrow{font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.adm.neo table td{font-size:13.5px;color:var(--ink-2);border-top-color:var(--line)}
+.adm.neo table tr:hover td{background:rgba(26,92,255,.035)}
+
+/* ---------- 10. VACÍOS ---------- */
+.adm.neo .empty,.adm.neo .empty2{position:relative;border-radius:18px;background:var(--card-2);box-shadow:inset 0 1px 2px rgba(10,10,10,.05),inset 0 0 0 1px rgba(10,10,10,.04);padding:44px 20px}
+.adm.neo .empty::before,.adm.neo .empty2::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:radial-gradient(rgba(10,10,10,.09) 1px,transparent 1.4px) 0 0/12px 12px;-webkit-mask-image:radial-gradient(closest-side,#000,transparent);mask-image:radial-gradient(closest-side,#000,transparent)}
+.adm.neo .empty > *,.adm.neo .empty2 > *{position:relative}
+.adm.neo .empty .ico,.adm.neo .empty2 .ico{background:var(--card);color:var(--m500);box-shadow:var(--realce),var(--sombra)}
+
+/* ---------- 11. MODALES / DRAWERS / ⌘K ---------- */
+.adm.neo .modal,.adm.neo .drawer,.adm.neo .pb-modal,.adm.neo .crm-drawer,.adm.neo .cmdk,.adm.neo .lc-modal{border-radius:24px;border:1px solid var(--line);box-shadow:var(--sombra-flot)}
+.cmdk-ov{backdrop-filter:blur(6px)}
+
+/* ---------- 12. AVISOS ---------- */
+.adm.neo .demo-banner{background:var(--card);color:var(--ink-2);border:1px dashed var(--line-2);border-radius:14px;font-weight:500}
+.adm.neo .marca-banner{border-radius:16px}
+
+/* ---------- 13. NEO AI ---------- */
+.neo-cara{display:inline-grid;place-items:center;flex:none;color:var(--m500,#1A5CFF)}
+.neo-cara svg{display:block;fill:currentColor}
+.neo-cara .neo-ojos{transform-origin:50% 44%;animation:neo-parpadeo 4.5s infinite}
+@keyframes neo-parpadeo{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.12)}}
+.neo-vivo{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:500}
+.neo-vivo i{width:7px;height:7px;border-radius:50%;background:#22C55E;box-shadow:0 0 0 0 rgba(34,197,94,.6);animation:neo-latido 1.8s infinite}
+@keyframes neo-latido{0%{box-shadow:0 0 0 0 rgba(34,197,94,.55)}70%{box-shadow:0 0 0 7px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+.neo-firma{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px 0 3px;border-radius:999px;font-size:11px;font-weight:650;color:var(--m700,#0038CC);
+  background:var(--card,#fff);box-shadow:0 0 0 1px rgba(26,92,255,.22)}
+.neo-escribe{display:flex;align-items:center;gap:8px;margin:6px 0 2px}
+.neo-escribe-burbuja{display:inline-flex;gap:4px;padding:10px 12px;border-radius:16px 16px 16px 6px;background:linear-gradient(180deg,#EEF3FF,#E5ECFF)}
+.neo-escribe-burbuja i{width:6px;height:6px;border-radius:50%;background:var(--m500,#1A5CFF);opacity:.5;animation:neo-salta 1.1s ease-in-out infinite}
+.neo-escribe-burbuja i:nth-child(2){animation-delay:.14s}
+.neo-escribe-burbuja i:nth-child(3){animation-delay:.28s}
+@keyframes neo-salta{0%,60%,100%{transform:translateY(0);opacity:.45}30%{transform:translateY(-4px);opacity:1}}
+.neo-escribe-txt{font-size:12px;color:var(--muted,#6E6E73)}
+.neo-powered{display:flex;align-items:center;justify-content:center;gap:6px;margin:0;font-size:11px;color:var(--muted,#6E6E73)}
+.neo-powered b{color:var(--ink,#0A0A0A);font-weight:650}
+
+/* Rango de fechas del dashboard */
+.adm.neo .dash-rbtn{min-height:36px;border-radius:11px;font-weight:600;background:var(--card);color:var(--ink-2);border:1px solid var(--line-2);box-shadow:var(--realce),0 1px 2px rgba(10,10,10,.04)}
+.adm.neo .dash-rbtn:hover{color:var(--ink);border-color:rgba(26,92,255,.35)}
+.adm.neo .dash-rbtn.on{color:#fff;border-color:transparent;background:linear-gradient(180deg,#4F7FFF,#1A5CFF 45%,#0047FF);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 6px 14px -8px rgba(0,56,204,.6)}
+.adm.neo .dash-rbtn.apply:disabled{opacity:.5}
+.adm.neo .dash-custom input{min-height:36px;padding:6px 10px}
+
+/* Franja Neo AI (dashboard) */
+.adm.neo .neo-franja{display:flex;align-items:center;gap:16px;margin:0 0 18px;padding:14px 18px;border-radius:24px;color:#fff;text-decoration:none;position:relative;overflow:hidden;
+  background:radial-gradient(80% 140% at 0% 0%,rgba(79,127,255,.38),transparent 60%),linear-gradient(160deg,#0B1640,#020A26);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 24px 48px -28px rgba(2,10,38,.8);transition:transform .25s var(--ease)}
+.adm.neo .neo-franja:hover{transform:translateY(-2px)}
+.adm.neo .neo-franja::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(rgba(255,255,255,.09) 1px,transparent 1.4px) 0 0/12px 12px;
+  -webkit-mask-image:linear-gradient(90deg,transparent 35%,#000);mask-image:linear-gradient(90deg,transparent 35%,#000)}
+.adm.neo .neo-franja > *{position:relative;z-index:1}
+.adm.neo .neo-franja-cara{width:48px;height:48px;border-radius:15px;display:grid;place-items:center;background:rgba(255,255,255,.07);box-shadow:inset 0 1px 0 rgba(255,255,255,.12);flex:none}
+.adm.neo .neo-franja-cara .neo-cara{color:#8FB2FF}
+.adm.neo .neo-franja-txt{display:grid;gap:2px;min-width:0;flex:1}
+.adm.neo .neo-franja-txt b{font-size:15px;font-weight:600;letter-spacing:-.015em}
+.adm.neo .neo-franja-txt small{font-size:12.5px;color:#B9CCFF;font-variant-numeric:tabular-nums}
+.adm.neo .neo-franja-vivo{color:#B9CCFF}
+.adm.neo .neo-franja-ir{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:12px;font-size:13px;font-weight:600;
+  background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+@media (max-width:900px){.adm.neo .neo-franja-vivo,.adm.neo .neo-franja-ir{display:none}}
+
+/* ---------- 14. MOVIMIENTO ---------- */
+.adm.neo .content > *{animation:neo-entrar .42s var(--ease) both}
+.adm.neo .content > *:nth-child(2){animation-delay:.06s}
+.adm.neo .content > *:nth-child(3){animation-delay:.12s}
+.adm.neo .content > *:nth-child(4){animation-delay:.18s}
+.adm.neo .sumgrid > *{animation:neo-entrar .42s var(--ease) both}
+.adm.neo .sumgrid > *:nth-child(2){animation-delay:.06s}
+.adm.neo .sumgrid > *:nth-child(3){animation-delay:.12s}
+.adm.neo .sumgrid > *:nth-child(4){animation-delay:.18s}
+.adm.neo .sumgrid > *:nth-child(5){animation-delay:.24s}
+.adm.neo .sumgrid > *:nth-child(6){animation-delay:.30s}
+@keyframes neo-entrar{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){
+  .adm.neo *,.adm.neo *::before,.adm.neo *::after{animation:none !important;transition:none !important}
+  .neo-cara .neo-ojos,.neo-vivo i,.neo-escribe-burbuja i{animation:none !important}
+}
+
+/* ---------- 15. OSCURO (azul noche, nunca negro) ---------- */
+[data-theme="dark"] .adm.neo{
+  --bg:#030920; --card:#0A1433; --card-2:#0E1A40; --ink:#EEF2FF; --ink-2:#C5CDE6; --muted:#A3AECF;
+  --line:rgba(255,255,255,.08); --line-2:rgba(255,255,255,.14); --input:rgba(255,255,255,.16);
+  --m50:#13214D; --blue-soft:#13214D; --m700:#8FB2FF;
+  --green-soft:#0F2A22; --green:#4ADE80; --amber-soft:#2A2110; --amber:#FBBF24; --red-soft:#2E1418; --red:#F87171;
+  --vidrio:rgba(10,20,51,.72); --realce:inset 0 1px 0 rgba(255,255,255,.05);
+  --sombra:0 1px 2px rgba(0,0,0,.4),0 12px 32px -16px rgba(0,0,0,.6);
+  background:radial-gradient(900px 520px at 100% -8%,rgba(26,92,255,.20),transparent 62%),radial-gradient(760px 460px at -8% 108%,rgba(26,92,255,.10),transparent 60%),var(--bg);
+}
+[data-theme="dark"] .adm.neo .sb{border-color:rgba(255,255,255,.06)}
+[data-theme="dark"] .adm.neo .sb .search,[data-theme="dark"] .adm.neo .t-buscar{background:rgba(10,20,51,.7)}
+[data-theme="dark"] .adm.neo .sb a.item:hover,[data-theme="dark"] .adm.neo .sb-tienda:hover{background:rgba(255,255,255,.05) !important}
+[data-theme="dark"] .adm.neo .sb .seclabel{color:#7F8BB3}
+[data-theme="dark"] .adm.neo .main > .top .mepill .av{background:linear-gradient(180deg,#4F7FFF,#0038CC)}
+[data-theme="dark"] .neo-escribe-burbuja{background:#13214D}
+[data-theme="dark"] .adm.neo .seg,[data-theme="dark"] .adm.neo .pb-seg,[data-theme="dark"] .adm.neo .chart .toggle{background:rgba(255,255,255,.05)}
+
+[data-theme="dark"] .adm.neo .card,[data-theme="dark"] .adm.neo .sumc:not(.hot),[data-theme="dark"] .adm.neo .panel,[data-theme="dark"] .adm.neo .pb-row,[data-theme="dark"] .adm.neo .pb-kpi,
+[data-theme="dark"] .adm.neo .crm-card,[data-theme="dark"] .adm.neo .crm-stage,[data-theme="dark"] .adm.neo .pb-modal,[data-theme="dark"] .adm.neo .crm-drawer,[data-theme="dark"] .adm.neo .cmdk,[data-theme="dark"] .adm.neo .od-card{
+  background:var(--card) !important;background-image:none !important;border-color:var(--line) !important}
+
+/* ---------- 16. RESPONSIVE ---------- */
+@media (max-width:1100px){
+  .adm.neo{grid-template-columns:104px minmax(0,1fr)}
+  .adm.neo .sb a.item .sb-ico{display:grid}
+  .adm.neo .sb{padding:16px 10px 12px;align-items:center}
+  .adm.neo .sb-cab{flex-direction:column}
+  .adm.neo .sb .brand b,.adm.neo .sb-txt,.adm.neo .sb .search span,.adm.neo .sb-neo,.adm.neo .neo-tarjeta-txt,.adm.neo .sb-plegar{display:none}
+  .adm.neo .sb .search{width:46px;justify-content:center;padding:10px}
+  .adm.neo .sb .seclabel{font-size:0;padding:10px 0 4px}
+  .adm.neo .sb a.item{justify-content:center;padding:4px}
+  .adm.neo .sb-ico{width:44px;height:44px;border-radius:15px}
+  .adm.neo .sb a.item.on{background:transparent !important;box-shadow:none !important}
+  .adm.neo .neo-tarjeta{padding:8px;justify-content:center;width:56px}
+  .adm.neo .sb-tienda{justify-content:center;width:46px;padding:10px}
+  .adm.neo .t-buscar span{display:none}
+  .adm.neo .t-buscar{width:44px;padding:0;justify-content:center}
+  .adm.neo .t-buscar kbd{display:none}
+}
+@media (max-width:760px){
+  .adm.neo,html[data-riel="1"] .adm.neo{grid-template-columns:1fr}
+  .adm.neo .sb{position:fixed;left:10px;right:10px;bottom:10px;top:auto;height:64px;margin:0;z-index:50;flex-direction:row;padding:6px 8px;border-radius:22px;align-items:center;overflow:visible}
+  .adm.neo .sb-cab,.adm.neo .sb .search,.adm.neo .sb-pie,.adm.neo .sb .seclabel{display:none}
+  .adm.neo .sb-nav{display:flex;flex:1;gap:4px;overflow-x:auto;margin:0;padding:0;align-items:center}
+  .adm.neo .sb-ico{width:44px;height:44px;border-radius:14px}
+  .adm.neo .sb-txt,.adm.neo .sb-neo{display:none}
+  .adm.neo .sb-grupo,.adm.neo .sb .nav{display:contents}
+  .adm.neo .sb a.item{flex:none;padding:2px}
+  .adm.neo .content{padding:8px 14px 110px}
+  .adm.neo .main > .top{padding:10px 14px 4px}
+  .adm.neo .migas span,.adm.neo .migas svg:first-of-type,.adm.neo .marca-tag,.adm.neo .mepill div:last-child{display:none}
+  .adm.neo .page-head h1,.adm.neo .pagehead h1{font-size:26px}
+}

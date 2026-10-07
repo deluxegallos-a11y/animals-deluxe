@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { cambiarEtapaCliente, guardarNotasCliente, crearClienteManual, importarClientes, crearCuponSegmento, enviarWhatsAppSegmento, setProductosCliente } from "../actions";
+import { soloFechaCO } from "@/lib/fecha";
 
 type Prod = { slug: string; name: string };
 export type BoardCustomer = {
@@ -29,7 +30,12 @@ const CHAN: Record<string, { label: string; color: string; ic: string }> = {
   web: { label: "Web", color: "#7A3CFF", ic: "🌐" }, manual: { label: "Manual", color: "#8A93A5", ic: "✍️" }, import: { label: "Importado", color: "#8A93A5", ic: "📥" },
 };
 const chan = (c: string) => CHAN[c] || { label: c || "—", color: "#8A93A5", ic: "•" };
-const initials = (n: string) => (n || "?").trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
+// Por código de punto (Array.from), no por unidad UTF-16: un nombre con emoji
+// partía el par sustituto y el servidor y el navegador pintaban distinto.
+const initials = (n: string) => {
+  const limpio = (n || "").replace(/[^\p{L}\p{N}\s]/gu, "").trim();
+  return limpio.split(/\s+/).slice(0, 2).map((w) => Array.from(w)[0] || "").join("").toUpperCase() || "👤";
+};
 const avColor = (n: string) => { let h = 0; for (const ch of n || "x") h = (h * 31 + ch.charCodeAt(0)) % 360; return `linear-gradient(135deg,hsl(${h} 70% 58%),hsl(${(h + 40) % 360} 70% 48%))`; };
 async function copy(t: string) { try { await navigator.clipboard.writeText(t); return true; } catch { return false; } }
 
@@ -229,7 +235,7 @@ function Drawer({ c, catalog, nameOf, onClose, onToast }: { c: BoardCustomer; ca
             <div className="pb-kv"><span className="k">Pedidos</span><span className="val">{c.numPedidos}</span></div>
             <div className="pb-kv"><span className="k">Total gastado</span><span className="val">{COP(c.totalGastado)}</span></div>
             <div className="pb-kv"><span className="k">Interacciones bot</span><span className="val">{c.interacciones}</span></div>
-            <div className="pb-kv"><span className="k">Última compra</span><span className="val">{c.ultimaCompra ? new Date(c.ultimaCompra).toLocaleDateString("es-CO") : "—"}</span></div>
+            <div className="pb-kv"><span className="k">Última compra</span><span className="val">{c.ultimaCompra ? soloFechaCO(c.ultimaCompra) : "—"}</span></div>
           </div>
 
           {c.compradosPedidos.length ? (
