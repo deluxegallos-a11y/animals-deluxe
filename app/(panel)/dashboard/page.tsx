@@ -1,5 +1,7 @@
 import { getDashboard, getAnalytics, rangoFechas, type DashboardKpis, type Analytics } from "@/lib/queries";
 import { DashboardView } from "@/components/dashboard-view";
+import { getPanelTenantId } from "@/lib/tenant-panel";
+import { resumenWhatsapp, type ResumenWhatsapp } from "@/lib/livechat/resumen";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +20,7 @@ const EST = [
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ range?: string; from?: string; to?: string }> }) {
   const { range = "hoy", from, to } = await searchParams;
-  const { label } = rangoFechas(range, from, to);
+  const { label, from: desde, to: hasta } = rangoFechas(range, from, to);
 
   const dashFb: DashboardKpis = {
     rangoLabel: label, pedidosHoy: 0, pedidosSemana: 0, ventasHoyCop: 0, ingresosCop: 0, aRecaudarCop: 0,
@@ -31,9 +33,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     pedidosWeb: 0, pedidosWhatsapp: 0, pedidosTotal: 0, porFuente: [], ventasPorCanal: [], origenes: [],
   };
 
-  const [d, a] = await Promise.all([
+  const wFb: ResumenWhatsapp = { chats: 0, pedidos: 0, ventasCop: 0, sinResponder: 0, pidenAsesor: 0 };
+  const tid = await getPanelTenantId().catch(() => null);
+  const [d, a, w] = await Promise.all([
     conTope(getDashboard(range, from, to), 12000, dashFb),
     conTope(getAnalytics(), 12000, anaFb),
+    // Misma fuente que los números del Live Chat (lib/livechat/resumen.ts).
+    tid ? conTope(resumenWhatsapp(tid, desde, hasta), 8000, wFb) : Promise.resolve(wFb),
   ]);
-  return <DashboardView d={d} a={a} range={range} from={from} to={to} />;
+  return <DashboardView d={d} a={a} w={w} range={range} from={from} to={to} />;
 }

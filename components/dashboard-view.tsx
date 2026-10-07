@@ -10,6 +10,7 @@ import {
 import { cop } from "@/lib/ai/format";
 import type { Analytics } from "@/lib/queries";
 import { CaraNeo, EnVivo } from "@/components/neo";
+import type { ResumenWhatsapp } from "@/lib/livechat/resumen";
 
 type Dash = {
   rangoLabel: string;
@@ -50,7 +51,7 @@ function Count({ to, fmt }: { to: number; fmt?: (n: number) => string }) {
 
 const ini = (s: string) => (s || "?").trim().charAt(0).toUpperCase();
 
-export function DashboardView({ d, a, range, from, to }: { d: Dash; a: Analytics; range: string; from?: string; to?: string }) {
+export function DashboardView({ d, a, w, range, from, to }: { d: Dash; a: Analytics; w: ResumenWhatsapp; range: string; from?: string; to?: string }) {
   const maxQ = Math.max(1, ...d.topProductos.map((t) => t.cantidad));
   const topBars = d.topProductos.slice(0, 7);
 
@@ -65,15 +66,21 @@ export function DashboardView({ d, a, range, from, to }: { d: Dash; a: Analytics
         <Link href="/pedidos" className="chip-btn"><ShoppingBag size={15} /> Ver pedidos</Link>
       </div>
 
-      {/* Neo AI: lo que vendió la IA por WhatsApp en el rango (dato real de pedidos). */}
+      {/* Neo AI · WhatsApp: los MISMOS números que el Live Chat (lib/livechat/resumen.ts). */}
       <Link href="/livechat" className="neo-franja">
         <span className="neo-franja-cara"><CaraNeo tamano={34} /></span>
         <span className="neo-franja-txt">
-          <b>Neo AI · {d.pedidosWhatsapp} {d.pedidosWhatsapp === 1 ? "pedido" : "pedidos"} por WhatsApp {d.rangoLabel.toLowerCase()}</b>
-          <small>{cop(d.ventasWhatsappCop)} vendidos por el bot · {pct(d.whatsappPct)} de la plata del rango</small>
+          <span className="neo-franja-tit"><b>Neo AI en WhatsApp</b><EnVivo texto="en vivo" className="neo-franja-vivo" /></span>
+          <small>Lo que pasó {d.rangoLabel.toLowerCase()} en el Live Chat</small>
         </span>
-        <EnVivo texto="atendiendo ahora" className="neo-franja-vivo" />
-        <span className="neo-franja-ir">Abrir Live Chat <ArrowRight size={15} /></span>
+        <span className="neo-franja-datos">
+          <span><b>{w.chats.toLocaleString("es-CO")}</b>chats</span>
+          <span><b>{w.pedidos.toLocaleString("es-CO")}</b>pedidos</span>
+          <span><b>{cop(w.ventasCop)}</b>vendido</span>
+          <span className={w.sinResponder ? "alerta" : ""}><b>{w.sinResponder}</b>sin responder</span>
+          <span className={w.pidenAsesor ? "alerta" : ""}><b>{w.pidenAsesor}</b>piden asesor</span>
+        </span>
+        <span className="neo-franja-ir" aria-hidden><ArrowRight size={16} /></span>
       </Link>
 
       {/* Selector de rango de fechas */}

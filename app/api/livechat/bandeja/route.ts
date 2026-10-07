@@ -2,6 +2,8 @@ import type { NextRequest } from "next/server";
 import { NextResponse, after } from "next/server";
 import { contadores, contexto, espaciosVisibles, FILTROS, leerBandeja, SinAcceso, type FiltroBandeja } from "@/lib/livechat/datos";
 import { sincronizarEspacio } from "@/lib/livechat/sync";
+import { resumenWhatsapp } from "@/lib/livechat/resumen";
+import { rangoFechas } from "@/lib/queries";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,15 +25,19 @@ export async function GET(req: NextRequest) {
       forzar: sp.get("forzar") === "1",
       alFondo: (trabajo) => after(trabajo),
     });
-    const [conversaciones, conteo] = await Promise.all([
+    const hoy = rangoFechas("hoy");
+    const [conversaciones, conteo, resumen] = await Promise.all([
       leerBandeja(ctx, espacio.codigo, filtro, (sp.get("q") || "").slice(0, 80)),
       contadores(ctx, espacio.codigo),
+      // Mismos números que el dashboard (rango «Hoy»).
+      ctx.rol === "admin" ? resumenWhatsapp(ctx.tenantId, hoy.from, hoy.to) : Promise.resolve(null),
     ]);
     return NextResponse.json({
       ok: true,
       espacio: espacio.codigo,
       conversaciones,
       contadores: conteo,
+      resumen,
       error: sync && !sync.ok ? (sync as { motivo?: string }).motivo || "" : "",
     });
   } catch (e) {
