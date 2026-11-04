@@ -26,6 +26,13 @@ const qty = (x: unknown) => {
 /** Placeholder del bot ("pendiente", "N/A", "-", "sin dato"…) = dato ausente. */
 const esPlaceholder = (s: string) =>
   !s || /^(pendiente|pend|n\/?a|na|no\s*(aplica|hay|tiene|se)|ninguno?|sin\s*\w*|desconocid[oa]|\.+|-+|\?+|x+)$/i.test(s.trim());
+/** Nombre completo = al menos 2 palabras de ≥2 letras (nombre + apellido). "Luis" solo NO pasa:
+ *  Interrapidísimo rechaza guías sin apellidos. */
+const nombreCompletoValido = (s: string): boolean => {
+  if (esPlaceholder(s)) return false;
+  const palabras = s.split(/\s+/).map((w) => w.replace(/[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ]/g, "")).filter((w) => w.length >= 2);
+  return palabras.length >= 2;
+};
 /** Celular colombiano válido → 10 dígitos que empiezan en 3 (tolera prefijo 57). "" si inválido. */
 const telValido = (raw: string): string => {
   let d = String(raw || "").replace(/\D/g, "");
@@ -62,7 +69,12 @@ export const POST = withBridge(
     const catalog = await getProducts();
 
     // --- Campos (acepta nombres alternativos que puede mandar el bot) ---
-    const nombre = str(b.nombre ?? b.cliente ?? b.nombre_cliente ?? b.nombreCliente);
+    // Nombre COMPLETO con apellidos (Interrapidísimo lo exige para la guía). Si el bot
+    // manda el apellido en un campo aparte, se une al nombre.
+    const nombreBase = str(b.nombre ?? b.cliente ?? b.nombre_cliente ?? b.nombreCliente ?? b.nombre_completo);
+    const apellidos = str(b.apellido ?? b.apellidos ?? b.apellido_cliente);
+    const nombre = apellidos && !nombreBase.toLowerCase().includes(apellidos.toLowerCase())
+      ? `${nombreBase} ${apellidos}`.trim() : nombreBase;
     const telefono = str(b.telefono ?? b.celular ?? b.movil ?? b.whatsapp ?? b.tel ?? b.numero);
     const ciudad = str(b.ciudad ?? b.municipio ?? b.pueblo);
     const oficina = str(b.oficina ?? b.agencia ?? b.punto_recogida ?? b.transportadora_oficina);
@@ -212,7 +224,7 @@ export const POST = withBridge(
     // --- REQUISITOS DUROS (bug AD-7PM7: se creó un pedido sin nombre/cédula/tel/dirección).
     // NINGÚN pedido se crea sin los 5 datos + 1 ítem. Se validan formato y placeholders.
     const telOk = telValido(telefono);            // celular CO válido (10 díg, empieza en 3)
-    const nombreOk = !esPlaceholder(nombre) && nombre.replace(/[^a-zA-ZáéíóúñÁÉÍÓÚÑ]/g, "").length >= 3;
+    const nombreOk = nombreCompletoValido(nombre);
     const faltantes: string[] = [];
     if (!nombreOk) faltantes.push("nombre");
     if (!telOk) faltantes.push("telefono");
@@ -227,7 +239,7 @@ export const POST = withBridge(
       });
       await updateOrderAttempt(attemptId, { resultado: "rejected", motivo: `faltan: ${faltantes.join(", ")}${noEncontrados.length ? ` · no encontré: ${noEncontrados.join(", ")}` : ""}` });
       const et: Record<string, string> = {
-        nombre: "tu nombre", telefono: "tu teléfono", ciudad: "tu ciudad",
+        nombre: "tu *nombre completo con apellidos* (la transportadora lo exige para la guía)", telefono: "tu teléfono", ciudad: "tu ciudad",
         direccion: "tu dirección (o la oficina de la transportadora)",
         cedula: "tu número de cédula (la transportadora la exige para entregar)",
         producto: noEncontrados.length ? `el producto (no encontré "${noEncontrados[0]}")` : "el producto que quieres",
