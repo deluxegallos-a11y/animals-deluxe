@@ -215,3 +215,17 @@ test("combos: no se les asigna UNA forma (mezclan gotas, inyectable y pastillas)
   for (const s of ["combo-del-mes", "combo-potenciador", "equipo-de-campeones", "kit-entreno-recovery"])
     assert.equal(formaDe(P(s)), "", s);
 });
+
+/* ---------- 9 · un alias suelto no se traga un producto del otro canal ---------- */
+import { contieneQuery } from "@/lib/ai/marcas";
+
+test("separación: 'super cobra 500' NO queda como Energy Cobra (se redirige a Rooster)", () => {
+  assert.equal(contieneQuery("super cobra 500", P("energy-cobra")), false);
+  assert.equal(contieneQuery("cobra", P("energy-cobra")), true, "'cobra' solo sí es Energy Cobra");
+  assert.equal(contieneQuery("la cobra", P("energy-cobra")), true);
+});
+
+test("separación: el nombre de cada producto COD lo contiene a sí mismo (nunca se redirige un producto propio por su nombre)", () => {
+  const mal = cat.filter((p) => !contieneQuery(p.name, p)).map((p) => p.slug);
+  assert.deepEqual(mal, []);
+});

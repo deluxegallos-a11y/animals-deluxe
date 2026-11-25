@@ -28,6 +28,7 @@ import { ANIMALS_RULES } from "@/lib/ai/aliases";
 import { filtrarCatalogo } from "@/lib/ai/catalog-rules";
 import { publicProduct } from "@/lib/ai/present";
 import { calcularFlete, FREE_SHIPPING_SLUGS } from "@/lib/ai/shipping";
+import { contieneQuery } from "@/lib/ai/marcas";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const KEY = process.env.OPENAI_API_KEY || "";
@@ -65,8 +66,10 @@ const fichaBot = (p: ProductView) => {
 };
 function buscar(q: string) {
   const r = identifyProduct(q, animals, [], ANIMALS_RULES);
-  if (r.product && r.status !== "ambiguous") return { status: "found", producto: fichaBot(r.product) };
-  if (r.options.length) return { status: "ambiguous", opciones: r.options.slice(0, 4).map((p) => ({ nombre: p.name, precio_cop: p.priceCOP, forma: fichaBot(p).forma })) };
+  // Igual que /buscar-producto: un alias/fuzzy que no cubre el query cede ante el otro canal.
+  const debil = r.product && (r.matchedBy === "alias" || r.matchedBy === "fuzzy") && !contieneQuery(q, r.product);
+  if (r.product && r.status !== "ambiguous" && !debil) return { status: "found", producto: fichaBot(r.product) };
+  if (r.options.length && !debil) return { status: "ambiguous", opciones: r.options.slice(0, 4).map((p) => ({ nombre: p.name, precio_cop: p.priceCOP, forma: fichaBot(p).forma })) };
   const o = identifyProduct(q, rooster);
   if (o.product) return {
     status: "otra_marca", marca: "Rooster Deluxe", politica_pago: "anticipado", whatsapp: ROOSTER_WA, producto: o.product.name,
@@ -207,6 +210,9 @@ const ESC: Esc[] = [
   { id: "espuelas-redireccion", reporte: "17-ago: respondió 'eso lo maneja el asesor por pago anticipado' sin dar a quién escribir",
     turnos: ["tienen espuelas excalibur de 35 líneas?"],
     criterio: "Espuelas no son de este bot. Debe redirigir a Rooster Deluxe dando un número de WhatsApp concreto (312 291 1088). FALLA si no da ningún número o si las ofrece contra entrega." },
+  { id: "super-cobra-500-redireccion", reporte: "25-nov (prueba en vivo): 'super cobra 500' (desparasitante de Rooster) salía como Energy Cobra",
+    turnos: ["tenés el super cobra 500?"],
+    criterio: "Super Cobra 500 NO es de este bot: debe redirigir a Rooster Deluxe (312 291 1088). FALLA si presenta Energy Cobra como si fuera lo que pidió, o lo ofrece contra entrega." },
   { id: "purge-beach-minimo", reporte: "17-ago/19-nov: 'el envío mínimo del PURGEBEACK son dos goteros; Interrapidísimo despacha desde 45.000'",
     turnos: ["quiero 1 purge beach para Medellín", "Juan Pérez Gómez, cc 10203040, 3101234567, calle 10 # 20-30 Medellín Antioquia"],
     criterio: "No debe confirmar un pedido de 1 solo Purge Beach ($25.000). Debe explicar que el mínimo es 2 goteros / $45.000 y ajustar a 2 o pedir sumar producto. PASA si el pedido quedó con 2 unidades o si pidió sumar. FALLA si confirma 1 unidad por $25.000." },

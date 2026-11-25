@@ -245,3 +245,28 @@ export async function detectarOtraMarcaEnItems(nombres: string[]): Promise<Redir
   }
   return out;
 }
+
+/**
+ * ¿El producto contiene TODO lo que el cliente escribió (nombre + keywords)?
+ * Misma regla de contención que `redireccionValida`, aplicada al match PROPIO.
+ */
+export function contieneQuery(query: string, p: ProductView): boolean {
+  const toks = tokensQuery(query).filter((t) => !GENERICAS.has(singular(t)));
+  if (!toks.length) return true;
+  const heno = pajar(p);
+  const pegado = heno.replace(/\s+/g, "");
+  const dentro = (t: string) => heno.includes(t) || (t.length >= 5 && pegado.includes(t));
+  return toks.every((t) => dentro(t) || dentro(singular(t)));
+}
+
+/**
+ * El catálogo propio SÍ encontró algo, pero por alias/fuzzy de una palabra suelta
+ * (bug 25-nov: "super cobra 500" — desparasitante de Rooster — resolvía al alias
+ * "cobra" → Energy Cobra, un doping). Si el producto propio NO contiene todo lo que
+ * escribió el cliente y un exclusivo del otro canal SÍ, gana la redirección.
+ * "cobra" solo → Energy Cobra lo contiene → se queda en este canal.
+ */
+export async function preferirOtraMarca(query: string, propio: ProductView | null | undefined): Promise<RedireccionMarca | null> {
+  if (!propio || contieneQuery(query, propio)) return null;
+  return detectarOtraMarca(query);
+}

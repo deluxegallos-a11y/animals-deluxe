@@ -3,7 +3,7 @@ import { withBridge, audit, logEvent, recordInterest } from "@/lib/ai/bridge";
 import { getProducts, getExtraAliases, logSearchMiss } from "@/lib/ai/data";
 import { identifyProduct, esQueryBasura } from "@/lib/ai/brain";
 import { rulesForTenant } from "@/lib/ai/aliases";
-import { detectarOtraMarca } from "@/lib/ai/marcas";
+import { detectarOtraMarca, preferirOtraMarca } from "@/lib/ai/marcas";
 import { publicProduct, suggestion, emptyProduct, richMensaje, opcionesMensaje, cualMensaje } from "@/lib/ai/present";
 
 export const runtime = "nodejs";
@@ -63,11 +63,15 @@ export const POST = withBridge(
       });
     }
 
-    if (!r.product) {
+    // Match propio por una palabra suelta que NO cubre lo que pidió ("super cobra 500"
+    // → Energy Cobra) y el otro canal sí lo tiene → se redirige (los bots no se mezclan).
+    const otraPreferida = r.product && (r.matchedBy === "alias" || r.matchedBy === "fuzzy")
+      ? await preferirOtraMarca(body.q, r.product) : null;
+    if (!r.product || otraPreferida) {
       // OTRA MARCA (M-CERO): antes de dar por perdida la consulta, miramos si lo que
       // pidió es un producto EXCLUSIVO del otro negocio (botas, canilleras, comederos,
       // antibióticos…). Si lo es, redirigimos a ese canal en vez de callar.
-      const otra = await detectarOtraMarca(body.q);
+      const otra = otraPreferida || await detectarOtraMarca(body.q);
       if (otra) {
         await logEvent("otra_marca", {
           q: body.q, marca: otra.marca, producto: otra.producto_slug, sub_id: customer.uchatSubId || "",

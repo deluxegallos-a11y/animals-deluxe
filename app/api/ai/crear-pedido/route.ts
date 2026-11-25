@@ -11,7 +11,7 @@ import { cop } from "@/lib/ai/format";
 import { searchProducts } from "@/lib/ai/search";
 import { identifyProduct } from "@/lib/ai/brain";
 import { rulesForTenant } from "@/lib/ai/aliases";
-import { detectarOtraMarcaEnItems, telLegible } from "@/lib/ai/marcas";
+import { detectarOtraMarcaEnItems, preferirOtraMarca, telLegible } from "@/lib/ai/marcas";
 import { DEFAULT_TENANT_SLUG } from "@/lib/ai/tenant";
 import type { ProductView } from "@/lib/ai/types";
 
@@ -164,7 +164,11 @@ export const POST = withBridge(
         !!res.product && res.status !== "ambiguous" &&
         (res.matchedBy === "alias" || res.matchedBy === "name" || res.matchedBy === "keyword"
           || (res.matchedBy === "fuzzy" && res.score >= 0.6));
-      if (seguro) items.push({ slug: res.product!.slug, presentacion: r.presentacion, cantidad: r.cantidad });
+      // Un alias de una palabra ("cobra") no puede convertir un producto del OTRO canal
+      // ("super cobra 500") en uno nuestro: si no lo cubre, va a la detección de otra marca.
+      const otraPreferida = seguro && (res.matchedBy === "alias" || res.matchedBy === "fuzzy") ? await preferirOtraMarca(r.name, res.product) : null;
+      if (otraPreferida) noEncontrados.push(r.name);
+      else if (seguro) items.push({ slug: res.product!.slug, presentacion: r.presentacion, cantidad: r.cantidad });
       else if (res.product || res.status === "ambiguous" || res.status === "category") aclarar.push(r.name);
       else noEncontrados.push(r.name);
     }
