@@ -149,6 +149,9 @@ const GENERICAS = new Set([
   "gallo", "gallito", "pollo", "pollito", "ave", "ejemplar", "animal", "fino",
   "producto", "implemento", "accesorio", "herramienta", "medicina", "remedio",
   "vitamina", "suplemento", "cosa", "algo", "cria", "levante",
+  // Marca: están en el nombre de medio catálogo de los DOS negocios. "rooster" solo
+  // no puede mandar a nadie al otro canal (chat Juaquin 25-nov: hablaba del Fury).
+  "rooster", "deluxe",
 ]);
 
 /** Tokens con carga identificatoria del query (≥3 letras, sin muletillas). */

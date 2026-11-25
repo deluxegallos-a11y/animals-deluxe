@@ -152,15 +152,17 @@ test("dosis: todo lo de la tabla con dosis la tiene en la ficha", () => {
 
 /* ---------- 5 · mínimo de Interrapidísimo ---------- */
 
-test("mínimo: goteros de $25.000 salen de a 2 (Interrapidísimo pide ≥ $45.000)", () => {
+test("mínimo: goteros de $25.000 salen de a 2 (mínimo contra entrega $50.000)", () => {
   for (const s of ["purge-beach", "clear-chicks", "nutripeep-refoce"]) {
     assert.equal(P(s).minUnidades, 2, s);
   }
 });
 
-test("mínimo: NINGÚN producto COD queda por debajo de $45.000 con su cantidad mínima", () => {
+test("mínimo: los goteros baratos con su cantidad mínima llegan al mínimo de contra entrega ($50.000)", () => {
+  // Los de $40.000–$45.000 (Cure Chest, Chicks 400 gr) no se suben solos: crear-pedido
+  // le pide al cliente sumar otro producto. Aquí se blindan los de $25.000.
   const mal = cat
-    .filter((p) => p.priceCOP * Math.max(1, p.minUnidades ?? 1) < V.minimo_contraentrega_cop)
+    .filter((p) => p.priceCOP <= 25000 && p.priceCOP * Math.max(1, p.minUnidades ?? 1) < V.minimo_contraentrega_cop)
     .map((p) => `${p.slug} ($${p.priceCOP} × ${p.minUnidades ?? 1})`);
   assert.deepEqual(mal, []);
 });
@@ -228,4 +230,34 @@ test("separación: 'super cobra 500' NO queda como Energy Cobra (se redirige a R
 test("separación: el nombre de cada producto COD lo contiene a sí mismo (nunca se redirige un producto propio por su nombre)", () => {
   const mal = cat.filter((p) => !contieneQuery(p.name, p)).map((p) => p.slug);
   assert.deepEqual(mal, []);
+});
+
+/* ---------- 10 · una palabra suelta no se inventa el producto (chat Juaquin 25-nov) ---------- */
+
+test("palabra suelta: 'rooster' y 'gallo' solos NO eligen producto (antes: Rooster And Worm / Ultra Gallo)", () => {
+  for (const q of ["rooster", "gallo", "el rooster"]) {
+    const r = identifyProduct(q, cat, [], ANIMALS_RULES);
+    assert.equal(r.status === "found" ? r.product?.slug : "", "", `"${q}" resolvió a ${r.product?.slug}`);
+  }
+});
+
+test("palabra suelta compartida → opciones: mamba (Red/Dragon), dragon (Mamba/Rooster), energy (Cobra/77)", () => {
+  const casos: Record<string, string[]> = {
+    mamba: ["dragon-mamba", "red-copping-mamba"],
+    dragon: ["dragon-mamba", "dragon-rooster"],
+    energy: ["energy-cobra", "super-energy-77"],
+  };
+  for (const [q, esperados] of Object.entries(casos)) {
+    const r = identifyProduct(q, cat, [], ANIMALS_RULES);
+    assert.equal(r.status, "ambiguous", q);
+    assert.deepEqual(r.options.map((p) => p.slug).sort(), esperados.sort(), q);
+  }
+});
+
+test("nombres completos siguen resolviendo directo", () => {
+  const casos: Record<string, string> = {
+    "red mamba": "red-copping-mamba", "la mamba": "red-copping-mamba", "dragon mamba": "dragon-mamba",
+    "energy cobra": "energy-cobra", "cobra": "energy-cobra", "fury": "american-rooster-fury", "american rooster fury": "american-rooster-fury",
+  };
+  for (const [q, slug] of Object.entries(casos)) assert.equal(identifyProduct(q, cat, [], ANIMALS_RULES).product?.slug, slug, q);
 });

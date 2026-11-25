@@ -268,6 +268,10 @@ function bySlugs(slugs: string[], products: ProductView[]): ProductView[] {
   return dedupe(out);
 }
 
+/** Palabras que están en el nombre de MEDIO catálogo: solas no identifican nada
+ *  ("rooster" → Fury, Strength, Booster, Deluxe…). El bot debe usar el contexto. */
+const PALABRA_DE_MARCA = new Set(["rooster", "gallo", "pollo", "deluxe", "for"]);
+
 function pack(
   hits: ProductView[],
   matchedBy: MatchedBy,
@@ -373,6 +377,22 @@ export function identifyProduct(
   // pasos de identidad (keyword y fuzzy) y deja decidir a la regla de necesidad:
   // "vitaminas y minerales" es CATEGORÍA, no el único SKU con esa keyword.
   const hasIdentity = norm.tokens.some((t) => !FUZZY_STOP.has(t));
+
+  /* --- PASO 0: UNA SOLA PALABRA que comparten varios productos ---
+     Bug 25-nov (venta perdida): el cliente venía hablando del American Rooster Fury,
+     escribió "rooster" y el alias más corto lo mandó a Rooster And Worm. Lo mismo
+     con "mamba" (Red vs Dragon), "dragon" (Mamba vs Rooster), "energy" (Cobra vs 77).
+     Una palabra suelta que está en el NOMBRE de 2+ productos no identifica a ninguno:
+     se devuelven las opciones y el bot pregunta (o usa el producto de la conversación).
+     Una palabra genérica del dominio ("gallo") sola no elige producto. */
+  const toks0 = norm.stripped.split(" ").filter(Boolean);
+  const aliasExacto = index.some((e) => e.alias === norm.q || e.alias === norm.stripped);
+  if (!aliasExacto && toks0.length === 1 && PALABRA_DE_MARCA.has(singular(toks0[0]))) return empty;
+  if (!aliasExacto && toks0.length === 1 && toks0[0].length >= 4 && !FUZZY_STOP.has(toks0[0])) {
+    const t = singular(toks0[0]);
+    const duenos = pool.filter((p) => normalize(p.name).split(/[^a-z0-9]+/).map(singular).includes(t));
+    if (dedupe(duenos).length >= 2) return pack(duenos, "name", 0.5, norm, ranked);
+  }
 
   /* --- PASO 1a: ALIAS contenido en el query (alias más largo gana) ---
      "dragon mamba" gana sobre "mamba"; "atp gold" sobre "gold". */

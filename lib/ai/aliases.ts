@@ -21,7 +21,7 @@ export type AliasEntry = {
 
 export const ALIAS_CATALOG: AliasEntry[] = [
   /* ---------- DOPING / ENERGIZANTES ---------- */
-  { slugs: ["red-dopping-mamba"], aliases: ["rebamba", "red manba", "red bamba", "la mamba", "mamba roja", "mamba", "red mamba", "red doping mamba"] },
+  { slugs: ["red-dopping-mamba"], aliases: ["rebamba", "red manba", "red bamba", "la mamba", "mamba roja", "red mamba", "red doping mamba"] },
   { slugs: ["dopping-dragon-mamba"], aliases: ["dragon mamba", "dragon", "mamba inyeccion oral", "dragon mamba oral", "doping dragon"] },
   { slugs: ["super-dragon-mamba"], aliases: ["super dragon mamba", "super dragon", "super mamba"] },
   { slugs: ["rooster-fury"], aliases: ["furi", "fury", "el furi", "american fury", "american rooster fury", "la furia"] },
@@ -205,8 +205,8 @@ export const NEED_RULES: NeedRule[] = [
 
 export const ALIAS_CATALOG_ANIMALS: AliasEntry[] = [
   /* ---------- DOPING / ENERGÍA ---------- */
-  { slugs: ["red-copping-mamba"], aliases: ["rebamba", "red manba", "red bamba", "la mamba", "mamba roja", "mamba", "red mamba", "red doping mamba", "red dopping mamba", "red copping mamba"] },
-  { slugs: ["dragon-mamba"], aliases: ["dragon mamba", "dragon", "mamba oral", "dragon oral"] },
+  { slugs: ["red-copping-mamba"], aliases: ["rebamba", "red manba", "red bamba", "la mamba", "mamba roja", "red mamba", "red doping mamba", "red dopping mamba", "red copping mamba"] },
+  { slugs: ["dragon-mamba"], aliases: ["dragon mamba", "dragon manba", "mamba inyectable", "dragon inyectable"] },
   { slugs: ["american-rooster-fury"], aliases: ["furi", "fury", "el furi", "american fury", "american rooster fury", "la furia"] },
   { slugs: ["atp-fighter-rooster"], aliases: ["atp", "el atp", "fighter", "atp fighter"] },
   { slugs: ["atp-rooster-gold"], aliases: ["atp gold", "gold", "atp dorado"] },

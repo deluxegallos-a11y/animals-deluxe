@@ -1,54 +1,274 @@
 {
   "_fuente": "Chats de WhatsApp con el dueño de Animals Deluxe (13-jun → 25-nov-2026). Única fuente de verdad del bot de CONTRA ENTREGA. La usan scripts/fix-catalogo-dueno.mjs (corrige la DB) y tests/verdad-dueno.test.ts + scripts/validar-bot-openai.mjs (validación).",
-  "_actualizado": "2026-11-25",
-  "minimo_contraentrega_cop": 45000,
+  "_actualizado": "2026-11-26",
+  "minimo_contraentrega_cop": 50000,
   "protocolo_doping_gotas": "Si el gallo no está acostumbrado: 4 gotas 1 hora antes de la pelea. Lo recomendable es acostumbrarlo: en los 2 últimos entrenamientos 4 gotas 1 hora antes de cada entrenamiento; 2 días antes de la pelea 3 gotas después del desayuno; y el día de la pelea 4 gotas 1 hora antes. Mantener refrigerado.",
   "solo_rooster_anticipado": [
-    "red-rooster", "vitapower", "plume-king-shampoo", "gallo-purga-plus", "rooster-xt-impulsor",
-    "rooster-smallpox", "super-cobra-500"
+    "red-rooster",
+    "vitapower",
+    "plume-king-shampoo",
+    "gallo-purga-plus",
+    "rooster-xt-impulsor",
+    "rooster-smallpox",
+    "super-cobra-500"
   ],
   "nunca_en_contraentrega_nombres": [
-    "Red Rooster", "Karate Kill", "Cure Chest cápsulas", "Cure Chest pastillas", "botas", "canilleras", "espuelas", "Gallo Purga", "Vita Power", "Rooster XT"
+    "Red Rooster",
+    "Karate Kill",
+    "Cure Chest cápsulas",
+    "Cure Chest pastillas",
+    "botas",
+    "canilleras",
+    "espuelas",
+    "Gallo Purga",
+    "Vita Power",
+    "Rooster XT"
   ],
   "productos": {
-    "american-rooster-fury": { "precio": 150000, "forma": "inyectable", "presentacion": "Frasco · INYECTABLE", "dosificacion": "0.2 a 0.3 ml con jeringa de insulina en la pechuga, 3 días antes de la pelea (entre 2 y 5 días antes como máximo). No hay que acostumbrarlo. No necesita nevera, guardar en lugar fresco." },
-    "atp-fighter-rooster": { "precio": 250000, "forma": "inyectable", "presentacion": "100 ml · INYECTABLE", "dosificacion": "0.3 ml en la pechuga, 5 días antes de cada presentación." },
-    "atp-rooster-gold": { "precio": 180000, "forma": "inyectable", "presentacion": "50 ml · INYECTABLE", "dosificacion": "0.3 ml en la pechuga, 5 días antes de cada presentación (intramuscular o subcutánea)." },
-    "black-rooster": { "precio": 70000, "forma": "gotas", "presentacion": "20 ml · gotas", "dosificacion": "6 a 8 gotas, 8 horas antes del juego. No necesita refrigerar." },
-    "champions-choice": { "precio": 60000, "forma": "gotas", "presentacion": "100 ml · gotas", "dosificacion": "8 gotas diarias por ejemplar directamente en el pico." },
-    "clear-chicks": { "precio": 25000, "forma": "gotas", "presentacion": "Gotero 10 ml · gotas", "min_unidades": 2, "dosificacion": "Menores de 3 meses: 8 gotas diarias por 7 días. Mayores de 4 meses: 12 a 15 gotas diarias por 7 días." },
-    "cure-chest-rooster": { "precio": 45000, "forma": "gotas", "presentacion": "Gotero · gotas", "solo_gotero": true, "dosificacion": "Gotas para problemas respiratorios; la dosis exacta te la confirma el asesor." },
-    "cyanomax-b12-5500": { "precio": 70000, "forma": "inyectable", "presentacion": "10 ml · INYECTABLE", "dosificacion": "Mayores de 4 meses: 0.5 ml en la pechuga cada 15 días." },
-    "dragon-mamba": { "precio": 150000, "forma": "inyectable", "presentacion": "10 ml · INYECTABLE", "dosificacion": "0.3 ml con jeringa de insulina en la pechuga, 2 días antes de la pelea. No mezclar con otro medicamento." },
-    "dragon-rooster": { "precio": 80000, "forma": "pastillas", "presentacion": "200 pastillas", "dosificacion": "1 pastilla diaria de lunes a viernes (etapa de crestones y cuido)." },
-    "energy-cobra": { "precio": 70000, "forma": "gotas", "presentacion": "30 ml · gotas (~40 dosis)", "dosificacion": "@protocolo_doping_gotas" },
-    "the-avian-pro": { "precio": 80000, "forma": "pastillas", "presentacion": "200 pastillas", "dosificacion": "1 pastilla diaria por gallo en cuido." },
-    "gallo-post-recovery": { "precio": 80000, "forma": "pastillas", "presentacion": "200 pastillas", "dosificacion": "1 pastilla media hora después de cada entrenamiento." },
-    "horse-deluxe": { "precio": 160000, "forma": "polvo", "presentacion": "polvo x 3 kg", "envio_gratis": true },
-    "more-muscle-dogs": { "precio": 100000, "forma": "polvo", "presentacion": "polvo · 400 gr / 1000 gr", "envio_gratis": true, "solo_perros": true },
-    "more-muscle-dogs-3m": { "precio": 100000, "forma": "polvo", "presentacion": "polvo · plan 3 meses", "solo_perros": true },
-    "nordic-rooster-vitamins": { "precio": 180000, "forma": "inyectable", "presentacion": "50 ml · INYECTABLE" },
-    "nutripeep-refoce": { "precio": 25000, "forma": "gotas", "presentacion": "Gotero · gotas", "min_unidades": 2, "dosificacion": "6 gotas diarias en el bebedero (pollitos de 0 a 3 meses)." },
-    "omega-3": { "precio": 75000, "forma": "pastillas", "presentacion": "100 cápsulas soft gel" },
-    "purge-beach": { "precio": 25000, "forma": "gotas", "presentacion": "Gotero 10 ml · gotas", "min_unidades": 2 },
-    "red-copping-mamba": { "precio": 50000, "forma": "gotas", "presentacion": "10 ml · gotas", "dosificacion": "@protocolo_doping_gotas" },
-    "rooster-and-worm": { "precio": 60000, "forma": "gotas", "presentacion": "Frasco · gotas" },
-    "rooscer-b12-complete": { "precio": 130000, "forma": "inyectable", "presentacion": "30 ml · INYECTABLE" },
-    "rooster-booster": { "precio": 250000, "forma": "inyectable", "presentacion": "100 ml · INYECTABLE" },
-    "rooster-deluxe": { "precio": 80000, "forma": "pastillas", "presentacion": "500 pastillas", "dosificacion": "1 a 2 pastillas al día." },
-    "rooster-deluxe-chicks": { "precio": 45000, "forma": "polvo", "presentacion": "polvo · 400 gr / 1 kg / 3 kg" },
-    "rooster-deluxe-shampoo": { "precio": 40000, "forma": "shampoo", "presentacion": "1 litro · shampoo", "min_unidades": 2 },
-    "rooster-strength": { "precio": 50000, "forma": "gotas", "presentacion": "100 ml · gotas", "dosificacion": "8 gotas diarias directamente en el pico." },
-    "super-b12-max": { "precio": 180000, "forma": "inyectable", "presentacion": "50 ml · INYECTABLE (100 dosis)", "dosificacion": "0.5 ml en la pechuga cada 15 días." },
-    "super-energizante-b15": { "precio": 100000, "forma": "gotas", "presentacion": "30 ml · gotas", "dosificacion": "Si el gallo no está acostumbrado: 4 gotas 1 hora y media antes de la pelea. Para acostumbrarlo: en los 2 últimos entrenamientos 4 gotas 1 hora y media antes; 2 días antes de la pelea 3 gotas después del desayuno; el día de la pelea 4 gotas 1 hora y media antes. Mantener refrigerado." },
-    "super-energy-77": { "precio": 80000, "forma": "gotas", "presentacion": "20 ml · gotas", "label": "20 ml", "dosificacion": "@protocolo_doping_gotas" },
-    "super-trainer": { "precio": 80000, "forma": "gotas", "presentacion": "Frasco · gotas", "dosificacion": "6 gotas antes de iniciar el entrenamiento." },
-    "ultra-gallo": { "precio": 50000, "forma": "inyectable", "presentacion": "10 ml · INYECTABLE", "label": "10 ml", "dosificacion": "0.2 ml por ave, inyectable, UNA VEZ AL MES (no cada semana ni cada 8 días)." },
-    "vitalmin-rooster": { "precio": 80000, "forma": "pastillas", "presentacion": "200 pastillas", "dosificacion": "1 pastilla diaria por animal." },
-    "weight-muscle-protein": { "precio": 80000, "forma": "liquido", "presentacion": "1 litro (líquido)", "envio_gratis": false, "dosificacion": "Medio centímetro revuelto en una comida, día por medio. Guardar en lugar oscuro y fresco." },
-    "equipo-de-campeones": { "precio": 300000, "combo": ["Super Trainer", "Energy Cobra", "Ultra Gallo", "American Rooster Fury"] },
-    "combo-potenciador": { "precio": 320000, "combo": ["Energy Cobra", "Super Trainer", "CyanoMax B12 5500", "Dragón Mamba"] },
-    "combo-del-mes": { "precio": 230000, "combo": ["Weight Muscle Protein", "Red Dopping Mamba", "Omega-3", "Super Trainer"] },
-    "kit-entreno-recovery": { "precio": 160000, "combo": ["Super Trainer", "Gallo Post Recovery"] }
+    "american-rooster-fury": {
+      "precio": 150000,
+      "forma": "inyectable",
+      "presentacion": "Frasco · INYECTABLE",
+      "dosificacion": "0.2 a 0.3 ml con jeringa de insulina en la pechuga, 3 días antes de la pelea (entre 2 y 5 días antes como máximo). No hay que acostumbrarlo. No necesita nevera, guardar en lugar fresco."
+    },
+    "atp-fighter-rooster": {
+      "precio": 250000,
+      "forma": "inyectable",
+      "presentacion": "100 ml · INYECTABLE",
+      "dosificacion": "0.3 ml en la pechuga, 5 días antes de cada presentación."
+    },
+    "atp-rooster-gold": {
+      "precio": 180000,
+      "forma": "inyectable",
+      "presentacion": "50 ml · INYECTABLE",
+      "dosificacion": "0.3 ml en la pechuga, 5 días antes de cada presentación (intramuscular o subcutánea)."
+    },
+    "black-rooster": {
+      "precio": 70000,
+      "forma": "gotas",
+      "presentacion": "20 ml · gotas",
+      "dosificacion": "6 a 8 gotas, 8 horas antes del juego. No necesita refrigerar."
+    },
+    "champions-choice": {
+      "precio": 60000,
+      "forma": "gotas",
+      "presentacion": "100 ml · gotas",
+      "dosificacion": "8 gotas diarias por ejemplar directamente en el pico."
+    },
+    "clear-chicks": {
+      "precio": 25000,
+      "forma": "gotas",
+      "presentacion": "Gotero 10 ml · gotas",
+      "min_unidades": 2,
+      "dosificacion": "Menores de 3 meses: 8 gotas diarias por 7 días. Mayores de 4 meses: 12 a 15 gotas diarias por 7 días."
+    },
+    "cure-chest-rooster": {
+      "precio": 45000,
+      "forma": "gotas",
+      "presentacion": "Gotero · gotas",
+      "solo_gotero": true,
+      "dosificacion": "Gotas para problemas respiratorios; la dosis exacta te la confirma el asesor."
+    },
+    "cyanomax-b12-5500": {
+      "precio": 70000,
+      "forma": "inyectable",
+      "presentacion": "10 ml · INYECTABLE",
+      "dosificacion": "Mayores de 4 meses: 0.5 ml en la pechuga cada 15 días."
+    },
+    "dragon-mamba": {
+      "precio": 150000,
+      "forma": "inyectable",
+      "presentacion": "10 ml · INYECTABLE",
+      "dosificacion": "0.3 ml con jeringa de insulina en la pechuga, 2 días antes de la pelea. No mezclar con otro medicamento."
+    },
+    "dragon-rooster": {
+      "precio": 80000,
+      "forma": "pastillas",
+      "presentacion": "200 pastillas",
+      "dosificacion": "1 pastilla diaria de lunes a viernes (etapa de crestones y cuido)."
+    },
+    "energy-cobra": {
+      "precio": 70000,
+      "forma": "gotas",
+      "presentacion": "30 ml · gotas (~40 dosis)",
+      "dosificacion": "@protocolo_doping_gotas"
+    },
+    "the-avian-pro": {
+      "precio": 80000,
+      "forma": "pastillas",
+      "presentacion": "200 pastillas",
+      "dosificacion": "1 pastilla diaria por gallo en cuido."
+    },
+    "gallo-post-recovery": {
+      "precio": 80000,
+      "forma": "pastillas",
+      "presentacion": "200 pastillas",
+      "dosificacion": "1 pastilla media hora después de cada entrenamiento."
+    },
+    "horse-deluxe": {
+      "precio": 160000,
+      "forma": "polvo",
+      "presentacion": "polvo x 3 kg",
+      "envio_gratis": true
+    },
+    "more-muscle-dogs": {
+      "precio": 100000,
+      "forma": "polvo",
+      "presentacion": "polvo · 400 gr / 1000 gr",
+      "envio_gratis": true,
+      "solo_perros": true
+    },
+    "more-muscle-dogs-3m": {
+      "precio": 100000,
+      "forma": "polvo",
+      "presentacion": "polvo · plan 3 meses",
+      "solo_perros": true
+    },
+    "nordic-rooster-vitamins": {
+      "precio": 180000,
+      "forma": "inyectable",
+      "presentacion": "50 ml · INYECTABLE"
+    },
+    "nutripeep-refoce": {
+      "precio": 25000,
+      "forma": "gotas",
+      "presentacion": "Gotero · gotas",
+      "min_unidades": 2,
+      "dosificacion": "6 gotas diarias en el bebedero (pollitos de 0 a 3 meses)."
+    },
+    "omega-3": {
+      "precio": 75000,
+      "forma": "pastillas",
+      "presentacion": "100 cápsulas soft gel"
+    },
+    "purge-beach": {
+      "precio": 25000,
+      "forma": "gotas",
+      "presentacion": "Gotero 10 ml · gotas",
+      "min_unidades": 2
+    },
+    "red-copping-mamba": {
+      "precio": 50000,
+      "forma": "gotas",
+      "presentacion": "10 ml · gotas",
+      "dosificacion": "@protocolo_doping_gotas"
+    },
+    "rooster-and-worm": {
+      "precio": 60000,
+      "forma": "gotas",
+      "presentacion": "Frasco · gotas"
+    },
+    "rooscer-b12-complete": {
+      "precio": 130000,
+      "forma": "inyectable",
+      "presentacion": "30 ml · INYECTABLE"
+    },
+    "rooster-booster": {
+      "precio": 250000,
+      "forma": "inyectable",
+      "presentacion": "100 ml · INYECTABLE"
+    },
+    "rooster-deluxe": {
+      "precio": 80000,
+      "forma": "pastillas",
+      "presentacion": "500 pastillas",
+      "dosificacion": "1 a 2 pastillas al día."
+    },
+    "rooster-deluxe-chicks": {
+      "precio": 45000,
+      "forma": "polvo",
+      "presentacion": "polvo · 400 gr / 1 kg / 3 kg"
+    },
+    "rooster-deluxe-shampoo": {
+      "precio": 40000,
+      "forma": "shampoo",
+      "presentacion": "1 litro · shampoo",
+      "min_unidades": 2
+    },
+    "rooster-strength": {
+      "precio": 50000,
+      "forma": "gotas",
+      "presentacion": "100 ml · gotas",
+      "dosificacion": "8 gotas diarias directamente en el pico."
+    },
+    "super-b12-max": {
+      "precio": 180000,
+      "forma": "inyectable",
+      "presentacion": "50 ml · INYECTABLE (100 dosis)",
+      "dosificacion": "0.5 ml en la pechuga cada 15 días."
+    },
+    "super-energizante-b15": {
+      "precio": 100000,
+      "forma": "gotas",
+      "presentacion": "30 ml · gotas",
+      "dosificacion": "Si el gallo no está acostumbrado: 4 gotas 1 hora y media antes de la pelea. Para acostumbrarlo: en los 2 últimos entrenamientos 4 gotas 1 hora y media antes; 2 días antes de la pelea 3 gotas después del desayuno; el día de la pelea 4 gotas 1 hora y media antes. Mantener refrigerado."
+    },
+    "super-energy-77": {
+      "precio": 80000,
+      "forma": "gotas",
+      "presentacion": "20 ml · gotas",
+      "label": "20 ml",
+      "dosificacion": "@protocolo_doping_gotas"
+    },
+    "super-trainer": {
+      "precio": 80000,
+      "forma": "gotas",
+      "presentacion": "Frasco · gotas",
+      "dosificacion": "6 gotas antes de iniciar el entrenamiento."
+    },
+    "ultra-gallo": {
+      "precio": 50000,
+      "forma": "inyectable",
+      "presentacion": "10 ml · INYECTABLE",
+      "label": "10 ml",
+      "dosificacion": "0.2 ml por ave, inyectable, UNA VEZ AL MES (no cada semana ni cada 8 días)."
+    },
+    "vitalmin-rooster": {
+      "precio": 80000,
+      "forma": "pastillas",
+      "presentacion": "200 pastillas",
+      "dosificacion": "1 pastilla diaria por animal."
+    },
+    "weight-muscle-protein": {
+      "precio": 80000,
+      "forma": "liquido",
+      "presentacion": "1 litro (líquido)",
+      "envio_gratis": false,
+      "dosificacion": "Medio centímetro revuelto en una comida, día por medio. Guardar en lugar oscuro y fresco."
+    },
+    "equipo-de-campeones": {
+      "precio": 300000,
+      "combo": [
+        "Super Trainer",
+        "Energy Cobra",
+        "Ultra Gallo",
+        "American Rooster Fury"
+      ]
+    },
+    "combo-potenciador": {
+      "precio": 320000,
+      "combo": [
+        "Energy Cobra",
+        "Super Trainer",
+        "CyanoMax B12 5500",
+        "Dragón Mamba"
+      ]
+    },
+    "combo-del-mes": {
+      "precio": 230000,
+      "combo": [
+        "Weight Muscle Protein",
+        "Red Dopping Mamba",
+        "Omega-3",
+        "Super Trainer"
+      ]
+    },
+    "kit-entreno-recovery": {
+      "precio": 160000,
+      "combo": [
+        "Super Trainer",
+        "Gallo Post Recovery"
+      ]
+    }
   }
 }

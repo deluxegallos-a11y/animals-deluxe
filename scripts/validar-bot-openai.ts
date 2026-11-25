@@ -28,7 +28,7 @@ import { ANIMALS_RULES } from "@/lib/ai/aliases";
 import { filtrarCatalogo } from "@/lib/ai/catalog-rules";
 import { publicProduct } from "@/lib/ai/present";
 import { calcularFlete, FREE_SHIPPING_SLUGS } from "@/lib/ai/shipping";
-import { contieneQuery } from "@/lib/ai/marcas";
+import { contieneQuery, redireccionValida, exclusivosDelOtro } from "@/lib/ai/marcas";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const KEY = process.env.OPENAI_API_KEY || "";
@@ -70,8 +70,9 @@ function buscar(q: string) {
   const debil = r.product && (r.matchedBy === "alias" || r.matchedBy === "fuzzy") && !contieneQuery(q, r.product);
   if (r.product && r.status !== "ambiguous" && !debil) return { status: "found", producto: fichaBot(r.product) };
   if (r.options.length && !debil) return { status: "ambiguous", opciones: r.options.slice(0, 4).map((p) => ({ nombre: p.name, precio_cop: p.priceCOP, forma: fichaBot(p).forma })) };
-  const o = identifyProduct(q, rooster);
-  if (o.product) return {
+  // Igual que detectarOtraMarca: solo exclusivos de Rooster, sin reglas, con candado de contención.
+  const o = identifyProduct(q, exclusivosDelOtro(rooster, animals), [], { aliases: [], needs: [] });
+  if (o.product && redireccionValida(q, o)) return {
     status: "otra_marca", marca: "Rooster Deluxe", politica_pago: "anticipado", whatsapp: ROOSTER_WA, producto: o.product.name,
     mensaje: `👉 *${o.product.name}* no lo manejamos en este canal de contra entrega. Ese lo despacha *Rooster Deluxe* con pago anticipado 📲 Escribile al *${ROOSTER_WA}* 🐓`,
   };
@@ -213,6 +214,16 @@ const ESC: Esc[] = [
   { id: "super-cobra-500-redireccion", reporte: "25-nov (prueba en vivo): 'super cobra 500' (desparasitante de Rooster) salía como Energy Cobra",
     turnos: ["tenés el super cobra 500?"],
     criterio: "Super Cobra 500 NO es de este bot: debe redirigir a Rooster Deluxe (312 291 1088). FALLA si presenta Energy Cobra como si fuera lo que pidió, o lo ofrece contra entrega." },
+  { id: "juaquin-cierre-fury", reporte: "25-nov (venta perdida): vio Energy Cobra, luego American Fury, mandó sus datos y el bot preguntó 3 veces '¿solo Energy Cobra o también el Fury?' sin crear el pedido",
+    turnos: ["Hola. ¿Puedes darme más información sobre energy cobra", "Hola. ¿Puedes darme más información sobre american fury",
+      "Joaquín Zambrano Ruiz, cédula 87451105, cel 3207465750, barrio La Graciela manzana 15 casa 20, Dosquebradas, Risaralda"],
+    criterio: "Tras ver el American Fury y mandar los datos completos, el bot debe CREAR el pedido del American Rooster Fury, o hacer el ECO de confirmación de los datos con el American Rooster Fury como ÚNICO producto (el eco es parte del proceso de venta original y es correcto). FALLA si pregunta '¿solo este o también el Energy Cobra?', si mete Energy Cobra en el pedido, o si vuelve a pedir datos que ya dio." },
+  { id: "rooster-es-el-fury", reporte: "25-nov: el cliente venía con el American Rooster Fury, escribió 'rooster' y el bot le mostró Rooster And Worm",
+    turnos: ["info del american fury", "rooster"],
+    criterio: "Al escribir 'rooster' el cliente se refiere al American Rooster Fury del que venían hablando. FALLA si el bot presenta Rooster And Worm u otro producto distinto, o si lo manda a Rooster Deluxe." },
+  { id: "fury-cuantas-gotas", reporte: "25-nov: preguntó 'cuántas gotas' del Fury (inyectable) y el bot respondió con la dosis en gotas de Energy Cobra",
+    turnos: ["info del american fury", "como se le da, cuántas gotas"],
+    criterio: "American Fury es INYECTABLE: debe aclarar que no es en gotas y dar 0.2-0.3 ml en la pechuga, 3 días antes. FALLA si da una dosis en gotas o habla de Energy Cobra." },
   { id: "purge-beach-minimo", reporte: "17-ago/19-nov: 'el envío mínimo del PURGEBEACK son dos goteros; Interrapidísimo despacha desde 45.000'",
     turnos: ["quiero 1 purge beach para Medellín", "Juan Pérez Gómez, cc 10203040, 3101234567, calle 10 # 20-30 Medellín Antioquia"],
     criterio: "No debe confirmar un pedido de 1 solo Purge Beach ($25.000). Debe explicar que el mínimo es 2 goteros / $45.000 y ajustar a 2 o pedir sumar producto. PASA si el pedido quedó con 2 unidades o si pidió sumar. FALLA si confirma 1 unidad por $25.000." },

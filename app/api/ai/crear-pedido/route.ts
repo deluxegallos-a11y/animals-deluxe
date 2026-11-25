@@ -55,7 +55,7 @@ function resolvesToProduct(name: string, catalog: ProductView[]): boolean {
 const SOSPECHA_CANTIDAD = 20;
 const SOSPECHA_TOTAL_COP = 2_000_000;
 /** Interrapidísimo no despacha contra entrega por debajo de este valor en productos. */
-const MINIMO_CONTRAENTREGA_COP = 45_000;
+const MINIMO_CONTRAENTREGA_COP = 50_000; // dueño 26-nov: Interrapidísimo rechaza contra entrega < $45.000; se exige $50.000 en productos
 
 /** 57XXXXXXXXXX → "313 316 0235" para el aviso al asesor. "" si no hay número. */
 function telAviso(raw: string): string {
