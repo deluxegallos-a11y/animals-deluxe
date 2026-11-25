@@ -7,13 +7,15 @@ import assert from "node:assert/strict";
 import { bloqueadosDe, esBloqueado, filtrarCatalogo } from "@/lib/ai/catalog-rules";
 import { ALIAS_CATALOG_ANIMALS, NEED_RULES_ANIMALS } from "@/lib/ai/aliases";
 
-/** Los 5 confirmados contra las conversaciones de WhatsApp. */
+/** Confirmados contra las conversaciones de WhatsApp (+2 de la auditoría 25-nov). */
 const SOLO_ROOSTER = [
   "red-rooster",
   "vitapower",
   "plume-king-shampoo",
   "gallo-purga-plus",
   "rooster-xt-impulsor",
+  "rooster-smallpox",
+  "super-cobra-500",
 ];
 
 test("animals-deluxe bloquea exactamente los productos solo-anticipado", () => {

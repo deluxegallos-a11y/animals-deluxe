@@ -73,7 +73,7 @@
       "gallo sin fondo"
     ],
     "objeciones": {
-      "muy_caro": "Mirá, son $150.000 pero rinde un montón (Frasco) y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
+      "muy_caro": "Mirá, son $150.000 pero rinde un montón  y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
       "lo_pienso": "Tranquilo parcero, te lo aparto sin compromiso y arrancás cuando querás. Eso sí, es de los que más sale, no te quedés sin él.",
       "no_confio": "Es americano original y es contraentrega: pagás cuando lo tenés en la mano. Cero riesgo, mi rey. Miles de galleros ya lo usan.",
       "ya_lo_uso": "¡Bacano! Entonces ya sabés cómo rinde. ¿Te mando otro pa que no te quedés sin él en el momento clave? 🐓",
@@ -86,9 +86,11 @@
     "envioGratis": false,
     "descripcion": "🇺🇸💉 AMERICAN ROOSTER FURY — Doping inyectable original\nEl doping americano #1 para que tu campeón entre encendido y domine el careo desde el primer choque.\n✅ Energía explosiva desde el minuto uno\n✅ Más resistencia y aguante en combate\n✅ Agilidad y reacción para pegar primero\n✅ Recuperación más rápida entre choques\n✅ Fórmula americana 100% original, probada por galleros\n✅ Ideal para el día de la pelea\n🥄 Modo de uso: 0.3 ml en la pechuga con jeringa de insulina, 3 días antes de la pelea.\n💵 $150.000 + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "",
-    "presentacion": "",
-    "paraQue": ""
+    "dosificacion": "0.2 a 0.3 ml con jeringa de insulina en la pechuga, 3 días antes de la pelea (entre 2 y 5 días antes como máximo). No hay que acostumbrarlo. No necesita nevera, guardar en lugar fresco.",
+    "presentacion": "Frasco · INYECTABLE",
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "ebf8bcd7-ac94-4aa6-bd70-2681fc60f70f",
@@ -164,7 +166,7 @@
       "gallo sin fondo"
     ],
     "objeciones": {
-      "muy_caro": "Mirá, son $70.000 pero rinde un montón (100 ml) y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
+      "muy_caro": "Mirá, son $250.000 pero rinde un montón (100 ml) y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
       "lo_pienso": "Tranquilo parcero, te lo aparto sin compromiso y arrancás cuando querás. Eso sí, es de los que más sale, no te quedés sin él.",
       "no_confio": "Es americano original y es contraentrega: pagás cuando lo tenés en la mano. Cero riesgo, mi rey. Miles de galleros ya lo usan.",
       "ya_lo_uso": "¡Bacano! Entonces ya sabés cómo rinde. ¿Te mando otro pa que no te quedés sin él en el momento clave? 🐓",
@@ -177,9 +179,11 @@
     "envioGratis": false,
     "descripcion": "🇺🇸🥇 ATP FIGHTER ROOSTER — Energizante fórmula americana premium\nPotencia total el día del juego, listo para usar.\n✅ Energía de campeón\n✅ Resistencia y reacción superiores\n✅ Fórmula lista para usar (100 ml)\n✅ Calidad americana de primer nivel\n✅ Presentación rendidora\n💵 $250.000 + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "",
-    "presentacion": "",
-    "paraQue": ""
+    "dosificacion": "0.3 ml en la pechuga, 5 días antes de cada presentación.",
+    "presentacion": "100 ml · INYECTABLE",
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "31c92d71-f91f-4e27-a92b-aac82472cfe9",
@@ -254,7 +258,7 @@
       "gallo sin fondo"
     ],
     "objeciones": {
-      "muy_caro": "Mirá, son $75.000 pero rinde un montón (50 ml) y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
+      "muy_caro": "Mirá, son $180.000 pero rinde un montón (50 ml) y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
       "lo_pienso": "Tranquilo parcero, te lo aparto sin compromiso y arrancás cuando querás. Eso sí, es de los que más sale, no te quedés sin él.",
       "no_confio": "Es americano original y es contraentrega: pagás cuando lo tenés en la mano. Cero riesgo, mi rey. Miles de galleros ya lo usan.",
       "ya_lo_uso": "¡Bacano! Entonces ya sabés cómo rinde. ¿Te mando otro pa que no te quedés sin él en el momento clave? 🐓",
@@ -267,9 +271,11 @@
     "envioGratis": false,
     "descripcion": "🥇 ATP ROOSTER GOLD — Energizante premium\nEnergía rápida, concentración y resistencia para el careo (50 ml).\n✅ Energía inmediata\n✅ Concentración y enfoque\n✅ Resistencia en combate\n✅ Fórmula premium\n💵 $180.000 + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "",
-    "presentacion": "",
-    "paraQue": ""
+    "dosificacion": "0.3 ml en la pechuga, 5 días antes de cada presentación (intramuscular o subcutánea).",
+    "presentacion": "50 ml · INYECTABLE",
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "d1d9affe-9a28-4200-b48b-86ab128a8c25",
@@ -356,9 +362,11 @@
     "envioGratis": false,
     "descripcion": "🖤⚡ BLACK ROOSTER — Original energy doping\nEl energizante ideal para preparar a tus mejores ejemplares.\n✅ Energía de combate\n✅ Aguante y resistencia\n✅ Reacción rápida en el careo\n✅ Fórmula confiable y económica\n🥄 Modo de uso: 6 a 8 gotas 2 horas antes del juego.\n💵 $70.000 + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "",
-    "presentacion": "",
-    "paraQue": ""
+    "dosificacion": "6 a 8 gotas, 8 horas antes del juego. No necesita refrigerar.",
+    "presentacion": "20 ml · gotas",
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "097d9b31-5180-42d2-8cbd-8c6d61c53b4f",
@@ -432,7 +440,7 @@
       "pa engordar gallo"
     ],
     "objeciones": {
-      "muy_caro": "Mirá, son $70.000 pero rinde un montón (Frasco gotas) y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
+      "muy_caro": "Mirá, son $60.000 pero rinde un montón (Frasco gotas) y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
       "lo_pienso": "Tranquilo parcero, te lo aparto sin compromiso y arrancás cuando querás. Eso sí, es de los que más sale, no te quedés sin él.",
       "no_confio": "Es original y es contraentrega: pagás cuando lo tenés en la mano. Cero riesgo, mi rey. Miles de galleros ya lo usan.",
       "ya_lo_uso": "¡Bacano! Entonces ya sabés cómo rinde. ¿Te mando otro pa que no te quedés sin él en el momento clave? 🐓",
@@ -445,9 +453,11 @@
     "envioGratis": false,
     "descripcion": "💊 CHAMPIONS CHOICE — Multivitamínico en gotas\nAporte completo del complejo vitamínico, fácil de dar día a día.\n✅ Vitalidad y desarrollo\n✅ Defensas y buen estado general\n✅ Apoya el rendimiento\n✅ Cómodo en gotas\n💵 $60.000 + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "",
-    "presentacion": "",
-    "paraQue": ""
+    "dosificacion": "8 gotas diarias por ejemplar directamente en el pico.",
+    "presentacion": "100 ml · gotas",
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "5c0b1128-88d5-4047-ab04-ed23355fc64c",
@@ -534,9 +544,11 @@
     "envioGratis": false,
     "descripcion": "🐥🫁 CLEAR CHICKS — Acaba con los mocos\nPara mocos y problemas respiratorios, sirve en gallos y pollos.\n✅ Despeja las vías respiratorias\n✅ Combate mocos y molestias respiratorias\n✅ Apto para gallos y pollos\n✅ Económico\n💵 $25.000 + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "",
-    "presentacion": "",
-    "paraQue": ""
+    "dosificacion": "Menores de 3 meses: 8 gotas diarias por 7 días. Mayores de 4 meses: 12 a 15 gotas diarias por 7 días.",
+    "presentacion": "Gotero 10 ml · gotas",
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 2
   },
   {
     "id": "090bd7d2-b8bf-4451-83fb-4bf33abd98c2",
@@ -600,7 +612,9 @@
     "edadMinima": "",
     "dosificacion": "",
     "presentacion": "Combo x 4 tapas",
-    "paraQue": "Combo de cuidado completo para pollos/aves: vitaminas por etapa, purga y respiratorio (moquillo)."
+    "paraQue": "Combo de cuidado completo para pollos/aves: vitaminas por etapa, purga y respiratorio (moquillo).",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "bae226c4-566b-443f-af41-49e70b7885ab",
@@ -661,7 +675,9 @@
     "edadMinima": "",
     "dosificacion": "",
     "presentacion": "Combo x 4 productos",
-    "paraQue": "Combo de nutrición completa para gallos: masa muscular, energía, salud (omega-3) y pre-entreno (4 productos)."
+    "paraQue": "Combo de nutrición completa para gallos: masa muscular, energía, salud (omega-3) y pre-entreno (4 productos).",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "1f46fca2-d5cf-4bfb-95cc-0436b322e0c1",
@@ -687,7 +703,7 @@
       "Potenciador"
     ],
     "tagline": "Máxima fuerza, energía y rendimiento: 4 productos en un pack.",
-    "shortDesc": "Combo de 4: Energy Cobra, MegaForce Power, CyanoMax B12 y Super Trainer.",
+    "shortDesc": "Combo de 4: Energy Cobra, Dragón Mamba, CyanoMax B12 y Super Trainer.",
     "benefits": [
       "Energy Cobra: fuerza, energía y máximo rendimiento",
       "MegaForce Power: potenciador de fuerza y energía",
@@ -718,11 +734,13 @@
     "stock": 999,
     "activo": true,
     "envioGratis": false,
-    "descripcion": "⚡ COMBO POTENCIADOR — Máxima fuerza, energía y rendimiento\nEnergy Cobra 30ml + MegaForce Power 10ml + CyanoMax B12 5500 10ml + Super Trainer.\n✅ Energía pre-juego (Energy Cobra)\n✅ Potenciador de fuerza y energía (MegaForce Power)\n✅ Masa muscular y B12 (CyanoMax B12 5500)\n✅ Maximiza el entreno (Super Trainer)\n✅ 4 productos para el rendimiento total\n💵 $320.000 + envío · Contra entrega, pagás al recibir.",
+    "descripcion": "⚡ COMBO POTENCIADOR — Máxima fuerza, energía y rendimiento\nEnergy Cobra 30ml + Dragón Mamba 10ml (inyectable) + CyanoMax B12 5500 10ml + Super Trainer.\n✅ Energía pre-juego (Energy Cobra)\n✅ Doping inyectable para el día de la pelea (Dragón Mamba)\n✅ Masa muscular y B12 (CyanoMax B12 5500)\n✅ Maximiza el entreno (Super Trainer)\n✅ 4 productos para el rendimiento total\n💵 $320.000 + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
     "dosificacion": "",
     "presentacion": "Combo x 4 productos",
-    "paraQue": "Combo potenciador para gallos: fuerza, energía, B12 y pre-entreno (4 productos) para máximo rendimiento."
+    "paraQue": "Combo potenciador para gallos: fuerza, energía, B12 y pre-entreno (4 productos) para máximo rendimiento.",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "084926d6-9381-4f12-b4ce-941d9ea227cd",
@@ -733,17 +751,12 @@
     "categoryName": "Respiratorio",
     "audience": "Gallos con problemas respiratorios",
     "origin": "co",
-    "priceCOP": 40000,
+    "priceCOP": 45000,
     "presentations": [
       {
         "label": "Gotero",
-        "priceCOP": 40000,
-        "shopifyVariantId": "gid://shopify/ProductVariant/48900415783147"
-      },
-      {
-        "label": "60 cápsulas",
         "priceCOP": 45000,
-        "shopifyVariantId": "gid://shopify/ProductVariant/48900415815915"
+        "shopifyVariantId": "gid://shopify/ProductVariant/48900415783147"
       }
     ],
     "image": "cure-chest-rooster.jpg",
@@ -760,7 +773,7 @@
       "Previene malestares"
     ],
     "ingredients": [],
-    "usage": "Gotero: dosis en gotas. Cápsulas: 1 cápsula diaria por 3 días.",
+    "usage": "Gotas. La dosis exacta te la confirma el asesor según el estado del gallo.",
     "pitch": "Respiración limpia: oxigena pulmones y controla la mucosa. Gotero o cápsulas.",
     "faq": [
       {
@@ -768,7 +781,7 @@
         "q": "¿Sirve pa los mocos?"
       },
       {
-        "a": "Las gotas o dosis indicada 1-2 veces al día por unos días, según el estado del gallo.",
+        "a": "En gotas; la dosis exacta te la confirma el asesor según cómo esté el gallo.",
         "q": "¿Cómo se da?"
       },
       {
@@ -802,7 +815,7 @@
       "problemas para respirar"
     ],
     "objeciones": {
-      "muy_caro": "Mirá, son $40.000 pero rinde un montón (Gotero) y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
+      "muy_caro": "Mirá, son $45.000 pero rinde un montón  y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
       "lo_pienso": "Tranquilo parcero, te lo aparto sin compromiso y arrancás cuando querás. Eso sí, es de los que más sale, no te quedés sin él.",
       "no_confio": "Es original y es contraentrega: pagás cuando lo tenés en la mano. Cero riesgo, mi rey. Miles de galleros ya lo usan.",
       "ya_lo_uso": "¡Bacano! Entonces ya sabés cómo rinde. ¿Te mando otro pa que no te quedés sin él en el momento clave? 🐓",
@@ -813,11 +826,13 @@
     "stock": 999,
     "activo": true,
     "envioGratis": false,
-    "descripcion": "🫁 CURE CHEST — Para problemas respiratorios\nAyuda a oxigenar y despejar el pecho de tu gallo cuando lo necesita.\n✅ Alivia problemas respiratorios\n✅ Mejora la oxigenación\n✅ Ayuda a la recuperación del ave\n✅ Disponible en gotero o cápsulas\n🥄 Modo de uso: cápsulas 1 diaria por 3 días; gotero según dosis.\n💵 Gotero $40.000 · 60 cápsulas $45.000 · + envío · Contra entrega, pagás al recibir.",
+    "descripcion": "🫁 CURE CHEST GOTAS — Para problemas respiratorios\nAyuda a oxigenar y despejar el pecho de tu gallo cuando lo necesita.\n✅ Alivia problemas respiratorios\n✅ Mejora la oxigenación\n✅ Ayuda a la recuperación del ave\n📦 En este canal solo viene en GOTERO (gotas). Las cápsulas NO se venden contra entrega: esas las despacha Rooster Deluxe con pago anticipado.\n💵 $45.000 + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "",
-    "presentacion": "",
-    "paraQue": ""
+    "dosificacion": "Gotas para problemas respiratorios; la dosis exacta te la confirma el asesor.",
+    "presentacion": "Gotero · gotas",
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "901320f6-612f-42e9-9bac-e249d31c511d",
@@ -891,7 +906,7 @@
       "pa engordar gallo"
     ],
     "objeciones": {
-      "muy_caro": "Mirá, son $60.000 pero rinde un montón (10 ml) y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
+      "muy_caro": "Mirá, son $70.000 pero rinde un montón (10 ml) y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
       "lo_pienso": "Tranquilo parcero, te lo aparto sin compromiso y arrancás cuando querás. Eso sí, es de los que más sale, no te quedés sin él.",
       "no_confio": "Es americano original y es contraentrega: pagás cuando lo tenés en la mano. Cero riesgo, mi rey. Miles de galleros ya lo usan.",
       "ya_lo_uso": "¡Bacano! Entonces ya sabés cómo rinde. ¿Te mando otro pa que no te quedés sin él en el momento clave? 🐓",
@@ -904,9 +919,11 @@
     "envioGratis": false,
     "descripcion": "🇺🇸💉 CYANOMAX B12 5500 — Vitamina B12 fórmula americana\r\nEnergía y músculo de campeón: la base para un gallo fuerte y con rendimiento.\r\n✅ Fortalecimiento general del ejemplar\r\n✅ Aumento de masa muscular\r\n✅ Alto rendimiento en el trabajo y el careo\r\n✅ Complementa el desarrollo\r\n✅ Mejora la vitalidad y el tono\r\n✅ Fórmula americana concentrada (5500)\r\n🥄 Modo de uso: mayores de 4 meses, 0.5 ml en la pechuga cada 15 días.\r\n💵 $70.000 + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "",
-    "presentacion": "",
-    "paraQue": ""
+    "dosificacion": "Mayores de 4 meses: 0.5 ml en la pechuga cada 15 días.",
+    "presentacion": "10 ml · INYECTABLE",
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "3795218d-c7b9-4eb7-8aaf-a179507a9ada",
@@ -982,7 +999,7 @@
       "gallo sin fondo"
     ],
     "objeciones": {
-      "muy_caro": "Mirá, son $90.000 pero rinde un montón (10 ml) y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
+      "muy_caro": "Mirá, son $150.000 pero rinde un montón (10 ml) y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
       "lo_pienso": "Tranquilo parcero, te lo aparto sin compromiso y arrancás cuando querás. Eso sí, es de los que más sale, no te quedés sin él.",
       "no_confio": "Es importado original (Brasil) y es contraentrega: pagás cuando lo tenés en la mano. Cero riesgo, mi rey. Miles de galleros ya lo usan.",
       "ya_lo_uso": "¡Bacano! Entonces ya sabés cómo rinde. ¿Te mando otro pa que no te quedés sin él en el momento clave? 🐓",
@@ -995,9 +1012,11 @@
     "envioGratis": false,
     "descripcion": "🐍🔥 DRAGON MAMBA — El mejor doping importado (con ATP)\nPotencia importada para el día de exhibición: tu gallo con toda la fiera adentro.\n✅ Energía y vitalidad de sobra\n✅ Resistencia para aguantar todo el juego\n✅ Movilidad y reacción rápida\n✅ Contiene ATP para explosión de fuerza\n✅ Rinde: solo 0.2 ml por ejemplar\n✅ Resultados visibles el día del careo\n🥄 Modo de uso: 0.2 ml por ejemplar. No mezclar con otro medicamento que interfiera.\n💵 $150.000 + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "",
-    "presentacion": "",
-    "paraQue": ""
+    "dosificacion": "0.3 ml con jeringa de insulina en la pechuga, 2 días antes de la pelea. No mezclar con otro medicamento.",
+    "presentacion": "10 ml · INYECTABLE",
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "c6ae5627-7cda-46b2-aec4-2d649abd522c",
@@ -1085,9 +1104,11 @@
     "envioGratis": false,
     "descripcion": "🇺🇸💊 DRAGON ROOSTER — Multivitamínico americano para el ave de combate\nMantén a tu gallo fuerte, activo y listo todos los días.\n✅ Vitalidad y tono muscular\n✅ Apoya el rendimiento de combate\n✅ Defensas y buen estado\n✅ Práctico: 1 tableta al día\n🥄 Modo de uso: 1 tableta diaria por ejemplar.\n💵 $80.000 (200 pastillas) + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "",
+    "dosificacion": "1 pastilla diaria de lunes a viernes (etapa de crestones y cuido).",
     "presentacion": "200 pastillas",
-    "paraQue": ""
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "6b48a73c-626d-4bec-8b85-489c22b6c6a8",
@@ -1177,9 +1198,11 @@
     "envioGratis": false,
     "descripcion": "🇺🇸🐍 ENERGY COBRA — El doping que despierta la fiera\nSaca lo mejor de tu gallo justo antes del juego, con la potencia de la fórmula americana.\n✅ Energía y reacción inmediata\n✅ Más aguante en el careo\n✅ Despierta el instinto de pelea\n✅ Rendimiento sostenido durante el juego\n✅ ~40 dosis por frasco (30 ml): rinde muchísimo\n✅ Fácil de dosificar en gotas\n🥄 Modo de uso: 4 a 5 gotas 1 hora antes del juego.\n💵 $70.000 + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "",
-    "presentacion": "",
-    "paraQue": ""
+    "dosificacion": "Si el gallo no está acostumbrado: 4 gotas 1 hora antes de la pelea. Lo recomendable es acostumbrarlo: en los 2 últimos entrenamientos 4 gotas 1 hora antes de cada entrenamiento; 2 días antes de la pelea 3 gotas después del desayuno; y el día de la pelea 4 gotas 1 hora antes. Mantener refrigerado.",
+    "presentacion": "30 ml · gotas (~40 dosis)",
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "fa9f1196-7784-45c2-aacd-99cc419aea18",
@@ -1240,11 +1263,13 @@
     "stock": 999,
     "activo": true,
     "envioGratis": false,
-    "descripcion": "🏆 EQUIPO DE CAMPEONES — El kit definitivo\n4 productos que trabajan juntos para llevar a tu gallo al máximo rendimiento.\n✅ Energía para el careo\n✅ Fuerza y masa muscular\n✅ Recuperación después del trabajo\n✅ Cuidado integral en un solo pack\n✅ Ahorro por combo (4 productos)\n💵 $300.000 + envío · Contra entrega, pagás al recibir.",
+    "descripcion": "🏆 EQUIPO DE CAMPEONES — El kit definitivo\nTrae 4 productos: Super Trainer (pre-entreno, gotas) + Energy Cobra (doping en gotas) + Ultra Gallo (vitamina inyectable) + American Rooster Fury (doping inyectable).\n✅ Energía para el careo\n✅ Fuerza y masa muscular\n✅ Resistencia el día de la pelea\n✅ Ahorro por combo (antes $350.000)\n💵 $300.000 + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
     "dosificacion": "",
     "presentacion": "Kit x 4 productos",
-    "paraQue": "Combo/kit de rendimiento para gallos: energía, resistencia, agilidad y fuerza (4 productos en un pack)."
+    "paraQue": "Combo/kit de rendimiento para gallos: energía, resistencia, agilidad y fuerza (4 productos en un pack).",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "7fc75c2d-577f-4229-b8ff-79bdbe5e554a",
@@ -1332,9 +1357,11 @@
     "envioGratis": false,
     "descripcion": "💊 THE AVIAN PRO — Multivitamínico de cuido (todas las etapas)\nEl aporte vitamínico diario para mantener a tus aves siempre a punto.\n✅ Vitalidad y desarrollo\n✅ Sirve en todas las etapas del ave\n✅ Defensas más fuertes\n✅ Cómodo: 1 tableta al día\n🥄 Modo de uso: 1 tableta diaria por ejemplar.\n💵 $80.000 (200 pastillas) + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "",
+    "dosificacion": "1 pastilla diaria por gallo en cuido.",
     "presentacion": "200 pastillas",
-    "paraQue": ""
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "4f26aa27-1aea-4431-9389-1d48f685b205",
@@ -1421,9 +1448,104 @@
     "envioGratis": false,
     "descripcion": "💊 GALLO POST RECOVERY — Recuperación post-entreno\nMinimiza la fatiga y acelera la recuperación después del trabajo o la pelea.\n✅ Recuperación muscular más rápida\n✅ Menos fatiga\n✅ Prepara al gallo para la siguiente sesión\n✅ Cómodo: 1 tableta después de entrenar\n🥄 Modo de uso: 1 tableta inmediatamente después de cada entrenamiento.\n💵 $80.000 (200 pastillas) + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "",
+    "dosificacion": "1 pastilla media hora después de cada entrenamiento.",
+    "presentacion": "200 pastillas",
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 1
+  },
+  {
+    "id": "9c081f7c-d162-4836-893f-621544ed58de",
+    "slug": "gallo-purga-plus",
+    "name": "Gallo Purga Plus",
+    "categoryId": "ef292f0d-856b-4dae-b2d8-26f3c1059b86",
+    "categorySlug": "desparasitantes",
+    "categoryName": "Desparasitantes & Purgantes",
+    "audience": "Aves mayores a 4 meses",
+    "origin": "co",
+    "priceCOP": 120000,
+    "presentations": [
+      {
+        "label": "100 pastillas",
+        "priceCOP": 120000,
+        "shopifyVariantId": "gid://shopify/ProductVariant/48900413194475"
+      }
+    ],
+    "image": "gallo-purga-plus.jpg",
+    "imageUrl": "https://animals-deluxe.vercel.app/products/gallo-purga-plus.jpg",
+    "badges": [
+      "Best Choice",
+      "Non Toxic"
+    ],
+    "tagline": "Purgante original: elimina parásitos internos y limpia.",
+    "shortDesc": "Elimina parásitos internos, remueve y limpia, mejora el flujo intestinal.",
+    "benefits": [
+      "Elimina parásitos internos",
+      "Remueve y limpia",
+      "Flujo intestinal",
+      "Acondiciona el estómago"
+    ],
+    "ingredients": [],
+    "usage": "1 pastilla en aves mayores a 4 meses.",
+    "pitch": "Purgante original: limpia parásitos internos y acondiciona el estómago. 100 pastillas.",
+    "faq": [
+      {
+        "a": "Cada 2-3 meses, parcero. Un gallo con parásitos no aprovecha la comida.",
+        "q": "¿Cada cuánto desparasito?"
+      },
+      {
+        "a": "Sí, elimina lombrices y parásitos internos, y limpia el intestino.",
+        "q": "¿Elimina lombrices?"
+      },
+      {
+        "a": "Preferible en ayunas pa que actúe mejor. Da la dosis según el peso.",
+        "q": "¿Se da en ayunas?"
+      },
+      {
+        "a": "Según la presentación; en general aves ya desarrolladas. Te asesoro según el caso.",
+        "q": "¿Desde qué edad?"
+      },
+      {
+        "a": "Es de uso para gallos, tranquilo. Seguí la dosis recomendada y listo.",
+        "q": "¿Tiene efectos fuertes?"
+      }
+    ],
+    "keywords": [
+      "desparasitante",
+      "purga",
+      "lombrices",
+      "parasitos",
+      "gusanos",
+      "limpieza",
+      "nacional",
+      "gallo",
+      "plus",
+      "aves",
+      "mayores",
+      "meses",
+      "parasitos gallo",
+      "purgar gallo",
+      "desparasitar"
+    ],
+    "objeciones": {
+      "muy_caro": "Mirá, son $45.000 pero rinde un montón (100 pastillas) y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
+      "lo_pienso": "Tranquilo parcero, te lo aparto sin compromiso y arrancás cuando querás. Eso sí, es de los que más sale, no te quedés sin él.",
+      "no_confio": "Es original y es contraentrega: pagás cuando lo tenés en la mano. Cero riesgo, mi rey. Miles de galleros ya lo usan.",
+      "ya_lo_uso": "¡Bacano! Entonces ya sabés cómo rinde. ¿Te mando otro pa que no te quedés sin él en el momento clave? 🐓",
+      "no_tengo_plata": "De una te entiendo. Mirá que es contraentrega, no pagás nada ahora; cuando te llegue lo pagás. ¿Te lo aparto pa guardarte el cupo?"
+    },
+    "adIds": [],
+    "disclaimer": "Producto de bienestar y rendimiento. No cura enfermedades.",
+    "stock": 999,
+    "activo": true,
+    "envioGratis": false,
+    "descripcion": "🪱 GALLO PURGA PLUS — Purgante original en pastillas\nElimina parásitos internos y limpia el intestino de tus aves.\n✅ Elimina parásitos y limpia el intestino\n✅ Mejor aprovechamiento del alimento\n✅ Aves más sanas y fuertes\n✅ Cómodo en pastillas\n🥄 Modo de uso: 1 pastilla en aves mayores de 4 meses.\n💵 $120.000 (100 pastillas) + envío · Contra entrega, pagás al recibir.",
+    "edadMinima": "",
+    "dosificacion": "1 pastilla en aves mayores de 4 meses.",
     "presentacion": "",
-    "paraQue": ""
+    "paraQue": "Purgante y desparasitante: elimina parásitos internos y limpia el intestino.",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "7dc128bb-97c4-4821-8fc1-df0c2d154fea",
@@ -1513,7 +1635,9 @@
     "edadMinima": "8 meses",
     "dosificacion": "60 a 80 gr por animal al día",
     "presentacion": "polvo x 3 kg",
-    "paraQue": ""
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "d1c75908-e469-4b6c-824d-33b5bcefdd45",
@@ -1570,7 +1694,9 @@
     "edadMinima": "",
     "dosificacion": "",
     "presentacion": "Kit x 2 productos",
-    "paraQue": "Combo entreno y recuperación para gallos: energía y fuerza antes, recuperación muscular después."
+    "paraQue": "Combo entreno y recuperación para gallos: energía y fuerza antes, recuperación muscular después.",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "1eadfc2b-0cb4-40af-8489-63756fbcc262",
@@ -1615,9 +1741,11 @@
     "envioGratis": false,
     "descripcion": "🐕💪 MORE MUSCLE DOGS PREMIUM — Masa muscular y salud digestiva\nPara perros de todas las razas, con ingredientes naturales y resultados visibles.\n✅ Aumento de masa muscular\n✅ Reduce diarrea, gases y olor de las heces (semana 1-2)\n✅ Menos caída de pelo y mejor piel (desde la semana 4)\n✅ Ingredientes naturales, sin derivados de pollo\n✅ Se mezcla fácil con el concentrado o la dieta\n✅ Rinde de 3 a 6 meses según peso\n🥄 Modo de uso: según peso (ej. perro de 13 kg ≈ 3 g/día, de lunes a viernes).\n💵 400 gr $100.000 · 1000 gr $180.000 · 🚚 ENVÍO GRATIS · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "",
-    "presentacion": "",
-    "paraQue": ""
+    "dosificacion": "según peso (ej. perro de 13 kg ≈ 3 g/día, de lunes a viernes).",
+    "presentacion": "polvo · plan 3 meses",
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "89226e15-917c-4dde-88cd-269797eaf9ff",
@@ -1712,8 +1840,10 @@
     "descripcion": "🐕💪 MORE MUSCLE DOGS PREMIUM — Masa muscular y salud digestiva\nPara perros de todas las razas, con ingredientes naturales y resultados visibles.\n✅ Aumento de masa muscular\n✅ Reduce diarrea, gases y olor de las heces (semana 1-2)\n✅ Menos caída de pelo y mejor piel (desde la semana 4)\n✅ Ingredientes naturales, sin derivados de pollo\n✅ Se mezcla fácil con el concentrado o la dieta\n✅ Rinde de 3 a 6 meses según peso\n🥄 Modo de uso: según peso (ej. perro de 13 kg ≈ 3 g/día, de lunes a viernes).\n💵 400 gr $100.000 · 1000 gr $180.000 · 🚚 ENVÍO GRATIS · Contra entrega, pagás al recibir.",
     "edadMinima": "",
     "dosificacion": "3 g diarios de lunes a viernes (según peso; perro de ~13 kg ≈ 3 g/día). Rinde de 3 a 6 meses según tipo y peso.",
-    "presentacion": "400 gr / 1000 gr",
-    "paraQue": "Suplemento en polvo para perros: masa muscular, mejor digestión (menos diarrea/gases/olor) y piel/pelo sano."
+    "presentacion": "polvo · 400 gr / 1000 gr",
+    "paraQue": "Suplemento en polvo para perros: masa muscular, mejor digestión (menos diarrea/gases/olor) y piel/pelo sano.",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "9ee1dac4-9c54-4665-8f5a-c04c5a6d4525",
@@ -1794,7 +1924,7 @@
       "pa engordar gallo"
     ],
     "objeciones": {
-      "muy_caro": "Mirá, son $80.000 pero rinde un montón (100 ml) y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
+      "muy_caro": "Mirá, son $180.000 pero rinde un montón (100 ml) y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
       "lo_pienso": "Tranquilo parcero, te lo aparto sin compromiso y arrancás cuando querás. Eso sí, es de los que más sale, no te quedés sin él.",
       "no_confio": "Es americano original y es contraentrega: pagás cuando lo tenés en la mano. Cero riesgo, mi rey. Miles de galleros ya lo usan.",
       "ya_lo_uso": "¡Bacano! Entonces ya sabés cómo rinde. ¿Te mando otro pa que no te quedés sin él en el momento clave? 🐓",
@@ -1807,9 +1937,11 @@
     "envioGratis": false,
     "descripcion": "🇺🇸💊 NORDIC ROOSTER VITAMINS — Vitamina completa fórmula americana\nEl complemento diario para un gallo fuerte, sano y con presencia.\n✅ Desarrollo y vitalidad\n✅ Defensas más fuertes\n✅ Apoya músculo y estructura\n✅ Fórmula americana completa\n✅ Rinde según la presentación que elijas\n🥄 Modo de uso: dosis según la etapa del ejemplar.\n💵 50 ml $180.000 · 100 ml $250.000 · + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "",
-    "presentacion": "",
-    "paraQue": ""
+    "dosificacion": "dosis según la etapa del ejemplar.",
+    "presentacion": "50 ml · INYECTABLE",
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "0de8b836-5f26-4eef-bc83-48d217dd506b",
@@ -1882,7 +2014,7 @@
       "nutripeep refoce"
     ],
     "objeciones": {
-      "muy_caro": "Mirá, son $25.000 pero rinde un montón (Gotero) y es inversión pa tu pollo. Un pollo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
+      "muy_caro": "Mirá, son $25.000 pero rinde un montón  y es inversión pa tu pollo. Un pollo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
       "lo_pienso": "Tranquilo parcero, te lo aparto sin compromiso y arrancás cuando querás. Eso sí, es de los que más sale, no te quedés sin él.",
       "no_confio": "Es americano original y es contraentrega: pagás cuando lo tenés en la mano. Cero riesgo, mi rey. Miles de galleros ya lo usan.",
       "ya_lo_uso": "¡Bacano! Entonces ya sabés cómo rinde. ¿Te mando otro pa que no te quedés sin él en el momento clave? 🐓",
@@ -1895,9 +2027,11 @@
     "envioGratis": false,
     "descripcion": "🐥 NUTRIPEEP REFOCE — Para tus pollitos\nSalud y crecimiento óptimo desde los primeros días de vida.\n✅ Crecimiento sano\n✅ Vitalidad para pollitos\n✅ Fácil de dar en el bebedero\n✅ Económico\n🥄 Modo de uso: 6 gotas diarias en el bebedero.\n💵 $25.000 + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "",
-    "presentacion": "",
-    "paraQue": ""
+    "dosificacion": "6 gotas diarias en el bebedero (pollitos de 0 a 3 meses).",
+    "presentacion": "Gotero · gotas",
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 2
   },
   {
     "id": "365d8d28-33bf-484c-ba64-486da67827a6",
@@ -1986,8 +2120,101 @@
     "descripcion": "🐟 OMEGA-3 FOR ROOSTER — Piel y plumaje sano\nNutre a tu gallo por dentro para que brille por fuera.\n✅ Piel sana e hidratada\n✅ Plumaje fuerte y brillante\n✅ Apoya la salud general\n✅ 100 softgel: rinde\n💵 $75.000 (100 softgel) + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
     "dosificacion": "",
+    "presentacion": "100 cápsulas soft gel",
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 1
+  },
+  {
+    "id": "618e2994-cbaf-4fd5-9a38-b5aafaef7eb1",
+    "slug": "plume-king-shampoo",
+    "name": "Plume King Shampoo",
+    "categoryId": "1fbe1b59-36ce-4f29-846b-8f02ea808372",
+    "categorySlug": "cuidado",
+    "categoryName": "Piel, Pluma & Cuidado",
+    "audience": "Gallos finos",
+    "origin": "co",
+    "priceCOP": 40000,
+    "presentations": [
+      {
+        "label": "1 litro",
+        "priceCOP": 40000,
+        "shopifyVariantId": "gid://shopify/ProductVariant/48900416340203"
+      }
+    ],
+    "image": "plume-king-shampoo.jpg",
+    "imageUrl": "https://animals-deluxe.vercel.app/products/plume-king-shampoo.jpg",
+    "badges": [
+      "Premium"
+    ],
+    "tagline": "El shampoo para gallos: limpieza, brillo y desinfección.",
+    "shortDesc": "Limpieza, brillo en pluma, desinfecta y elimina ácaros y piojos.",
+    "benefits": [
+      "Limpieza profunda",
+      "Brillo en pluma",
+      "Elimina ácaros y piojos"
+    ],
+    "ingredients": [],
+    "usage": "Aplica como shampoo, masajea y enjuaga.",
+    "pitch": "Shampoo premium: pluma brillante, piel limpia y sin ácaros ni piojos. 1 litro.",
+    "faq": [
+      {
+        "a": "Pa dejar la pluma brillante y la piel sana, y ayudar a prevenir hongos y ácaros.",
+        "q": "¿Pa qué sirve?"
+      },
+      {
+        "a": "Según la presentación: el shampoo en baño, o el producto sobre la zona. Te indico el modo.",
+        "q": "¿Cómo se aplica?"
+      },
+      {
+        "a": "Según necesidad, mi rey. Pa exhibición, dejalo brillante unos días antes.",
+        "q": "¿Cada cuánto?"
+      },
+      {
+        "a": "Claro, deja el ejemplar bien presentado, con pluma sana y brillante.",
+        "q": "¿Sirve pa exhibición?"
+      },
+      {
+        "a": "No, está hecho pa el cuidado del gallo. Seguí el modo de uso y listo.",
+        "q": "¿Es fuerte pa la piel?"
+      }
+    ],
+    "keywords": [
+      "pluma",
+      "piel",
+      "brillo",
+      "muda",
+      "plumaje",
+      "hongos",
+      "cuidado",
+      "escamas",
+      "nacional",
+      "plume",
+      "king",
+      "shampoo",
+      "pluma opaca",
+      "piojos",
+      "brillo de pluma"
+    ],
+    "objeciones": {
+      "muy_caro": "Mirá, son $45.000 pero rinde un montón (1 litro) y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
+      "lo_pienso": "Tranquilo parcero, te lo aparto sin compromiso y arrancás cuando querás. Eso sí, es de los que más sale, no te quedés sin él.",
+      "no_confio": "Es original y es contraentrega: pagás cuando lo tenés en la mano. Cero riesgo, mi rey. Miles de galleros ya lo usan.",
+      "ya_lo_uso": "¡Bacano! Entonces ya sabés cómo rinde. ¿Te mando otro pa que no te quedés sin él en el momento clave? 🐓",
+      "no_tengo_plata": "De una te entiendo. Mirá que es contraentrega, no pagás nada ahora; cuando te llegue lo pagás. ¿Te lo aparto pa guardarte el cupo?"
+    },
+    "adIds": [],
+    "disclaimer": "Producto de bienestar y rendimiento. No cura enfermedades.",
+    "stock": 999,
+    "activo": true,
+    "envioGratis": false,
+    "descripcion": "🧴👑 PLUME KING SHAMPOO — El shampoo del campeón\nLimpieza, brillo y desinfección en un solo paso.\n✅ Limpieza profunda\n✅ Brillo en el plumaje\n✅ Desinfección\n✅ 1 litro rendidor\n💵 $40.000 (1 litro) + envío · Contra entrega, pagás al recibir.",
+    "edadMinima": "",
+    "dosificacion": "",
     "presentacion": "",
-    "paraQue": ""
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "ca5959ae-b563-4d34-a25d-324d5e38ebf5",
@@ -2074,9 +2301,11 @@
     "envioGratis": false,
     "descripcion": "🇺🇸🪱 PURGE BEACH — Purgante de calidad norteamericana\nIntestino limpio, gallo fuerte de adentro hacia afuera.\n✅ Elimina lombrices, gusanos redondos, tenias y protozoos\n✅ Previene la obstrucción intestinal por parásitos\n✅ Mejora la conversión alimenticia (aprovecha mejor el alimento)\n✅ Mejor salud digestiva general\n✅ Fórmula norteamericana confiable\n🥄 Modo de uso: menores de 3 meses 4 gotas · mayores de 4 meses 8 gotas. En ayunas; repetir a los 15 días.\n💵 $25.000 + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "",
-    "presentacion": "",
-    "paraQue": ""
+    "dosificacion": "menores de 3 meses 4 gotas · mayores de 4 meses 8 gotas. En ayunas; repetir a los 15 días.",
+    "presentacion": "Gotero 10 ml · gotas",
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 2
   },
   {
     "id": "961332cf-5019-4f14-b1ea-a61b68eda4ac",
@@ -2164,9 +2393,11 @@
     "envioGratis": false,
     "descripcion": "🔴🐍 RED DOPPING MAMBA — Energizante pre-juego (con ATP)\nPrepara a tu gallo para reventar en el careo, al mejor precio.\n✅ Energía y potencia\n✅ Contiene ATP para explosión de fuerza\n✅ Reacción rápida\n✅ Excelente relación precio-resultado\n💵 $50.000 + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "",
-    "presentacion": "",
-    "paraQue": ""
+    "dosificacion": "Si el gallo no está acostumbrado: 4 gotas 1 hora antes de la pelea. Lo recomendable es acostumbrarlo: en los 2 últimos entrenamientos 4 gotas 1 hora antes de cada entrenamiento; 2 días antes de la pelea 3 gotas después del desayuno; y el día de la pelea 4 gotas 1 hora antes. Mantener refrigerado.",
+    "presentacion": "10 ml · gotas",
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "979b8d6f-b045-42b8-bd03-dd61ef63592d",
@@ -2240,7 +2471,7 @@
       "desparasitar"
     ],
     "objeciones": {
-      "muy_caro": "Mirá, son $40.000 pero rinde un montón (Frasco) y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
+      "muy_caro": "Mirá, son $60.000 pero rinde un montón  y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
       "lo_pienso": "Tranquilo parcero, te lo aparto sin compromiso y arrancás cuando querás. Eso sí, es de los que más sale, no te quedés sin él.",
       "no_confio": "Es americano original y es contraentrega: pagás cuando lo tenés en la mano. Cero riesgo, mi rey. Miles de galleros ya lo usan.",
       "ya_lo_uso": "¡Bacano! Entonces ya sabés cómo rinde. ¿Te mando otro pa que no te quedés sin él en el momento clave? 🐓",
@@ -2253,9 +2484,11 @@
     "envioGratis": false,
     "descripcion": "🪱 ROOSTER AND WORM — Desparasitante de rápida absorción\nLimpia parásitos internos a fondo, con dosis exacta según la edad del ave.\n✅ Elimina parásitos internos\n✅ Rápida absorción y acción\n✅ Mejora digestión y conversión del alimento\n✅ Aves más sanas y con más energía\n✅ Dosis clara por edad\n🥄 Modo de uso: 0-3 meses 4 gotas · 4-6 meses 8 gotas · 7-9 meses 10 gotas. En ayunas; repetir a los 15 días.\n💵 $60.000 + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "",
-    "presentacion": "",
-    "paraQue": ""
+    "dosificacion": "0-3 meses 4 gotas · 4-6 meses 8 gotas · 7-9 meses 10 gotas. En ayunas; repetir a los 15 días.",
+    "presentacion": "Frasco · gotas",
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "b50db08e-4667-4c79-a54c-ce411d0a784e",
@@ -2331,7 +2564,7 @@
       "pa engordar gallo"
     ],
     "objeciones": {
-      "muy_caro": "Mirá, son $60.000 pero rinde un montón (30 ml) y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
+      "muy_caro": "Mirá, son $130.000 pero rinde un montón (30 ml) y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
       "lo_pienso": "Tranquilo parcero, te lo aparto sin compromiso y arrancás cuando querás. Eso sí, es de los que más sale, no te quedés sin él.",
       "no_confio": "Es importado original (Brasil) y es contraentrega: pagás cuando lo tenés en la mano. Cero riesgo, mi rey. Miles de galleros ya lo usan.",
       "ya_lo_uso": "¡Bacano! Entonces ya sabés cómo rinde. ¿Te mando otro pa que no te quedés sin él en el momento clave? 🐓",
@@ -2344,9 +2577,11 @@
     "envioGratis": false,
     "descripcion": "🇧🇷💉 ROOSTER B12 COMPLETE — B12 premium inyectable (30 ml)\nOxigena y recupera a tu gallo a otro nivel con esta B12 completa.\n✅ Mejor oxigenación y transporte de energía\n✅ Recuperación más rápida tras el trabajo\n✅ Vigor y fortalecimiento\n✅ Músculo activo y absorción óptima\n✅ Presentación 30 ml que rinde\n🥄 Modo de uso: mayores de 4 meses, 0.5 ml en la pechuga cada 15 días.\n💵 $130.000 + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "",
-    "presentacion": "",
-    "paraQue": ""
+    "dosificacion": "mayores de 4 meses, 0.5 ml en la pechuga cada 15 días.",
+    "presentacion": "30 ml · INYECTABLE",
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "62a82173-0643-41ac-b98c-e6905695fcb4",
@@ -2421,7 +2656,7 @@
       "pa engordar gallo"
     ],
     "objeciones": {
-      "muy_caro": "Mirá, son $80.000 pero rinde un montón (100 ml) y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
+      "muy_caro": "Mirá, son $250.000 pero rinde un montón (100 ml) y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
       "lo_pienso": "Tranquilo parcero, te lo aparto sin compromiso y arrancás cuando querás. Eso sí, es de los que más sale, no te quedés sin él.",
       "no_confio": "Es original y es contraentrega: pagás cuando lo tenés en la mano. Cero riesgo, mi rey. Miles de galleros ya lo usan.",
       "ya_lo_uso": "¡Bacano! Entonces ya sabés cómo rinde. ¿Te mando otro pa que no te quedés sin él en el momento clave? 🐓",
@@ -2434,9 +2669,11 @@
     "envioGratis": false,
     "descripcion": "🇺🇸💉 ROOSTER BOOSTER — B12 americana presentación grande (100 ml)\nLa que más rinde del catálogo: pensada para galleras con varios ejemplares.\n✅ Activación total y enfoque máximo\n✅ Alto rendimiento sostenido\n✅ Vitalidad y energía de campeón\n✅ Presentación 100 ml: rinde muchísimo\n✅ Fórmula americana premium\n🥄 Modo de uso: mayores de 4 meses, 0.5 ml en la pechuga cada 15 días.\n💵 $250.000 + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "",
-    "presentacion": "",
-    "paraQue": "Vitamina para energía, vitalidad y desempeño."
+    "dosificacion": "mayores de 4 meses, 0.5 ml en la pechuga cada 15 días.",
+    "presentacion": "100 ml · INYECTABLE",
+    "paraQue": "Vitamina para energía, vitalidad y desempeño.",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "47d47e72-727a-4e5e-a8b1-6345e0d52a63",
@@ -2471,7 +2708,7 @@
       "Más defensas pa pollitos sanos"
     ],
     "ingredients": [],
-    "usage": "Las gotas indicadas en el agua del bebedero a diario, o la dosis según presentación. Ideal desde los primeros días de levante.",
+    "usage": "1 a 2 pastillas al día por ejemplar. Envase de 500 pastillas.",
     "pitch": "Vitamina para pollos: todas las vitaminas y minerales.",
     "faq": [
       {
@@ -2483,7 +2720,7 @@
         "q": "¿Pa qué sirve?"
       },
       {
-        "a": "Las gotas en el agua del bebedero a diario, o la dosis según presentación.",
+        "a": "1 a 2 pastillas al día por ejemplar, mi rey.",
         "q": "¿Cómo se da?"
       },
       {
@@ -2513,7 +2750,7 @@
       "rooster deluxe"
     ],
     "objeciones": {
-      "muy_caro": "Mirá, son $50.000 pero rinde un montón (100 ml) y es inversión pa tu pollo. Un pollo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
+      "muy_caro": "Mirá, son $80.000 pero rinde un montón (100 ml) y es inversión pa tu pollo. Un pollo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
       "lo_pienso": "Tranquilo parcero, te lo aparto sin compromiso y arrancás cuando querás. Eso sí, es de los que más sale, no te quedés sin él.",
       "no_confio": "Es original y es contraentrega: pagás cuando lo tenés en la mano. Cero riesgo, mi rey. Miles de galleros ya lo usan.",
       "ya_lo_uso": "¡Bacano! Entonces ya sabés cómo rinde. ¿Te mando otro pa que no te quedés sin él en el momento clave? 🐓",
@@ -2526,9 +2763,11 @@
     "envioGratis": false,
     "descripcion": "🐔 ROOSTER DELUXE — Vitamina para pollos en levante\nTodas las vitaminas y minerales para un crecimiento fuerte y parejo.\n✅ Crecimiento fuerte y sano\n✅ Vitaminas y minerales completos\n✅ Aves más parejas en el lote\n✅ Presentación rendidora (500 pastillas)\n💵 $80.000 (500 pastillas) + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "",
+    "dosificacion": "1 a 2 pastillas al día.",
     "presentacion": "500 pastillas",
-    "paraQue": "Vitaminas y minerales para pollos en levante."
+    "paraQue": "Vitaminas y minerales para pollos en levante.",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "57877bda-afc1-47e1-8e34-da453a3c5887",
@@ -2623,103 +2862,11 @@
     "envioGratis": false,
     "descripcion": "🐥 ROOSTER DELUXE CHICKS — Levante fuerte desde el día 0\nAsegura el futuro de tus aves: crecimiento, huesos e inmunidad desde el primer día.\n✅ Fórmula de crecimiento (growth) para levante\n✅ Base ósea sólida y estructura fuerte\n✅ Sistema inmune fuerte desde temprano\n✅ Buen aporte proteico\n✅ Aves más sanas y parejas en el lote\n✅ Elige el tamaño según cuántas aves tengas\n🥄 Modo de uso: etapa de levante (0 a 3 meses), según cantidad de aves.\n💵 400 gr $45.000 · 1 kg $80.000 · 3 kg $180.000 · + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "",
-    "presentacion": "",
-    "paraQue": ""
-  },
-  {
-    "id": "a1f36547-6480-44b5-9cf4-68cc066316fa",
-    "slug": "rooster-deluxe-max",
-    "name": "Rooster Deluxe Max",
-    "categoryId": "2f60304d-2acb-4b08-889f-3dd115df23b9",
-    "categorySlug": "suplementos",
-    "categoryName": "Suplementos en Polvo",
-    "audience": "Gallos · etapa de cuido final",
-    "origin": "co",
-    "priceCOP": 50000,
-    "presentations": [
-      {
-        "label": "400 gr",
-        "priceCOP": 50000,
-        "shopifyVariantId": "gid://shopify/ProductVariant/48900414734571"
-      },
-      {
-        "label": "1 kg",
-        "priceCOP": 90000,
-        "shopifyVariantId": "gid://shopify/ProductVariant/48900414767339"
-      }
-    ],
-    "image": "rooster-deluxe-max.jpg",
-    "imageUrl": "https://animals-deluxe.vercel.app/products/rooster-deluxe-max.jpg",
-    "badges": [
-      "Best Choice"
-    ],
-    "tagline": "Etapa de cuido final: calcio, fósforo, color, minerales y vitaminas.",
-    "shortDesc": "Para la etapa de cuido final: aporte de calcio, fósforo, color, minerales y vitaminas.",
-    "benefits": [
-      "Calcio y fósforo",
-      "Aporte de color",
-      "Minerales y vitaminas"
-    ],
-    "ingredients": [],
-    "usage": "1 a 2 dosis diarias en la etapa de cuido final.",
-    "pitch": "El suplemento de cuido final: calcio, fósforo y color para rematar la preparación.",
-    "faq": [
-      {
-        "a": "A diario según la dosis, parcero. Es de uso constante pa ver resultados.",
-        "q": "¿Cada cuánto se lo doy?"
-      },
-      {
-        "a": "Aporta vitaminas, minerales y proteína pa más masa, energía y vitalidad.",
-        "q": "¿Pa qué sirve?"
-      },
-      {
-        "a": "Con uso constante, en pocas semanas notás más cuerpo y más energía.",
-        "q": "¿En cuánto se ve el cambio?"
-      },
-      {
-        "a": "Sí, podés darlo mezclado con la comida o directo según la presentación.",
-        "q": "¿Se mezcla con la comida?"
-      },
-      {
-        "a": "Sí, pa desarrollo y mantenimiento. Ajustás la dosis según el ejemplar.",
-        "q": "¿Sirve pa todas las etapas?"
-      }
-    ],
-    "keywords": [
-      "suplemento",
-      "polvo",
-      "formula",
-      "mezcla",
-      "nutricion",
-      "proteina",
-      "nacional",
-      "rooster",
-      "deluxe",
-      "gallos",
-      "etapa",
-      "cuido",
-      "masa muscular",
-      "desarrollo gallo",
-      "vitalidad"
-    ],
-    "objeciones": {
-      "muy_caro": "Mirá, son $45.000 pero rinde un montón (400 gr) y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
-      "lo_pienso": "Tranquilo parcero, te lo aparto sin compromiso y arrancás cuando querás. Eso sí, es de los que más sale, no te quedés sin él.",
-      "no_confio": "Es original y es contraentrega: pagás cuando lo tenés en la mano. Cero riesgo, mi rey. Miles de galleros ya lo usan.",
-      "ya_lo_uso": "¡Bacano! Entonces ya sabés cómo rinde. ¿Te mando otro pa que no te quedés sin él en el momento clave? 🐓",
-      "no_tengo_plata": "De una te entiendo. Mirá que es contraentrega, no pagás nada ahora; cuando te llegue lo pagás. ¿Te lo aparto pa guardarte el cupo?"
-    },
-    "adIds": [],
-    "disclaimer": "Producto de bienestar y rendimiento. No cura enfermedades.",
-    "stock": 999,
-    "activo": true,
-    "envioGratis": false,
-    "descripcion": "🏆 ROOSTER DELUXE MAX — Etapa de cuido final\nLlévalo al peso, color y estructura de campeón para el día clave.\n✅ Calcio y fósforo para estructura firme\n✅ Color y brillo en la pluma\n✅ Minerales y vitaminas de cierre\n✅ Presencia de gallo fino\n✅ Elige el tamaño según tu gallera\n🥄 Modo de uso: 1 a 2 dosis diarias en la etapa de cuido final.\n💵 400 gr $50.000 · 1 kg $90.000 · + envío · Contra entrega, pagás al recibir.",
-    "edadMinima": "",
-    "dosificacion": "",
-    "presentacion": "",
-    "paraQue": ""
+    "dosificacion": "etapa de levante (0 a 3 meses), según cantidad de aves.",
+    "presentacion": "polvo · 400 gr / 1 kg / 3 kg",
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "e7f40e06-b323-4ef7-b5a9-ce97e758f8ae",
@@ -2808,8 +2955,10 @@
     "descripcion": "🧴 ROOSTER DELUXE SHAMPOO — Limpieza profunda\nDeja el plumaje impecable y libre de ácaros.\n✅ Limpieza profunda y espumosa\n✅ Elimina ácaros\n✅ Plumaje suave y limpio\n✅ 1 litro: rinde mucho\n💵 $40.000 (1 litro) + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
     "dosificacion": "",
-    "presentacion": "",
-    "paraQue": ""
+    "presentacion": "1 litro · shampoo",
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 2
   },
   {
     "id": "d82b2c44-1f63-4027-9999-50555e2029ef",
@@ -2899,7 +3048,9 @@
     "edadMinima": "",
     "dosificacion": "",
     "presentacion": "",
-    "paraQue": ""
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "455aaf3a-c432-4466-87f4-1d188e19cde7",
@@ -2986,9 +3137,11 @@
     "envioGratis": false,
     "descripcion": "🩹 ROOSTER SMALLPOX — Roll-on para viruela/bubas\nAplicación tópica directa, cómoda y precisa sobre la zona afectada.\n✅ Para condiciones de viruela y bubas\n✅ Aplicación tópica con roll-on\n✅ Fácil y directo\n🥄 Modo de uso: aplicar con el roll dejando actuar sobre la zona.\n💵 $35.000 + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "",
+    "dosificacion": "aplicar con el roll dejando actuar sobre la zona.",
     "presentacion": "",
-    "paraQue": "Ungüento/roll-on tópico para viruela y bubas en la piel."
+    "paraQue": "Ungüento/roll-on tópico para viruela y bubas en la piel.",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "40defee4-ec30-4fc0-ac25-f1937bb8d9bc",
@@ -3050,8 +3203,101 @@
     "descripcion": "💪 ROOSTER STRENGTH — Vitamina para crestones\nFuerza y desarrollo para la etapa de crestón.\n✅ Desarrollo muscular\n✅ Vitalidad y estructura\n✅ Apoya la etapa de crecimiento\n💵 $50.000 + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
     "dosificacion": "8 gotas diarias directamente en el pico.",
-    "presentacion": "100 ml (gotas)",
-    "paraQue": "Vitamina en gotas para gallos: vitaminas, minerales y probióticos para condición física y desarrollo del ejemplar (crestones/fight)."
+    "presentacion": "100 ml · gotas",
+    "paraQue": "Vitamina en gotas para gallos: vitaminas, minerales y probióticos para condición física y desarrollo del ejemplar (crestones/fight).",
+    "soloAnticipado": false,
+    "minUnidades": 1
+  },
+  {
+    "id": "57d580de-b3d5-4f83-bdcf-7ecbb3489a9b",
+    "slug": "rooster-xt-impulsor",
+    "name": "Rooster XT Impulsor",
+    "categoryId": "73fc6008-7b82-46e0-82e5-4d6326817f80",
+    "categorySlug": "energia",
+    "categoryName": "Energizantes & Doping",
+    "audience": "Gallos de combate",
+    "origin": "us",
+    "priceCOP": 70000,
+    "presentations": [
+      {
+        "label": "20 ml",
+        "priceCOP": 70000
+      }
+    ],
+    "image": "rooster-xt-impulsor.jpg",
+    "imageUrl": "https://animals-deluxe.vercel.app/products/rooster-xt-impulsor.jpg",
+    "badges": [
+      "Best Choice",
+      "Fórmula americana"
+    ],
+    "tagline": "American doping for cocks: energía, resistencia y fortaleza.",
+    "shortDesc": "El energizante ideal para tus ejemplares con calidad y fórmula original americana.",
+    "benefits": [
+      "Energía",
+      "Resistencia",
+      "Fortaleza"
+    ],
+    "ingredients": [],
+    "usage": "6 a 8 gotas 2 horas antes del juego.",
+    "pitch": "Impulso de energía, resistencia y fortaleza con calidad americana.",
+    "faq": [
+      {
+        "a": "No, mi rey. No genera dependencia; lo usás solo cuando lo necesitás pa el careo.",
+        "q": "¿Crea adicción?"
+      },
+      {
+        "a": "Se lo das 1 hora antes y entra al juego encendido, con oxígeno y reflejos arriba.",
+        "q": "¿En cuánto hace efecto?"
+      },
+      {
+        "a": "Rinde un montón, te dura varios careos. Una inversión baratica por lo que da.",
+        "q": "¿Cuánto rinde?"
+      },
+      {
+        "a": "Sí, pero arrancá con menos dosis la primera vez y lo vas acostumbrando.",
+        "q": "¿Sirve pa un gallo nuevo?"
+      },
+      {
+        "a": "Original, parcero. Acá no manejamos copias.",
+        "q": "¿Es original?"
+      }
+    ],
+    "keywords": [
+      "energizante",
+      "doping",
+      "energia",
+      "fuerza",
+      "fiera",
+      "pelea",
+      "careo",
+      "resistencia",
+      "aguante",
+      "potencia",
+      "vuelo",
+      "americano",
+      "pa la pelea",
+      "antes del juego",
+      "gallo sin fondo"
+    ],
+    "objeciones": {
+      "muy_caro": "Mirá, son $70.000 pero rinde un montón (20 ml) y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
+      "lo_pienso": "Tranquilo parcero, te lo aparto sin compromiso y arrancás cuando querás. Eso sí, es de los que más sale, no te quedés sin él.",
+      "no_confio": "Es americano original y es contraentrega: pagás cuando lo tenés en la mano. Cero riesgo, mi rey. Miles de galleros ya lo usan.",
+      "ya_lo_uso": "¡Bacano! Entonces ya sabés cómo rinde. ¿Te mando otro pa que no te quedés sin él en el momento clave? 🐓",
+      "no_tengo_plata": "De una te entiendo. Mirá que es contraentrega, no pagás nada ahora; cuando te llegue lo pagás. ¿Te lo aparto pa guardarte el cupo?"
+    },
+    "adIds": [],
+    "disclaimer": "Producto de bienestar y rendimiento. No cura enfermedades.",
+    "stock": 999,
+    "activo": true,
+    "envioGratis": false,
+    "descripcion": "🇺🇸⚡ ROOSTER XT IMPULSOR — American doping\nEl impulso de energía, resistencia y fortaleza para el día clave.\n✅ Impulso inmediato de energía\n✅ Resistencia y fuerza sostenidas\n✅ Reacción y agilidad\n✅ Fórmula americana\n🥄 Modo de uso: 6 a 8 gotas 2 horas antes del juego.\n💵 $70.000 + envío · Contra entrega, pagás al recibir.",
+    "edadMinima": "",
+    "dosificacion": "",
+    "presentacion": "",
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "9594bee0-5e3a-43d6-b109-da627b946509",
@@ -3112,9 +3358,11 @@
     "envioGratis": false,
     "descripcion": "⚡💉 SUPER B12 MAX — La fórmula vitamínica más potente\nDiseñada para gallos de combate y reproducción. El complejo B más completo del catálogo.\n✅ Favorece la formación de glóbulos rojos: más oxígeno y resistencia\n✅ Mejora el apetito y sube el tono muscular\n✅ Potencia la vitalidad general del ejemplar\n✅ Antiestrés: combate ansiedad, debilidad y anemias\n✅ Plumaje sano, fuerte y brillante\n✅ Ideal para reproductores y gallos de exigencia\n💊 Complejo B completo: B1, B2, B3, B5, B6, B7 y B12.\n🥄 Modo de uso: 0.5 ml en la pechuga cada 15 días.\n💵 $180.000 + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "0.5 ml en pechuga cada 15 días.",
-    "presentacion": "50 ml (100 dosis)",
-    "paraQue": "Multivitamínico (complejo B: B1-B12) para gallos: glóbulos rojos, vitalidad, tono muscular, resistencia y plumaje; ayuda con estrés y anemia."
+    "dosificacion": "0.5 ml en la pechuga cada 15 días.",
+    "presentacion": "50 ml · INYECTABLE (100 dosis)",
+    "paraQue": "Multivitamínico (complejo B: B1-B12) para gallos: glóbulos rojos, vitalidad, tono muscular, resistencia y plumaje; ayuda con estrés y anemia.",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "15ae5b0f-ff98-4fcb-8227-4a226227aab8",
@@ -3203,7 +3451,9 @@
     "edadMinima": "",
     "dosificacion": "",
     "presentacion": "",
-    "paraQue": "Desparasitante: elimina parásitos internos."
+    "paraQue": "Desparasitante: elimina parásitos internos.",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "9873b3bd-921d-41e8-aab2-57263e9d5c78",
@@ -3278,7 +3528,7 @@
       "gallo sin fondo"
     ],
     "objeciones": {
-      "muy_caro": "Mirá, son $85.000 pero rinde un montón (30 ml) y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
+      "muy_caro": "Mirá, son $100.000 pero rinde un montón (30 ml) y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
       "lo_pienso": "Tranquilo parcero, te lo aparto sin compromiso y arrancás cuando querás. Eso sí, es de los que más sale, no te quedés sin él.",
       "no_confio": "Es americano original y es contraentrega: pagás cuando lo tenés en la mano. Cero riesgo, mi rey. Miles de galleros ya lo usan.",
       "ya_lo_uso": "¡Bacano! Entonces ya sabés cómo rinde. ¿Te mando otro pa que no te quedés sin él en el momento clave? 🐓",
@@ -3291,9 +3541,11 @@
     "envioGratis": false,
     "descripcion": "🇺🇸⚡ B15 5500 ULTRA — Energizante USA de alto rendimiento\nRendimiento, alerta y oxigenación en pleno juego para tu campeón.\n✅ Más energía y oxígeno en sangre\n✅ Alerta y reacción afiladas\n✅ Aguante superior en combate\n✅ Fórmula americana concentrada\n✅ Presentación en gotas 30 ml (mantener refrigerado)\n💵 $100.000 + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "",
-    "presentacion": "",
-    "paraQue": ""
+    "dosificacion": "Si el gallo no está acostumbrado: 4 gotas 1 hora y media antes de la pelea. Para acostumbrarlo: en los 2 últimos entrenamientos 4 gotas 1 hora y media antes; 2 días antes de la pelea 3 gotas después del desayuno; el día de la pelea 4 gotas 1 hora y media antes. Mantener refrigerado.",
+    "presentacion": "30 ml · gotas",
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "5496b6be-67ee-4e4e-b4c9-b63e5bb10339",
@@ -3307,7 +3559,7 @@
     "priceCOP": 80000,
     "presentations": [
       {
-        "label": "Gotero",
+        "label": "20 ml",
         "priceCOP": 80000
       }
     ],
@@ -3366,7 +3618,7 @@
       "gallo sin fondo"
     ],
     "objeciones": {
-      "muy_caro": "Mirá, son $80.000 pero rinde un montón (Gotero) y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
+      "muy_caro": "Mirá, son $80.000 pero rinde un montón  y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
       "lo_pienso": "Tranquilo parcero, te lo aparto sin compromiso y arrancás cuando querás. Eso sí, es de los que más sale, no te quedés sin él.",
       "no_confio": "Es americano original y es contraentrega: pagás cuando lo tenés en la mano. Cero riesgo, mi rey. Miles de galleros ya lo usan.",
       "ya_lo_uso": "¡Bacano! Entonces ya sabés cómo rinde. ¿Te mando otro pa que no te quedés sin él en el momento clave? 🐓",
@@ -3379,9 +3631,11 @@
     "envioGratis": false,
     "descripcion": "⚡ SUPER ENERGY 77 — Energizante de careo\nLa preparación que tu gallo necesita para rendir al máximo antes del juego.\n✅ Energía y alerta al 100%\n✅ Resistencia para todo el combate\n✅ Reacción rápida\n✅ Fórmula lista para usar\n✅ Buen precio para su rendimiento\n💵 $80.000 + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "",
-    "presentacion": "",
-    "paraQue": ""
+    "dosificacion": "Si el gallo no está acostumbrado: 4 gotas 1 hora antes de la pelea. Lo recomendable es acostumbrarlo: en los 2 últimos entrenamientos 4 gotas 1 hora antes de cada entrenamiento; 2 días antes de la pelea 3 gotas después del desayuno; y el día de la pelea 4 gotas 1 hora antes. Mantener refrigerado.",
+    "presentacion": "20 ml · gotas",
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "54abd48e-d247-449f-a1e0-59309a281671",
@@ -3467,9 +3721,11 @@
     "envioGratis": false,
     "descripcion": "🏋️ SUPER TRAINER — Pre-entreno líquido\nMaximiza cada sesión de entrenamiento de tu gallo.\n✅ Energía y fuerza pre-entreno\n✅ Mejor rendimiento en el trabajo\n✅ Aprovecha al máximo cada sesión\n✅ Fácil de dar en gotas\n🥄 Modo de uso: 6 gotas antes de iniciar el entrenamiento.\n💵 $80.000 + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "",
-    "presentacion": "",
-    "paraQue": ""
+    "dosificacion": "6 gotas antes de iniciar el entrenamiento.",
+    "presentacion": "Frasco · gotas",
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "38cdce5c-ccb9-4d00-88a9-b04f9af57a7f",
@@ -3483,7 +3739,7 @@
     "priceCOP": 50000,
     "presentations": [
       {
-        "label": "Frasco",
+        "label": "10 ml",
         "priceCOP": 50000,
         "shopifyVariantId": "gid://shopify/ProductVariant/48900414963947"
       }
@@ -3501,24 +3757,20 @@
       "Resistencia y fortaleza"
     ],
     "ingredients": [],
-    "usage": "Aplica la dosis recomendada para la etapa de preparación.",
+    "usage": "Dosis recomendada 0.2 ml por ave, una vez al mes. Inyectable.",
     "pitch": "Inyectable de preparación: masa muscular, regula el PH y sube la resistencia.",
     "faq": [
       {
-        "a": "No, mi rey. No genera dependencia; lo usás solo cuando lo necesitás pa el careo.",
-        "q": "¿Crea adicción?"
+        "a": "Una vez al mes, mi rey: 0.2 ml por ave, inyectado. No es semanal.",
+        "q": "¿Cada cuánto se aplica?"
       },
       {
-        "a": "Se lo das 1 hora antes y entra al juego encendido, con oxígeno y reflejos arriba.",
-        "q": "¿En cuánto hace efecto?"
-      },
-      {
-        "a": "Rinde un montón, te dura varios careos. Una inversión baratica por lo que da.",
+        "a": "Con 0.2 ml por ave al mes, un frasco te rinde pa varios gallos y varios meses.",
         "q": "¿Cuánto rinde?"
       },
       {
-        "a": "Sí, pero arrancá con menos dosis la primera vez y lo vas acostumbrando.",
-        "q": "¿Sirve pa un gallo nuevo?"
+        "a": "No, parcero. Es vitamina B12; se aplica una vez al mes durante la preparación.",
+        "q": "¿Crea adicción?"
       },
       {
         "a": "Original, parcero. Acá no manejamos copias.",
@@ -3543,22 +3795,24 @@
       "gallo sin fondo"
     ],
     "objeciones": {
-      "muy_caro": "Mirá, son $120.000 pero rinde un montón (Frasco) y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
-      "lo_pienso": "Tranquilo parcero, te lo aparto sin compromiso y arrancás cuando querás. Eso sí, es de los que más sale, no te quedés sin él.",
-      "no_confio": "Es original y es contraentrega: pagás cuando lo tenés en la mano. Cero riesgo, mi rey. Miles de galleros ya lo usan.",
-      "ya_lo_uso": "¡Bacano! Entonces ya sabés cómo rinde. ¿Te mando otro pa que no te quedés sin él en el momento clave? 🐓",
-      "no_tengo_plata": "De una te entiendo. Mirá que es contraentrega, no pagás nada ahora; cuando te llegue lo pagás. ¿Te lo aparto pa guardarte el cupo?"
+      "muy_caro": "Mirá, son $50.000 el frasco y con 0.2 ml al mes por ave te rinde un montón. Sale baratico por lo que da.",
+      "lo_pienso": "Tranquilo parcero, te lo aparto sin compromiso. Eso sí, es de los que más sale, no te quedés sin él.",
+      "no_confio": "Es original y es contraentrega: pagás cuando lo tenés en la mano. Cero riesgo, mi rey.",
+      "ya_lo_uso": "¡Bacano! Entonces ya sabés cómo rinde. ¿Te mando otro pa que no te quedés sin él? 🐓",
+      "no_tengo_plata": "De una te entiendo. Es contraentrega, no pagás nada ahora; cuando te llegue lo pagás. ¿Te lo aparto?"
     },
     "adIds": [],
     "disclaimer": "Producto de bienestar y rendimiento. No cura enfermedades.",
     "stock": 999,
     "activo": true,
     "envioGratis": false,
-    "descripcion": "💉 ULTRA GALLO — Vitamina inyectable de preparación\nPon a punto a tu gallo en su etapa de preparación con esta vitamina inyectable.\n✅ Vitalidad y tono muscular\n✅ Apoya el desarrollo del ejemplar\n✅ Prepara al gallo para la exigencia\n✅ Fácil aplicación, gran resultado\n💵 $50.000 + envío · Contra entrega, pagás al recibir.",
+    "descripcion": "💉 ULTRA GALLO B12 5500 — Vitamina inyectable de preparación\nVitamina B12 5500 inyectable enriquecida con vitaminas y minerales para tu gallo en preparación.\n✅ Masa muscular y apetito\n✅ Resistencia y fuerza\n✅ Regula el pH de la sangre\n📋 Cómo se usa: 0.2 ml por ave, una vez al mes.\n💵 $50.000 + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "",
-    "presentacion": "",
-    "paraQue": ""
+    "dosificacion": "0.2 ml por ave, inyectable, UNA VEZ AL MES (no cada semana ni cada 8 días).",
+    "presentacion": "10 ml · INYECTABLE",
+    "paraQue": "Vitamina B12 5500 inyectable: masa muscular, apetito, resistencia, fuerza y regula el pH de la sangre.",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "ad3d5a10-b768-43e8-aa8d-b883c6138f1d",
@@ -3647,9 +3901,102 @@
     "envioGratis": false,
     "descripcion": "💊 VITALMIN ROOSTER — Multivitamina para el desarrollo óptimo\nPara crestones y todas las etapas del gallo fino.\n✅ Desarrollo óptimo del ejemplar\n✅ Vitalidad y energía\n✅ Defensas más fuertes\n✅ Cómodo: 1 tableta al día\n🥄 Modo de uso: 1 tableta diaria por ejemplar.\n💵 $80.000 (200 pastillas) + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "",
+    "dosificacion": "1 pastilla diaria por animal.",
     "presentacion": "200 pastillas",
-    "paraQue": "Multivitamina (vitaminas, minerales y aminoácidos) para desarrollo, apetito y masa muscular."
+    "paraQue": "Multivitamina (vitaminas, minerales y aminoácidos) para desarrollo, apetito y masa muscular.",
+    "soloAnticipado": false,
+    "minUnidades": 1
+  },
+  {
+    "id": "013211a3-46a2-429f-a7cf-2d1104e3bb18",
+    "slug": "vitapower",
+    "name": "VitaPower",
+    "categoryId": "19c28949-f8ad-4c78-9713-cdd57720621a",
+    "categorySlug": "vitaminas",
+    "categoryName": "Vitaminas & Multivitamínicos",
+    "audience": "Gallos finos (desde 5 meses)",
+    "origin": "us",
+    "priceCOP": 25000,
+    "presentations": [
+      {
+        "label": "10 ml",
+        "priceCOP": 25000
+      }
+    ],
+    "image": "vitapower.jpg",
+    "imageUrl": "https://animals-deluxe.vercel.app/products/vitapower.jpg",
+    "badges": [
+      "Fórmula americana",
+      "Desde $25.000"
+    ],
+    "tagline": "Multivitamínico en gotas para preparar a tus ejemplares.",
+    "shortDesc": "Complejo multivitamínico completo con minerales, fácil absorción y gotero portátil.",
+    "benefits": [
+      "Multi completo",
+      "Fácil absorción",
+      "Gotero portátil"
+    ],
+    "ingredients": [],
+    "usage": "6 gotas diarias de lunes a viernes, desde los 5 meses.",
+    "pitch": "Multivitamínico completo en gotas, gotero de bolsillo. Desde $25.000.",
+    "faq": [
+      {
+        "a": "A diario, mi rey. Es de uso constante pa que veás el cambio en pocas semanas.",
+        "q": "¿Cada cuánto se lo doy?"
+      },
+      {
+        "a": "Pa mantener el gallo fuerte: más defensas, mejor emplume, apetito y vitalidad.",
+        "q": "¿Pa qué sirve?"
+      },
+      {
+        "a": "Con uso constante, en pocas semanas notás más brillo de pluma y más energía.",
+        "q": "¿En cuánto se ve el cambio?"
+      },
+      {
+        "a": "Sí, podés darlo con la comida o en el bebedero según la presentación.",
+        "q": "¿Se da con comida?"
+      },
+      {
+        "a": "Sí, sirve pa mantenimiento y preparación. Ajustás la dosis según el ejemplar.",
+        "q": "¿Sirve pa todas las etapas?"
+      }
+    ],
+    "keywords": [
+      "vitamina",
+      "multivitaminico",
+      "complejo",
+      "salud",
+      "defensas",
+      "apetito",
+      "americano",
+      "importado",
+      "premium",
+      "vitapower",
+      "gallos",
+      "finos",
+      "gallo debil",
+      "sin apetito",
+      "pa engordar gallo"
+    ],
+    "objeciones": {
+      "muy_caro": "Mirá, son $25.000 pero rinde un montón (10 ml) y es inversión pa tu gallo. Un gallo sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.",
+      "lo_pienso": "Tranquilo parcero, te lo aparto sin compromiso y arrancás cuando querás. Eso sí, es de los que más sale, no te quedés sin él.",
+      "no_confio": "Es americano original y es contraentrega: pagás cuando lo tenés en la mano. Cero riesgo, mi rey. Miles de galleros ya lo usan.",
+      "ya_lo_uso": "¡Bacano! Entonces ya sabés cómo rinde. ¿Te mando otro pa que no te quedés sin él en el momento clave? 🐓",
+      "no_tengo_plata": "De una te entiendo. Mirá que es contraentrega, no pagás nada ahora; cuando te llegue lo pagás. ¿Te lo aparto pa guardarte el cupo?"
+    },
+    "adIds": [],
+    "disclaimer": "Producto de bienestar y rendimiento. No cura enfermedades.",
+    "stock": 999,
+    "activo": true,
+    "envioGratis": false,
+    "descripcion": "💧 VITAPOWER — Multivitamínico en gotas\nPrepara a tus ejemplares desde temprano, con la comodidad de las gotas.\n✅ Vitalidad y desarrollo\n✅ Apoya el crecimiento sano\n✅ Fácil de dosificar\n✅ Excelente precio\n🥄 Modo de uso: 6 gotas diarias de lunes a viernes, desde los 5 meses.\n💵 $25.000 + envío · Contra entrega, pagás al recibir.",
+    "edadMinima": "",
+    "dosificacion": "",
+    "presentacion": "",
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 1
   },
   {
     "id": "1317c387-93f2-4f70-b191-2556e9822c4f",
@@ -3736,8 +4083,10 @@
     "envioGratis": false,
     "descripcion": "🇺🇸💪 WEIGHT MUSCLE PROTEIN — Proteína líquida americana\r\nFuerza, energía y musculatura para tu campeón.\r\n✅ Aumento de masa muscular\r\n✅ Fuerza y energía\r\n✅ Apoya el desarrollo físico\r\n✅ 1 litro rendidor\r\n💵 $80.000 (1 litro) + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "4 meses",
-    "dosificacion": "0.5 ml al dia en la comida por ejemplar.",
-    "presentacion": "1000 ml",
-    "paraQue": ""
+    "dosificacion": "Medio centímetro revuelto en una comida, día por medio. Guardar en lugar oscuro y fresco.",
+    "presentacion": "1 litro (líquido)",
+    "paraQue": "",
+    "soloAnticipado": false,
+    "minUnidades": 1
   }
 ]

@@ -233,7 +233,6 @@ export const ALIAS_CATALOG_ANIMALS: AliasEntry[] = [
   { slugs: ["vitalmin-rooster"], aliases: ["vitalmin", "bitalmin", "vitalmin rooster"] },
   // VitaPower: SOLO Rooster Deluxe (anticipado) → sin alias en Animals.
   { slugs: ["rooster-strength"], aliases: ["strength", "rooster strength"] },
-  { slugs: ["rooster-deluxe-max"], aliases: ["deluxe max", "polvo max", "el polvo rojo", "rooster max"] },
   { slugs: ["rooster-deluxe-supplement"], aliases: ["supplement", "suplement", "suplemento deluxe", "deluxe supplement"] },
   { slugs: ["rooster-deluxe-chicks"], aliases: ["chicks", "polvo pollitos", "deluxe chicks", "deluxe pollitos"] },
 
@@ -242,7 +241,6 @@ export const ALIAS_CATALOG_ANIMALS: AliasEntry[] = [
   // "purga"/"desparasitar" caen en la regla de necesidad (Purge Beach, And Worm, Super Cobra).
   { slugs: ["purge-beach"], aliases: ["purge beach", "purgebeak", "purge beak", "purgebeack", "purguebeak"] },
   { slugs: ["rooster-and-worm"], aliases: ["and worm", "end worm", "endworm", "rooster worm", "rooster and worm"] },
-  { slugs: ["super-cobra-500"], aliases: ["cobra 500", "super cobra", "super cobra 500"] },
 
   /* ---------- RESPIRATORIO ---------- */
   { slugs: ["cure-chest-rooster"], aliases: ["cure chest", "curechest", "kiur chest", "pecho", "cure chest for rooster"] },
@@ -255,7 +253,6 @@ export const ALIAS_CATALOG_ANIMALS: AliasEntry[] = [
   { slugs: ["rooster-deluxe-shampoo"], aliases: ["rooster deluxe shampoo", "shampoo deluxe", "champu deluxe", "shampoo", "champu", "shampu", "champo"] },
   // Red Rooster (enrojecedor) es SOLO de Rooster Deluxe → NO se ofrece en Animals
   // (producto desactivado en animals-deluxe). Sin alias aquí para no resolverlo.
-  { slugs: ["rooster-smallpox"], aliases: ["smallpox", "viruela", "bubas", "crema viruela", "esmolpox"] },
 
   /* ---------- ENTRENAMIENTO / RECUPERACIÓN ---------- */
   { slugs: ["gallo-post-recovery"], aliases: ["recovery", "post recovery", "recuperador", "gallo post recovery"] },
@@ -277,14 +274,13 @@ export const ALIAS_CATALOG_ANIMALS: AliasEntry[] = [
 ];
 
 export const NEED_RULES_ANIMALS: NeedRule[] = [
-  { id: "cola-emplume", match: ["que le crezca la cola", "que les crezca la cola", "crezca la cola", "crecer la cola", "emplumar", "emplume", "que emplume", "cola", "plumaje", "muda"], slugs: ["omega-3", "rooster-deluxe-shampoo", "rooster-deluxe-max"] },
+  { id: "cola-emplume", match: ["que le crezca la cola", "que les crezca la cola", "crezca la cola", "crecer la cola", "emplumar", "emplume", "que emplume", "cola", "plumaje", "muda"], slugs: ["omega-3", "rooster-deluxe-shampoo"] },
   { id: "respiratorio", match: ["moquillo", "gripa", "mocos", "moco", "respiratorio", "ahogado", "ahogo", "tos", "estornuda", "ronquera", "pal moquillo", "para el moquillo"], categorySlug: "respiratorio" },
-  { id: "purga", match: ["purga", "purgar", "desparasitar", "desparasitante", "desparasitantes", "vermifugo", "vermifugos", "lombriz", "lombrices", "gusano", "gusanos", "parasito", "parasitos", "parasitosis"], slugs: ["purge-beach", "rooster-and-worm", "super-cobra-500"] },
+  { id: "purga", match: ["purga", "purgar", "desparasitar", "desparasitante", "desparasitantes", "vermifugo", "vermifugos", "lombriz", "lombrices", "gusano", "gusanos", "parasito", "parasitos", "parasitosis"], slugs: ["purge-beach", "rooster-and-worm"] },
   { id: "doping", match: ["pelea", "peleas", "energia", "dope", "doping", "dopin", "que lo levante", "energizante", "para la pelea", "topada", "careo", "dopar", "doparlo", "dopalo", "para dopar", "dopar los gallos", "dopar el gallo", "goticas para dopar", "gotas para dopar", "goticas", "gotica"], categorySlug: "energia" },
-  { id: "engorde", match: ["engorde", "engordar", "peso", "masa", "musculo", "musculatura", "masa muscular"], slugs: ["rooster-deluxe-max", "weight-muscle-protein", "gallo-post-recovery"] },
+  { id: "engorde", match: ["engorde", "engordar", "peso", "masa", "musculo", "musculatura", "masa muscular"], slugs: ["weight-muscle-protein", "gallo-post-recovery"] },
   { id: "pollitos", match: ["pollitos", "pollito", "levante", "cria", "crias", "polluelo"], slugs: ["rooster-deluxe-chicks", "nutripeep-refoce", "rooster-deluxe"] },
   { id: "piojos", match: ["piojos", "piojo", "pulgas", "pulga", "acaros", "acaro", "garrapata", "garrapatas"], slugs: ["rooster-deluxe-shampoo", "omega-3"] },
-  { id: "viruela", match: ["viruela", "bubas", "hongos cara", "hongos en la cara"], slugs: ["rooster-smallpox"] },
   { id: "recuperacion", match: ["recuperacion", "recuperar", "despues de la pelea", "post pelea"], slugs: ["gallo-post-recovery"] },
   { id: "entrenar", match: ["entrenar", "entrenamiento", "topar", "topas", "pre entreno", "preentreno"], slugs: ["super-trainer", "gallo-post-recovery", "weight-muscle-protein"] },
   { id: "perros", match: ["perro", "perros", "canino", "cachorro", "musculo perro", "perro flaco"], slugs: ["more-muscle-dogs"] },

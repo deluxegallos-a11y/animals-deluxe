@@ -145,6 +145,9 @@ export function productMatchesForma(p: ProductView, forma: string): boolean {
  * el nombre y el gancho de venta mienten más ("Gotas de Campeón" en polvo).
  */
 export function formaDe(p: ProductView): string {
+  // Un COMBO/KIT mezcla formas (gotas + inyectable + pastillas): no tiene UNA sola.
+  // Sin esto, "Omega-3 120 cáps" hacía que el Combo del Mes saliera "en pastillas".
+  if (/^(combo|kit)\b/i.test((p.presentacion || "").trim())) return "";
   const explicito = normalize([p.presentacion, p.dosificacion || "", p.usage].filter(Boolean).join(" "));
   for (const f of FORMAS) if (f.prod.test(explicito)) return f.forma;
   // Sin campo explícito: la descripción larga (redactada a mano) es la mejor fuente.

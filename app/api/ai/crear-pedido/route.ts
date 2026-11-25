@@ -54,6 +54,31 @@ function resolvesToProduct(name: string, catalog: ProductView[]): boolean {
    gallos: una cantidad enorme o un total absurdo NO se confirma automático. */
 const SOSPECHA_CANTIDAD = 20;
 const SOSPECHA_TOTAL_COP = 2_000_000;
+/** Interrapidísimo no despacha contra entrega por debajo de este valor en productos. */
+const MINIMO_CONTRAENTREGA_COP = 45_000;
+
+/** 57XXXXXXXXXX → "313 316 0235" para el aviso al asesor. "" si no hay número. */
+function telAviso(raw: string): string {
+  let d = String(raw || "").replace(/\D/g, "");
+  if (d.length === 12 && d.startsWith("57")) d = d.slice(2);
+  return d.length === 10 ? `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}` : "";
+}
+
+/** WhatsApp DESDE EL QUE SE HIZO el pedido (no el que el cliente escribe para la guía).
+ *  El dueño busca el chat por ese número: si el aviso trae solo el del destinatario,
+ *  no encuentra al cliente (reportes 9-jul, 27-ago, 14-nov, 25-nov). Fuentes, en orden:
+ *  lo que mande UChat en el body → get-info de UChat por sub_id. Fail-soft: "" si no hay. */
+async function whatsappDelChat(b: Record<string, unknown>, subId: string): Promise<string> {
+  const crudo = str(b.telefono_wa ?? b.wa_phone ?? b.phone ?? b.whatsapp_phone);
+  if (crudo.replace(/\D/g, "").length >= 10) return crudo;
+  if (!subId || subId.startsWith("demo-")) return "";
+  const { uchatGetSubscriber } = await import("@/lib/uchat");
+  const r = await Promise.race([
+    uchatGetSubscriber(subId),
+    new Promise<{ ok: false }>((res) => setTimeout(() => res({ ok: false }), 2500)),
+  ]);
+  return r.ok && "telefono" in r ? r.telefono || "" : "";
+}
 
 export const POST = withBridge(
   // Body PERMISIVO (§2.1): NUNCA rechazamos por formato ("faltan datos"). Normalizamos
@@ -221,6 +246,30 @@ export const POST = withBridge(
       }
     }
 
+    // --- MÍNIMO DE INTERRAPIDÍSIMO (reporte del dueño 30-jul / 17-ago / 19-nov):
+    // contra entrega solo se despacha si los PRODUCTOS suman ≥ $45.000. Un gotero de
+    // $25.000 solo no sale. No se crea el pedido: se le pide sumar unidades/productos.
+    if (metodo === "contraentrega" && items.length) {
+      const subtotalProd = items.reduce((s, it) => {
+        const p = catalog.find((x) => x.slug === it.slug);
+        return s + (p?.presentations?.[0]?.priceCOP ?? p?.priceCOP ?? 0) * it.cantidad;
+      }, 0);
+      if (subtotalProd > 0 && subtotalProd < MINIMO_CONTRAENTREGA_COP) {
+        await logEvent("pedido_no_creado", { motivo: "minimo_contraentrega", subtotal: subtotalProd, sub_id: subId });
+        await updateOrderAttempt(attemptId, { resultado: "rejected", motivo: `bajo mínimo COD: ${subtotalProd}` });
+        return {
+          ok: false,
+          status: "minimo_contraentrega",
+          minimo_cop: MINIMO_CONTRAENTREGA_COP,
+          subtotal_cop: subtotalProd,
+          campos_faltantes: ["producto"],
+          mensaje:
+            `Mi rey, la transportadora despacha contra entrega desde *${cop(MINIMO_CONTRAENTREGA_COP)}* en productos ` +
+            `y tu pedido va en ${cop(subtotalProd)}. ¿Le sumamos otra unidad u otro producto y te lo despacho de una? 🐓`,
+        };
+      }
+    }
+
     // --- REQUISITOS DUROS (bug AD-7PM7: se creó un pedido sin nombre/cédula/tel/dirección).
     // NINGÚN pedido se crea sin los 5 datos + 1 ítem. Se validan formato y placeholders.
     const telOk = telValido(telefono);            // celular CO válido (10 díg, empieza en 3)
@@ -271,6 +320,14 @@ export const POST = withBridge(
     const totalEstimado = items.reduce((s, it) => s + precioDe(it.slug) * it.cantidad, 0);
     const sospechoso = maxCantidad > SOSPECHA_CANTIDAD || totalEstimado > SOSPECHA_TOTAL_COP;
 
+    // Teléfonos para el AVISO AL ASESOR: el de la guía + el WhatsApp del chat.
+    const waChat = await whatsappDelChat(b, subId);
+    const telGuia = telAviso(telOk);
+    const telChat = telAviso(waChat);
+    const telefonoAviso =
+      telChat && telChat !== telGuia ? `${telGuia} · WhatsApp del chat: ${telChat}`
+      : telGuia || telChat || (canal === "messenger" ? "cliente de Messenger (sin WhatsApp)" : "sin número");
+
     const order = await createOrder({
       subId: customer.uchatSubId || customer.id,
       customerId: customer.id,
@@ -284,7 +341,7 @@ export const POST = withBridge(
       estado: sospechoso ? "por_revisar" : (metodo === "anticipado" ? "por_verificar_pago" : undefined),
       notas: sospechoso
         ? `⚠️ REVISAR CANTIDAD (posible error del bot): pidió ${maxCantidad} unid · total estimado ${cop(totalEstimado)}. Confirmar con el cliente antes de despachar. La cantidad real suele ser 1.`
-        : undefined,
+        : (telChat && telChat !== telGuia ? `WhatsApp del chat: ${telChat}` : undefined),
     });
 
     const ref = order.ref;
@@ -374,6 +431,13 @@ export const POST = withBridge(
       // pedido recién creado (producto, total y ref), para que el bot no llene la
       // plantilla con variables de un pedido anterior.
       producto_resumen: listaProductos,
+      // Aviso al asesor: SIEMPRE con número. `telefono_aviso` trae el de la guía y,
+      // si es distinto, el WhatsApp desde el que se hizo el pedido (para encontrar el chat).
+      cliente_nombre: nombre,
+      cliente_telefono: telOk,
+      cliente_whatsapp: waChat.replace(/\D/g, ""),
+      cliente_cedula: cedula,
+      telefono_aviso: telefonoAviso,
       subtotal_cop: order.subtotal_cop,
       total_cop: order.total_cop,
       flete: order.envio_cop,
