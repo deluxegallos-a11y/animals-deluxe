@@ -80,6 +80,7 @@ export type Reporte = {
   conversion: number; // pedidos / chats (0..1)
   chats_revisados: number;
   chats_sin_revisar?: number;
+  error_revision?: string;
   chats_con_error: number;
   errores: Record<string, number>;
   motivos: Record<string, number>;
@@ -185,6 +186,8 @@ async function contextoBot(): Promise<string> {
   }
 }
 
+let ultimoErrorOpenAI = "";
+
 /** null = no se pudo revisar (sin clave, sin saldo, modelo no disponible). */
 async function juzgar(ctx: string, ch: ChatDia, modelo: string): Promise<ChatRevisado | null> {
   const key = process.env.OPENAI_API_KEY || "";
@@ -202,8 +205,14 @@ ${ctx}`;
         headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
         body: JSON.stringify({ model: modelo, temperature: 0, response_format: { type: "json_object" }, messages: [{ role: "system", content: sistema }, { role: "user", content: usuario }] }),
       });
-      if (r.status === 429 || r.status >= 500) { await new Promise((s) => setTimeout(s, 2000 * (i + 1))); continue; }
-      if (!r.ok) { console.error("reporte_diario_openai", r.status, (await r.text()).slice(0, 200)); return null; }
+      if (!r.ok) {
+        const cuerpo = (await r.text()).slice(0, 300);
+        ultimoErrorOpenAI = /insufficient_quota|credit_balance/.test(cuerpo) ? "OpenAI sin saldo" : `OpenAI ${r.status}`;
+        console.error("reporte_diario_openai", r.status, cuerpo);
+        if (/insufficient_quota|credit_balance/.test(cuerpo)) return null;
+        if (r.status === 429 || r.status >= 500) { await new Promise((s) => setTimeout(s, 3000 * (i + 1))); continue; }
+        return null;
+      }
       const j = (await r.json()) as { choices?: { message?: { content?: string } }[] };
       const o = JSON.parse(j.choices?.[0]?.message?.content || "{}") as Partial<ChatRevisado>;
       const errores = (Array.isArray(o.errores) ? o.errores : [])
@@ -235,7 +244,8 @@ export async function generarReporte(slug: string, dia: string, opts: { modelo?:
   let chats = await chatsDelDia(base.tid, dia);
   if (opts.limite) chats = chats.slice(0, opts.limite);
   const modelo = opts.modelo || process.env.REPORTE_MODELO || "gpt-4.1";
-  const intentos = await enParalelo(chats, 10, (ch) => juzgar(ctx, ch, modelo));
+  ultimoErrorOpenAI = "";
+  const intentos = await enParalelo(chats, 6, (ch) => juzgar(ctx, ch, modelo));
   const revisados = intentos.filter((r): r is ChatRevisado => r !== null);
   const errores: Record<string, number> = {};
   const motivos: Record<string, number> = {};
@@ -256,6 +266,7 @@ export async function generarReporte(slug: string, dia: string, opts: { modelo?:
     conversion: base.chats ? base.pedidos / base.chats : 0,
     chats_revisados: revisados.length,
     chats_sin_revisar: intentos.length - revisados.length,
+    error_revision: intentos.length - revisados.length ? ultimoErrorOpenAI || "falla de OpenAI" : "",
     chats_con_error: revisados.filter((r) => r.errores.length).length,
     errores,
     motivos,
@@ -306,7 +317,7 @@ export function parametrosPlantilla(hoy: Reporte, ayer: Reporte | null): string[
     dif(hoy.pedidos, ayer?.pedidos),
     dif(hoy.ventas_cop, ayer?.ventas_cop, cop),
     dif(hoy.conversion, ayer?.conversion, pct),
-    `${dif(totalErrores(hoy), errAyer)} en ${hoy.chats_con_error} de ${hoy.chats_revisados} chats revisados${hoy.chats_sin_revisar ? ` (${hoy.chats_sin_revisar} sin revisar: falla de OpenAI)` : ""}`,
+    `${dif(totalErrores(hoy), errAyer)} en ${hoy.chats_con_error} de ${hoy.chats_revisados} chats revisados${hoy.chats_sin_revisar ? ` (${hoy.chats_sin_revisar} sin revisar: ${hoy.error_revision || "falla de OpenAI"})` : ""}`,
     lim(top(hoy.errores, NOMBRE_ERROR, 3)),
     lim(top(hoy.motivos, NOMBRE_MOTIVO, 3, ["compro"])),
   ];
