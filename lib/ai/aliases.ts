@@ -252,6 +252,9 @@ export const ALIAS_CATALOG_ANIMALS: AliasEntry[] = [
   // dueño 26-nov): sin alias aquí → "shampoo" se redirige al bot de Rooster.
   // Super Cobra 500 SÍ es contra entrega (dueño 26-nov).
   { slugs: ["super-cobra-500"], aliases: ["cobra 500", "super cobra", "super cobra 500", "supercobra"] },
+  // Los galleros le dicen "Rooster Deluxe MAX" al Supplement (26-nov: el bot lo confundía
+  // con Rooster DELUXE de pollitos e inventaba la dosis). 1 kg y 3 kg = pago anticipado.
+  { slugs: ["rooster-deluxe-supplement"], aliases: ["rooster deluxe max", "deluxe max", "rooster max", "polvo max", "el polvo rojo", "rooster deluxe suplement", "rooster deluxe supplement"] },
   // Red Rooster (enrojecedor) es SOLO de Rooster Deluxe → NO se ofrece en Animals
   // (producto desactivado en animals-deluxe). Sin alias aquí para no resolverlo.
 
@@ -282,7 +285,9 @@ export const NEED_RULES_ANIMALS: NeedRule[] = [
   { id: "engorde", match: ["engorde", "engordar", "peso", "masa", "musculo", "musculatura", "masa muscular"], slugs: ["weight-muscle-protein", "gallo-post-recovery"] },
   { id: "pollitos", match: ["pollitos", "pollito", "levante", "cria", "crias", "polluelo"], slugs: ["rooster-deluxe-chicks", "nutripeep-refoce", "rooster-deluxe"] },
   { id: "piojos", match: ["piojos", "piojo", "pulgas", "pulga", "acaros", "acaro", "garrapata", "garrapatas"], slugs: ["omega-3"] },
-  { id: "recuperacion", match: ["recuperacion", "recuperar", "despues de la pelea", "post pelea"], slugs: ["gallo-post-recovery"] },
+  // 26-nov: "una inyección para después de la presentación" recibía pastillas. El
+  // inyectable de recuperación es Rooster B12 Complete; la forma pedida decide cuál.
+  { id: "recuperacion", match: ["recuperacion", "recuperar", "despues de la pelea", "post pelea", "despues de la presentacion", "despues de presentarlo", "post presentacion", "despues del juego", "despues de jugarlo"], slugs: ["gallo-post-recovery", "rooscer-b12-complete"] },
   { id: "entrenar", match: ["entrenar", "entrenamiento", "topar", "topas", "pre entreno", "preentreno"], slugs: ["super-trainer", "gallo-post-recovery", "weight-muscle-protein"] },
   { id: "perros", match: ["perro", "perros", "canino", "cachorro", "musculo perro", "perro flaco"], slugs: ["more-muscle-dogs"] },
   { id: "caballos", match: ["caballo", "caballos", "equino", "yegua", "potro"], slugs: ["horse-deluxe"] },

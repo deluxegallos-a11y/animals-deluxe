@@ -268,3 +268,20 @@ test("Rooster Deluxe Supplement: contra entrega 500 pastillas $80.000 y polvo 40
   assert.deepEqual(p.presentations.map((x) => [x.label, x.priceCOP]), [["500 pastillas", 80000], ["Polvo 400 gr", 45000]]);
   assert.equal(formaDe(p), "", "trae dos formas: el bot no debe afirmar una sola");
 });
+
+/* ---------- 12 · chats reales después de los cambios (25-nov, 8 p. m. en adelante) ---------- */
+
+test("recuperación: si piden INYECCIÓN sale el inyectable (B12 Complete), no las pastillas", () => {
+  for (const q of ["una inyeccion para ponerle a mis gallos despues de la presentacion", "inyectable para recuperacion"]) {
+    const r = identifyProduct(q, cat, [], ANIMALS_RULES);
+    assert.equal(r.product?.slug, "rooscer-b12-complete", q);
+  }
+  assert.equal(identifyProduct("pastillas para recuperar despues de la pelea", cat, [], ANIMALS_RULES).product?.slug, "gallo-post-recovery");
+});
+
+test("'Rooster Deluxe Max' es el Supplement (no Rooster DELUXE de pollitos); 'rooster deluxe' solo pregunta cuál", () => {
+  assert.equal(identifyProduct("rooster deluxe max", cat, [], ANIMALS_RULES).product?.slug, "rooster-deluxe-supplement");
+  const r = identifyProduct("rooster deluxe", cat, [], ANIMALS_RULES);
+  assert.equal(r.status, "ambiguous");
+  assert.ok(r.options.length >= 2);
+});

@@ -388,6 +388,11 @@ export function identifyProduct(
   const toks0 = norm.stripped.split(" ").filter(Boolean);
   const aliasExacto = index.some((e) => e.alias === norm.q || e.alias === norm.stripped);
   if (!aliasExacto && toks0.length === 1 && PALABRA_DE_MARCA.has(singular(toks0[0]))) return empty;
+  // Solo palabras de marca ("rooster deluxe"): están en DELUXE, Chicks, Supplement… → opciones.
+  if (!aliasExacto && toks0.length >= 2 && toks0.every((t) => PALABRA_DE_MARCA.has(singular(t)))) {
+    const duenos = pool.filter((p) => { const n = normalize(p.name).split(/[^a-z0-9]+/).map(singular); return toks0.every((t) => n.includes(singular(t))); });
+    if (dedupe(duenos).length >= 2) return pack(duenos, "name", 0.5, norm, ranked);
+  }
   if (!aliasExacto && toks0.length === 1 && toks0[0].length >= 4 && !FUZZY_STOP.has(toks0[0])) {
     const t = singular(toks0[0]);
     const duenos = pool.filter((p) => normalize(p.name).split(/[^a-z0-9]+/).map(singular).includes(t));
@@ -498,6 +503,13 @@ export function identifyProduct(
     if (best >= THRESHOLD) cands.push({ product: p, sim: best });
   }
   cands.sort((a, b) => b.sim - a.sim);
+  // Pidió una FORMA (26-nov: "inyectable para recuperación" → Gallo Post Recovery en
+  // pastillas por parecido "recovery≈recuperación"): un candidato de otra forma no gana
+  // por similitud de nombre; se deja a la regla de necesidad, que sí filtra por forma.
+  if (forma && cands.length) {
+    const enForma = cands.filter((c) => productMatchesForma(c.product, forma));
+    cands.splice(0, cands.length, ...enForma);
+  }
 
   if (cands.length) {
     const top = cands[0];

@@ -105,7 +105,7 @@ const ANIMAL_WORDS = new Set([
    el bot lo daba por gotas (M7). El 🥄 NO sirve como señal: esas fichas lo usan para
    encabezar "Modo de uso" incluso en inyectables. */
 const FORMAS: { forma: string; q: RegExp; prod: RegExp }[] = [
-  { forma: "inyectable", q: /\b(inyect|ampoll|jeringa|intramuscular)\w*/, prod: /(\b(inyect|ampoll|intramuscular)\w*|💉|\d+[.,]?\d*\s*(ml|cc)\b[^.\n]{0,30}\bpechuga\b)/ },
+  { forma: "inyectable", q: /\b(inyect|inyecc|ampoll|jeringa|intramuscular)\w*/, prod: /(\b(inyect|ampoll|intramuscular)\w*|💉|\d+[.,]?\d*\s*(ml|cc)\b[^.\n]{0,30}\bpechuga\b)/ },
   // "goticas"/"gotitas" son el diminutivo que usa el gallero; sin ellos, quien
   // pedía goticas recibía inyectables.
   { forma: "gotas", q: /\b(gota|gotita|gotic|gotero|goteo)\w*/, prod: /(\b(gota|gotero)\w*|💧)/ },
