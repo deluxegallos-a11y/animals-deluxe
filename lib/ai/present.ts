@@ -38,8 +38,9 @@ export function buildContexto(p: ProductView): string {
     forma
       ? `FORMA: ${forma.toUpperCase()} — NO ofrezcas otra vía de administración.`
       : `FORMA: no registrada — NO afirmes si es inyectable, gotas o polvo; confirma con el asesor.`,
-    p.usage ? `MODO DE USO: ${p.usage}` : "",
-    p.dosificacion ? `DOSIS: ${p.dosificacion}` : "",
+    // UNA sola dosis: la del dueño (dosificacion). El `usage` viejo traía otra
+    // ("6 a 8 gotas") y el bot mezclaba las dos (23 dosis inventadas el 25-nov).
+    p.dosificacion ? `DOSIS (única válida): ${p.dosificacion}` : p.usage ? `MODO DE USO: ${p.usage}` : "",
     faqs ? `FAQS: ${faqs}` : "",
     obj ? `OBJECIONES: ${obj}` : "",
     `NOTA: ${p.disclaimer || "Producto de bienestar y rendimiento. No cura enfermedades."}`,
@@ -49,7 +50,19 @@ export function buildContexto(p: ProductView): string {
 /** Descripción de venta enriquecida (§4.6). Usa la editada; si no hay, la compone
  *  con gancho + beneficios ✅ para que NUNCA llegue una ficha pobre al cliente. */
 export function descripcionRica(p: ProductView): string {
-  if (p.descripcion && p.descripcion.trim()) return p.descripcion.trim();
+  if (p.descripcion && p.descripcion.trim()) {
+    const d = p.descripcion.trim();
+    if (!p.dosificacion) return d;
+    // La línea "🥄 Modo de uso: …" de la descripción vieja traía otra dosis
+    // (Energy Cobra "4 a 5 gotas" vs la del dueño). Se cambia por la del dueño.
+    const linea = /^[ \t]*(?:🥄[ \t]*)?(?:modo de uso|uso|dosis|dosificaci[oó]n)[ \t]*:.*$/gim;
+    const limpia = d.replace(linea, "").replace(/\n{3,}/g, "\n\n").trim();
+    const partes = limpia.split("\n").filter((l, i, a) => l.trim() || (a[i - 1] ?? "").trim());
+    const iPrecio = partes.findIndex((l) => l.trim().startsWith("💵"));
+    const dosis = `🥄 Dosis: ${p.dosificacion}`;
+    if (iPrecio >= 0) partes.splice(iPrecio, 0, dosis); else partes.push(dosis);
+    return partes.join("\n");
+  }
   const gancho = p.tagline || p.pitch || p.shortDesc || "";
   const bens = (p.benefits || []).map((b) => `✅ ${b}`).join("\n");
   return [gancho, bens].filter(Boolean).join("\n");
@@ -104,7 +117,8 @@ export function publicProduct(p: ProductView) {
     shortDesc: p.shortDesc,
     benefits: p.benefits,
     ingredients: p.ingredients,
-    usage: p.usage,
+    // Con dosis del dueño, `usage` repite ESA dosis (nunca otra distinta).
+    usage: p.dosificacion || p.usage,
     pitch: p.pitch,
     faq: p.faq,
     keywords: p.keywords || [],

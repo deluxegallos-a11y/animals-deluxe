@@ -2,6 +2,17 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "buildCommand": "next build",
-  "regions": ["iad1"],
-  "crons": [{ "path": "/api/cron/livechat", "schedule": "*/5 * * * *" }]
+  "regions": [
+    "iad1"
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/livechat",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/reporte-diario",
+      "schedule": "15 5 * * *"
+    }
+  ]
 }

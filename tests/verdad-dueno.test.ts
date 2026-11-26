@@ -285,3 +285,22 @@ test("'Rooster Deluxe Max' es el Supplement (no Rooster DELUXE de pollitos); 'ro
   assert.equal(r.status, "ambiguous");
   assert.ok(r.options.length >= 2);
 });
+
+// 26-nov: 23 "dosis inventadas" en un día. Causa: cada producto traía DOS dosis
+// (la del dueño + un `usage`/"🥄 Modo de uso" viejo, p. ej. Energy Cobra
+// "4 a 5 gotas"). Lo que ve el bot tiene que traer SOLO la del dueño.
+test("una sola dosis: lo que recibe el bot no trae otra distinta a la del dueño", async () => {
+  const { publicProduct, buildContexto } = await import("@/lib/ai/present");
+  for (const p of cat) {
+    if (!p.dosificacion) continue;
+    const pub = publicProduct(p) as { descripcion: string; usage: string; uso: string };
+    assert.equal(pub.usage, p.dosificacion, `${p.slug}: usage distinto a la dosis del dueño`);
+    assert.equal(pub.uso, p.dosificacion, `${p.slug}: uso distinto`);
+    assert.doesNotMatch(pub.descripcion, /modo de uso\s*:/i, `${p.slug}: la descripción trae otro "modo de uso"`);
+    assert.doesNotMatch(buildContexto(p), /MODO DE USO/, `${p.slug}: el contexto trae otro modo de uso`);
+  }
+  const cobra = cat.find((p) => p.slug === "energy-cobra")!;
+  const d = (publicProduct(cobra) as { descripcion: string }).descripcion;
+  assert.doesNotMatch(d, /4 a 5 gotas/);
+  assert.ok(d.includes(cobra.dosificacion!));
+});
