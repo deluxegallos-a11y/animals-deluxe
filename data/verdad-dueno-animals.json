@@ -278,6 +278,16 @@
         "Polvo 400 gr": 45000
       },
       "nota": "1 kg y 3 kg = pago anticipado (Rooster Deluxe)"
+    },
+    "combo-4-tapas": {
+      "precio": 100000,
+      "envio_gratis": false,
+      "combo": [
+        "Tapa Amarilla (vitamina pollitos 0-3 meses)",
+        "Tapa Roja (vitamina crestones y cuido)",
+        "Tapa Naranja (purga, todas las etapas)",
+        "Tapa Azul (moquillo y respiratorio)"
+      ]
     }
   }
 }
