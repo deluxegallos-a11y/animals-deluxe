@@ -8,7 +8,7 @@ import { getProducts } from "@/lib/ai/data";
 import { createOrder, parsePlainItems } from "@/lib/ai/orders";
 import { pushOrderToShopify } from "@/lib/shopify-sync";
 import { cop } from "@/lib/ai/format";
-import { searchProducts } from "@/lib/ai/search";
+import { searchProducts, detectForma, formaDe } from "@/lib/ai/search";
 import { identifyProduct } from "@/lib/ai/brain";
 import { rulesForTenant } from "@/lib/ai/aliases";
 import { detectarOtraMarcaEnItems, preferirOtraMarca, telLegible } from "@/lib/ai/marcas";
@@ -174,6 +174,7 @@ export const POST = withBridge(
     const items: { slug: string; presentacion?: string; cantidad: number }[] = [];
     const noEncontrados: string[] = []; // sin match → "no encontré"
     const aclarar: string[] = [];       // match dudoso/ambiguo → "¿cuál exactamente?"
+    const formasNoEncontradas: string[] = []; // "shampoo"/"topico" pedidos que no hay en este canal
     for (const r of raws) {
       const bySlug = catalog.find((p) => p.slug === r.name.toLowerCase());
       if (bySlug) { items.push({ slug: bySlug.slug, presentacion: r.presentacion, cantidad: r.cantidad }); continue; }
@@ -185,7 +186,12 @@ export const POST = withBridge(
       // Un alias de una palabra ("cobra") no puede convertir un producto del OTRO canal
       // ("super cobra 500") en uno nuestro: si no lo cubre, va a la detección de otra marca.
       const otraPreferida = seguro && (res.matchedBy === "alias" || res.matchedBy === "fuzzy") ? await preferirOtraMarca(r.name, res.product) : null;
-      if (otraPreferida) noEncontrados.push(r.name);
+      // Pidió un shampoo/ungüento y el match es de otra forma (AD-VBAJ 25-nov: "Rooster Deluxe
+      // Shampoo" quedó como Rooster DELUXE en pastillas). Ese producto NO es lo que pidió.
+      const formaPedida = detectForma(r.name);
+      const formaChoca = !!(seguro && res.product && (formaPedida === "shampoo" || formaPedida === "topico") && formaDe(res.product) !== formaPedida);
+      if (formaChoca) formasNoEncontradas.push(formaPedida!);
+      if (otraPreferida || formaChoca) noEncontrados.push(r.name);
       else if (seguro) items.push({ slug: res.product!.slug, presentacion: r.presentacion, cantidad: r.cantidad });
       else if (res.product || res.status === "ambiguous" || res.status === "category") aclarar.push(r.name);
       else noEncontrados.push(r.name);
@@ -195,7 +201,8 @@ export const POST = withBridge(
     // redirige al canal que sí lo despacha, con su número y su forma de pago.
     // Va ANTES de "aclarar"/"faltan datos" para que el cliente no dé vueltas.
     if (noEncontrados.length) {
-      const otras = await detectarOtraMarcaEnItems(noEncontrados);
+      let otras = await detectarOtraMarcaEnItems(noEncontrados);
+      if (!otras.length && formasNoEncontradas.length) otras = await detectarOtraMarcaEnItems(formasNoEncontradas);
       if (otras.length) {
         const primera = otras[0];
         const nombres = otras.map((o) => `*${o.producto_nombre}*`).join(", ");
