@@ -1937,7 +1937,7 @@
     "envioGratis": false,
     "descripcion": "🇺🇸💊 NORDIC ROOSTER VITAMINS — Vitamina completa fórmula americana\nEl complemento diario para un gallo fuerte, sano y con presencia.\n✅ Desarrollo y vitalidad\n✅ Defensas más fuertes\n✅ Apoya músculo y estructura\n✅ Fórmula americana completa\n✅ Rinde según la presentación que elijas\n🥄 Modo de uso: dosis según la etapa del ejemplar.\n💵 50 ml $180.000 · 100 ml $250.000 · + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "dosis según la etapa del ejemplar.",
+    "dosificacion": "0.5 ml en la pechuga cada 15 días.",
     "presentacion": "50 ml · INYECTABLE",
     "paraQue": "",
     "soloAnticipado": false,
@@ -2783,14 +2783,6 @@
       {
         "label": "400 gr",
         "priceCOP": 45000
-      },
-      {
-        "label": "1 kg",
-        "priceCOP": 80000
-      },
-      {
-        "label": "3 kg",
-        "priceCOP": 180000
       }
     ],
     "image": "rooster-deluxe-chicks.jpg",
@@ -2860,10 +2852,10 @@
     "stock": 999,
     "activo": true,
     "envioGratis": false,
-    "descripcion": "🐥 ROOSTER DELUXE CHICKS — Levante fuerte desde el día 0\nAsegura el futuro de tus aves: crecimiento, huesos e inmunidad desde el primer día.\n✅ Fórmula de crecimiento (growth) para levante\n✅ Base ósea sólida y estructura fuerte\n✅ Sistema inmune fuerte desde temprano\n✅ Buen aporte proteico\n✅ Aves más sanas y parejas en el lote\n✅ Elige el tamaño según cuántas aves tengas\n🥄 Modo de uso: etapa de levante (0 a 3 meses), según cantidad de aves.\n💵 400 gr $45.000 · 1 kg $80.000 · 3 kg $180.000 · + envío · Contra entrega, pagás al recibir.",
+    "descripcion": "🐥 ROOSTER DELUXE CHICKS — Levante fuerte desde el día 0\nAsegura el futuro de tus aves: crecimiento, huesos e inmunidad desde el primer día.\n✅ Fórmula de crecimiento (growth) para levante\n✅ Base ósea sólida y estructura fuerte\n✅ Sistema inmune fuerte desde temprano\n✅ Buen aporte proteico\n✅ Aves más sanas y parejas en el lote\n📦 Contra entrega: bolsa de 400 gr. El de 1 kg y 3 kg va por Rooster Deluxe con pago anticipado.\n🥄 Modo de uso: etapa de levante (0 a 3 meses), según cantidad de aves.\n💵 400 gr $45.000 · 1 kg $80.000 · 3 kg $180.000 · + envío · Contra entrega, pagás al recibir.",
     "edadMinima": "",
-    "dosificacion": "etapa de levante (0 a 3 meses), según cantidad de aves.",
-    "presentacion": "polvo · 400 gr / 1 kg / 3 kg",
+    "dosificacion": "3 gramos diarios por pollito, mezclados en la comida (1 kilo de Chicks por cada 40 kilos de comida).",
+    "presentacion": "Polvo · bolsa 400 gr",
     "paraQue": "",
     "soloAnticipado": false,
     "minUnidades": 1

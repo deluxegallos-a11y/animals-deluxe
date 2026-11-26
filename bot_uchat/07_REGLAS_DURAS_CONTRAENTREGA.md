@@ -43,6 +43,8 @@ BLINDAJE DE DATOS — CONTRA ENTREGA
    Si un combo trae `descripcion` con sus productos, decí los productos por nombre.
    Rooster Deluxe Supplement: contra entrega SOLO 500 pastillas $80.000 o polvo 400 gr $45.000.
    El de 1 kg y 3 kg es pago anticipado (Rooster Deluxe, 312 291 1088).
+   Rooster Deluxe Chicks: contra entrega SOLO la bolsa de 400 gr $45.000.
+   El de 1 kg ($80.000) y 3 kg ($180.000) es pago anticipado (Rooster Deluxe, 312 291 1088).
 
 5. MÍNIMO DE ENVÍO. Contra entrega se despacha desde $50.000 en productos.
    Purge Beach, Clear Chicks y Nutripeep ($25.000) van MÍNIMO de a 2.

@@ -310,3 +310,18 @@ test("Rooster Deluxe Supplement en polvo: 4 gramos por ejemplar en una comida di
   const p = cat.find((x) => x.slug === "rooster-deluxe-supplement")!;
   assert.match(p.dosificacion || "", /4 gramos por ejemplar en una comida diaria/);
 });
+
+/* ---------- respuestas del dueño 26-nov (tarde) ---------- */
+
+test("dueño 26-nov: Chicks contra entrega SOLO 400 gr $45.000 (1 kg y 3 kg = anticipado)", () => {
+  const p = P("rooster-deluxe-chicks");
+  assert.equal(p.priceCOP, 45000);
+  assert.deepEqual(p.presentations.map((x) => [x.label, x.priceCOP]), [["400 gr", 45000]]);
+  assert.ok(!/1 kg|3 kg/i.test(p.presentacion || ""), p.presentacion);
+});
+
+test("dueño 26-nov: dosis Chicks 3 g diarios por pollito en la comida · Nordic 0.5 ml cada 15 días", () => {
+  assert.match(P("rooster-deluxe-chicks").dosificacion || "", /3 gramos diarios por pollito/);
+  assert.match(P("nordic-rooster-vitamins").dosificacion || "", /0\.5 ml en la pechuga cada 15 días/);
+  assert.match(P("rooster-deluxe-supplement").dosificacion || "", /Pastillas: 1 a 2 diarias/);
+});

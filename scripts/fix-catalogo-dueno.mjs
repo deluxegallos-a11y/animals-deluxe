@@ -19,7 +19,7 @@ const sql = postgres(process.env.DIRECT_DATABASE_URL || process.env.DATABASE_URL
 
 const dosis = (d) => (d === "@protocolo_doping_gotas" ? V.protocolo_doping_gotas : d);
 /* El combo potenciador decía "MegaForce Power"; el dueño (1-jul) dice Dragón Mamba. */
-const TEXTO = { "combo-potenciador": [[/MegaForce Power 10ml/g, "Dragón Mamba 10ml (inyectable)"], [/MegaForce Power/g, "Dragón Mamba"], [/Potenciador de fuerza y energía \(Dragón Mamba\)/g, "Doping inyectable para el día de la pelea (Dragón Mamba)"]] };
+const TEXTO = { "rooster-deluxe-chicks": [[/✅ Elige el tamaño según cuántas aves tengas/g, "📦 Contra entrega: bolsa de 400 gr. El de 1 kg y 3 kg va por Rooster Deluxe con pago anticipado."]], "combo-potenciador": [[/MegaForce Power 10ml/g, "Dragón Mamba 10ml (inyectable)"], [/MegaForce Power/g, "Dragón Mamba"], [/Potenciador de fuerza y energía \(Dragón Mamba\)/g, "Doping inyectable para el día de la pelea (Dragón Mamba)"]] };
 
 /* Textos con datos viejos que el bot repetía tal cual (auditoría 25-nov). */
 const COMBO_TEXTO = {
@@ -48,7 +48,13 @@ for (const [slug, v] of Object.entries(V.productos)) {
   // Presentaciones: precio de la primera = precio real; etiqueta corregida; cure chest solo gotero.
   let pres = Array.isArray(r.presentations) ? r.presentations.map((x) => ({ ...x })) : [];
   if (v.solo_gotero) pres = pres.filter((x) => /gotero|gota/i.test(x.label));
-  if (pres.length && v.precio && !v.combo) {
+  // Presentaciones EXACTAS del dueño para contra entrega ({"400 gr": 45000}): las demás
+  // (1 kg / 3 kg de pago anticipado) se quitan para que el bot no las ofrezca ni invente precio.
+  if (v.presentaciones) {
+    const prev = new Map(pres.map((x) => [String(x.label).toLowerCase(), x]));
+    pres = Object.entries(v.presentaciones).map(([label, priceCOP]) => ({ ...(prev.get(label.toLowerCase()) || {}), label, priceCOP }));
+  }
+  if (pres.length && v.precio && !v.combo && !v.presentaciones) {
     if (pres.length === 1 || v.solo_gotero) pres[0].priceCOP = v.precio;
     if (v.label) pres[0].label = v.label;
   }

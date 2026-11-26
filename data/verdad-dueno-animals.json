@@ -129,7 +129,9 @@
     "nordic-rooster-vitamins": {
       "precio": 180000,
       "forma": "inyectable",
-      "presentacion": "50 ml · INYECTABLE"
+      "presentacion": "50 ml · INYECTABLE",
+      "dosificacion": "0.5 ml en la pechuga cada 15 días.",
+      "nota": "Dosis confirmada por el dueño el 26-nov."
     },
     "nutripeep-refoce": {
       "precio": 25000,
@@ -179,7 +181,12 @@
     "rooster-deluxe-chicks": {
       "precio": 45000,
       "forma": "polvo",
-      "presentacion": "polvo · 400 gr / 1 kg / 3 kg"
+      "presentacion": "Polvo · bolsa 400 gr",
+      "presentaciones": {
+        "400 gr": 45000
+      },
+      "dosificacion": "3 gramos diarios por pollito, mezclados en la comida (1 kilo de Chicks por cada 40 kilos de comida).",
+      "nota": "Dueño 26-nov: contra entrega SOLO 400 gr $45.000. 1 kg $80.000 y 3 kg $180.000 = pago anticipado (Rooster Deluxe)."
     },
     "rooster-strength": {
       "precio": 50000,
@@ -277,7 +284,7 @@
         "500 pastillas": 80000,
         "Polvo 400 gr": 45000
       },
-      "nota": "1 kg y 3 kg = pago anticipado (Rooster Deluxe) · Dosis del polvo confirmada por el dueño el 26-nov (4 g por ejemplar en una comida diaria); la de pastillas venía de la base, sin confirmar.",
+      "nota": "1 kg y 3 kg = pago anticipado (Rooster Deluxe) · Dosis confirmadas por el dueño el 26-nov: pastillas 1 a 2 diarias por ejemplar; polvo 4 g por ejemplar en una comida diaria.",
       "dosificacion": "Pastillas: 1 a 2 diarias por ejemplar. En polvo: 4 gramos por ejemplar en una comida diaria."
     },
     "combo-4-tapas": {
