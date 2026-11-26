@@ -41,7 +41,8 @@ const BLOQUEADOS_POR_TENANT: Record<string, string[]> = {
        (anticipado). Al bloquearlos aquí, si un cliente los pide el bot lo
        REDIRIGE al WhatsApp de Rooster (marcas.ts) en vez de ofrecerlos COD. */
     "rooster-smallpox",
-    "super-cobra-500",
+    // Dueño 26-nov: Rooster Deluxe Shampoo es pago anticipado (Super Cobra 500 SÍ es contra entrega).
+    "rooster-deluxe-shampoo",
   ],
 };
 

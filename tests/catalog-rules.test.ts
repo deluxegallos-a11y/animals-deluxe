@@ -15,7 +15,7 @@ const SOLO_ROOSTER = [
   "gallo-purga-plus",
   "rooster-xt-impulsor",
   "rooster-smallpox",
-  "super-cobra-500",
+  "rooster-deluxe-shampoo",
 ];
 
 test("animals-deluxe bloquea exactamente los productos solo-anticipado", () => {

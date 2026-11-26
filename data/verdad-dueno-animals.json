@@ -10,7 +10,7 @@
     "gallo-purga-plus",
     "rooster-xt-impulsor",
     "rooster-smallpox",
-    "super-cobra-500"
+    "rooster-deluxe-shampoo"
   ],
   "nunca_en_contraentrega_nombres": [
     "Red Rooster",
@@ -22,7 +22,9 @@
     "espuelas",
     "Gallo Purga",
     "Vita Power",
-    "Rooster XT"
+    "Rooster XT",
+    "Rooster Deluxe Shampoo",
+    "Smallpox"
   ],
   "productos": {
     "american-rooster-fury": {
@@ -179,12 +181,6 @@
       "forma": "polvo",
       "presentacion": "polvo · 400 gr / 1 kg / 3 kg"
     },
-    "rooster-deluxe-shampoo": {
-      "precio": 40000,
-      "forma": "shampoo",
-      "presentacion": "1 litro · shampoo",
-      "min_unidades": 2
-    },
     "rooster-strength": {
       "precio": 50000,
       "forma": "gotas",
@@ -269,6 +265,11 @@
         "Super Trainer",
         "Gallo Post Recovery"
       ]
+    },
+    "super-cobra-500": {
+      "precio": 100000,
+      "presentacion": "Frasco",
+      "envio_gratis": false
     }
   }
 }

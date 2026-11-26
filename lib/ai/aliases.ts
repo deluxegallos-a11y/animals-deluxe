@@ -248,9 +248,10 @@ export const ALIAS_CATALOG_ANIMALS: AliasEntry[] = [
 
   /* ---------- CUIDADO / PLUMAJE ---------- */
   { slugs: ["omega-3"], aliases: ["omega", "omega tres", "omega 3"] },
-  // Plume King Shampoo: SOLO Rooster Deluxe (anticipado). "shampoo"/"champú" ahora
-  // resuelven al shampoo que SÍ es de contra entrega (Rooster Deluxe Shampoo).
-  { slugs: ["rooster-deluxe-shampoo"], aliases: ["rooster deluxe shampoo", "shampoo deluxe", "champu deluxe", "shampoo", "champu", "shampu", "champo"] },
+  // Shampoos (Plume King y Rooster Deluxe Shampoo) son SOLO Rooster Deluxe (anticipado,
+  // dueño 26-nov): sin alias aquí → "shampoo" se redirige al bot de Rooster.
+  // Super Cobra 500 SÍ es contra entrega (dueño 26-nov).
+  { slugs: ["super-cobra-500"], aliases: ["cobra 500", "super cobra", "super cobra 500", "supercobra"] },
   // Red Rooster (enrojecedor) es SOLO de Rooster Deluxe → NO se ofrece en Animals
   // (producto desactivado en animals-deluxe). Sin alias aquí para no resolverlo.
 
@@ -274,13 +275,13 @@ export const ALIAS_CATALOG_ANIMALS: AliasEntry[] = [
 ];
 
 export const NEED_RULES_ANIMALS: NeedRule[] = [
-  { id: "cola-emplume", match: ["que le crezca la cola", "que les crezca la cola", "crezca la cola", "crecer la cola", "emplumar", "emplume", "que emplume", "cola", "plumaje", "muda"], slugs: ["omega-3", "rooster-deluxe-shampoo"] },
+  { id: "cola-emplume", match: ["que le crezca la cola", "que les crezca la cola", "crezca la cola", "crecer la cola", "emplumar", "emplume", "que emplume", "cola", "plumaje", "muda"], slugs: ["omega-3"] },
   { id: "respiratorio", match: ["moquillo", "gripa", "mocos", "moco", "respiratorio", "ahogado", "ahogo", "tos", "estornuda", "ronquera", "pal moquillo", "para el moquillo"], categorySlug: "respiratorio" },
-  { id: "purga", match: ["purga", "purgar", "desparasitar", "desparasitante", "desparasitantes", "vermifugo", "vermifugos", "lombriz", "lombrices", "gusano", "gusanos", "parasito", "parasitos", "parasitosis"], slugs: ["purge-beach", "rooster-and-worm"] },
+  { id: "purga", match: ["purga", "purgar", "desparasitar", "desparasitante", "desparasitantes", "vermifugo", "vermifugos", "lombriz", "lombrices", "gusano", "gusanos", "parasito", "parasitos", "parasitosis"], slugs: ["purge-beach", "rooster-and-worm", "super-cobra-500"] },
   { id: "doping", match: ["pelea", "peleas", "energia", "dope", "doping", "dopin", "que lo levante", "energizante", "para la pelea", "topada", "careo", "dopar", "doparlo", "dopalo", "para dopar", "dopar los gallos", "dopar el gallo", "goticas para dopar", "gotas para dopar", "goticas", "gotica"], categorySlug: "energia" },
   { id: "engorde", match: ["engorde", "engordar", "peso", "masa", "musculo", "musculatura", "masa muscular"], slugs: ["weight-muscle-protein", "gallo-post-recovery"] },
   { id: "pollitos", match: ["pollitos", "pollito", "levante", "cria", "crias", "polluelo"], slugs: ["rooster-deluxe-chicks", "nutripeep-refoce", "rooster-deluxe"] },
-  { id: "piojos", match: ["piojos", "piojo", "pulgas", "pulga", "acaros", "acaro", "garrapata", "garrapatas"], slugs: ["rooster-deluxe-shampoo", "omega-3"] },
+  { id: "piojos", match: ["piojos", "piojo", "pulgas", "pulga", "acaros", "acaro", "garrapata", "garrapatas"], slugs: ["omega-3"] },
   { id: "recuperacion", match: ["recuperacion", "recuperar", "despues de la pelea", "post pelea"], slugs: ["gallo-post-recovery"] },
   { id: "entrenar", match: ["entrenar", "entrenamiento", "topar", "topas", "pre entreno", "preentreno"], slugs: ["super-trainer", "gallo-post-recovery", "weight-muscle-protein"] },
   { id: "perros", match: ["perro", "perros", "canino", "cachorro", "musculo perro", "perro flaco"], slugs: ["more-muscle-dogs"] },
