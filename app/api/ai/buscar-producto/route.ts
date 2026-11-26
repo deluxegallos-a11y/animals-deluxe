@@ -4,6 +4,7 @@ import { getProducts, getExtraAliases, logSearchMiss } from "@/lib/ai/data";
 import { identifyProduct, esQueryBasura } from "@/lib/ai/brain";
 import { rulesForTenant } from "@/lib/ai/aliases";
 import { detectarOtraMarca, preferirOtraMarca } from "@/lib/ai/marcas";
+import { detectForma, formaDe } from "@/lib/ai/search";
 import { publicProduct, suggestion, emptyProduct, richMensaje, opcionesMensaje, cualMensaje } from "@/lib/ai/present";
 
 export const runtime = "nodejs";
@@ -67,11 +68,20 @@ export const POST = withBridge(
     // → Energy Cobra) y el otro canal sí lo tiene → se redirige (los bots no se mezclan).
     const otraPreferida = r.product && (r.matchedBy === "alias" || r.matchedBy === "fuzzy")
       ? await preferirOtraMarca(body.q, r.product) : null;
-    if (!r.product || otraPreferida) {
+    // Pidió una FORMA que el producto encontrado no tiene ("rooster deluxe shampoo" →
+    // Rooster DELUXE en pastillas, 26-nov): ese producto no es lo que pidió.
+    const formaPedida = detectForma(body.q);
+    const formaHallada = r.product ? formaDe(r.product) : "";
+    // Solo formas que son OTRO TIPO de producto (shampoo, ungüento). Gotas/inyectable/pastillas
+    // NO: "dragon mamba en gotas" debe mostrar el Dragon Mamba y que el bot aclare que es inyectable.
+    const formaChoca = !!(r.product && formaPedida && (formaPedida === "shampoo" || formaPedida === "topico")
+      && formaHallada !== formaPedida);
+    if (!r.product || otraPreferida || formaChoca) {
       // OTRA MARCA (M-CERO): antes de dar por perdida la consulta, miramos si lo que
       // pidió es un producto EXCLUSIVO del otro negocio (botas, canilleras, comederos,
       // antibióticos…). Si lo es, redirigimos a ese canal en vez de callar.
-      const otra = otraPreferida || await detectarOtraMarca(body.q);
+      const otra = otraPreferida || await detectarOtraMarca(body.q)
+        || (formaChoca && formaPedida ? await detectarOtraMarca(formaPedida) : null);
       if (otra) {
         await logEvent("otra_marca", {
           q: body.q, marca: otra.marca, producto: otra.producto_slug, sub_id: customer.uchatSubId || "",
