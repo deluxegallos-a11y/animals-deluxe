@@ -325,3 +325,10 @@ test("dueño 26-nov: dosis Chicks 3 g diarios por pollito en la comida · Nordic
   assert.match(P("nordic-rooster-vitamins").dosificacion || "", /0\.5 ml en la pechuga cada 15 días/);
   assert.match(P("rooster-deluxe-supplement").dosificacion || "", /Pastillas: 1 a 2 diarias/);
 });
+
+test("dueño 26-nov: Nordic contra entrega 50 ml $180.000 y 100 ml $250.000", () => {
+  const p = P("nordic-rooster-vitamins");
+  assert.equal(p.priceCOP, 180000);
+  assert.deepEqual(p.presentations.map((x) => [x.label, x.priceCOP]), [["50 ml", 180000], ["100 ml", 250000]]);
+  assert.ok(!p.soloAnticipado, "Nordic va contra entrega");
+});
