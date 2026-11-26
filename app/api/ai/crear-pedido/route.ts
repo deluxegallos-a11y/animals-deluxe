@@ -64,6 +64,24 @@ function telAviso(raw: string): string {
   return d.length === 10 ? `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}` : "";
 }
 
+/* Campos de UChat que usa la plantilla `aviso_pedido_asesor` (bot f280503 de Animals).
+   Bug 25-nov (AD-VBAJ): `ad_prod_nombre` lo llenaba solo buscar_producto; si el cliente
+   pidió sin búsqueda previa quedaba VACÍO, Meta rechaza la plantilla con un parámetro
+   vacío y el aviso NO llegaba (sin error en UChat). Ahora crear-pedido los escribe con
+   los datos REALES del pedido antes de responder, así el aviso siempre sale completo. */
+const AVISO_FIELDS_ANIMALS = {
+  prodNombre: "f280503v14846981", // ad_prod_nombre
+  prodPrecio: "f280503v14846983", // ad_prod_precio
+};
+async function llenarCamposAviso(tenantSlug: string, subId: string, producto: string, total: number): Promise<void> {
+  if (tenantSlug !== DEFAULT_TENANT_SLUG || !subId.startsWith("f280503u") || !producto) return;
+  const { uchatSetUserFields } = await import("@/lib/uchat");
+  await Promise.race([
+    uchatSetUserFields(subId, { [AVISO_FIELDS_ANIMALS.prodNombre]: producto, [AVISO_FIELDS_ANIMALS.prodPrecio]: String(total) }),
+    new Promise((res) => setTimeout(res, 3000)),
+  ]);
+}
+
 /** WhatsApp DESDE EL QUE SE HIZO el pedido (no el que el cliente escribe para la guía).
  *  El dueño busca el chat por ese número: si el aviso trae solo el del destinatario,
  *  no encuentra al cliente (reportes 9-jul, 27-ago, 14-nov, 25-nov). Fuentes, en orden:
@@ -357,6 +375,7 @@ export const POST = withBridge(
       await audit("pedido_por_revisar", "orders", { ref, maxCantidad, total: totalEstimado });
       await updateOrderAttempt(attemptId, { resultado: "por_revisar", ref, motivo: `sospechoso: ${maxCantidad} unid / ${totalEstimado}` });
       const listaNombres = order.items.map((it) => it.name).join(", ");
+      await llenarCamposAviso(tenant.slug, subId, `${order.items.map((it) => `${it.cantidad}× ${it.name}`).join(", ")} (POR REVISAR)`, order.total_cop);
       return {
         pedido_id: order.pedido_id,
         ref,
@@ -406,6 +425,7 @@ export const POST = withBridge(
     await updateOrderAttempt(attemptId, { resultado: "created", ref: order.ref });
 
     const listaProductos = order.items.map((it) => `${it.cantidad}× ${it.name}`).join(", ");
+    await llenarCamposAviso(tenant.slug, subId, listaProductos, order.total_cop);
     // Aviso de mínimo por envío (M6.3): el total ya viene recalculado con la cantidad subida.
     const avisoMinimo = subidos.length
       ? `ℹ️ De ${subidos.join(" y ")} se envían mínimo esas unidades, así que ajusté la cantidad.\n`
