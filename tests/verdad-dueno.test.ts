@@ -152,17 +152,15 @@ test("dosis: todo lo de la tabla con dosis la tiene en la ficha", () => {
 
 /* ---------- 5 · mínimo de Interrapidísimo ---------- */
 
-test("mínimo: goteros de $25.000 salen de a 2 (mínimo contra entrega $50.000)", () => {
+test("mínimo: goteros de $25.000 salen de a 2 (mínimo contra entrega $45.000)", () => {
   for (const s of ["purge-beach", "clear-chicks", "nutripeep-refoce"]) {
     assert.equal(P(s).minUnidades, 2, s);
   }
 });
 
-test("mínimo: los goteros baratos con su cantidad mínima llegan al mínimo de contra entrega ($50.000)", () => {
-  // Los de $40.000–$45.000 (Cure Chest, Chicks 400 gr) no se suben solos: crear-pedido
-  // le pide al cliente sumar otro producto. Aquí se blindan los de $25.000.
+test("mínimo: NINGÚN producto COD queda por debajo de $45.000 con su cantidad mínima", () => {
   const mal = cat
-    .filter((p) => p.priceCOP <= 25000 && p.priceCOP * Math.max(1, p.minUnidades ?? 1) < V.minimo_contraentrega_cop)
+    .filter((p) => p.priceCOP * Math.max(1, p.minUnidades ?? 1) < V.minimo_contraentrega_cop)
     .map((p) => `${p.slug} ($${p.priceCOP} × ${p.minUnidades ?? 1})`);
   assert.deepEqual(mal, []);
 });
@@ -260,4 +258,12 @@ test("nombres completos siguen resolviendo directo", () => {
     "energy cobra": "energy-cobra", "cobra": "energy-cobra", "fury": "american-rooster-fury", "american rooster fury": "american-rooster-fury",
   };
   for (const [q, slug] of Object.entries(casos)) assert.equal(identifyProduct(q, cat, [], ANIMALS_RULES).product?.slug, slug, q);
+});
+
+/* ---------- 11 · Rooster Deluxe Supplement (dueño 25-nov 7:30 p. m.) ---------- */
+
+test("Rooster Deluxe Supplement: contra entrega 500 pastillas $80.000 y polvo 400 gr $45.000 (1 y 3 kg = anticipado)", () => {
+  const p = P("rooster-deluxe-supplement");
+  assert.deepEqual(p.presentations.map((x) => [x.label, x.priceCOP]), [["500 pastillas", 80000], ["Polvo 400 gr", 45000]]);
+  assert.equal(formaDe(p), "", "trae dos formas: el bot no debe afirmar una sola");
 });

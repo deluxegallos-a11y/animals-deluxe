@@ -149,6 +149,10 @@ export function formaDe(p: ProductView): string {
   // Sin esto, "Omega-3 120 cáps" hacía que el Combo del Mes saliera "en pastillas".
   if (/^(combo|kit)\b/i.test((p.presentacion || "").trim())) return "";
   const explicito = normalize([p.presentacion, p.dosificacion || "", p.usage].filter(Boolean).join(" "));
+  // Viene en DOS formas a la vez (Rooster Deluxe Supplement: pastillas o polvo):
+  // no hay UNA forma; el bot lee las presentaciones.
+  const formasExplicitas = FORMAS.filter((f) => f.prod.test(explicito));
+  if (formasExplicitas.length >= 2 && formasExplicitas.every((f) => f.forma === "pastillas" || f.forma === "polvo")) return "";
   for (const f of FORMAS) if (f.prod.test(explicito)) return f.forma;
   // Sin campo explícito: la descripción larga (redactada a mano) es la mejor fuente.
   const desc = normalize(p.descripcion || "");

@@ -1,7 +1,7 @@
 {
   "_fuente": "Chats de WhatsApp con el dueño de Animals Deluxe (13-jun → 25-nov-2026). Única fuente de verdad del bot de CONTRA ENTREGA. La usan scripts/fix-catalogo-dueno.mjs (corrige la DB) y tests/verdad-dueno.test.ts + scripts/validar-bot-openai.mjs (validación).",
   "_actualizado": "2026-11-26",
-  "minimo_contraentrega_cop": 50000,
+  "minimo_contraentrega_cop": 45000,
   "protocolo_doping_gotas": "Si el gallo no está acostumbrado: 4 gotas 1 hora antes de la pelea. Lo recomendable es acostumbrarlo: en los 2 últimos entrenamientos 4 gotas 1 hora antes de cada entrenamiento; 2 días antes de la pelea 3 gotas después del desayuno; y el día de la pelea 4 gotas 1 hora antes. Mantener refrigerado.",
   "solo_rooster_anticipado": [
     "red-rooster",
@@ -270,6 +270,14 @@
       "precio": 100000,
       "presentacion": "Frasco",
       "envio_gratis": false
+    },
+    "rooster-deluxe-supplement": {
+      "precio": 80000,
+      "presentaciones": {
+        "500 pastillas": 80000,
+        "Polvo 400 gr": 45000
+      },
+      "nota": "1 kg y 3 kg = pago anticipado (Rooster Deluxe)"
     }
   }
 }
