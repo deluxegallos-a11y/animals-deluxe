@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { withBridge, audit, logEvent, recordInterest } from "@/lib/ai/bridge";
 import { getProducts, getExtraAliases, logSearchMiss } from "@/lib/ai/data";
-import { identifyProduct, esQueryBasura } from "@/lib/ai/brain";
+import { identifyProduct, esQueryBasura, esNumeroDeProducto } from "@/lib/ai/brain";
 import { rulesForTenant } from "@/lib/ai/aliases";
 import { detectarOtraMarca, preferirOtraMarca } from "@/lib/ai/marcas";
 import { detectForma, formaDe } from "@/lib/ai/search";
@@ -16,7 +16,8 @@ export const POST = withBridge(
     // CANDADO DURO (antes de tocar la DB): query vacío, o basura que no es una
     // consulta (UChat manda la URL del audio/foto como `q` cuando el cliente
     // manda una nota de voz). Nunca se devuelve un producto "por si acaso".
-    if (esQueryBasura(body.q)) {
+    // Excepción: "77" / "5500" son nombres de producto, no basura.
+    if (esQueryBasura(body.q) && !esNumeroDeProducto(body.q, rulesForTenant(tenant.slug))) {
       await logEvent("busqueda_producto", { q: body.q, status: "not_found", match: "", matched_by: "descartado", score: 0 });
       return {
         status: "not_found" as const,

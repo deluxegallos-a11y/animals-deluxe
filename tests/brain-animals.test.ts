@@ -2,7 +2,7 @@
    Corre contra tests/fixtures/animals-catalog.json (congelado desde prod). */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { identifyProduct } from "@/lib/ai/brain";
+import { identifyProduct, esNumeroDeProducto } from "@/lib/ai/brain";
 import { ALIAS_CATALOG_ANIMALS, NEED_RULES_ANIMALS, ANIMALS_RULES } from "@/lib/ai/aliases";
 import type { ProductView } from "@/lib/ai/types";
 import catalogJson from "@/tests/fixtures/animals-catalog.json";
@@ -135,4 +135,11 @@ test("ANIMALS: 'vitamina para pollitos' ofrece el Chicks (no solo el Combo 4 Tap
 
 test("ANIMALS: 'para qué sirve el chicks' es el Chicks, nunca Etapa de Cuido", () => {
   for (const q of ["para que sirve el chicks", "que es el chicks", "chicks"]) assert.deepEqual(slugs(q), ["rooster-deluxe-chicks"], q);
+});
+
+test("ANIMALS: el candado de la ruta deja pasar números de producto, no celulares", () => {
+  assert.equal(esNumeroDeProducto("5500", ANIMALS_RULES), true);
+  assert.equal(esNumeroDeProducto("77", ANIMALS_RULES), true);
+  assert.equal(esNumeroDeProducto("3001234567", ANIMALS_RULES), false);
+  assert.equal(esNumeroDeProducto("energy cobra", ANIMALS_RULES), false);
 });

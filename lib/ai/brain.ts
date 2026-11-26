@@ -114,6 +114,14 @@ export function esQueryBasura(raw: string): boolean {
   return false;
 }
 
+/** ¿Es un número suelto que los clientes usan como NOMBRE de producto ("77", "5500")?
+ *  Esos no son basura aunque no tengan letras: son un alias exacto del tenant. */
+export function esNumeroDeProducto(raw: string, rules: Ruleset = ROOSTER_RULES, index?: AliasIndex): boolean {
+  const q = normalizeQuery(raw).q;
+  if (!/^\d+$/.test(q)) return false;
+  return (index || buildAliasIndex([], rules.aliases)).some((e) => e.alias === q);
+}
+
 export function normalizeQuery(raw: string): NormalizedQuery {
   const q = normalize(raw).replace(/[^a-z0-9\s+]/g, " ").replace(/\s+/g, " ").trim();
   const stripped = stripFillers(q);
@@ -352,7 +360,7 @@ export function identifyProduct(
     : buildAliasIndex(extraAliases, rules.aliases);
   // Un número suelto es basura (id, celular)… salvo que sea el número de un producto
   // que los clientes usan como nombre ("77", "5500"): ese es un alias exacto.
-  const numeroDeProducto = /^\d+$/.test(norm.q) && index.some((e) => e.alias === norm.q);
+  const numeroDeProducto = esNumeroDeProducto(rawQuery, rules, index);
   if (!numeroDeProducto && esQueryBasura(rawQuery)) {
     return { status: "not_found", product: null, options: [], matchedBy: "", score: 0, ranked: [], norm };
   }
