@@ -19,7 +19,7 @@ const sql = postgres(process.env.DIRECT_DATABASE_URL || process.env.DATABASE_URL
 
 const dosis = (d) => (d === "@protocolo_doping_gotas" ? V.protocolo_doping_gotas : d);
 /* El combo potenciador decía "MegaForce Power"; el dueño (1-jul) dice Dragón Mamba. */
-const TEXTO = { "rooster-deluxe-chicks": [[/✅ Elige el tamaño según cuántas aves tengas/g, "📦 Contra entrega: bolsa de 400 gr. El de 1 kg y 3 kg va por Rooster Deluxe con pago anticipado."]], "combo-potenciador": [[/MegaForce Power 10ml/g, "Dragón Mamba 10ml (inyectable)"], [/MegaForce Power/g, "Dragón Mamba"], [/Potenciador de fuerza y energía \(Dragón Mamba\)/g, "Doping inyectable para el día de la pelea (Dragón Mamba)"]] };
+const TEXTO = { "rooster-deluxe-chicks": [[/✅ Elige el tamaño según cuántas aves tengas/g, "📦 Contra entrega: bolsa de 400 gr. El de 1 kg y 3 kg va por Rooster Deluxe con pago anticipado."], [/💵 400 gr \$45\.000 · 1 kg \$80\.000 · 3 kg \$180\.000 · /g, "💵 400 gr $45.000 · "]], "combo-potenciador": [[/MegaForce Power 10ml/g, "Dragón Mamba 10ml (inyectable)"], [/MegaForce Power/g, "Dragón Mamba"], [/Potenciador de fuerza y energía \(Dragón Mamba\)/g, "Doping inyectable para el día de la pelea (Dragón Mamba)"]] };
 
 /* Textos con datos viejos que el bot repetía tal cual (auditoría 25-nov). */
 const COMBO_TEXTO = {
