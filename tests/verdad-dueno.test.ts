@@ -304,3 +304,9 @@ test("una sola dosis: lo que recibe el bot no trae otra distinta a la del dueño
   assert.doesNotMatch(d, /4 a 5 gotas/);
   assert.ok(d.includes(cobra.dosificacion!));
 });
+
+// 26-nov: el dueño confirmó la dosis del Supplement en polvo (antes el bot la inventaba: "una cucharadita").
+test("Rooster Deluxe Supplement en polvo: 4 gramos por ejemplar en una comida diaria", () => {
+  const p = cat.find((x) => x.slug === "rooster-deluxe-supplement")!;
+  assert.match(p.dosificacion || "", /4 gramos por ejemplar en una comida diaria/);
+});
