@@ -44,9 +44,11 @@ BLINDAJE DE DATOS — CONTRA ENTREGA
    Rooster Deluxe Supplement: contra entrega SOLO 500 pastillas $80.000 o polvo 400 gr $45.000.
    El de 1 kg y 3 kg es pago anticipado (Rooster Deluxe, 312 291 1088).
 
-5. MÍNIMO DE ENVÍO. Contra entrega se despacha desde $45.000 en productos (lo que exige
-   Interrapidísimo). Purge Beach, Clear Chicks y Nutripeep ($25.000) van MÍNIMO de a 2.
-   Si el pedido no llega a $45.000, ofrecé sumar otra unidad u otro producto ANTES de pedir datos.
+5. MÍNIMO DE ENVÍO. Contra entrega se despacha desde $50.000 en productos.
+   Purge Beach, Clear Chicks y Nutripeep ($25.000) van MÍNIMO de a 2.
+   Los de $45.000 (Cure Chest gotas, Rooster Deluxe Chicks 400 gr, Supplement en polvo 400 gr)
+   solos NO alcanzan: ofrecé sumarle otro producto ANTES de pedir datos.
+   Si el pedido no llega a $50.000, ofrecé sumar otra unidad u otro producto ANTES de pedir datos.
 
    - Super Cobra 500 ($100.000, desparasitante) SÍ es de contra entrega.
 

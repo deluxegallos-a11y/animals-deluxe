@@ -152,15 +152,16 @@ test("dosis: todo lo de la tabla con dosis la tiene en la ficha", () => {
 
 /* ---------- 5 · mínimo de Interrapidísimo ---------- */
 
-test("mínimo: goteros de $25.000 salen de a 2 (mínimo contra entrega $45.000)", () => {
+test("mínimo: goteros de $25.000 salen de a 2 (mínimo contra entrega $50.000)", () => {
   for (const s of ["purge-beach", "clear-chicks", "nutripeep-refoce"]) {
     assert.equal(P(s).minUnidades, 2, s);
   }
 });
 
-test("mínimo: NINGÚN producto COD queda por debajo de $45.000 con su cantidad mínima", () => {
+test("mínimo: los goteros de $25.000 con su cantidad mínima llegan al mínimo ($50.000)", () => {
+  // Los de $45.000 no se suben solos: crear-pedido le pide al cliente sumar otro producto.
   const mal = cat
-    .filter((p) => p.priceCOP * Math.max(1, p.minUnidades ?? 1) < V.minimo_contraentrega_cop)
+    .filter((p) => p.priceCOP <= 25000 && p.priceCOP * Math.max(1, p.minUnidades ?? 1) < V.minimo_contraentrega_cop)
     .map((p) => `${p.slug} ($${p.priceCOP} × ${p.minUnidades ?? 1})`);
   assert.deepEqual(mal, []);
 });
