@@ -225,7 +225,10 @@ export const ALIAS_CATALOG_ANIMALS: AliasEntry[] = [
   { slugs: ["rooster-booster"], aliases: ["booster", "buster", "el buster", "rooster booster"] },
   { slugs: ["nordic-rooster-vitamins"], aliases: ["nordic", "nordica", "nordico", "nordic rooster"] },
   { slugs: ["super-b12-max"], aliases: ["b12 max", "super b12", "b12max"] },
-  { slugs: ["cyanomax-b12-5500"], aliases: ["siano max", "cyano", "ciano max", "sianomax", "cianomax", "ciano", "cyanomax"] },
+  { slugs: ["cyanomax-b12-5500"], aliases: ["siano max", "cyano", "ciano max", "sianomax", "cianomax", "ciano", "cyanomax", "b12 5500", "cyanomax 5500", "cyano 5500", "ciano 5500", "vitamina b12 5500", "cyanomax b12"] },
+  // "5500" a secas = CyanoMax B12 5500 o Super Energizante B15 5500 Ultra (26-nov el bot
+  // respondió con el B15 cuando pedían el CyanoMax). Sin más pistas → opciones.
+  { slugs: ["cyanomax-b12-5500", "super-energizante-b15"], aliases: ["5500", "la 5500", "el 5500"] },
   { slugs: ["rooscer-b12-complete"], aliases: ["complet", "complete", "b12 complete", "rooster complete", "rooscer"] },
   { slugs: ["champions-choice"], aliases: ["champions", "choice", "champion choice", "champions choice"] },
   { slugs: ["dragon-rooster"], aliases: ["dragon rooster", "dragon pastillas"] },
@@ -235,6 +238,9 @@ export const ALIAS_CATALOG_ANIMALS: AliasEntry[] = [
   { slugs: ["rooster-strength"], aliases: ["strength", "rooster strength"] },
   { slugs: ["rooster-deluxe-supplement"], aliases: ["supplement", "suplement", "suplemento deluxe", "deluxe supplement"] },
   { slugs: ["rooster-deluxe-chicks"], aliases: ["chicks", "polvo pollitos", "deluxe chicks", "deluxe pollitos"] },
+  // "vitamina para pollitos" caía por palabra clave en el Combo 4 Tapas (26-nov):
+  // son dos opciones reales, el bot pregunta cuál.
+  { slugs: ["rooster-deluxe-chicks", "combo-4-tapas"], aliases: ["vitamina para pollitos", "vitaminas para pollitos", "vitamina pollitos", "vitaminas pollitos"] },
 
   /* ---------- DESPARASITANTES ---------- */
   // Gallo Purga Plus: SOLO Rooster Deluxe (anticipado) → sin alias en Animals.

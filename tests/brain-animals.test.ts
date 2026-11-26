@@ -113,3 +113,26 @@ test("ANIMALS: queries basura NUNCA devuelven producto", () => {
     assert.equal(id(q).status, "not_found", `'${q}' no debió matchear`);
   }
 });
+
+/* ---------- errores reales del 26-nov ---------- */
+
+test("ANIMALS: '5500' a secas → opciones CyanoMax B12 5500 y B15 5500 Ultra", () => {
+  for (const q of ["5500", "la 5500"]) {
+    const s = slugs(q);
+    assert.ok(s.includes("cyanomax-b12-5500") && s.includes("super-energizante-b15"), `${q} → ${s.join(", ")}`);
+  }
+});
+
+test("ANIMALS: con el nombre, 5500 resuelve UNO solo (CyanoMax ≠ B15)", () => {
+  for (const q of ["cyanomax b12 5500", "cyanomax 5500", "b12 5500", "el cyanomax de 5500"]) assert.deepEqual(slugs(q), ["cyanomax-b12-5500"], q);
+  for (const q of ["b15 5500 ultra", "b15 5500", "ultra 5500"]) assert.deepEqual(slugs(q), ["super-energizante-b15"], q);
+});
+
+test("ANIMALS: 'vitamina para pollitos' ofrece el Chicks (no solo el Combo 4 Tapas)", () => {
+  const s = slugs("vitamina para pollitos");
+  assert.ok(s.includes("rooster-deluxe-chicks") && s.length > 1, s.join(", "));
+});
+
+test("ANIMALS: 'para qué sirve el chicks' es el Chicks, nunca Etapa de Cuido", () => {
+  for (const q of ["para que sirve el chicks", "que es el chicks", "chicks"]) assert.deepEqual(slugs(q), ["rooster-deluxe-chicks"], q);
+});

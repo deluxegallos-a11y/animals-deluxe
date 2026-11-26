@@ -310,7 +310,9 @@ function top(m: Record<string, number>, nombres: Record<string, string>, n: numb
 export function parametrosPlantilla(hoy: Reporte, ayer: Reporte | null): string[] {
   const fecha = new Date(`${hoy.dia}T12:00:00-05:00`).toLocaleDateString("es-CO", { timeZone: TZ, weekday: "long", day: "numeric", month: "long" });
   const errAyer = ayer && ayer.chats_revisados ? totalErrores(ayer) : undefined;
-  const lim = (s: string) => (s || "ninguno").replace(/[\n\t]+/g, " ").replace(/ {4,}/g, " ").slice(0, 300);
+  // Meta rechaza variables vacías, con saltos de línea/tabs o con 4+ espacios seguidos:
+  // se limpian TODAS (el motivo de error de OpenAI puede traer saltos de línea).
+  const lim = (s: string) => (s || "").replace(/[\r\n\t]+/g, " ").replace(/ {2,}/g, " ").trim().slice(0, 300) || "ninguno";
   return [
     fecha,
     dif(hoy.chats, ayer?.chats),
@@ -318,9 +320,9 @@ export function parametrosPlantilla(hoy: Reporte, ayer: Reporte | null): string[
     dif(hoy.ventas_cop, ayer?.ventas_cop, cop),
     dif(hoy.conversion, ayer?.conversion, pct),
     `${dif(totalErrores(hoy), errAyer)} en ${hoy.chats_con_error} de ${hoy.chats_revisados} chats revisados${hoy.chats_sin_revisar ? ` (${hoy.chats_sin_revisar} sin revisar: ${hoy.error_revision || "falla de OpenAI"})` : ""}`,
-    lim(top(hoy.errores, NOMBRE_ERROR, 3)),
-    lim(top(hoy.motivos, NOMBRE_MOTIVO, 3, ["compro"])),
-  ];
+    top(hoy.errores, NOMBRE_ERROR, 3),
+    top(hoy.motivos, NOMBRE_MOTIVO, 3, ["compro"]),
+  ].map(lim);
 }
 
 /** Mismo contenido en texto (para revisar o para el registro). */

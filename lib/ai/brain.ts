@@ -345,15 +345,17 @@ export function identifyProduct(
 
   /* --- PASO -1: CANDADO. Query vacío o basura (URL de audio/foto, archivo, id)
      → not_found seco, SIN mirar el catálogo. Nunca un producto "por si acaso". */
-  if (esQueryBasura(rawQuery)) {
-    return { status: "not_found", product: null, options: [], matchedBy: "", score: 0, ranked: [], norm };
-  }
-
   // Índice de alias del tenant (+ alias extra de la DB). Se cachea el del set
   // rooster sin extras (caso más común en los tests) para no reconstruirlo.
   const index = (rules === ROOSTER_RULES && !extraAliases.length)
     ? DEFAULT_INDEX
     : buildAliasIndex(extraAliases, rules.aliases);
+  // Un número suelto es basura (id, celular)… salvo que sea el número de un producto
+  // que los clientes usan como nombre ("77", "5500"): ese es un alias exacto.
+  const numeroDeProducto = /^\d+$/.test(norm.q) && index.some((e) => e.alias === norm.q);
+  if (!numeroDeProducto && esQueryBasura(rawQuery)) {
+    return { status: "not_found", product: null, options: [], matchedBy: "", score: 0, ranked: [], norm };
+  }
   // FILTRO POR ESPECIE — se aplica de PASO 1b en adelante. Un producto de perro o
   // de caballo solo entra si el cliente nombró ese animal; si no, el pool es
   // gallos+pollos. Bug real: "algo para el músculo" resolvía More Muscle Dogs
@@ -415,8 +417,10 @@ export function identifyProduct(
 
   /* --- PASO 1b: el query es PARTE de un alias ("mamba" → "la mamba") ---
      Segunda pasada, y aquí gana el alias MÁS CORTO (el que mejor le calza):
-     si fuera en la misma pasada, "mamba" caería en "dragon mamba". */
-  if (norm.stripped.length >= 4) {
+     si fuera en la misma pasada, "mamba" caería en "dragon mamba".
+     Solo con palabras que identifican: "vitaminas" a secas es parte de "vitaminas
+     para pollitos", pero es una NECESIDAD amplia, no ese alias. */
+  if (norm.stripped.length >= 4 && hasIdentity) {
     for (const e of [...index].sort((a, b) => a.alias.length - b.alias.length)) {
       if (!containsPhrase(e.alias, norm.stripped)) continue;
       // Contra `pool`: "musculo" es parte del alias "musculo perro", y sin este

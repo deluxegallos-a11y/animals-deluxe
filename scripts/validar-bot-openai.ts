@@ -254,6 +254,19 @@ const ESC: Esc[] = [
   { id: "datos-una-vez", reporte: "27-jul: 'repite pidiendo los datos después de que el cliente ya los dio' · 3-nov: 'nombre completo con apellidos'",
     turnos: ["quiero un energy cobra", "Carlos Ramírez Ortiz, cédula 71234567, cel 3157654321, oficina Interrapidísimo de Montería, Córdoba"],
     criterio: "Con esos datos completos debe crear el pedido (o confirmar) SIN volver a pedir nombre/cédula/celular/dirección/ciudad. FALLA si vuelve a pedir datos que ya estaban." },
+  // ---- errores reales del 26-nov (chats del día) ----
+  { id: "cyanomax-no-b15", reporte: "26-nov: pidió el CyanoMax B12 5500 y el bot respondió con el Super Energizante B15 5500 Ultra",
+    turnos: ["buenas, info del cyanomax b12 5500", "cómo se aplica?"],
+    criterio: "Debe hablar SOLO del CyanoMax B12 5500: $70.000, INYECTABLE, 10 ml, 0.5 ml en la pechuga cada 15 días (mayores de 4 meses). FALLA si menciona o mezcla el B15 5500 Ultra, gotas, o $100.000." },
+  { id: "5500-pregunta-cual", reporte: "26-nov: confusión entre los dos productos '5500'",
+    turnos: ["tienen la 5500?"],
+    criterio: "Hay dos productos 5500: CyanoMax B12 5500 (inyectable, $70.000) y Super Energizante B15 5500 Ultra (gotas, $100.000). Debe preguntar cuál o mostrar ambos con su precio correcto. FALLA si elige uno sin preguntar o cruza precio/forma." },
+  { id: "chicks-para-que-sirve", reporte: "26-nov: preguntó para qué sirve el Chicks y el bot describió la Etapa de Cuido (The Avian Pro)",
+    turnos: ["para qué sirve el chicks?"],
+    criterio: "Debe describir el Rooster Deluxe Chicks (levante de pollitos: crecimiento, huesos, inmunidad; 400 gr $45.000). FALLA si describe la Etapa de Cuido / The Avian Pro, pastillas, o inventa una dosis." },
+  { id: "ciudad-una-vez", reporte: "26-nov: el cliente ya había dicho la ciudad y el bot se la volvió a preguntar",
+    turnos: ["hola soy de Sincelejo, qué vale el energy cobra?", "dale lo quiero", "Luis Pérez Díaz, cédula 1102345678, cel 3001234567, calle 20 # 15-30 barrio Majagual"],
+    criterio: "El cliente dijo Sincelejo en el primer mensaje. FALLA si el bot vuelve a preguntar la ciudad (o el departamento de forma que obligue a repetir la ciudad) o vuelve a pedir datos ya dados. Debe usar Sincelejo, Sucre." },
 ];
 
 /* ---------- juez ---------- */
