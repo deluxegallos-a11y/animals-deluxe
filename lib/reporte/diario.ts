@@ -243,7 +243,7 @@ export async function generarReporte(slug: string, dia: string, opts: { modelo?:
   const ctx = await contextoBot();
   let chats = await chatsDelDia(base.tid, dia);
   if (opts.limite) chats = chats.slice(0, opts.limite);
-  const modelo = opts.modelo || process.env.REPORTE_MODELO || "gpt-4.1";
+  const modelo = opts.modelo || process.env.REPORTE_MODELO || "gpt-4o-mini";
   ultimoErrorOpenAI = "";
   const intentos = await enParalelo(chats, 6, (ch) => juzgar(ctx, ch, modelo));
   const revisados = intentos.filter((r): r is ChatRevisado => r !== null);

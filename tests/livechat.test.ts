@@ -160,6 +160,9 @@ test("etapa de venta: el pedido real manda, luego las etiquetas del bot", async 
   assert.equal(etapaDe({ pedidoEstado: "aprobado" }), "aprobado");
   assert.equal(etapaDe({ pedidoEstado: "guia", etiquetas: ["2 Vio producto"] }), "despachado");
   assert.equal(etapaDe({}), "nuevo");
+  // Cliente que vuelve: el pedido de hace 6 semanas no marca la conversación de hoy como confirmada.
+  assert.equal(etapaDe({ pedidoEstado: "remision", etiquetas: ["5 Pedido creado", "2 Vio producto"], pedidoAt: "2026-10-13T03:33:50Z", ultimoClienteAt: "2026-11-26T14:25:00Z" }), "interesado");
+  assert.equal(etapaDe({ pedidoEstado: "remision", pedidoAt: "2026-11-26T14:00:00Z", ultimoClienteAt: "2026-11-26T14:25:00Z" }), "confirmado");
   assert.equal(esConfirmado("despachado"), true);
   assert.equal(esConfirmado("datos"), false);
 });
