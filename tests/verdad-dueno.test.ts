@@ -332,3 +332,24 @@ test("dueño 26-nov: Nordic contra entrega 50 ml $180.000 y 100 ml $250.000", ()
   assert.deepEqual(p.presentations.map((x) => [x.label, x.priceCOP]), [["50 ml", 180000], ["100 ml", 250000]]);
   assert.ok(!p.soloAnticipado, "Nordic va contra entrega");
 });
+
+/* ---------- auditoría 26-nov: textos que el bot manda tal cual ---------- */
+
+test("Chicks y Supplement: el gancho y los beneficios no ofrecen 1 kg / 3 kg contra entrega", () => {
+  for (const slug of ["rooster-deluxe-chicks", "rooster-deluxe-supplement"]) {
+    const p = P(slug);
+    const texto = [p.pitch, p.tagline, p.shortDesc, ...(p.benefits || [])].join(" ");
+    assert.ok(!/\b[13] ?kg\b/i.test(texto), `${slug}: ${texto}`);
+  }
+});
+
+test("ningún texto que ve el cliente nombra MegaForce Power (el combo trae Dragón Mamba)", () => {
+  for (const p of cat) {
+    const texto = [p.pitch, p.tagline, p.shortDesc, p.descripcion, ...(p.benefits || [])].join(" ");
+    assert.ok(!/megaforce/i.test(texto), p.slug);
+  }
+});
+
+test("Nordic: la presentación nombra los dos tamaños que se venden", () => {
+  assert.match(P("nordic-rooster-vitamins").presentacion || "", /50 ml o 100 ml/);
+});

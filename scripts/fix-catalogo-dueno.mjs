@@ -19,7 +19,7 @@ const sql = postgres(process.env.DIRECT_DATABASE_URL || process.env.DATABASE_URL
 
 const dosis = (d) => (d === "@protocolo_doping_gotas" ? V.protocolo_doping_gotas : d);
 /* El combo potenciador decía "MegaForce Power"; el dueño (1-jul) dice Dragón Mamba. */
-const TEXTO = { "rooster-deluxe-chicks": [[/✅ Elige el tamaño según cuántas aves tengas/g, "📦 Contra entrega: bolsa de 400 gr. El de 1 kg y 3 kg va por Rooster Deluxe con pago anticipado."], [/💵 400 gr \$45\.000 · 1 kg \$80\.000 · 3 kg \$180\.000 · /g, "💵 400 gr $45.000 · "]], "combo-potenciador": [[/MegaForce Power 10ml/g, "Dragón Mamba 10ml (inyectable)"], [/MegaForce Power/g, "Dragón Mamba"], [/Potenciador de fuerza y energía \(Dragón Mamba\)/g, "Doping inyectable para el día de la pelea (Dragón Mamba)"]] };
+const TEXTO = { "combo-del-mes": [[/Red Copping Mamba/g, "Red Dopping Mamba"]], "red-copping-mamba": [[/Red Copping Mamba/g, "Red Dopping Mamba"]], "rooster-deluxe-supplement": [[/ 400gr\/1kg\/3kg\./g, " 500 pastillas o polvo de 400 gr."]], "rooster-deluxe-chicks": [[/ 400gr\/1kg\/3kg\./g, " Bolsa de 400 gr."], [/✅ Elige el tamaño según cuántas aves tengas/g, "📦 Contra entrega: bolsa de 400 gr. El de 1 kg y 3 kg va por Rooster Deluxe con pago anticipado."], [/💵 400 gr \$45\.000 · 1 kg \$80\.000 · 3 kg \$180\.000 · /g, "💵 400 gr $45.000 · "]], "combo-potenciador": [[/MegaForce Power 10ml/g, "Dragón Mamba 10ml (inyectable)"], [/MegaForce Power/g, "Dragón Mamba"], [/Potenciador de fuerza y energía \(Dragón Mamba\)/g, "Doping inyectable para el día de la pelea (Dragón Mamba)"], [/Dragón Mamba: potenciador de fuerza y energía/g, "Dragón Mamba: doping inyectable para el día de la pelea"]] };
 
 /* Textos con datos viejos que el bot repetía tal cual (auditoría 25-nov). */
 const COMBO_TEXTO = {
@@ -59,10 +59,15 @@ for (const [slug, v] of Object.entries(V.productos)) {
     if (v.label) pres[0].label = v.label;
   }
   if (JSON.stringify(pres) !== JSON.stringify(r.presentations)) set.presentations = sql.json(pres);
-  for (const campo of ["short_desc", "descripcion", "tagline"]) {
+  for (const campo of ["short_desc", "descripcion", "tagline", "pitch"]) {
     let t = r[campo] || "";
     for (const [re, rep] of TEXTO[slug] || []) t = t.replace(re, rep);
     if (t !== (r[campo] || "")) set[campo] = t;
+  }
+  // Beneficios ✅: el bot los manda tal cual en el mensaje del producto.
+  if (Array.isArray(r.benefits) && TEXTO[slug]) {
+    const bens = r.benefits.map((b) => (TEXTO[slug] || []).reduce((t, [re, rep]) => t.replace(re, rep), String(b)));
+    if (JSON.stringify(bens) !== JSON.stringify(r.benefits)) set.benefits = sql.json(bens);
   }
   if (COMBO_TEXTO[slug] && r.descripcion !== COMBO_TEXTO[slug]) set.descripcion = COMBO_TEXTO[slug];
   if (slug === "cure-chest-rooster") {
