@@ -1,6 +1,6 @@
 {
   "_fuente": "Verdad del dueño del Rancho de las Estrellas (Victor). Sale del prompt vigente del agente al 26-nov-2026 (respaldo en bot_uchat/rancho/respaldo_2026-11-26). Lo que no está confirmado va en pendientes: el bot NO lo inventa, escala a la encargada.",
-  "_actualizado": "2026-11-26",
+  "_actualizado": "2026-11-27",
   "ejemplares": [
     {
       "id": "creston",
@@ -38,7 +38,7 @@
   "promo_parejas": "terminada (no ofrecer)",
   "combos_2_meses": {
     "estado": "agotados",
-    "vuelven": "en unos 2 meses, sin fecha fija",
+    "vuelven": "la próxima tanda sale a finales de diciembre",
     "se_separan": false,
     "dar_precio": false
   },
@@ -46,7 +46,16 @@
     "abono_minimo": 200000,
     "pasos": "abono desde $200.000 → galería de 4-5 ejemplares → elige y paga el saldo → envío en bus; si no le gusta ninguno se le devuelve el abono a una cuenta de Colombia",
     "fotos": "imagen de precios por WhatsApp + Telegram gratis; las fotos de los disponibles van con el abono",
-    "color": "se escoge en la galería, después del abono"
+    "color": "se escoge en la galería, después del abono",
+    "galeria_con_abono_para_todos": true,
+    "estrategia_empatica": [
+      "Todos ponen el abono para ver la galería, también los clientes que ya compraron; no hay excepciones.",
+      "El porqué, en palabras de Victor: 'Mira mi socio, te cuento por qué es el abono para mirar galería: yo vivo lejos de la finca y me toca ir hasta allá para hacerte una galería personalizada con base en lo que tú necesitas. Por eso no me sale hacer galerías solo para mirar.'",
+      "Si solo quiere mirar y analizar antes de decidir: le pasas el Telegram, donde Victor sube todo su contenido (si no tiene Telegram, el Facebook).",
+      "El abono NO es un pago extra: se descuenta del precio del ejemplar. Si en la galería no le gusta ninguno, se le devuelve completo a una cuenta de Colombia.",
+      "Confianza: diecisiete años en el mismo número y garantía (si corre o sale ordinario se cambia).",
+      "Con cariño y sin presionar: se explica una sola vez; si duda, se le da tiempo y se le deja la puerta abierta."
+    ]
   },
   "envios": {
     "medio": "bus (las transportadoras no reciben animales)",
@@ -59,20 +68,28 @@
       "Venezuela",
       "Panamá"
     ],
-    "internacional_costo": null
+    "internacional_costo": null,
+    "internacional": {
+      "Ecuador": "50 dólares por cada ejemplar",
+      "Perú": "150 dólares por cada ejemplar",
+      "Venezuela": "70 dólares por cada ejemplar",
+      "Panamá": "no se cotiza por aquí: se comunica con nuestra sede en Panamá al 6889-5322",
+      "otros_paises": "no confirmados → escalar_humano, sin dar cifra"
+    }
   },
   "pagos": {
     "titular": "Santiago Gomez",
     "bancolombia_ahorros": "(en UChat: subflujo C - Enviar Cuentas)",
     "nequi": "(en UChat: subflujo C - Enviar Cuentas)",
     "ecuador": "hay cuenta en Ecuador (la da la encargada)",
-    "otros_medios": null
+    "otros_medios": "Addi, Zelle, PayPal y otros medios NO se reciben (el asesor confirmó 'Addi no' el 27-nov).",
+    "internacional": "solo Western Union (los datos los da la encargada)"
   },
   "garantia": "si corre o sale ordinario se cambia; 17 años en el mismo número",
   "telegram": "https://t.me/elranchodelasestrellas",
   "derivar": {
-    "productos_droga_vitaminas": "+57 315 7652850 (hermano, Rooster Deluxe)",
-    "rifas_eventos": "+57 305 292 4944"
+    "productos_droga_vitaminas": "315 765 2850 (mi hermano, Rooster Deluxe)",
+    "rifas_eventos": "305 292 4944"
   },
   "lineas": [
     "Tony Montana",
@@ -114,11 +131,10 @@
     "El Mexicano"
   ],
   "pendientes": [
-    "Costo del envío a Ecuador, Perú, Venezuela y Panamá (el bot inventó 500-700 dólares a Perú)",
-    "¿Aceptan Zelle, PayPal u otro medio para clientes de fuera? ¿Cuál es la cuenta de Ecuador?",
-    "¿Hay pollitas/pollos de 3-4 meses o solo 2 meses (combos) y 6+ meses?",
     "¿El crestón de 6 meses puede venderse como padrote joven? ¿Hay padrón 'mediano' más barato?",
-    "¿Se puede mostrar la galería sin abono a clientes que ya compraron antes?",
-    "Fecha aproximada de la próxima tanda de combos y su precio"
-  ]
+    "Precio de los combos de 2 meses de la tanda de finales de diciembre",
+    "Datos de Western Union (a nombre de quién) para que el bot no tenga que escalar"
+  ],
+  "edades_que_manejamos": "solo combos de 2 meses y ejemplares de 6 meses en adelante (no hay de 3, 4 o 5 meses)",
+  "facebook": "https://www.facebook.com/share/1FxjRgvd4K/"
 }
