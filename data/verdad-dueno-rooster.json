@@ -1,0 +1,23 @@
+{
+  "_fuente": "Verdad del dueño de Rooster Deluxe (pago anticipado). Lo confirmado por el dueño va en productos{slug}; lo que falta confirmar va en pendientes. NADA se inventa: sin confirmar, el bot dice que lo confirma el asesor.",
+  "_actualizado": "2026-11-26",
+  "politica": {
+    "pago": "anticipado: transfiere el valor de los productos antes del despacho; el envío se paga al recibir según la zona",
+    "cuentas": "las del mensaje de SF_crear_pedido_v5 (Bancolombia ahorros + Nequi, titular Edwin Correa)",
+    "corte_despacho": "pago antes de las 3 pm sale el mismo día; después, al día siguiente",
+    "punto_fisico": false
+  },
+  "productos": {},
+  "pendientes": [
+    "¿En Medellín se puede pagar al recibir con domicilio? ¿Cuánto vale el domicilio? (asesores lo ofrecen; el prompt dice que no)",
+    "¿Se vende por mayor? ¿Desde cuántas unidades y qué productos? (asesor vendió espuelas 35-40 a $5.000 el par)",
+    "Espuelas de combate: tipos y precio por par (no están en el catálogo)",
+    "Tijera Roja: ¿$25.000 o $30.000? (hay dos productos)",
+    "Trueno Oro 100 ml: ¿$100.000 (prompt) o $110.000 (plataforma)?",
+    "¿Energy Cobra, Dragon Mamba y Rooster Fury tienen la misma dosis que en Animals Deluxe?",
+    "¿Qué es el 'Doppy B12 en gotas' que piden los clientes? ¿Lo manejan?",
+    "Combos de anuncio (Kit Potencia Máxima $300.000, Combo Definitivo $320.000, Combo de Calza $95.000, Combo de Entrenamiento $250.000): ¿se agregan como productos en la plataforma?",
+    "Dosis de los productos sin dosis confirmada (103 de 104)",
+    "Productos repetidos en la plataforma: Botas Goma, Mona, Rooster Deluxe Max, Rooster Deluxe Suplement, Tijera Roja — ¿cuál queda?"
+  ]
+}
