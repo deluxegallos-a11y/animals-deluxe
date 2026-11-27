@@ -175,6 +175,8 @@ export const NEED_RULES: NeedRule[] = [
   // --- frases específicas primero ---
   { id: "cola-emplume", match: ["que le crezca la cola", "que les crezca la cola", "crezca la cola", "crecer la cola", "emplumar", "emplume", "que emplume", "cria de polola", "cola"], slugs: ["omega-3", "vitalmin-rooster", "rooster-deluxe-max"] },
   { id: "agua-pollitos", match: ["agua de los pollitos", "agua para pollitos"], slugs: ["clear-chicks-gotas", "cure-chest-for-rooster-gotas", "septibron-forte"] },
+  // "para las gallinas, que pongan" iba a Galliverm (desparasitante) por parecido.
+  { id: "gallinas", match: ["que pongan", "paque pongan", "pa que pongan", "postura", "ponedora", "ponedoras", "para las gallinas", "pa las gallinas", "gallinas", "gallina"], slugs: ["hens", "rooster-deluxe-suplement"] },
   { id: "comida", match: ["cuido alimento", "comida", "alimento", "concentrado", "alimentar", "de comer", "cuido diario"], slugs: ["avena", "cinta-azul", "master-pollito"] },
   { id: "respiratorio", match: ["moquillo", "gripa", "mocos", "moco", "respiratorio", "ahogado", "ahogo", "tos", "estornuda", "ronquera", "pal moquillo", "para el moquillo"], slugs: ["cure-chest-for-rooster-gotas", "cure-chest-for-rooster-pastillas", "clear-chicks-gotas", "septibron-forte"] },
   { id: "purga", match: ["purga", "purgar", "purgarlos", "purgante", "purgantes", "esparacitante", "esparasitante", "desparacitante", "desparacitar", "desparasitar", "desparasitante", "desparasitantes", "vermifugo", "vermifugos", "lombriz", "lombrices", "gusano", "gusanos", "parasito", "parasitos", "parasitosis"], slugs: ["gallo-purga", "galliverm-super", "vermi-ultra", "vermicina-vermifugo"] },
@@ -194,8 +196,6 @@ export const NEED_RULES: NeedRule[] = [
   { id: "afeitar", match: ["afeitar", "motilar", "rapar"], slugs: ["rooster-shave", "tijera-roja"] },
   // "el B12" sin decir cuál (26-nov: quedaba sin respuesta) → las B12 que hay.
   { id: "b12", match: ["b12", "vitamina b12", "complejo b"], slugs: ["super-vitamina-b12-5500-inyectable", "super-b12-max", "ultra-gallo-b12-5500", "super-tron-b12", "compleland-b12-oral"] },
-  // "para las gallinas, que pongan" iba a Galliverm (desparasitante) por parecido.
-  { id: "gallinas", match: ["que pongan", "paque pongan", "pa que pongan", "postura", "ponedora", "ponedoras", "para las gallinas", "pa las gallinas", "gallinas", "gallina"], slugs: ["hens", "rooster-deluxe-suplement"] },
   { id: "calzar", match: ["calzar", "calsar", "calzadar", "calzada", "de calzar", "para calzar", "botiquin de calzar", "kit de calzar", "kit de calza", "calza"], slugs: ["espadadrapo-blanco", "percloruro", "cera-dominicana", "corta-espuela"] },
   { id: "vitaminas", match: ["vitamina", "vitaminas", "fortalecer", "cuido", "etapa final", "fortaleza"], categorySlug: "vitaminas-y-suplementos" },
 ];
