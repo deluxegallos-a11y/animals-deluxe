@@ -304,12 +304,23 @@ export const POST = withBridge(
     const telOk = telValido(telefono);            // celular CO válido (10 díg, empieza en 3)
     const nombreOk = nombreCompletoValido(nombre);
     const faltantes: string[] = [];
+    // PAGO ANTICIPADO (Rooster Deluxe): el proceso del dueño es cuentas → comprobante →
+    // datos. Pedir nombre/cédula/dirección ANTES del pago hace creer que es contra entrega
+    // y el cliente no paga. Por eso aquí el pedido nace solo con producto (+ ciudad si la
+    // dio) en 'por_verificar_pago'; los datos llegan con el comprobante (registrar-cliente
+    // los completa en ESTE pedido). Antes, crear_pedido de Rooster no registraba NADA:
+    // 0 pedidos en el sistema con miles de chats.
+    const datosDespues = metodo === "anticipado";
+    if (datosDespues) {
+      if (!items.length) faltantes.push("producto");
+    } else {
     if (!nombreOk) faltantes.push("nombre");
     if (!telOk) faltantes.push("telefono");
     if (!cedula) faltantes.push("cedula");        // cédula: numérica ≥5 díg (ya validada arriba). Requerida.
     if (esPlaceholder(ciudad)) faltantes.push("ciudad");
     if (esPlaceholder(direccion)) faltantes.push("direccion");
     if (!items.length) faltantes.push("producto");
+    }
     if (faltantes.length) {
       await logEvent("pedido_no_creado", {
         motivo: "campos_faltantes", campos: faltantes, no_encontrados: noEncontrados,
@@ -329,12 +340,14 @@ export const POST = withBridge(
       };
     }
 
-    // actualizar datos del cliente
+    // actualizar datos del cliente (sin pisar con vacíos: en anticipado aún no los dio)
     if (db && !customer.id.startsWith("demo-")) {
-      await db
-        .update(customers)
-        .set({ nombre, telefono: telOk, ciudad, direccion, estado: "cliente", ultimoContacto: new Date() })
-        .where(eq(customers.id, customer.id));
+      const set: Record<string, unknown> = { estado: "cliente", ultimoContacto: new Date() };
+      if (nombreOk) set.nombre = nombre;
+      if (telOk) set.telefono = telOk;
+      if (!esPlaceholder(ciudad)) set.ciudad = ciudad;
+      if (!esPlaceholder(direccion)) set.direccion = direccion;
+      await db.update(customers).set(set).where(eq(customers.id, customer.id));
     }
 
     // --- SALVAGUARDA DE SENSATEZ (§2 · bug $385M) ---------------------------------
@@ -357,11 +370,17 @@ export const POST = withBridge(
       telChat && telChat !== telGuia ? `${telGuia} · WhatsApp del chat: ${telChat}`
       : telGuia || telChat || (canal === "messenger" ? "cliente de Messenger (sin WhatsApp)" : "sin número");
 
+    // Anticipado sin datos aún: nombre del WhatsApp y teléfono del chat, para que el
+    // asesor ubique el pedido; el resto llega con el comprobante.
+    const nombrePedido = nombreOk ? nombre
+      : (datosDespues ? (str(b.nombre_wa) || customer.nombre || "Cliente WhatsApp") : nombre);
+    const telPedido = telOk || (datosDespues ? telValido(waChat) : "");
+    const ciudadPedido = esPlaceholder(ciudad) ? "" : ciudad;
     const order = await createOrder({
       subId: customer.uchatSubId || customer.id,
       customerId: customer.id,
       items,
-      nombre, telefono: telOk, ciudad, direccion, cedula,
+      nombre: nombrePedido, telefono: telPedido, ciudad: ciudadPedido, direccion: esPlaceholder(direccion) ? "" : direccion, cedula,
       cupon: cupon || undefined,
       metodo,
       canal,
@@ -370,7 +389,11 @@ export const POST = withBridge(
       estado: sospechoso ? "por_revisar" : (metodo === "anticipado" ? "por_verificar_pago" : undefined),
       notas: sospechoso
         ? `⚠️ REVISAR CANTIDAD (posible error del bot): pidió ${maxCantidad} unid · total estimado ${cop(totalEstimado)}. Confirmar con el cliente antes de despachar. La cantidad real suele ser 1.`
-        : (telChat && telChat !== telGuia ? `WhatsApp del chat: ${telChat}` : undefined),
+        : [
+            datosDespues && (!nombreOk || !cedula || esPlaceholder(direccion))
+              ? "Pago anticipado: datos de envío pendientes (llegan con el comprobante)." : "",
+            telChat && telChat !== telGuia ? `WhatsApp del chat: ${telChat}` : "",
+          ].filter(Boolean).join(" ") || undefined,
     });
 
     const ref = order.ref;
@@ -439,11 +462,9 @@ export const POST = withBridge(
       : "";
     const mensaje = metodo === "anticipado"
       // --- PAGO ANTICIPADO: nunca menciona contra entrega. Pide comprobante. ---
-      ? `✅ ¡Listo${nombre ? " " + nombre.split(" ")[0] : ""}! Tu pedido quedó registrado 🎉 Ref *${ref}*\n` +
-        `${listaProductos}\n` + avisoMinimo +
-        `*Total a pagar: ${cop(order.total_cop)}*\n` +
-        `Para despacharlo, realiza el pago por adelantado y envíame el *comprobante*. ` +
-        `Un asesor lo confirma y coordina el envío a ${ciudad}. ¡Gracias! 🐓`
+      ? `📝 Tu pedido: ${listaProductos}\n` + avisoMinimo +
+        `💵 *Total a transferir: ${cop(order.total_cop)}* (solo productos; el envío se paga al recibir)` +
+        (ciudadPedido ? ` · ${ciudadPedido}` : "") + ` · Ref *${ref}*`
       // --- CONTRA ENTREGA (Animals Deluxe) ---
       : `✅ ¡Listo${nombre ? " " + nombre.split(" ")[0] : ""}! Tu pedido quedó confirmado 🎉 Ref *${ref}*\n` +
         `${listaProductos}\n` + avisoMinimo +

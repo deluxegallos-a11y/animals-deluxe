@@ -11,7 +11,15 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export const POST = withBridge(
-  z.object({ q: z.string().optional().default("") }),
+  // `q` = nombre LIMPIO que el agente pasa como parámetro de buscar_producto.
+  // `q_raw` = último mensaje del cliente ({{last_text_input}}), solo de respaldo:
+  // Rooster mandaba el mensaje crudo ("si", "este", "precio") y el 80% eran búsquedas
+  // fallidas. Un placeholder sin reemplazar ("{{q_producto}}") cuenta como vacío.
+  z.object({ q: z.string().optional().default(""), q_raw: z.string().optional().default("") })
+    .transform((b) => {
+      const limpio = (s: string) => (/\{\{[^}]*\}\}/.test(s) ? "" : s.trim());
+      return { q: limpio(b.q) || limpio(b.q_raw) };
+    }),
   async ({ body, customer, tenant }) => {
     // CANDADO DURO (antes de tocar la DB): query vacío, o basura que no es una
     // consulta (UChat manda la URL del audio/foto como `q` cuando el cliente
