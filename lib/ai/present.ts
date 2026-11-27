@@ -214,7 +214,7 @@ export function cualMensaje(products: ProductView[], nota?: string): string {
 export function variosMensaje(products: ProductView[]): string {
   const vistos = new Set<string>();
   const uniq = products.filter((p) => { const k = p.name.toLowerCase().trim(); if (vistos.has(k)) return false; vistos.add(k); return true; });
-  const lines = uniq.slice(0, 4).map((p) => `🔥 *${p.name}* · ${cop(p.priceCOP)}`);
+  const lines = uniq.slice(0, 6).map((p) => `🔥 *${p.name}* · ${cop(p.priceCOP)}`);
   return `¡De una mi rey! 🐓 Te paso los que pediste:\n${lines.join("\n")}\n¿Cuáles te mando y pa qué ciudad?`;
 }
 

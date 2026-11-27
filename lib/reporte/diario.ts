@@ -154,7 +154,8 @@ export async function cifras(slug: string, dia: string) {
       and c.user_ns not in (${excluir})`));
   const [o] = filas<{ n: string; total: string | null }>(await db.execute(sql`
     select count(*) n, sum(total_cop) total from orders
-    where tenant_id = ${tid} and (created_at at time zone ${TZ})::date = ${dia}::date`));
+    where tenant_id = ${tid} and (created_at at time zone ${TZ})::date = ${dia}::date
+      and coalesce(estado, '') <> 'cancelado'`));
   const [e] = filas<{ n: string }>(await db.execute(sql`
     select count(*) n from events
     where tipo = 'pedido_no_creado' and (created_at at time zone ${TZ})::date = ${dia}::date

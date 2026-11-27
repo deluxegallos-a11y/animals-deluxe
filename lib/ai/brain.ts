@@ -488,7 +488,7 @@ function identifyCore(
   const grupos = distintos.filter((e, i) => distintos.findIndex((o) => o.slugs.join() === e.slugs.join()) === i);
   if (grupos.length >= 2 && grupos.every((g) => !grupos.some((o) => o !== g && o.slugs.some((s) => g.slugs.includes(s))))) {
     const todos = dedupe(grupos.flatMap((g) => bySlugs(g.slugs, products)));
-    if (todos.length >= 2) return { ...pack(todos, "alias", 1, norm, ranked), multi: true };
+    if (todos.length >= 2) return { ...pack(todos, "alias", 1, norm, ranked), options: todos.slice(0, 6), multi: true };
   }
   if (aliasHits.length) {
     const e = aliasHits[0];
