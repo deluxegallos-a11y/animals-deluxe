@@ -12,7 +12,8 @@ import {
   type Presentacion,
 } from "@/lib/db/schema";
 import {
-  getShopifyCreds, createProduct, updateProduct, archiveProduct, createOrder,
+  getShopifyCreds, createProduct, updateProduct, archiveProduct, createDraftOrder, createOrder,
+  publishProductOnline,
   type ShopifyProductInput, type ShopifyOrderLineItem, ShopifyError,
 } from "@/lib/shopify";
 
@@ -76,6 +77,16 @@ export async function syncProductToShopify(productId: string): Promise<SyncResul
     const result = row.p.shopifyProductId
       ? await updateProduct(row.p.shopifyProductId, input, creds)
       : await createProduct(input, creds);
+
+    // Publica en el canal Online Store para que el cart permalink (pago anticipado)
+    // reconozca la variante. No rompe el sync si falla.
+    if (row.p.activo !== false) {
+      try {
+        await publishProductOnline(result.productId, creds);
+      } catch (e) {
+        console.error("publishProductOnline:", e instanceof Error ? e.message : e);
+      }
+    }
 
     const presentations = mergeVariantIds((row.p.presentations as Presentacion[]) || [], result.variantIdByLabel);
     await db
@@ -143,6 +154,7 @@ export interface PushOrderInput {
   telefono: string;
   ciudad: string;
   direccion: string;
+  cedula?: string;
   items: PushOrderItem[];
   note?: string;
 }
@@ -177,19 +189,33 @@ export async function pushOrderToShopify(input: PushOrderInput): Promise<PushOrd
     quantity: it.cantidad,
   }));
 
+  const cedula = (input.cedula || "").trim();
+  // La cédula va en la nota (visible en Shopify) — Interrapidísimo la exige para entregar.
+  const note = [input.note, cedula ? `Cédula destinatario: ${cedula}` : ""].filter(Boolean).join("\n");
+
+  const orderInput = {
+    lineItems,
+    nombre: input.nombre,
+    telefono: input.telefono,
+    ciudad: input.ciudad,
+    direccion: input.direccion,
+    cedula,
+    note,
+    tags: ["COD", "WhatsApp", "Bot"],
+  };
+
   try {
-    const result = await createOrder(
-      {
-        lineItems,
-        nombre: input.nombre,
-        telefono: input.telefono,
-        ciudad: input.ciudad,
-        direccion: input.direccion,
-        note: input.note,
-        tags: ["COD", "WhatsApp", "Bot"],
-      },
-      creds,
-    );
+    // Draft order (borrador, §2): no descuenta inventario hasta confirmar. Si la app
+    // de Shopify NO tiene el scope `write_draft_orders`, caemos a ORDEN REAL para que
+    // el pedido SIEMPRE quede en Shopify (los drafts se activan solos al dar el scope).
+    let result: { orderId: string; orderName: string };
+    try {
+      result = await createDraftOrder(orderInput, creds);
+    } catch (draftErr) {
+      const dmsg = draftErr instanceof Error ? draftErr.message : String(draftErr);
+      console.error("createDraftOrder falló → fallback a orden real:", dmsg);
+      result = await createOrder(orderInput, creds);
+    }
     await db
       .update(orders)
       .set({ shopifyOrderId: result.orderId, shopifyOrderName: result.orderName, updatedAt: new Date() })

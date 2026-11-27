@@ -264,6 +264,40 @@ export async function updateProduct(productId: string, input: ShopifyProductInpu
   return runProductSet(input, creds, productId);
 }
 
+/* ---- Publicación en el canal Online Store ----
+   Sin esto, los productos creados por la Admin API quedan ACTIVE pero NO
+   disponibles en la tienda online, y el cart permalink del pago anticipado
+   responde 410 ("el enlace ya no existe"). Publicarlos lo arregla. */
+let _onlineStorePubId: string | null = null;
+async function getOnlineStorePublicationId(creds?: ShopifyCreds): Promise<string | null> {
+  if (_onlineStorePubId) return _onlineStorePubId;
+  const data = await shopifyGraphQL<{ publications: { nodes: Array<{ id: string; name: string }> } }>(
+    `{ publications(first: 20) { nodes { id name } } }`,
+    {},
+    creds,
+  );
+  _onlineStorePubId =
+    data.publications.nodes.find((p) => /online store/i.test(p.name))?.id || null;
+  return _onlineStorePubId;
+}
+
+/** Publica un producto en el canal Online Store (idempotente). Necesario para que
+ *  el cart permalink (pago anticipado) reconozca la variante. */
+export async function publishProductOnline(productId: string, creds?: ShopifyCreds): Promise<void> {
+  const pubId = await getOnlineStorePublicationId(creds);
+  if (!pubId) return;
+  const data = await shopifyGraphQL<{
+    publishablePublish: { userErrors: Array<{ field?: string[] | null; message: string }> };
+  }>(
+    `mutation AdPublish($id: ID!, $input: [PublicationInput!]!) {
+      publishablePublish(id: $id, input: $input) { userErrors { field message } }
+    }`,
+    { id: productId, input: [{ publicationId: pubId }] },
+    creds,
+  );
+  throwUserErrors("publishablePublish", data.publishablePublish.userErrors);
+}
+
 /** Archiva un producto en Shopify (no se borra en duro). */
 export async function archiveProduct(productId: string, creds?: ShopifyCreds): Promise<void> {
   const data = await shopifyGraphQL<{ productUpdate: { userErrors: Array<{ field?: string[] | null; message: string }> } }>(
@@ -290,6 +324,7 @@ export interface ShopifyOrderInput {
   telefono: string;
   ciudad: string;
   direccion: string;
+  cedula?: string;
   note?: string;
   tags?: string[];
 }
@@ -356,6 +391,59 @@ export async function createOrder(input: ShopifyOrderInput, creds?: ShopifyCreds
   throwUserErrors("orderCreate", data.orderCreate.userErrors);
   const o = data.orderCreate.order;
   if (!o) throw new ShopifyError("orderCreate no devolvió orden.");
+  return { orderId: o.id, orderName: o.name };
+}
+
+const DRAFT_ORDER_CREATE = /* GraphQL */ `
+  mutation AdCreateDraftOrder($input: DraftOrderInput!) {
+    draftOrderCreate(input: $input) {
+      draftOrder { id name }
+      userErrors { field message }
+    }
+  }`;
+
+/**
+ * Crea un DRAFT ORDER (borrador) en Shopify. Es la opción para contraentrega:
+ * queda como borrador (no descuenta inventario ni notifica al cliente) hasta que
+ * el asesor lo confirme/complete. No notifica al cliente (sólo WhatsApp).
+ */
+export async function createDraftOrder(input: ShopifyOrderInput, creds?: ShopifyCreds): Promise<ShopifyOrderResult> {
+  const [firstName, ...rest] = (input.nombre || "Cliente WhatsApp").trim().split(/\s+/);
+  const lastName = rest.join(" ") || ".";
+
+  const lineItems = input.lineItems.map((li) =>
+    li.variantId
+      ? { variantId: li.variantId, quantity: li.quantity }
+      : {
+          title: li.title,
+          quantity: li.quantity,
+          originalUnitPriceWithCurrency: { amount: String(li.priceCOP || 0), currencyCode: "COP" },
+        },
+  );
+
+  const draftInput = {
+    tags: input.tags && input.tags.length ? input.tags : ["COD", "WhatsApp", "Bot"],
+    note: input.note || "Pedido contraentrega tomado por el bot Victor (WhatsApp)",
+    // Cédula del destinatario como atributo (Interrapidísimo la exige para entregar).
+    ...(input.cedula ? { customAttributes: [{ key: "Cédula", value: input.cedula }] } : {}),
+    lineItems,
+    shippingAddress: {
+      firstName,
+      lastName,
+      address1: input.direccion || "Por confirmar",
+      city: input.ciudad || "",
+      phone: input.telefono || "",
+      countryCode: "CO",
+    },
+  };
+
+  const data = await shopifyGraphQL<{
+    draftOrderCreate: { draftOrder: { id: string; name: string } | null; userErrors: Array<{ field?: string[] | null; message: string }> };
+  }>(DRAFT_ORDER_CREATE, { input: draftInput }, creds);
+
+  throwUserErrors("draftOrderCreate", data.draftOrderCreate.userErrors);
+  const o = data.draftOrderCreate.draftOrder;
+  if (!o) throw new ShopifyError("draftOrderCreate no devolvió borrador.");
   return { orderId: o.id, orderName: o.name };
 }
 

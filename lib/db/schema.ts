@@ -4,11 +4,41 @@
    RLS + extensiones en supabase/migration.sql.
    =========================================================== */
 import {
-  pgTable, uuid, text, integer, boolean, timestamp, jsonb, index,
+  pgTable, uuid, text, integer, boolean, timestamp, jsonb, index, primaryKey, doublePrecision,
 } from "drizzle-orm/pg-core";
 
 const id = () => uuid("id").primaryKey().defaultRandom();
 const now = () => timestamp("created_at", { withTimezone: true }).defaultNow();
+/** FK a tenants(id). Multitenant: cada fila de dominio pertenece a un tenant. */
+const tenantId = () => uuid("tenant_id");
+
+/* 0. tenants — cada bot/tienda es un tenant, resuelto por x-bridge-token.
+   payment_mode 'contra_entrega' (Animals Deluxe) | 'anticipado' (Rooster Deluxe).
+   cuentas_pago/asesor_wa/flete salen de aquí, NO de constantes. */
+export const tenants = pgTable("tenants", {
+  id: id(),
+  slug: text("slug").notNull().unique(),
+  nombre: text("nombre").notNull().default(""),
+  bridgeToken: text("bridge_token").notNull().unique(),
+  paymentMode: text("payment_mode").$type<"anticipado" | "contra_entrega">().notNull().default("contra_entrega"),
+  cuentasPago: text("cuentas_pago").notNull().default(""),
+  asesorWa: text("asesor_wa").notNull().default(""),
+  fleteModo: text("flete_modo").$type<"incluido" | "fijo" | "por_ciudad">().notNull().default("incluido"),
+  fleteValor: integer("flete_valor").notNull().default(0),
+  activo: boolean("activo").notNull().default(true),
+  createdAt: now(),
+});
+
+/* 0b. tenant_users — qué usuario del panel pertenece a qué tenant (por email).
+   El login del panel resuelve su tenant por aquí; email NO mapeado → tenant por
+   defecto (Animals Deluxe), así el admin actual de AD no cambia. */
+export const tenantUsers = pgTable("tenant_users", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull(),
+  email: text("email").notNull().unique(),
+  rol: text("rol").notNull().default("admin"),
+  createdAt: now(),
+});
 
 /* tipos jsonb */
 export type Presentacion = { label: string; priceCOP: number; shopifyVariantId?: string };
@@ -31,7 +61,8 @@ export type ShopifySync = "synced" | "pending" | "error";
 /* 1. categories */
 export const categories = pgTable("categories", {
   id: id(),
-  slug: text("slug").notNull().unique(),
+  tenantId: tenantId(),
+  slug: text("slug").notNull(),
   name: text("name").notNull(),
   color: text("color").default("#FF4D2E"),
   sortOrder: integer("sort_order").default(0),
@@ -43,7 +74,8 @@ export const products = pgTable(
   "products",
   {
     id: id(),
-    slug: text("slug").notNull().unique(),
+    tenantId: tenantId(),
+    slug: text("slug").notNull(),
     name: text("name").notNull(),
     categoryId: uuid("category_id"),
     audience: text("audience").default(""),
@@ -66,8 +98,27 @@ export const products = pgTable(
     salesPrompt: text("sales_prompt").default(""),
     disclaimer: text("disclaimer").default(""),
     stock: integer("stock").default(999),
+    // --- Reglas de negocio por producto (M4 · M6.2 · M6.3) ---
+    // Solo si es true se respeta `stock`. Default false: el stock NUNCA tumba una venta.
+    controlStock: boolean("control_stock").notNull().default(false),
+    // true = no se vende contra entrega en este bot; se remite al canal anticipado.
+    soloAnticipado: boolean("solo_anticipado").notNull().default(false),
+    // Mínimo de unidades por envío (goteros de a 2+). 1 = sin mínimo.
+    minUnidades: integer("min_unidades").notNull().default(1),
+    // Dimensiones para el flete/guía MiPaquete (afectan el precio del envío)
+    pesoGr: integer("peso_gr").default(1000), // peso en gramos
+    altoCm: integer("alto_cm").default(15),
+    anchoCm: integer("ancho_cm").default(12),
+    largoCm: integer("largo_cm").default(8),
     activo: boolean("activo").default(true),
     envioGratis: boolean("envio_gratis").default(false),
+    // --- Ficha enriquecida (§4.6): contenido de venta editable en el panel ---
+    descripcion: text("descripcion").default(""),
+    edadMinima: text("edad_minima").default(""),
+    dosificacion: text("dosificacion").default(""),
+    presentacion: text("presentacion").default(""),
+    // Para qué sirve (propósito real): guía la recomendación por propósito, no por nombre (§4.5).
+    paraQue: text("para_que").default(""),
     // --- Espejo Shopify (la plataforma es la fuente de verdad) ---
     shopifyProductId: text("shopify_product_id"),
     shopifySync: text("shopify_sync").$type<"synced" | "pending" | "error">().default("pending"),
@@ -80,18 +131,175 @@ export const products = pgTable(
   (t) => ({ catIdx: index("idx_products_category").on(t.categoryId) }),
 );
 
+/* 2c. order_attempts: TODO intento de crear-pedido (body crudo) para no perder ventas. */
+export const orderAttempts = pgTable("order_attempts", {
+  id: id(),
+  tenantId: tenantId(), // nullable: un intento con token inválido no tiene tenant
+  createdAt: now(),
+  subId: text("sub_id").default(""),
+  rawBody: jsonb("raw_body"),
+  rawText: text("raw_text").default(""),
+  resultado: text("resultado").default(""), // created | rejected | error
+  motivo: text("motivo").default(""),
+  ref: text("ref").default(""),
+});
+
+/* 2e. visits: analítica de tráfico (visitas a la web y landings). */
+export const visits = pgTable("visits", {
+  id: id(),
+  path: text("path").default(""),
+  fuente: text("fuente").default("otro"), // tienda | gallos | perros | caballos | producto | otro
+  referrer: text("referrer").default(""),
+  utmSource: text("utm_source").default(""),
+  utmCampaign: text("utm_campaign").default(""),
+  sessionId: text("session_id").default(""),
+  createdAt: now(),
+});
+
+/* 2d. Despacho / MiPaquete: credencial, empresa, direcciones, DANE, guías, tracking. */
+export const mpCredenciales = pgTable("mp_credenciales", {
+  id: text("id").primaryKey().default("active"),
+  apikey: text("apikey").default(""),
+  baseUrl: text("base_url").default("https://api.mipaquete.com"),
+  loginEmail: text("login_email").default(""),
+  loginPassEnc: text("login_pass_enc").default(""),
+  generatedAt: timestamp("generated_at", { withTimezone: true }),
+  refreshedCount: integer("refreshed_count").default(0),
+  lastError: text("last_error").default(""),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+});
+export const configEmpresa = pgTable("config_empresa", {
+  id: text("id").primaryKey().default("default"),
+  nombreMarca: text("nombre_marca").default("Animals Deluxe"),
+  logoUrl: text("logo_url").default(""),
+  nit: text("nit").default(""),
+  razonSocial: text("razon_social").default(""),
+  direccionFiscal: text("direccion_fiscal").default(""),
+  ciudadFiscal: text("ciudad_fiscal").default(""),
+  telefono: text("telefono").default(""),
+  email: text("email").default(""),
+  whatsapp: text("whatsapp").default(""),
+  sitioWeb: text("sitio_web").default(""),
+  prefijoFactura: text("prefijo_factura").default("AD"),
+  siguienteFactura: integer("siguiente_factura").default(1),
+  pieFactura: text("pie_factura").default(""),
+});
+export const mpAddresses = pgTable("mp_addresses", {
+  id: id(),
+  mpId: text("mp_id").default(""),
+  name: text("name").default(""),
+  address: text("address").default(""),
+  locationCode: text("location_code").default(""),
+  locationName: text("location_name").default(""),
+  departmentName: text("department_name").default(""),
+  countryCode: text("country_code").default("CO"),
+  telefono: text("telefono").default(""),
+  isDefault: boolean("is_default").default(false),
+  createdAt: now(),
+});
+export const mpLocationsCache = pgTable("mp_locations_cache", {
+  locationCode: text("location_code").primaryKey(),
+  locationName: text("location_name").default(""),
+  departmentName: text("department_name").default(""),
+  countryCode: text("country_code").default("CO"),
+  raw: jsonb("raw"),
+  cachedAt: timestamp("cached_at", { withTimezone: true }).defaultNow(),
+});
+export const mpShipments = pgTable("mp_shipments", {
+  id: id(),
+  orderId: uuid("order_id"),
+  orderRef: text("order_ref").default(""),
+  mpCode: text("mp_code").default(""),
+  guideNumber: text("guide_number").default(""),
+  pickupNumber: text("pickup_number").default(""),
+  status: text("status").default("pendiente"), // pendiente | cotizado | guia_generada | despachado | entregado | novedad | cancelado
+  deliveryCompany: text("delivery_company").default(""),
+  deliveryCompanyId: text("delivery_company_id").default(""),
+  senderName: text("sender_name").default(""),
+  senderPhone: text("sender_phone").default(""),
+  senderIdNumber: text("sender_id_number").default(""),
+  senderAddress: text("sender_address").default(""),
+  originDane: text("origin_dane").default(""),
+  originCity: text("origin_city").default(""),
+  receiverName: text("receiver_name").default(""),
+  receiverPhone: text("receiver_phone").default(""),
+  receiverIdNumber: text("receiver_id_number").default(""),
+  receiverAddress: text("receiver_address").default(""),
+  destinyDane: text("destiny_dane").default(""),
+  destinyCity: text("destiny_city").default(""),
+  description: text("description").default(""),
+  productReference: text("product_reference").default(""),
+  quantity: integer("quantity").default(1),
+  weight: integer("weight").default(1),
+  width: integer("width").default(20),
+  height: integer("height").default(20),
+  length: integer("length").default(20),
+  declaredValue: integer("declared_value").default(0),
+  paymentType: integer("payment_type").default(102), // 101 anticipado / 102 COD
+  collectionValue: integer("collection_value").default(0),
+  saleValue: integer("sale_value").default(0),
+  shippingCost: integer("shipping_cost").default(0),
+  collectionCommission: integer("collection_commission").default(0),
+  totalCost: integer("total_cost").default(0),
+  amountToTransfer: integer("amount_to_transfer").default(0),
+  pdfGuideUrl: text("pdf_guide_url").default(""),
+  pdfRelationUrl: text("pdf_relation_url").default(""),
+  channel: text("channel").default("Animals Deluxe Plataforma"),
+  comments: text("comments").default(""),
+  idempotencyKey: text("idempotency_key"),
+  impreso: boolean("impreso").default(false),
+  impresoEn: timestamp("impreso_en", { withTimezone: true }),
+  impresoPor: text("impreso_por").default(""),
+  cotizacionSeleccionada: jsonb("cotizacion_seleccionada"),
+  rawResponse: jsonb("raw_response"),
+  createdAt: now(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+  createdBy: text("created_by").default(""),
+});
+export const mpTrackingEvents = pgTable("mp_tracking_events", {
+  id: id(),
+  shipmentId: uuid("shipment_id"),
+  mpCode: text("mp_code").default(""),
+  state: text("state").default(""),
+  eventDate: timestamp("event_date", { withTimezone: true }),
+  receivedAt: timestamp("received_at", { withTimezone: true }).defaultNow(),
+  rawPayload: jsonb("raw_payload"),
+});
+
+/* 2b. ad_map: anuncio de Meta (ad_id) → producto(s). Un ad puede tener VARIOS
+   productos (una fila por producto). PK compuesta (ad_id, product_slug). */
+export const adMap = pgTable("ad_map", {
+  tenantId: tenantId(),
+  adId: text("ad_id").notNull(),               // ad_id de Meta (referral del anuncio)
+  productSlug: text("product_slug").notNull(), // → products.slug
+  nombreAnuncio: text("nombre_anuncio").default(""),
+  orden: integer("orden").default(0),          // orden de presentación cuando el ad tiene varios
+  activo: boolean("activo").default(true),
+  createdAt: now(),
+}, (t) => ({ pk: primaryKey({ columns: [t.tenantId, t.adId, t.productSlug] }) }));
+
 /* 3. customers (leads) */
 export const customers = pgTable("customers", {
   id: id(),
-  uchatSubId: text("uchat_sub_id").unique(),
+  tenantId: tenantId(),
+  uchatSubId: text("uchat_sub_id"), // único POR tenant (ver 04-multitenant-constraints.sql)
   nombre: text("nombre").default(""),
   telefono: text("telefono").default(""),
   departamento: text("departamento").default(""),
   ciudad: text("ciudad").default(""),
   direccion: text("direccion").default(""),
-  canalOrigen: text("canal_origen").default("whatsapp"), // whatsapp | instagram | web
+  canalOrigen: text("canal_origen").default("whatsapp"), // whatsapp | messenger | web
   estado: text("estado").default("nuevo"), // nuevo | interesado | cliente
   notas: text("notas").default(""),
+  // --- CRM ---
+  etapaManual: text("etapa_manual").default(""), // override manual de la etapa calculada
+  ultimoProductoVisto: text("ultimo_producto_visto").default(""),
+  productosInteres: jsonb("productos_interes").default([]), // slugs de productos que vio / le gustan
+  productosCompradosManual: jsonb("productos_comprados_manual").default([]), // compras registradas a mano
+  tags: jsonb("tags").default([]),
+  interacciones: integer("interacciones").default(0),
+  totalGastado: integer("total_gastado").default(0),
+  numPedidos: integer("num_pedidos").default(0),
   ultimoContacto: timestamp("ultimo_contacto", { withTimezone: true }).defaultNow(),
   createdAt: now(),
 });
@@ -99,6 +307,7 @@ export const customers = pgTable("customers", {
 /* 4. advisors (asesores de venta) — round-robin */
 export const advisors = pgTable("advisors", {
   id: id(),
+  tenantId: tenantId(),
   nombre: text("nombre").notNull(),
   whatsapp: text("whatsapp").default(""),
   activo: boolean("activo").default(true),
@@ -109,7 +318,8 @@ export const advisors = pgTable("advisors", {
 /* 5. coupons */
 export const coupons = pgTable("coupons", {
   id: id(),
-  codigo: text("codigo").notNull().unique(),
+  tenantId: tenantId(),
+  codigo: text("codigo").notNull(), // único POR tenant (ver 04-multitenant-constraints.sql)
   tipo: text("tipo").default("porcentaje"), // porcentaje | fijo
   valor: integer("valor").notNull().default(0),
   activo: boolean("activo").default(true),
@@ -124,10 +334,18 @@ export const orders = pgTable(
   "orders",
   {
     id: id(),
+    tenantId: tenantId(),
     ref: text("ref").notNull().unique(),
     customerId: uuid("customer_id"),
-    estado: text("estado").default("pendiente_confirmacion"),
-    // pendiente_confirmacion | confirmado | despachado | entregado | pagado | cancelado
+    estado: text("estado").default("remision"),
+    // Anticipado (Rooster Deluxe): payment_type + comprobante. Ciclo anticipado:
+    // por_verificar_pago → pagado → despachado → entregado | cancelado
+    paymentType: text("payment_type").$type<"contra_entrega" | "anticipado">().notNull().default("contra_entrega"),
+    comprobanteUrl: text("comprobante_url").notNull().default(""),
+    // FLUJO: remision → aprobado (orden de venta) → guia → despachado → entregado (+ cancelado)
+    canal: text("canal").default("whatsapp"), // whatsapp | messenger | web | asesor
+    fuente: text("fuente").default(""), // tienda | gallos | perros | caballos (página de origen del pedido web)
+    facturaNumero: integer("factura_numero"), // # de factura estable (asignado al facturar)
     metodoPago: text("metodo_pago").default("contraentrega"), // contraentrega | anticipado
     subtotalCop: integer("subtotal_cop").default(0),
     descuentoCop: integer("descuento_cop").default(0),
@@ -137,10 +355,17 @@ export const orders = pgTable(
     direccion: text("direccion").default(""),
     telefono: text("telefono").default(""),
     nombre: text("nombre").default(""),
+    cedula: text("cedula").default(""), // obligatoria: Interrapidísimo no entrega sin cédula del destinatario
     couponId: uuid("coupon_id"),
     advisorId: uuid("advisor_id"),
     notas: text("notas").default(""),
     idempotencyKey: text("idempotency_key"),
+    // --- Despacho / postventa (manual por ahora; luego automático vía transportadora) ---
+    guia: text("guia").default(""),                       // número de guía de la transportadora
+    transportadora: text("transportadora").default(""),   // Interrapidísimo | Servientrega | Coordinadora | Envía ...
+    despachadoAt: timestamp("despachado_at", { withTimezone: true }),        // cuándo se marcó despachado
+    clienteNotificadoAt: timestamp("cliente_notificado_at", { withTimezone: true }), // cuándo se avisó al cliente por WhatsApp
+    copiadoWppAt: timestamp("copiado_wpp_at", { withTimezone: true }),        // cuándo se copiaron los datos a WhatsApp
     // --- Espejo Shopify (registro/libro de pedidos) ---
     shopifyOrderId: text("shopify_order_id"),
     shopifyOrderName: text("shopify_order_name").default(""),
@@ -156,6 +381,7 @@ export const orders = pgTable(
 /* 7. order_items */
 export const orderItems = pgTable("order_items", {
   id: id(),
+  tenantId: tenantId(),
   orderId: uuid("order_id").notNull(),
   productId: uuid("product_id"),
   productSlug: text("product_slug").default(""),
@@ -169,6 +395,7 @@ export const orderItems = pgTable("order_items", {
 /* 8. promotions */
 export const promotions = pgTable("promotions", {
   id: id(),
+  tenantId: tenantId(),
   titulo: text("titulo").notNull(),
   descripcion: text("descripcion").default(""),
   productId: uuid("product_id"),
@@ -252,6 +479,7 @@ export const reviews = pgTable(
   "reviews",
   {
     id: id(),
+    tenantId: tenantId(),
     productSlug: text("product_slug").notNull(),
     nombre: text("nombre").notNull(),
     ciudad: text("ciudad").default(""),
@@ -262,3 +490,106 @@ export const reviews = pgTable(
   },
   (t) => ({ bySlug: index("reviews_slug_idx").on(t.productSlug) }),
 );
+
+/* 16. product_aliases — CEREBRO DE BÚSQUEDA: apodos/typos/jerga por producto.
+   Se siembra desde lib/ai/aliases.ts (scripts/seed-aliases.mjs) y se puede
+   ampliar desde el panel sin deploy: el cerebro los mezcla en runtime. */
+export const productAliases = pgTable(
+  "product_aliases",
+  {
+    id: id(),
+    tenantId: tenantId(),
+    productSlug: text("product_slug").notNull(),
+    alias: text("alias").notNull(),
+    nota: text("nota").notNull().default(""),
+    origen: text("origen").notNull().default("seed"), // seed | panel | logs
+    createdAt: now(),
+  },
+  (t) => ({ byTenant: index("product_aliases_tenant_idx").on(t.tenantId) }),
+);
+
+/* 17. search_misses — todo not_found + match flojo (score < 0.5).
+   De aquí salen los alias nuevos cada semana. */
+export const searchMisses = pgTable(
+  "search_misses",
+  {
+    id: id(),
+    tenantId: tenantId(),
+    query: text("query").notNull().default(""),
+    queryNormalizado: text("query_normalizado").notNull().default(""),
+    mejorCandidato: text("mejor_candidato").notNull().default(""),
+    score: doublePrecision("score").notNull().default(0),
+    status: text("status").notNull().default(""),
+    createdAt: now(),
+  },
+  (t) => ({ byTenant: index("search_misses_tenant_fecha_idx").on(t.tenantId) }),
+);
+
+/* 18. Live Chat — espejo local de UChat (supabase/06-livechat.sql).
+   OJO: tenants.livechat y advisors.email/recibe_chats NO están en las tablas de
+   arriba a propósito: se leen con SQL en lib/livechat/ para que el panel no se
+   rompa si el código se despliega antes que la migración.
+   Una fila por suscriptor de UChat (user_ns) por tenant; los mensajes se
+   deduplican por (tenant_id, provider_msg_id). */
+export const livechatConversaciones = pgTable("livechat_conversaciones", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull(),
+  espacio: text("espacio").notNull().default("bot"),
+  userNs: text("user_ns").notNull(),
+  nombre: text("nombre").notNull().default(""),
+  telefono: text("telefono").notNull().default(""),
+  canal: text("canal").notNull().default("whatsapp"),
+  ultimoTexto: text("ultimo_texto").notNull().default(""),
+  ultimoEmisor: text("ultimo_emisor").notNull().default(""),
+  ultimoAt: timestamp("ultimo_at", { withTimezone: true }),
+  ultimoClienteAt: timestamp("ultimo_cliente_at", { withTimezone: true }),
+  sinLeer: integer("sin_leer").notNull().default(0),
+  owner: text("owner").$type<"bot" | "humano">().notNull().default("bot"),
+  asesorId: uuid("asesor_id"),
+  asignadoEn: timestamp("asignado_en", { withTimezone: true }),
+  botPausadoHasta: timestamp("bot_pausado_hasta", { withTimezone: true }),
+  customerId: uuid("customer_id"),
+  ventanaAbierta: boolean("ventana_abierta"),
+  mensajesSyncAt: timestamp("mensajes_sync_at", { withTimezone: true }),
+  // Etapa de venta (supabase/07-livechat-etapas.sql): etiquetas de UChat + último pedido.
+  etiquetas: jsonb("etiquetas").$type<string[]>().notNull().default([]),
+  pedidoId: uuid("pedido_id"),
+  pedidoRef: text("pedido_ref").notNull().default(""),
+  pedidoEstado: text("pedido_estado").notNull().default(""),
+  pedidoTotal: integer("pedido_total").notNull().default(0),
+  pedidoAt: timestamp("pedido_at", { withTimezone: true }),
+  pedidosNum: integer("pedidos_num").notNull().default(0),
+  createdAt: now(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+});
+
+export const livechatMensajes = pgTable("livechat_mensajes", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull(),
+  conversacionId: uuid("conversacion_id").notNull(),
+  providerMsgId: text("provider_msg_id").notNull(),
+  direccion: text("direccion").$type<"in" | "out" | "event">().notNull(),
+  emisor: text("emisor").$type<"cliente" | "ia" | "asesor_uchat" | "asesor_panel" | "sistema" | "nota">().notNull(),
+  tipo: text("tipo").notNull().default("text"),
+  texto: text("texto").notNull().default(""),
+  mediaUrl: text("media_url").notNull().default(""),
+  autor: text("autor").notNull().default(""),
+  providerTs: timestamp("provider_ts", { withTimezone: true }).notNull().defaultNow(),
+  raw: jsonb("raw"),
+  createdAt: now(),
+});
+
+export const livechatSync = pgTable("livechat_sync", {
+  tenantId: uuid("tenant_id").notNull(),
+  espacio: text("espacio").notNull(),
+  ultimoSyncAt: timestamp("ultimo_sync_at", { withTimezone: true }),
+  ultimoError: text("ultimo_error").notNull().default(""),
+}, (t) => ({ pk: primaryKey({ columns: [t.tenantId, t.espacio] }) }));
+
+export const livechatRespuestasRapidas = pgTable("livechat_respuestas_rapidas", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull(),
+  atajo: text("atajo").notNull(),
+  texto: text("texto").notNull(),
+  createdAt: now(),
+});

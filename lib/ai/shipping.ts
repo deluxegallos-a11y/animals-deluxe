@@ -30,21 +30,51 @@ export const ZONES: Record<Zona, ZoneRate> = {
   vereda: { kiloInicial: 88000, kiloAdicional: 15200, label: "Veredas" },
 };
 
-/* Recargos. */
-const CONTRAENTREGA_PCT = 0.05; // +5% sobre el valor del producto (pago en casa)
-const SOBREFLETE_PCT = 0.02; // +2% sobre el valor declarado
-const MIN_DECLARADO_HASTA_2KG = 45000;
-const MIN_DECLARADO_2_A_5KG = 60000;
-const PESO_POR_UNIDAD_KG = 1; // 1 producto liviano ≈ 1 kg
-export const TIEMPO_ENTREGA = "24 a 72 horas";
+/* TARIFA ÚNICA DEL FLETE (tabla del dueño): $20.000 de base + 7% del valor de los
+   productos, IGUAL para todo el país. Comprobada contra los casos reales:
+     $50.000  → $23.500   ·  $150.000 → $30.500   ·  $25.000 → $21.750
+   ⚠️ NO volver a hacer que el flete varíe por zona. Ese fue el bug M3: una versión
+   "por zona" cobraba $3.500 (solo el 7%, sin la base) o $25.600 en vez de $21.750,
+   y el asesor tenía que corregir a mano. La ZONA solo define TIEMPOS y si hay que
+   CONFIRMAR cobertura — nunca el precio. */
+export const FLETE_BASE = 20000;
+export const FLETE_PCT = 0.07;
 
-/* Productos con envío gratis. Slugs reales del catálogo. Además, cualquier
-   producto con el flag `envioGratis` activo en el panel también cuenta como
-   gratis (ver pedidoEnvioGratis), así el dueño lo controla sin tocar código. */
+/* TIEMPOS POR ZONA (Interrapidísimo). Solo días hábiles + si requiere confirmar:
+   las zonas apartadas (San Andrés, Amazonas, Chocó…) tardan más y a veces son
+   recogida en oficina. El FLETE no depende de esto. */
+export interface ZoneFlete { diasMin: number; diasMax: number; confirmar: boolean }
+export const ZONE_RATE: Record<Zona, ZoneFlete> = {
+  local:              { diasMin: 1, diasMax: 2, confirmar: false },
+  regional:           { diasMin: 2, diasMax: 3, confirmar: false },
+  nacional_metro:     { diasMin: 2, diasMax: 4, confirmar: false },
+  nacional_municipal: { diasMin: 3, diasMax: 5, confirmar: false },
+  dificil:            { diasMin: 5, diasMax: 8, confirmar: true },
+  vereda:             { diasMin: 6, diasMax: 10, confirmar: true },
+};
+
+/** ÚNICA fórmula del flete en todo el sistema: $20.000 + 7% del valor de los
+ *  productos que pagan envío, redondeado a la centena. La usan cobertura,
+ *  crear-pedido y cualquier mensaje — no debe existir ningún otro cálculo.
+ *  `zona` se acepta por compatibilidad de firma pero NO altera el precio. */
+export function calcularFlete(totalProductos: number, _zona: Zona = "nacional_municipal"): number {
+  return Math.round((FLETE_BASE + Math.max(0, totalProductos || 0) * FLETE_PCT) / 100) * 100;
+}
+export function tiempoZona(zona: Zona): string {
+  const r = ZONE_RATE[zona];
+  return `${r.diasMin} a ${r.diasMax} días hábiles`;
+}
+const PESO_POR_UNIDAD_KG = 1; // 1 producto liviano ≈ 1 kg (solo informativo)
+export const TIEMPO_ENTREGA = "2 a 5 días hábiles"; // fallback genérico (zona por defecto)
+
+/* Envío gratis SOLO para More Muscle Dogs y Horse Deluxe (regla del dueño, 24-jul).
+   OJO: Weight Muscle Protein NO es gratis — se confundía por el nombre "muscle" y el
+   bot lo ofrecía gratis (bug M6.1). El flag `envioGratis` de la DB (panel) también
+   activa gratis por producto, así el dueño lo controla sin tocar código. Estos dos
+   slugs son de Animals Deluxe; Rooster (anticipado) no los tiene → no se mezcla. */
 export const FREE_SHIPPING_SLUGS = new Set<string>([
   "horse-deluxe",
   "more-muscle-dogs",
-  "weight-muscle-protein",
 ]);
 
 /* Mapa ciudad → zona. Default = nacional_municipal. Claves normalizadas
@@ -64,11 +94,16 @@ const CITY_ZONES_RAW: Record<Zona, string[]> = {
     "pereira", "manizales", "armenia", "ibague", "villavicencio",
     "santa marta", "pasto", "monteria", "valledupar", "neiva", "popayan",
     "sincelejo", "riohacha", "tunja", "florencia", "yopal", "quibdo",
-    "san andres", "soacha", "soledad", "dosquebradas", "floridablanca",
+    "soacha", "soledad", "dosquebradas", "floridablanca",
     "giron", "piedecuesta", "palmira", "buenaventura", "tulua",
   ],
   nacional_municipal: [],
-  dificil: [],
+  // Zonas apartadas: flete alto, tiempos largos, requiere confirmar (a veces recogida en oficina).
+  dificil: [
+    "san andres", "providencia", "leticia", "mitu", "inirida", "puerto inirida",
+    "puerto carreno", "bahia solano", "nuqui", "acandi", "capurgana", "unguia",
+    "jurado", "bajo baudo", "pizarro", "timbiqui", "guapi", "bojaya", "murindo",
+  ],
   vereda: [],
 };
 
@@ -80,16 +115,22 @@ const CITY_ZONE_INDEX: Map<string, Zona> = (() => {
   return m;
 })();
 
-/** Resuelve la zona de una ciudad. Default: nacional_municipal. */
-export function resolveZona(ciudad: string): Zona {
+/** Resuelve la zona + si la ciudad se ENCONTRÓ en la tabla (para pedir confirmación
+ *  de cobertura cuando es desconocida). Default: nacional_municipal, encontrada=false. */
+export function resolveZonaInfo(ciudad: string): { zona: Zona; encontrada: boolean } {
   const norm = normalize(ciudad || "");
-  if (!norm) return "nacional_municipal";
-  if (CITY_ZONE_INDEX.has(norm)) return CITY_ZONE_INDEX.get(norm)!;
+  if (!norm) return { zona: "nacional_municipal", encontrada: false };
+  if (CITY_ZONE_INDEX.has(norm)) return { zona: CITY_ZONE_INDEX.get(norm)!, encontrada: true };
   // match parcial (la ciudad puede venir con departamento, p.ej. "cali, valle")
   for (const [city, zona] of CITY_ZONE_INDEX) {
-    if (norm.includes(city) || city.includes(norm)) return zona;
+    if (city.length >= 4 && (norm.includes(city) || city.includes(norm))) return { zona, encontrada: true };
   }
-  return "nacional_municipal";
+  return { zona: "nacional_municipal", encontrada: false };
+}
+
+/** Resuelve la zona de una ciudad. Default: nacional_municipal. */
+export function resolveZona(ciudad: string): Zona {
+  return resolveZonaInfo(ciudad).zona;
 }
 
 export interface ShippingInput {
@@ -112,6 +153,11 @@ export interface ShippingResult {
   envio_gratis: boolean;
   costo_envio: number;
   tiempo: string;
+  dias_min: number;
+  dias_max: number;
+  /** Zona apartada o ciudad desconocida → confirmar cobertura/tiempos con el cliente. */
+  requiere_confirmar: boolean;
+  ciudad_encontrada: boolean;
   desglose: {
     kilos: number;
     base: number;
@@ -120,40 +166,33 @@ export interface ShippingResult {
   };
 }
 
-/** Calcula el flete con la tabla de zonas desde Medellín. Determinista. */
+/** Flete = $20.000 + 7% del valor de los productos que pagan envío (calcularFlete).
+ *  $0 si todo el pedido es envío-incluido. Determinista: mismo valor → misma cifra. */
 export function computeShipping(input: ShippingInput): ShippingResult {
-  const zona = resolveZona(input.ciudad);
-  const rate = ZONES[zona];
-
-  const pesoKg =
-    input.pesoKg != null
-      ? input.pesoKg
-      : Math.max(1, input.unidades ?? 1) * PESO_POR_UNIDAD_KG;
+  const { zona, encontrada } = resolveZonaInfo(input.ciudad);
+  const rate = ZONE_RATE[zona];
+  const pesoKg = input.pesoKg != null ? input.pesoKg : Math.max(1, input.unidades ?? 1) * PESO_POR_UNIDAD_KG;
   const kilos = Math.max(1, Math.ceil(pesoKg));
 
-  const base = rate.kiloInicial + Math.max(0, kilos - 1) * rate.kiloAdicional;
-
-  const subtotal = Math.max(0, Math.round(input.subtotalCop || 0));
-  const minDeclarado = kilos <= 2 ? MIN_DECLARADO_HASTA_2KG : MIN_DECLARADO_2_A_5KG;
-  const declarado = Math.max(subtotal, minDeclarado);
-  const sobreflete = Math.round(declarado * SOBREFLETE_PCT);
-
-  const recargoContraentrega =
-    (input.metodo ?? "contraentrega") === "contraentrega"
-      ? Math.round(subtotal * CONTRAENTREGA_PCT)
-      : 0;
-
+  // subtotalCop = valor de los productos que SÍ pagan envío (los de envío-incluido
+  // se excluyen; en mezcla, el % aplica solo sobre esta base). envioGratis = todo incluido.
   const envioGratis = !!input.envioGratis;
-  const costo = envioGratis ? 0 : base + sobreflete + recargoContraentrega;
+  const base = Math.max(0, input.subtotalCop || 0);
+  const costo = envioGratis ? 0 : calcularFlete(base, zona);
 
   return {
     zona,
-    zona_label: rate.label,
-    cubre: true, // cubrimos todo el país (incl. difícil acceso / veredas con su tarifa)
-    envio_gratis: envioGratis,
+    zona_label: ZONES[zona].label,
+    cubre: true, // cubrimos todo el país
+    envio_gratis: costo === 0,
     costo_envio: costo,
-    tiempo: TIEMPO_ENTREGA,
-    desglose: { kilos, base, sobreflete, recargo_contraentrega: recargoContraentrega },
+    tiempo: tiempoZona(zona),
+    dias_min: rate.diasMin,
+    dias_max: rate.diasMax,
+    // Apartada (San Andrés/Amazonas/Chocó…) o ciudad desconocida → confirmar con el cliente.
+    requiere_confirmar: rate.confirmar || !encontrada,
+    ciudad_encontrada: encontrada,
+    desglose: { kilos, base: FLETE_BASE, sobreflete: costo ? costo - FLETE_BASE : 0, recargo_contraentrega: 0 },
   };
 }
 

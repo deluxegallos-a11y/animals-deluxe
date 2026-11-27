@@ -32,8 +32,8 @@ function Group({
 
 export function TrustBadges() {
   return (
-    <section className="bg-background px-5 py-12">
-      <div className="mx-auto max-w-2xl space-y-9">
+    <section className="bg-background px-5 py-16">
+      <div className="mx-auto max-w-2xl space-y-10">
         <Group label="Pago 100% seguro" items={PAYMENTS} />
         <Group label="Envíos a todo Colombia" items={COURIERS} />
       </div>

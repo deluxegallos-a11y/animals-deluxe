@@ -12,12 +12,21 @@ import { PRODUCTS } from "@/components/gallos/_lib/data";
 import { track } from "@/components/gallos/_lib/tracking";
 import { checkoutShopify } from "@/app/order-actions";
 
+type CartPhase = "cart" | "pay";
+
 interface CartCtx {
   lines: CartLine[];
   isOpen: boolean;
   count: number;
   subtotal: number;
+  /** Paso del checkout: "cart" = lista; "pay" = elegir método de pago. */
+  phase: CartPhase;
+  setPhase: (p: CartPhase) => void;
   open: () => void;
+  /** Abre el carrito directo en la elección de pago (contraentrega/anticipado). */
+  openCheckout: () => void;
+  /** Agrega un producto y va directo a elegir método de pago. */
+  buyNow: (product: Product, qty?: number) => void;
   close: () => void;
   add: (product: Product, qty?: number) => void;
   setQty: (id: string, qty: number) => void;
@@ -54,6 +63,7 @@ export function CartProvider({
 
   const [lines, setLines] = useState<CartLine[]>([]);
   const [isOpen, setOpen] = useState(false);
+  const [phase, setPhase] = useState<CartPhase>("cart");
   const [loading, setLoading] = useState(false);
 
   const add = useCallback((product: Product, qty = 1) => {
@@ -73,6 +83,21 @@ export function CartProvider({
       price: product.price,
       qty,
     });
+  }, []);
+
+  // Agrega el producto y abre el carrito directamente en la elección de pago,
+  // para que "Comprar ahora" muestre de una contraentrega/anticipado.
+  const buyNow = useCallback(
+    (product: Product, qty = 1) => {
+      add(product, qty);
+      setPhase("pay");
+    },
+    [add],
+  );
+
+  const openCheckout = useCallback(() => {
+    setPhase("pay");
+    setOpen(true);
   }, []);
 
   const setQty = useCallback((id: string, qty: number) => {
@@ -128,8 +153,18 @@ export function CartProvider({
     isOpen,
     count,
     subtotal,
-    open: () => setOpen(true),
-    close: () => setOpen(false),
+    phase,
+    setPhase,
+    open: () => {
+      setPhase("cart");
+      setOpen(true);
+    },
+    openCheckout,
+    buyNow,
+    close: () => {
+      setOpen(false);
+      setPhase("cart");
+    },
     add,
     setQty,
     remove,

@@ -1,9 +1,14 @@
 import { getProductBySlug } from "@/lib/ai/data";
 import { CartProvider } from "@/components/gallos/_lib/useCart";
+import { CheckoutProvider } from "@/components/gallos/_lib/useCheckout";
+import { CheckoutFlow } from "@/components/gallos/commerce/CheckoutFlow";
+
+const GOLD = { from: "#ffe9a8", to: "#e0a92e", solid: "#e0a92e", ink: "#1a1206" };
 import { SmoothScroll } from "@/components/gallos/layout/SmoothScroll";
 import { PremiumLoader } from "@/components/gallos/layout/PremiumLoader";
 import { Analytics } from "@/components/gallos/layout/Analytics";
 import { Navbar } from "@/components/gallos/layout/Navbar";
+import { AnnouncementBar } from "@/components/gallos/shared/AnnouncementBar";
 import { Footer } from "@/components/gallos/layout/Footer";
 import { JsonLd } from "@/components/gallos/layout/JsonLd";
 import { WhatsAppFloat } from "@/components/gallos/layout/WhatsAppFloat";
@@ -28,19 +33,23 @@ export default async function GallosPage() {
 
   return (
     <CartProvider priceOverrides={priceOverrides}>
-      <PremiumLoader />
-      <Analytics />
-      <SmoothScroll>
-        <JsonLd />
-        <Navbar />
-        <main>
-          <FlatLanding />
-        </main>
-        <Footer />
-        <CartDrawer />
-        <StickyCTA />
-        <WhatsAppFloat />
-      </SmoothScroll>
+      <CheckoutProvider accent={GOLD}>
+        <PremiumLoader />
+        <Analytics />
+        <SmoothScroll>
+          <JsonLd />
+          <AnnouncementBar />
+          <Navbar />
+          <main>
+            <FlatLanding />
+          </main>
+          <Footer />
+          <CartDrawer />
+          <StickyCTA />
+          <WhatsAppFloat />
+        </SmoothScroll>
+        <CheckoutFlow />
+      </CheckoutProvider>
     </CartProvider>
   );
 }

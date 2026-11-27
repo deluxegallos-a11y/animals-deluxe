@@ -10,7 +10,8 @@ import type { ProductView } from "@/lib/ai/types";
 import { domainError } from "@/lib/ai/bridge";
 import { shortCode } from "@/lib/ai/format";
 import { assignAdvisor, cotizarEnvio, validateCoupon } from "@/lib/ai/data";
-import { pedidoEnvioGratis } from "@/lib/ai/shipping";
+import { FREE_SHIPPING_SLUGS } from "@/lib/ai/shipping";
+import { currentTenantId } from "@/lib/ai/tenant";
 
 export type ItemInput = { slug: string; presentacion?: string; cantidad?: number };
 export type ResolvedItem = {
@@ -19,16 +20,70 @@ export type ResolvedItem = {
   shopifyVariantId?: string;
 };
 
+/**
+ * Parsea items en TEXTO PLANO ("American Rooster Fury x2", "2 Energy Cobra", varios
+ * separados por salto de línea / ; / +).
+ *
+ * REGLA DE ORO (bug $385M · pedido AD-H3GW): la cantidad NUNCA sale de un número que
+ * viva DENTRO del nombre del producto. Muchos productos llevan cifras en el nombre
+ * ("CyanoMax B12 5500", "Super Energy 77", "Hunk 160", "Energy 500"): esos dígitos son
+ * parte del NOMBRE, jamás la cantidad. Solo se toma como cantidad:
+ *   1) un multiplicador EXPLÍCITO — "x2", "2 unidades/tarros/frascos/productos"; o
+ *   2) un número al INICIO cuyo resto resuelve a un producto real — "2 Energy Cobra".
+ * `resolves(name)` decide (2): debe devolver true si `name` es un producto del catálogo.
+ */
+export function parsePlainItems(
+  text: string,
+  resolves: (name: string) => boolean,
+): { name: string; cantidad: number }[] {
+  const out: { name: string; cantidad: number }[] = [];
+  // Separadores: salto de línea, ";", " + " y COMA (27-nov: el agente manda
+  // "1x Espadadrapo Blanco, 1x Cera Dominicana, 1x Mona" y salía como UN solo producto).
+  for (const part of String(text).split(/[\n;,]+|\s\+\s/).map((s) => s.trim()).filter(Boolean)) {
+    // 0) "1x Gallo Purga" / "2 x Mona" / "3× Avena": multiplicador al INICIO.
+    const mPre = part.match(/^\s*(\d+)\s*[x×]\s+(.+)$/i) || part.match(/^\s*(\d+)[x×](\S.*)$/i);
+    if (mPre && mPre[2].trim()) { out.push({ name: mPre[2].trim(), cantidad: Math.max(1, parseInt(mPre[1], 10)) }); continue; }
+    // 1) Multiplicador EXPLÍCITO. "x2" o "2 und/unidades/tarros/frascos/productos".
+    const mX = part.match(/\bx\s*(\d+)\b/i) || part.match(/\b(\d+)\s*(?:und|unid|unidades|productos?|tarros?|frascos?)\b/i);
+    if (mX) {
+      const name = part.replace(mX[0], " ").replace(/[,x·\-\s]+$/i, "").replace(/^[,x·\-\s]+/i, "").trim();
+      if (name) out.push({ name, cantidad: Math.max(1, parseInt(mX[1], 10)) });
+      continue;
+    }
+    // 2) Número al INICIO ("2 Energy Cobra") SOLO si el resto es un producto real.
+    const mIni = part.match(/^\s*(\d+)\s+(.+)/);
+    if (mIni && resolves(mIni[2].trim())) {
+      out.push({ name: mIni[2].trim(), cantidad: Math.max(1, parseInt(mIni[1], 10)) });
+      continue;
+    }
+    // 3) Por defecto: TODO el texto es el NOMBRE y la cantidad es 1. Los números del
+    //    nombre se conservan para resolver el producto correcto (nunca son cantidad).
+    const name = part.replace(/^[,x·\-\s]+/i, "").trim();
+    if (name) out.push({ name, cantidad: 1 });
+  }
+  return out;
+}
+
 /** Resuelve items contra el catálogo. Lanza domainError si falta producto/stock. */
 export function resolveItems(items: ItemInput[], catalog: ProductView[]): ResolvedItem[] {
   if (!items?.length) domainError("No veo productos en el pedido. ¿Cuál te empaco? 🐓");
   const out: ResolvedItem[] = [];
   for (const it of items) {
-    const cantidad = Math.max(1, Math.floor(it.cantidad || 1));
+    let cantidad = Math.max(1, Math.floor(it.cantidad || 1));
     const p = catalog.find((x) => x.slug === it.slug);
     if (!p) domainError(`No encontré "${it.slug}" en el catálogo. ¿Lo buscamos de nuevo?`);
     const prod = p!;
-    if ((prod.stock ?? 999) < cantidad) domainError(`Por ahora no tengo stock suficiente de ${prod.name}. 😕`);
+    // Animals Deluxe vende bajo demanda (contra entrega), NO lleva inventario unitario.
+    // El catálogo ya solo incluye productos activos → si está aquí, está disponible.
+    // El stock SOLO bloquea si el dueño activó `controlStock` en ese producto (M4).
+    // Sin esa bandera, un stock 0/null jamás tumba una venta cerrada.
+    if (prod.controlStock && (prod.stock ?? 0) <= 0) {
+      domainError(`Justo se me agotó el ${prod.name} 😕 ¿Te muestro una alternativa parecida?`);
+    }
+    // Mínimo de unidades por envío (M6.3): ciertos goteros solo se despachan de a 2+.
+    // Se SUBE la cantidad al mínimo (no se rechaza el pedido) y el total se recalcula solo.
+    const minU = Math.max(1, prod.minUnidades ?? 1);
+    if (cantidad < minU) cantidad = minU;
     // precio por presentación (si se indicó y existe)
     let label = prod.presentations[0]?.label || "Unidad";
     let precio = prod.presentations[0]?.priceCOP ?? prod.priceCOP;
@@ -57,7 +112,9 @@ export function computeTotals(resolved: ResolvedItem[], envioCop: number, coupon
       : coupon.valor;
     descuento = Math.min(descuento, subtotal);
   }
-  const total = Math.max(0, subtotal - descuento) + Math.max(0, envioCop);
+  // El total a RECAUDAR = solo el producto (menos descuento). El flete NO se suma: es un estimado
+  // referencial para el cliente; la transportadora (MiPaquete) le cobra el flete real aparte.
+  const total = Math.max(0, subtotal - descuento);
   return { subtotal, descuento, envio: Math.max(0, envioCop), total };
 }
 
@@ -78,9 +135,15 @@ export interface CreateOrderInput {
   telefono: string;
   ciudad: string;
   direccion: string;
+  cedula?: string;
   cupon?: string;
   metodo?: "contraentrega" | "anticipado";
+  canal?: string; // whatsapp | messenger | web
   catalog: ProductView[];
+  /** Estado inicial. Default "remision". La salvaguarda de sensatez lo pone en
+   *  "por_revisar" cuando la cantidad o el total son sospechosos (bug $385M). */
+  estado?: string;
+  notas?: string;
 }
 
 export interface CreatedOrder {
@@ -95,17 +158,15 @@ export interface CreatedOrder {
 export async function createOrder(input: CreateOrderInput): Promise<CreatedOrder> {
   const metodo = input.metodo || "contraentrega";
   const resolved = resolveItems(input.items, input.catalog);
-  // Flete con la tabla de zonas desde Medellín (valor real → sobreflete + recargo + gratis).
-  const subtotalProductos = resolved.reduce((s, r) => s + r.subtotalCop, 0);
   const unidades = resolved.reduce((s, r) => s + r.cantidad, 0);
-  const envioGratis = pedidoEnvioGratis(
-    resolved.map((r) => ({
-      slug: r.slug,
-      envioGratis: input.catalog.find((p) => p.slug === r.slug)?.envioGratis,
-    })),
-  );
+  // Flete = $20.000 + 7% del valor de los productos que SÍ pagan envío (los de
+  // envío-incluido no suman a la base; si TODOS son gratis → flete 0).
+  const esGratis = (slug: string) => !!input.catalog.find((p) => p.slug === slug)?.envioGratis
+    || FREE_SHIPPING_SLUGS.has(slug);
+  const subtotalNoGratis = resolved.reduce((s, r) => s + (esGratis(r.slug) ? 0 : r.subtotalCop), 0);
+  const envioGratis = subtotalNoGratis <= 0;
   const cobertura = await cotizarEnvio(input.ciudad, {
-    subtotalCop: subtotalProductos,
+    subtotalCop: subtotalNoGratis,
     unidades,
     metodo,
     envioGratis,
@@ -113,14 +174,16 @@ export async function createOrder(input: CreateOrderInput): Promise<CreatedOrder
   const envio = cobertura.costo_envio;
   const coupon = input.cupon ? await validateCoupon(input.cupon) : null;
   const totals = computeTotals(resolved, envio, coupon ? { tipo: coupon.tipo || "porcentaje", valor: coupon.valor } : null);
-  const idem = idempotencyKey(input.subId, metodo, resolved);
+  const tid = await currentTenantId(); // tenant actual (multitenant)
+  const idem = idempotencyKey(`${tid || "default"}:${input.subId}`, metodo, resolved);
+  const paymentType: "contra_entrega" | "anticipado" = metodo === "anticipado" ? "anticipado" : "contra_entrega";
 
   if (!db) {
     // Modo demo: no persiste, devuelve un pedido calculado.
     return {
       pedido_id: "demo-order", ref: shortCode("AD"),
       subtotal_cop: totals.subtotal, descuento_cop: totals.descuento,
-      envio_cop: totals.envio, total_cop: totals.total, estado: "pendiente_confirmacion",
+      envio_cop: totals.envio, total_cop: totals.total, estado: input.estado || "remision",
       asesor: { nombre: "Asesor Animals Deluxe", whatsapp: process.env.NEXT_PUBLIC_WHATSAPP || "" },
       reused: false,
       items: resolved,
@@ -139,7 +202,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreatedOrder
       pedido_id: existing.id, ref: existing.ref,
       subtotal_cop: existing.subtotalCop ?? 0, descuento_cop: existing.descuentoCop ?? 0,
       envio_cop: existing.envioCop ?? 0, total_cop: existing.totalCop ?? 0,
-      estado: existing.estado || "pendiente_confirmacion",
+      estado: existing.estado || "remision",
       asesor: { nombre: "", whatsapp: "" }, reused: true,
       items: resolved,
     };
@@ -149,13 +212,18 @@ export async function createOrder(input: CreateOrderInput): Promise<CreatedOrder
   const [created] = await db
     .insert(orders)
     .values({
+      tenantId: tid,
       ref: shortCode("AD"),
       customerId: input.customerId.startsWith("demo-") ? null : input.customerId,
-      estado: "pendiente_confirmacion",
+      estado: input.estado || "remision",
+      notas: input.notas || "",
+      canal: input.canal || "whatsapp",
       metodoPago: metodo,
+      paymentType,
       subtotalCop: totals.subtotal, descuentoCop: totals.descuento,
       envioCop: totals.envio, totalCop: totals.total,
       ciudad: input.ciudad, direccion: input.direccion, telefono: input.telefono, nombre: input.nombre,
+      cedula: input.cedula || "",
       couponId: coupon?.id ?? null,
       advisorId: "id" in asesor ? (asesor as { id: string }).id : null,
       idempotencyKey: idem,
@@ -164,7 +232,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreatedOrder
 
   await db.insert(orderItems).values(
     resolved.map((r) => ({
-      orderId: created.id, productId: r.productId.startsWith("prod-") ? null : r.productId,
+      tenantId: tid, orderId: created.id, productId: r.productId.startsWith("prod-") ? null : r.productId,
       productSlug: r.slug, productName: r.name, presentacionLabel: r.presentacionLabel,
       precioCop: r.precioCop, cantidad: r.cantidad, subtotalCop: r.subtotalCop,
     })),
@@ -173,7 +241,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreatedOrder
   return {
     pedido_id: created.id, ref: created.ref,
     subtotal_cop: totals.subtotal, descuento_cop: totals.descuento,
-    envio_cop: totals.envio, total_cop: totals.total, estado: created.estado || "pendiente_confirmacion",
+    envio_cop: totals.envio, total_cop: totals.total, estado: created.estado || "remision",
     asesor: { nombre: asesor.nombre, whatsapp: asesor.whatsapp || "" }, reused: false,
     items: resolved,
   };

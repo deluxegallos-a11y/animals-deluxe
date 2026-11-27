@@ -1,0 +1,3083 @@
+[
+  {
+    "num": "001",
+    "nombre": "Placas Personalizadas",
+    "slug": "placas-personalizadas",
+    "categoria": "Implementos",
+    "forma": "implemento",
+    "audiencia": "general",
+    "precio_cop": 70000,
+    "precio_texto": "50 unidades te valen 70mil / 100 unidades te valen 110mil",
+    "presentaciones": [
+      {
+        "detalle": "50 unidades",
+        "precio_cop": 70000
+      },
+      {
+        "detalle": "100 unidades",
+        "precio_cop": 110000
+      }
+    ],
+    "especificaciones": "Personalizadas con nombre, numeración y color. No se hacen banderas ni escudos. Se cancela la mitad para hacerlas y la totalidad para el despacho. Entrega de 8 a 15 días hábiles.",
+    "beneficios": "Placas personalizadas con nombre, numeración y color para identificar tus ejemplares.",
+    "keywords": [
+      "placas personalizadas",
+      "personalizadas",
+      "nombre",
+      "numeracion",
+      "color",
+      "implemento",
+      "identificacion"
+    ],
+    "descripcion": "50 unidades te valen 70mil\n\n100 unidades te valen 110mil\n\nPersonalizadas con el\n\nNombre:\n\nNumeración:\n\nColor:\n\nNo se hacen banderas ni escudos.\n\nDebe cancelar la mitad para hacerlas y en su totalidad para hacer el despacho.\n\nSe demoran de 8 a 15 días habiles para entregar",
+    "ruta_local_imagen": "Fotos/001_50_UNIDADES_TE_VALEN_70MIL.jpg",
+    "nombre_archivo": "001_50_UNIDADES_TE_VALEN_70MIL.jpg",
+    "activo": true
+  },
+  {
+    "num": "002",
+    "nombre": "Energy Cobra",
+    "slug": "energy-cobra",
+    "categoria": "Doping/energizantes",
+    "forma": "gotas",
+    "audiencia": "gallos de combate",
+    "precio_cop": 70000,
+    "precio_texto": "$70.000 más envío",
+    "presentaciones": [
+      {
+        "detalle": "Frasco (gotas)",
+        "precio_cop": 70000
+      }
+    ],
+    "especificaciones": "Aplicar de 4 a 5 gotas 1 hora antes del juego.",
+    "beneficios": "Doping de calidad americana que aporta energía instantánea, mayor resistencia y rápida absorción para el momento clave.",
+    "keywords": [
+      "energy cobra",
+      "doping",
+      "energizante",
+      "gotas",
+      "combate",
+      "energia",
+      "resistencia"
+    ],
+    "descripcion": "¡Desata el poder de tus gallos con ENERGY COBRA!\n\n¿Quieres que tus ejemplares estén listos para darlo todo? Con ENERGY COBRA, el doping de calidad americana, tus gallos obtendrán la energía y el rendimiento que necesitan.\n\nEste producto está diseñado para\n\nproporcionar:\n\nEnergía instantánea para el momento clave.\n\nMayor resistencia, ayudándolos a mantener un rendimiento superior.\n\nRápida absorción, para que los efectos se sientan justo a tiempo.\n\nModo de uso sencillo: Solo necesitas aplicar de 4-5 gotas, 1 hora antes del juego.\n\n¡Prepara a tus campeones para la victoria!\n\n$70.000 más envío",
+    "ruta_local_imagen": "Fotos/002_DESATA_EL_PODER_DE_TUS_GALLOS_CON_ENERGY.jpg",
+    "nombre_archivo": "002_DESATA_EL_PODER_DE_TUS_GALLOS_CON_ENERGY.jpg",
+    "activo": true
+  },
+  {
+    "num": "003",
+    "nombre": "Super B12 Max",
+    "slug": "super-b12-max",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "inyectable",
+    "audiencia": "gallos de combate",
+    "precio_cop": 180000,
+    "precio_texto": "$180.000 más envío",
+    "presentaciones": [
+      {
+        "detalle": "Frasco 50ml",
+        "precio_cop": 180000
+      }
+    ],
+    "especificaciones": "Dosis 0.5 ml en pechuga cada 15 días. Contenido neto 50 ml. Contiene complejo B: B1, B2, B3, B5, B6, B7 y B12.",
+    "beneficios": "Fórmula vitamínica que favorece la formación de glóbulos rojos, mejora vitalidad, tono muscular y apetito, combate el estrés y fortalece el plumaje.",
+    "keywords": [
+      "super b12 max",
+      "vitamina",
+      "b12",
+      "inyectable",
+      "combate",
+      "cria",
+      "glóbulos rojos",
+      "antiestres"
+    ],
+    "descripcion": "SUPER B12 MAX: ¡La Vitalidad que tu Gallo Necesita!\n\n100% Calidad Premium.\n\nDale a tus aves el impulso que merecen con la fórmula vitamínica más potente, diseñada específicamente para gallos de combate y reproducción.\n\nPRECIO:\n\n$180.000 más envío\n\nBeneficios Clave:\n\n* Glóbulos Rojos: Favorece la formación de glóbulos rojos para un mejor transporte de oxígeno y resistencia.\n\n* Vitalidad y Tono: Mejora el apetito, aumenta el tono muscular y potencia la vitalidad general.\n\n* Antiestrés: Ayuda a combatir el estrés, la ansiedad, la debilidad y las anemias.\n\n* Plumaje: Contribuye a un plumaje sano y fuerte.\n\nAporte Vitamínico Completo:\n\nContiene el complejo esencial B: B1, B2, B3, B5, B6, B7, y B12.\n\nDosis: 0.5 ml en pechuga cada 15 días.\n\nContenido Neto: 50ml. \"ONLY FOR ROOSTER\"\n\n¡YA DISPONIBLE!\n\nEnvíos Nacionales a todo el país.\n\n¡Haz tu pedido ahora y lleva la preparación de tus gallos al nivel MÁXIMO!",
+    "ruta_local_imagen": "Fotos/003_SUPER_B12_MAX_LA_VITALIDAD_QUE_TU_GALLO_.jpg",
+    "nombre_archivo": "003_SUPER_B12_MAX_LA_VITALIDAD_QUE_TU_GALLO_.jpg",
+    "activo": true
+  },
+  {
+    "num": "004",
+    "nombre": "Rooster Deluxe Max",
+    "slug": "rooster-deluxe-max",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "polvo",
+    "audiencia": "gallos de combate",
+    "precio_cop": 50000,
+    "precio_texto": "400 g a 50,000 / 1 kilo 90,000 / 3 kg a 210,000 / en pastillas por 500 unidades a $80,000",
+    "presentaciones": [
+      {
+        "detalle": "400 g",
+        "precio_cop": 50000
+      },
+      {
+        "detalle": "1 kilo",
+        "precio_cop": 90000
+      },
+      {
+        "detalle": "3 kg",
+        "precio_cop": 210000
+      },
+      {
+        "detalle": "500 pastillas",
+        "precio_cop": 80000
+      }
+    ],
+    "especificaciones": "Etapa de cuido (8 meses en adelante). Se suministra diario en la comida.",
+    "beneficios": "Suplemento para la etapa de cuido de gallos de 8 meses en adelante, suministrado diariamente en la comida.",
+    "keywords": [
+      "rooster deluxe max",
+      "suplemento",
+      "polvo",
+      "pastillas",
+      "cuido",
+      "combate",
+      "alimento"
+    ],
+    "descripcion": "ROOSTER DELUXE MAX\n\nETAPA DE CUIDO ( 8 MESES EN ADELANTE)\n\nEstá disponible\n\n400 g a 50,000\n\n1 kilo 90,000 y de\n\n3 kg a 210,000\n\nEn pastillas por 500 unidades a $80,000\n\nSe suministra diario en la comida",
+    "ruta_local_imagen": "Fotos/004_ROOSTER_DELUXE_MAX.jpg",
+    "nombre_archivo": "004_ROOSTER_DELUXE_MAX.jpg",
+    "activo": true
+  },
+  {
+    "num": "005",
+    "nombre": "Rooster Deluxe Chicks",
+    "slug": "rooster-deluxe-chicks",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "polvo",
+    "audiencia": "pollitos",
+    "precio_cop": 45000,
+    "precio_texto": "400 g a 45,000 / 1 kilo 80,000 / 3 kg a 180,000",
+    "presentaciones": [
+      {
+        "detalle": "400 g",
+        "precio_cop": 45000
+      },
+      {
+        "detalle": "1 kilo",
+        "precio_cop": 80000
+      },
+      {
+        "detalle": "3 kg",
+        "precio_cop": 180000
+      }
+    ],
+    "especificaciones": "Etapa 0 - 3 meses. Se suministra en la comida.",
+    "beneficios": "Suplemento alimenticio para pollitos en etapa de 0 a 3 meses, suministrado en la comida.",
+    "keywords": [
+      "rooster deluxe chicks",
+      "suplemento",
+      "polvo",
+      "pollitos",
+      "crecimiento",
+      "alimento",
+      "cria"
+    ],
+    "descripcion": "ROOSTER DELUXE CHICKS\n\nETAPA 0 - 3 MESES\n\nEstá disponible\n\n400 g a 45,000\n\n1 kilo 80,000 y de\n\n3 kg a 180,000\n\nSe suministra en la comida",
+    "ruta_local_imagen": "Fotos/005_ROOSTER_DELUXE_CHICKS.jpg",
+    "nombre_archivo": "005_ROOSTER_DELUXE_CHICKS.jpg",
+    "activo": true
+  },
+  {
+    "num": "006",
+    "nombre": "Dopping Dragón Mamba",
+    "slug": "dopping-dragon-mamba",
+    "categoria": "Doping/energizantes",
+    "forma": "inyectable",
+    "audiencia": "gallos de combate",
+    "precio_cop": 150000,
+    "precio_texto": "$150,000",
+    "presentaciones": [
+      {
+        "detalle": "Frasco inyectable",
+        "precio_cop": 150000
+      }
+    ],
+    "especificaciones": "0.2 a 0.3 ml con jeringa de insulina, de 2 a 5 días máximo antes de la pelea. No hay que acostumbrarlo. No refrigerar, mantener en lugar fresco.",
+    "beneficios": "Doping brasileño inyectable que genera estimulación y oxigenación, aportando energía, resistencia, vitalidad y un pH neutro en la sangre.",
+    "keywords": [
+      "dopping dragon mamba",
+      "doping",
+      "inyectable",
+      "combate",
+      "energia",
+      "oxigenacion",
+      "resistencia"
+    ],
+    "descripcion": "DOPPING\n\nDragón mamba\n\nDOPPING brasileño\n\nDOPPING inyectable que genera estimulación y oxigenación en nuestro gallo\n\nGenerando\n\nEnergía\n\nResistencia\n\nVitalidad\n\nUn ph neutro en su sangre\n\nModo de uso\n\n0.2 a 0.3 ml de una jeringa de insulina\n\n2 a 5 días máximo antes de la pelea\n\nNo hay que acostumbrarlo\n\nNo se debe mantener refrigerado pero si en un lugar fresco\n\nTiene un valor de $150,000",
+    "ruta_local_imagen": "Fotos/006_DOPPING.jpg",
+    "nombre_archivo": "006_DOPPING.jpg",
+    "activo": true
+  },
+  {
+    "num": "007",
+    "nombre": "Red Dopping Mamba",
+    "slug": "red-dopping-mamba",
+    "categoria": "Doping/energizantes",
+    "forma": "gotas",
+    "audiencia": "gallos de combate",
+    "precio_cop": 50000,
+    "precio_texto": "$50.000 más envío",
+    "presentaciones": [
+      {
+        "detalle": "Frasco (gotas)",
+        "precio_cop": 50000
+      }
+    ],
+    "especificaciones": "Dosis 6 a 8 gotas, 2 horas antes del juego.",
+    "beneficios": "Doping en gotas para potenciar resistencia, energía y vitalidad de los gallos finos.",
+    "keywords": [
+      "red dopping mamba",
+      "doping",
+      "gotas",
+      "combate",
+      "energia",
+      "resistencia",
+      "vitalidad"
+    ],
+    "descripcion": "¡La fórmula que tus gallos necesitan ha llegado a Colombia!\n\nPresentamos Red Dopping Mamba, un producto diseñado para potenciar a tus gallos finos y llevar su rendimiento al siguiente nivel.\n\nCon solo unas gotas, podrás notar una diferencia en:\n\nResistencia: Para que tus ejemplares se mantengan fuertes durante más tiempo.\n\nEnergía: Para una actuación explosiva y llena de poder.\n\nVitalidad: Para una salud óptima y un espíritu de campeón.\n\nRed Dopping Mamba es el aliado perfecto para la preparación de tus gallos.\n\nRecuerda: Es fundamental consultar la forma de uso para obtener los mejores resultados.\n\nDosis: 6 a 8 gotas (2) horas antes del juego.\n\n$50.000 más envío",
+    "ruta_local_imagen": "Fotos/007_LA_FORMULA_QUE_TUS_GALLOS_NECESITAN_HA_L.jpg",
+    "nombre_archivo": "007_LA_FORMULA_QUE_TUS_GALLOS_NECESITAN_HA_L.jpg",
+    "activo": true
+  },
+  {
+    "num": "008",
+    "nombre": "Super Energizante B15 5500 Ultra",
+    "slug": "super-energizante-b15-5500-ultra",
+    "categoria": "Doping/energizantes",
+    "forma": "N/A",
+    "audiencia": "gallos de combate",
+    "precio_cop": 100000,
+    "precio_texto": "$100.000 más envío",
+    "presentaciones": [
+      {
+        "detalle": "Frasco",
+        "precio_cop": 100000
+      }
+    ],
+    "especificaciones": "",
+    "beneficios": "Energizante de fórmula americana que aporta fuerza y energía, mejora la movilidad y agilidad y aumenta el rendimiento general.",
+    "keywords": [
+      "super energizante b15 5500 ultra",
+      "energizante",
+      "doping",
+      "b15",
+      "combate",
+      "fuerza",
+      "rendimiento"
+    ],
+    "descripcion": "¡Desata el poder de tus gallos con el SUPER ENERGIZANTE B15 5500 ULTRA!\n\n¿Buscas llevar a tus ejemplares al siguiente nivel? Con su fórmula americana de calidad premium, este energizante es lo que necesitas para ver resultados increíbles.\n\nEl SUPER ENERGIZANTE B15 5500 ULTRA está diseñado para:\n\nDarle a tus gallos la fuerza y la energía necesarias para cualquier desafío.\n\nMejorar su movilidad y agilidad en cada movimiento.\n\nAumentar su rendimiento general.\n\n¡No dejes que el cansancio sea un obstáculo! Invierte en un suplemento que realmente funciona.\n\nHacemos envíos nacionales\n\n$100.000 más envío",
+    "ruta_local_imagen": "Fotos/008_DESATA_EL_PODER_DE_TUS_GALLOS_CON_EL_SUP.jpg",
+    "nombre_archivo": "008_DESATA_EL_PODER_DE_TUS_GALLOS_CON_EL_SUP.jpg",
+    "activo": true
+  },
+  {
+    "num": "009",
+    "nombre": "Rooster Deluxe Suplement",
+    "slug": "rooster-deluxe-suplement",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "polvo",
+    "audiencia": "gallos de cría",
+    "precio_cop": 45000,
+    "precio_texto": "400 g a 45,000 / 1 kilo 80,000 / 3 kg a 180,000",
+    "presentaciones": [
+      {
+        "detalle": "400 g",
+        "precio_cop": 45000
+      },
+      {
+        "detalle": "1 kilo",
+        "precio_cop": 80000
+      },
+      {
+        "detalle": "3 kg",
+        "precio_cop": 180000
+      }
+    ],
+    "especificaciones": "Etapa crestones (4 - 7 meses). Se suministra en la comida.",
+    "beneficios": "Suplemento alimenticio para la etapa de crestones (4 a 7 meses), suministrado en la comida.",
+    "keywords": [
+      "rooster deluxe suplement",
+      "suplemento",
+      "polvo",
+      "crestones",
+      "cria",
+      "alimento"
+    ],
+    "descripcion": "ROOSTER DELUXE SUPLEMENT\n\nETAPA CRESTONES (4 - 7) MESES\n\nEstá disponible\n\n400 g a 45,000\n\n1 kilo 80,000 y de\n\n3 kg a 180,000\n\nSe suministra en la comida",
+    "ruta_local_imagen": "Fotos/009_ROOSTER_DELUXE_SUPLEMENT.jpg",
+    "nombre_archivo": "009_ROOSTER_DELUXE_SUPLEMENT.jpg",
+    "activo": true
+  },
+  {
+    "num": "010",
+    "nombre": "Ultra Gallo B12 5500",
+    "slug": "ultra-gallo-b12-5500",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "inyectable",
+    "audiencia": "gallos de combate",
+    "precio_cop": 50000,
+    "precio_texto": "$50,000 más envío",
+    "presentaciones": [
+      {
+        "detalle": "Frasco inyectable",
+        "precio_cop": 50000
+      }
+    ],
+    "especificaciones": "Dosis recomendada 0.2 ml por ave, una vez al mes.",
+    "beneficios": "Vitamina B12 5500 inyectable enriquecida con vitaminas y minerales que promueve masa muscular, apetito, resistencia, fuerza y regula el pH de la sangre.",
+    "keywords": [
+      "ultra gallo",
+      "b12 5500",
+      "vitamina",
+      "inyectable",
+      "combate",
+      "oxigenador",
+      "resistencia"
+    ],
+    "descripcion": "¡Lleva a tus Gallos al Nivel ULTRA con B12 5500! ULTRA GALLO es el suplemento inyectable que tus ejemplares necesitan para maximizar su desarrollo y rendimiento.\n\nEsta potente vitamina B12 5500, enriquecida con vitaminas y minerales, ofrece beneficios clave para la preparación de gallos:\n\nDesarrollo Físico: Promueve el aumento de masa muscular y el apetito.\n\nRendimiento y Resistencia: Actúa como un potente oxigenador celular, aumentando la resistencia y la fuerza en el juego.\n\nSalud Interna: Regula el pH de la sangre, optimizando el funcionamiento orgánico general.\n\nAsegura el máximo rendimiento con una dosis mensual. ¡Dale a tus gallos la ventaja que merecen!\n\nDosis Recomendada: 0.2 ml por ave.\n\nValor $ 50,000 más envio\n\n¡Hacemos envíos a todo el país!",
+    "ruta_local_imagen": "Fotos/010_LLEVA_A_TUS_GALLOS_AL_NIVEL_ULTRA_CON_B1.jpg",
+    "nombre_archivo": "010_LLEVA_A_TUS_GALLOS_AL_NIVEL_ULTRA_CON_B1.jpg",
+    "activo": true
+  },
+  {
+    "num": "011",
+    "nombre": "Super Energy 77",
+    "slug": "super-energy-77",
+    "categoria": "Doping/energizantes",
+    "forma": "N/A",
+    "audiencia": "gallos de combate",
+    "precio_cop": 80000,
+    "precio_texto": "$80,000 más envío",
+    "presentaciones": [
+      {
+        "detalle": "Frasco",
+        "precio_cop": 80000
+      }
+    ],
+    "especificaciones": "",
+    "beneficios": "Doping de calidad americana que aumenta la fuerza y potencia la energía, complemento para el juego del gallo fino.",
+    "keywords": [
+      "super energy 77",
+      "doping",
+      "energizante",
+      "combate",
+      "fuerza",
+      "energia"
+    ],
+    "descripcion": "¡Dale a tus gallos la ventaja con Super Energy 77!\n\n¿Quieres que tus ejemplares tengan el impulso extra que necesitan? Con Super Energy 77, el doping de calidad americana, tus gallos estarán listos para rendir al máximo.\n\nEste producto está diseñado para:\n\nAumentar su fuerza para un desempeño superior.\n\nPotenciar su energía para que estén siempre activos.\n\nSer el complemento perfecto para el juego del gallo fino.\n\n¡No esperes más para ver a tus campeones brillar!\n\n$80,000 más envio",
+    "ruta_local_imagen": "Fotos/011_DALE_A_TUS_GALLOS_LA_VENTAJA_CON_SUPER_E.jpg",
+    "nombre_archivo": "011_DALE_A_TUS_GALLOS_LA_VENTAJA_CON_SUPER_E.jpg",
+    "activo": true
+  },
+  {
+    "num": "012",
+    "nombre": "Rooster Fury",
+    "slug": "rooster-fury",
+    "categoria": "Doping/energizantes",
+    "forma": "inyectable",
+    "audiencia": "gallos de combate",
+    "precio_cop": 150000,
+    "precio_texto": "$150,000",
+    "presentaciones": [
+      {
+        "detalle": "Frasco inyectable",
+        "precio_cop": 150000
+      }
+    ],
+    "especificaciones": "0.2 a 0.3 ml con jeringa de insulina, de 2 a 5 días máximo antes de la pelea. No hay que acostumbrarlo. No refrigerar, mantener en lugar fresco.",
+    "beneficios": "Doping americano inyectable que genera estimulación y oxigenación, aportando energía, resistencia, vitalidad y un pH neutro en la sangre.",
+    "keywords": [
+      "rooster fury",
+      "doping",
+      "inyectable",
+      "americano",
+      "combate",
+      "oxigenacion",
+      "energia"
+    ],
+    "descripcion": "DOPPING INYECTABLE\n\nROOSTER FURY\n\nAMERICANO\n\nDOPPING inyectable que genera estimulación y oxigenación en nuestro gallo\n\nGenerando\n\nEnergía\n\nResistencia\n\nVitalidad\n\nUn ph neutro en su sangre\n\nModo de uso\n\n0.2 a 0.3 ml de una jeringa de insulina\n\n2 a 5 días máximo antes de la pelea\n\nNo hay que acostumbrarlo\n\nNo se debe mantener refrigerado pero si en un lugar fresco\n\nTiene un valor de $150,000",
+    "ruta_local_imagen": "Fotos/012_DOPPING_INYECTABLE.jpg",
+    "nombre_archivo": "012_DOPPING_INYECTABLE.jpg",
+    "activo": true
+  },
+  {
+    "num": "013",
+    "nombre": "ATP Fighter Rooster",
+    "slug": "atp-fighter-rooster",
+    "categoria": "Doping/energizantes",
+    "forma": "inyectable",
+    "audiencia": "gallos de combate",
+    "precio_cop": 250000,
+    "precio_texto": "$250.000 más el envío",
+    "presentaciones": [
+      {
+        "detalle": "Inyectable 100ml",
+        "precio_cop": 250000
+      }
+    ],
+    "especificaciones": "Presentación inyectable por 100 ml. Dosis 0.3 ml en la pechuga 5 días antes de cada presentación.",
+    "beneficios": "Fórmula americana inyectable de preparación para el rendimiento del gallo antes de cada presentación.",
+    "keywords": [
+      "atp fighter rooster",
+      "inyectable",
+      "doping",
+      "americano",
+      "combate",
+      "rendimiento",
+      "preparacion"
+    ],
+    "descripcion": "ATP FIGHTER ROOSTER\n\nFORMULA AMERICANA\n\nPRESENTACIÓN INYECTABLE POR 100 ML\n\nDOSIS 0.3 ML EN LA PECHUGA 5 DIAS ANTES DE CADA PRESENTACIÓN\n\n$250.000 MÁS EL ENVÍO",
+    "ruta_local_imagen": "Fotos/013_ATP_FIGHTER_ROOSTER.jpg",
+    "nombre_archivo": "013_ATP_FIGHTER_ROOSTER.jpg",
+    "activo": true
+  },
+  {
+    "num": "014",
+    "nombre": "Rooster Complet",
+    "slug": "rooster-complet",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "inyectable",
+    "audiencia": "gallos de combate",
+    "precio_cop": 130000,
+    "precio_texto": "$130.000 más el envío",
+    "presentaciones": [
+      {
+        "detalle": "Inyectable 30ml",
+        "precio_cop": 130000
+      }
+    ],
+    "especificaciones": "Presentación inyectable por 30 ml. Dosis 0.5 ml en la pechuga cada 15 días.",
+    "beneficios": "Vitamina B12 inyectable que aporta oxigenación, recuperación, vigor y fortalecimiento.",
+    "keywords": [
+      "rooster complet",
+      "vitamina",
+      "b12",
+      "inyectable",
+      "combate",
+      "oxigenacion",
+      "recuperacion"
+    ],
+    "descripcion": "ROOSTER COMPLET\n\nVITAMINA B12\n\n. OXIGENACIÓN\n\n. RECUPERACIÓN\n\n.VIGOR\n\n. FORTALECIMIENTO\n\nPRESENTACIÓN INYECTABLE POR 30 ML\n\nDOSIS 0.5 ML EN LA PECHUGA CADA 15 DÍAS\n\nVALOR $130.000 MÁS EL ENVÍO",
+    "ruta_local_imagen": "Fotos/014_ROOSTER_COMPLET.jpg",
+    "nombre_archivo": "014_ROOSTER_COMPLET.jpg",
+    "activo": true
+  },
+  {
+    "num": "015",
+    "nombre": "ATP Rooster Gold",
+    "slug": "atp-rooster-gold",
+    "categoria": "Doping/energizantes",
+    "forma": "inyectable",
+    "audiencia": "gallos de combate",
+    "precio_cop": 180000,
+    "precio_texto": "$180.000 más el envío",
+    "presentaciones": [
+      {
+        "detalle": "Inyectable 50ml",
+        "precio_cop": 180000
+      }
+    ],
+    "especificaciones": "Presentación inyectable por 50 ml. Dosis 0.3 ml en la pechuga 5 días antes de cada presentación.",
+    "beneficios": "Fórmula americana inyectable de preparación para el rendimiento del gallo antes de cada presentación.",
+    "keywords": [
+      "atp rooster gold",
+      "inyectable",
+      "doping",
+      "americano",
+      "combate",
+      "rendimiento",
+      "preparacion"
+    ],
+    "descripcion": "ATP ROOSTER GOLD\n\nFORMULA AMERICANA\n\nPRESENTACIÓN INYECTABLE POR 50.ML\n\nDOSIS 0.3 ML EN LA PECHUGA 5 DIAS ANTES DE CADA PRESENTACIÓN\n\n$180.000 MÁS EL ENVÍO",
+    "ruta_local_imagen": "Fotos/015_ATP_ROOSTER_GOLD.jpg",
+    "nombre_archivo": "015_ATP_ROOSTER_GOLD.jpg",
+    "activo": true
+  },
+  {
+    "num": "016",
+    "nombre": "Rooster Booster",
+    "slug": "rooster-booster",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "inyectable",
+    "audiencia": "gallos de combate",
+    "precio_cop": 250000,
+    "precio_texto": "$250.000 más el envío",
+    "presentaciones": [
+      {
+        "detalle": "Inyectable 100ml",
+        "precio_cop": 250000
+      }
+    ],
+    "especificaciones": "Presentación inyectable por 100 ml. Dosis para mayores de 4 meses: 0.5 ml en la pechuga cada 15 días.",
+    "beneficios": "Vitamina B12 de fórmula americana en presentación inyectable para el fortalecimiento del ejemplar.",
+    "keywords": [
+      "rooster booster",
+      "vitamina",
+      "b12",
+      "inyectable",
+      "americano",
+      "combate",
+      "fortalecimiento"
+    ],
+    "descripcion": "ROOSTER BOOSTER\n\nFORMULA AMERICANA\n\nVITAMINA B12\n\nPRESENTACIÓN INYECTABLE POR 100 ML\n\nDOSIS :\n\nMAYORES DE 4 MESES\n\n0.5 ML EN LA PECHUGA CADA 15 DÍAS\n\nVALOR $250.000 MAS EL ENVÍO",
+    "ruta_local_imagen": "Fotos/016_ROOSTER_BOOSTER.jpg",
+    "nombre_archivo": "016_ROOSTER_BOOSTER.jpg",
+    "activo": true
+  },
+  {
+    "num": "017",
+    "nombre": "Weight Muscle",
+    "slug": "weight-muscle",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "oral líquido",
+    "audiencia": "gallos de combate",
+    "precio_cop": 80000,
+    "precio_texto": "$80.000 más el envío",
+    "presentaciones": [
+      {
+        "detalle": "1 litro",
+        "precio_cop": 80000
+      }
+    ],
+    "especificaciones": "Dosificación: medio centímetro día por medio en la comida para cada ejemplar. Viene por un litro y dura 6 meses después de abierto. Mantener en lugar oscuro y fresco.",
+    "beneficios": "Fórmula mejorada con vitaminas y minerales necesarios para la evolución de los gallos.",
+    "keywords": [
+      "weight muscle",
+      "suplemento",
+      "vitaminas",
+      "minerales",
+      "oral",
+      "combate",
+      "litro"
+    ],
+    "descripcion": "WEIGHT MUSCLE\n\n1 LITRO\n\n$80.000 PESOS MÁS EL ENVÍO\n\nWEIGHT MUSCLE\n\nFORMULA MEJORADA\n\nViene por un litro\n\nDura 6 meses después de abierto\n\nDEBE MANTENERSE EN UN LUGAR OSCURO Y FRESCO ALEJADO DEL CALOR Y LUZ\n\nDOSIFICACIÓN:\n\nMEDIO CENTÍMETRO DIA POR MEDIO EN LA COMIDA PARA CADA EJEMPLAR\n\ncontiene vitaminas y minerales necesarios para la evolución de tus gallos\n\nVALOR $ 80.000\n\nMAS EL ENVÍO\n\nSERVICIO CONTRA ENTREGA\n\n$ 80.000",
+    "ruta_local_imagen": "Fotos/017_WEIGHT_MUSCLE.jpg",
+    "nombre_archivo": "017_WEIGHT_MUSCLE.jpg",
+    "activo": true
+  },
+  {
+    "num": "018",
+    "nombre": "Vitalmin Rooster",
+    "slug": "vitalmin-rooster",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "pastillas/tabletas",
+    "audiencia": "gallos de cría",
+    "precio_cop": 80000,
+    "precio_texto": "$80.000 más el envío",
+    "presentaciones": [
+      {
+        "detalle": "Tarro 300 pastillas",
+        "precio_cop": 80000
+      }
+    ],
+    "especificaciones": "Tarro por 300 pastillas. Dosificación: una pastilla diaria para pollos crestones.",
+    "beneficios": "Aporta vitaminas, minerales y aminoácidos: más masa muscular, mejora el apetito y la calidad de la pluma, aumenta el sistema inmune y la fuerza.",
+    "keywords": [
+      "vitalmin rooster",
+      "vitamina",
+      "pastillas",
+      "crestones",
+      "cria",
+      "masa muscular",
+      "sistema inmune"
+    ],
+    "descripcion": "VITALMIN ROOSTER\n\n$80.000 PESOS MÁS EL ENVÍO\n\n.TARRO POR 300 PASTILLAS\n\n.DOSIFICACIÓN\n\nUNA PASTILLA DIARIA PARA POLLOS CRESTONES\n\n.más masa muscular\n\n.mejora el apetito\n\n.tiene vitaminas y minerales\n\n.aminoácidos\n\n.ayuda a mejorar la calidad de la pluma\n\n.aumenta el sistema inmune\n\n.más fuerza\n\n. brinda vitaminas y minerales necesarios para el buen desarrollo de el ave de combate\n\n$.80.000 PESOS MÁS EL ENVÍO",
+    "ruta_local_imagen": "Fotos/018_VITALMIN_ROOSTER.jpg",
+    "nombre_archivo": "018_VITALMIN_ROOSTER.jpg",
+    "activo": true
+  },
+  {
+    "num": "019",
+    "nombre": "Gallo Post Recovery",
+    "slug": "gallo-post-recovery",
+    "categoria": "Recuperación",
+    "forma": "pastillas/tabletas",
+    "audiencia": "gallos de combate",
+    "precio_cop": 80000,
+    "precio_texto": "$80,000",
+    "presentaciones": [
+      {
+        "detalle": "100 tabletas",
+        "precio_cop": 80000
+      }
+    ],
+    "especificaciones": "Presentación por 100 tabletas. 1 pastilla 30 minutos después del entrenamiento.",
+    "beneficios": "Ideal para la recuperación después del entrenamiento.",
+    "keywords": [
+      "gallo post recovery",
+      "recuperacion",
+      "tabletas",
+      "entrenamiento",
+      "combate",
+      "post entreno"
+    ],
+    "descripcion": "GALLO POST RECOVERY X100 TABLETAS\n\n$80,000\n\nIdeal para después del entrenamiento 1 pastilla 30 minutos después del entrenamiento",
+    "ruta_local_imagen": "Fotos/019_GALLO_POST_RECOVERY_X100_TABLETAS.jpg",
+    "nombre_archivo": "019_GALLO_POST_RECOVERY_X100_TABLETAS.jpg",
+    "activo": true
+  },
+  {
+    "num": "020",
+    "nombre": "Omega 3",
+    "slug": "omega-3",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "pastillas/tabletas",
+    "audiencia": "general",
+    "precio_cop": 75000,
+    "precio_texto": "$75,000",
+    "presentaciones": [
+      {
+        "detalle": "100 tabletas",
+        "precio_cop": 75000
+      }
+    ],
+    "especificaciones": "Presentación por 100 tabletas.",
+    "beneficios": "Fundamental para la piel y el plumaje sano; reduce la inflamación y mejora la salud cardiovascular y renal.",
+    "keywords": [
+      "omega 3",
+      "suplemento",
+      "tabletas",
+      "plumaje",
+      "piel",
+      "antiinflamatorio",
+      "cardiovascular"
+    ],
+    "descripcion": "OMEGA 3 X 100 TABLETAS\n\n$75,000\n\nFundamental para la piel y el plumaje sano de tus ejemplares, reducen la inflamación y mejora la salud cardiovascular y renal.",
+    "ruta_local_imagen": "Fotos/020_OMEGA_3_X_100_TABLETAS.jpg",
+    "nombre_archivo": "020_OMEGA_3_X_100_TABLETAS.jpg",
+    "activo": true
+  },
+  {
+    "num": "021",
+    "nombre": "Super Cobra 500",
+    "slug": "super-cobra-500",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "gotas",
+    "audiencia": "general",
+    "precio_cop": 100000,
+    "precio_texto": "$100,000",
+    "presentaciones": [
+      {
+        "detalle": "100 ml",
+        "precio_cop": 100000
+      }
+    ],
+    "especificaciones": "Presentación por 100 ml. Dosis: 3 meses 4 gotas; 4 a 8 meses 8 gotas; 8 meses en adelante 15 gotas. Suministrar en ayunas.",
+    "beneficios": "Suplemento en gotas con dosificación según la edad del ejemplar, suministrado en ayunas.",
+    "keywords": [
+      "super cobra 500",
+      "suplemento",
+      "gotas",
+      "dosis por edad",
+      "general",
+      "ayunas"
+    ],
+    "descripcion": "SUPER COBRA 500\n\n$100,000\n\nPRESENTACIÓN POR 100 ML\n\nDOSIS :\n\nDe 3 meses: 4 gotas\n\nDe 4 a 8 meses: 8 gotas\n\nDe 8 meses en adelante: 15 gotas\n\nRecomendación:\n\nSuministrar el producto en ayunas.",
+    "ruta_local_imagen": "Fotos/021_SUPER_COBRA_500.jpg",
+    "nombre_archivo": "021_SUPER_COBRA_500.jpg",
+    "activo": true
+  },
+  {
+    "num": "022",
+    "nombre": "Rooster End Worm",
+    "slug": "rooster-end-worm",
+    "categoria": "Vermífugos/desparasitantes",
+    "forma": "gotas",
+    "audiencia": "general",
+    "precio_cop": 60000,
+    "precio_texto": "$60,000",
+    "presentaciones": [
+      {
+        "detalle": "50 ml",
+        "precio_cop": 60000
+      }
+    ],
+    "especificaciones": "Presentación por 50 ml. Dosis: 3 meses 4 gotas; 4 a 8 meses 8 gotas; 8 meses en adelante 15 gotas. Suministrar en ayunas.",
+    "beneficios": "Vermífugo en gotas con dosificación según la edad, suministrado en ayunas.",
+    "keywords": [
+      "rooster end worm",
+      "vermifugo",
+      "desparasitante",
+      "gotas",
+      "parasitos",
+      "general",
+      "ayunas"
+    ],
+    "descripcion": "ROOSTER END WORM\n\n$60,000\n\nPRESENTACIÓN POR 50 ML\n\nDOSIS :\n\nDe 3 meses: 4 gotas\n\nDe 4 a 8 meses: 8 gotas\n\nDe 8 meses en adelante: 15 gotas\n\nRecomendación:\n\nSuministrar el producto en ayunas.",
+    "ruta_local_imagen": "Fotos/022_ROOSTER_END_WORM.jpg",
+    "nombre_archivo": "022_ROOSTER_END_WORM.jpg",
+    "activo": true
+  },
+  {
+    "num": "023",
+    "nombre": "Super Trainer",
+    "slug": "super-trainer",
+    "categoria": "Doping/energizantes",
+    "forma": "gotas",
+    "audiencia": "gallos de combate",
+    "precio_cop": 80000,
+    "precio_texto": "$80,000",
+    "presentaciones": [
+      {
+        "detalle": "100 ml",
+        "precio_cop": 80000
+      }
+    ],
+    "especificaciones": "Pre-entreno en gotas. Presentación 100 ml.",
+    "beneficios": "Pre-entreno que prepara los músculos, previene el entumecimiento, promueve la estimulación sanguínea y mejora la oxigenación.",
+    "keywords": [
+      "super trainer",
+      "pre entreno",
+      "gotas",
+      "doping",
+      "combate",
+      "oxigenacion",
+      "musculos"
+    ],
+    "descripcion": "SUPER TRAINER\n\n$80,000\n\nPRE - ENTRENO EN GOTAS\n\nPRESENTACIÓN 100 ML\n\nPrepara los músculos, previene el entumecimiento, promueve la estimulación sanguínea y mejorar la oxigenación.",
+    "ruta_local_imagen": "Fotos/023_SUPER_TRAINER.jpg",
+    "nombre_archivo": "023_SUPER_TRAINER.jpg",
+    "activo": true
+  },
+  {
+    "num": "024",
+    "nombre": "The AvianPro",
+    "slug": "the-avianpro",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "pastillas/tabletas",
+    "audiencia": "general",
+    "precio_cop": 80000,
+    "precio_texto": "$80,000",
+    "presentaciones": [
+      {
+        "detalle": "100 tabletas",
+        "precio_cop": 80000
+      }
+    ],
+    "especificaciones": "Presentación por 100 tabletas. Suministrar una pastilla tres veces a la semana.",
+    "beneficios": "Excelente aporte vitamínico de rápida absorción y efectivo funcionamiento en el sistema digestivo.",
+    "keywords": [
+      "the avianpro",
+      "vitamina",
+      "tabletas",
+      "digestivo",
+      "general",
+      "absorcion"
+    ],
+    "descripcion": "THE AVIANPRO\n\n$80,000\n\nPRESENTACIÓN POR 100 TABLETAS\n\nAPORTE VITAMÍNICO EXCELENTE, RÁPIDA ABSORCIÓN Y EFECTIVO FUNCIONAMIENTO EN EL SISTEMA DIGESTIVO\n\nSE SUMINISTRAR UNA PASTILLA TRES VECES A LA SEMANA",
+    "ruta_local_imagen": "Fotos/024_THE_AVIANPRO.jpg",
+    "nombre_archivo": "024_THE_AVIANPRO.jpg",
+    "activo": true
+  },
+  {
+    "num": "025",
+    "nombre": "Dragon Rooster",
+    "slug": "dragon-rooster",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "pastillas/tabletas",
+    "audiencia": "gallos de combate",
+    "precio_cop": 80000,
+    "precio_texto": "$80,000",
+    "presentaciones": [
+      {
+        "detalle": "100 tabletas",
+        "precio_cop": 80000
+      }
+    ],
+    "especificaciones": "Presentación de 100 tabletas. Suministrar una pastilla tres veces a la semana. Para ejemplares de 4 meses en adelante.",
+    "beneficios": "Multivitamínico para ejemplares de 4 meses en adelante.",
+    "keywords": [
+      "dragon rooster",
+      "multivitaminico",
+      "vitamina",
+      "tabletas",
+      "combate",
+      "4 meses"
+    ],
+    "descripcion": "DRAGON ROOSTER\n\n$80,000\n\nPRESENTACIÓN DE 100 TABLETAS\n\nMULTIVITAMINICO\n\nSE SUMINISTRA UNA PASTILLA TRES VECES A LA SEMANA\n\nPARA EJEMPLARES DE 4 MESES EN ADELANTE",
+    "ruta_local_imagen": "Fotos/025_DRAGON_ROOSTER.jpg",
+    "nombre_archivo": "025_DRAGON_ROOSTER.jpg",
+    "activo": true
+  },
+  {
+    "num": "026",
+    "nombre": "Rooster Strength",
+    "slug": "rooster-strength",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "gotas",
+    "audiencia": "general",
+    "precio_cop": 50000,
+    "precio_texto": "$50,000",
+    "presentaciones": [
+      {
+        "detalle": "100 ml",
+        "precio_cop": 50000
+      }
+    ],
+    "especificaciones": "Presentación por 100 ml. Dosis: 8 gotas diarias.",
+    "beneficios": "Aporta vitaminas y minerales esenciales para mejorar la condición física y sistémica, ideal para el desarrollo del ejemplar.",
+    "keywords": [
+      "rooster strength",
+      "vitamina",
+      "minerales",
+      "gotas",
+      "desarrollo",
+      "general"
+    ],
+    "descripcion": "ROOSTER STRENGTH\n\n$50,000\n\nPRESENTACIÓN POR 100 ML\n\nDOSIS: 8 GOTAS DIARIAS\n\nAPORTA VITAMINAS Y MINERALES ESENCIALES EN TUS EJEMPLARES PARA MEJORAR CONDICIÓN TANTO FÍSICA COMO SISTEMÁTICA IDEAL PARA EL DESARROLLO DEL EJEMPLAR.",
+    "ruta_local_imagen": "Fotos/026_ROOSTER_STRENGTH.jpg",
+    "nombre_archivo": "026_ROOSTER_STRENGTH.jpg",
+    "activo": true
+  },
+  {
+    "num": "027",
+    "nombre": "Rooster Deluxe Suplement",
+    "slug": "rooster-deluxe-suplement",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "pastillas/tabletas",
+    "audiencia": "gallos de cría",
+    "precio_cop": 80000,
+    "precio_texto": "$80,000",
+    "presentaciones": [
+      {
+        "detalle": "500 pastillas",
+        "precio_cop": 80000
+      }
+    ],
+    "especificaciones": "Presentación en pastillas por 500 dosis. Para la etapa de crestones 7-10 meses.",
+    "beneficios": "Suplemento en pastillas para la etapa de crestones que aumenta la masa muscular y mejora el apetito.",
+    "keywords": [
+      "rooster deluxe suplement",
+      "suplemento",
+      "pastillas",
+      "crestones",
+      "cria",
+      "masa muscular"
+    ],
+    "descripcion": "ROOSTER DELUXE SUPLEMENT\n\n$80,000\n\nPRESENTACIÓN EN PASTILLAS POR 500 DOSIS\n\nPARA LA ETAPA DE CRESTONES\n\n7-10 MESES\n\nAUMENTA LA MASA MUSCULAR\n\nMEJORA EL APETITO",
+    "ruta_local_imagen": "Fotos/027_ROOSTER_DELUXE_SUPLEMENT.jpg",
+    "nombre_archivo": "027_ROOSTER_DELUXE_SUPLEMENT.jpg",
+    "activo": true
+  },
+  {
+    "num": "028",
+    "nombre": "Rooster Deluxe Max",
+    "slug": "rooster-deluxe-max",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "pastillas/tabletas",
+    "audiencia": "gallos de combate",
+    "precio_cop": 80000,
+    "precio_texto": "$80,000",
+    "presentaciones": [
+      {
+        "detalle": "500 pastillas",
+        "precio_cop": 80000
+      }
+    ],
+    "especificaciones": "Presentación en pastillas por 500 dosis. Para la etapa final de cuido.",
+    "beneficios": "Suplemento con calcio, fósforo, minerales, vitaminas y aporte de color para la etapa final de cuido.",
+    "keywords": [
+      "rooster deluxe max",
+      "suplemento",
+      "pastillas",
+      "cuido",
+      "combate",
+      "calcio",
+      "fosforo"
+    ],
+    "descripcion": "ROOSTER DELUXE MAX\n\n$80,000\n\nPRESENTACIÓN EN PASTILLAS POR 500 DOSIS\n\nCALCIO\n\nFÓSFORO\n\nAPORTE DE COLOR\n\nMINERALES Y VITAMINAS\n\nPARA LA ETAPA FINAL DE CUIDO",
+    "ruta_local_imagen": "Fotos/028_ROOSTER_DELUXE_MAX.jpg",
+    "nombre_archivo": "028_ROOSTER_DELUXE_MAX.jpg",
+    "activo": true
+  },
+  {
+    "num": "029",
+    "nombre": "Champions Choice",
+    "slug": "champions-choice",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "gotas",
+    "audiencia": "gallos de combate",
+    "precio_cop": 60000,
+    "precio_texto": "$60,000",
+    "presentaciones": [
+      {
+        "detalle": "100 ml",
+        "precio_cop": 60000
+      }
+    ],
+    "especificaciones": "Presentación por 100 ml. Dosis: 8 gotas diarias por ejemplar.",
+    "beneficios": "Mejora el metabolismo, brinda antioxidantes, reduce el cansancio y la fatiga y es de fácil absorción.",
+    "keywords": [
+      "champions choice",
+      "suplemento",
+      "gotas",
+      "antioxidante",
+      "combate",
+      "metabolismo",
+      "fatiga"
+    ],
+    "descripcion": "CHAMPIONS CHOICE\n\n$60,000\n\nPRESENTACIÓN POR 100 ML\n\nDOSIS: 8 GOTAS DIARIAS POR EJEMPLAR\n\nBENEFICIOS:\n\nMEJORA EL METABOLISMO\n\nBRINDA ANTIOXIDANTE\n\nREDUCE EL CANSANCIO\n\nREDUCE LA FATIGA\n\nFÁCIL LA ABSORCIÓN",
+    "ruta_local_imagen": "Fotos/029_CHAMPIONS_CHOICE.jpg",
+    "nombre_archivo": "029_CHAMPIONS_CHOICE.jpg",
+    "activo": true
+  },
+  {
+    "num": "030",
+    "nombre": "Shampoo Plume King",
+    "slug": "shampoo-plume-king",
+    "categoria": "Higiene/cuidado",
+    "forma": "N/A",
+    "audiencia": "general",
+    "precio_cop": 40000,
+    "precio_texto": "$40,000",
+    "presentaciones": [
+      {
+        "detalle": "1 litro",
+        "precio_cop": 40000
+      }
+    ],
+    "especificaciones": "Presentación por litro.",
+    "beneficios": "Shampoo que aporta limpieza y brillo en la pluma y desinfecta.",
+    "keywords": [
+      "shampoo plume king",
+      "higiene",
+      "shampoo",
+      "pluma",
+      "brillo",
+      "desinfecta",
+      "general"
+    ],
+    "descripcion": "SHAMPOO\n\nPLUME KING POR LITRO\n\n$40,000\n\nAporta:\n\nLimpieza y brillo en la pluma\n\nDesinfecta",
+    "ruta_local_imagen": "Fotos/030_SHAMPOO.jpg",
+    "nombre_archivo": "030_SHAMPOO.jpg",
+    "activo": true
+  },
+  {
+    "num": "031",
+    "nombre": "Fighter's Vision",
+    "slug": "fighter-s-vision",
+    "categoria": "Antibióticos/curación",
+    "forma": "crema/pomada",
+    "audiencia": "gallos de combate",
+    "precio_cop": 70000,
+    "precio_texto": "$70,000",
+    "presentaciones": [
+      {
+        "detalle": "Ungüento",
+        "precio_cop": 70000
+      }
+    ],
+    "especificaciones": "Ungüento tópico para la visión.",
+    "beneficios": "Ayuda en problemas de visión de los gallos, desde la lesión hasta la recuperación óptima.",
+    "keywords": [
+      "fighters vision",
+      "curacion",
+      "ungüento",
+      "topico",
+      "vision",
+      "combate",
+      "ojos"
+    ],
+    "descripcion": "FIGHTER'S VISION\n\n$70,000\n\nUngento tópico para la visión\n\nAyuda en problemas de la visión en los gallos desde la lección hasta la recuperación óptima",
+    "ruta_local_imagen": "Fotos/031_FIGHTERS_VISION.jpg",
+    "nombre_archivo": "031_FIGHTERS_VISION.jpg",
+    "activo": true
+  },
+  {
+    "num": "032",
+    "nombre": "Cure Chest For Rooster Gotas",
+    "slug": "cure-chest-for-rooster-gotas",
+    "categoria": "Antibióticos/curación",
+    "forma": "gotas",
+    "audiencia": "general",
+    "precio_cop": 40000,
+    "precio_texto": "$40,000",
+    "presentaciones": [
+      {
+        "detalle": "100 ml",
+        "precio_cop": 40000
+      }
+    ],
+    "especificaciones": "Presentación por 100 ml. Dosis: de 6 a 8 gotas diarias por ejemplar durante 7 días.",
+    "beneficios": "Ideal para el moquillo y afecciones respiratorias.",
+    "keywords": [
+      "cure chest for rooster",
+      "curacion",
+      "gotas",
+      "moquillo",
+      "respiratorio",
+      "general"
+    ],
+    "descripcion": "CURE CHEST FOR ROOSTER GOTAS\n\n$40,000\n\nPRESENTACIÓN POR 100 ML\n\nIDEAL PARA EL MOQUILLO Y AFECCIONES RESPIRATORIAS\n\nDOSIS: DE 6 A 8 GOTAS DIARIAS POR EJEMPLAR DURANTE 7 DÍAS",
+    "ruta_local_imagen": "Fotos/032_CURE_CHEST_FOR_ROOSTER_GOTAS.jpg",
+    "nombre_archivo": "032_CURE_CHEST_FOR_ROOSTER_GOTAS.jpg",
+    "activo": true
+  },
+  {
+    "num": "033",
+    "nombre": "Rooster Smallpox",
+    "slug": "rooster-smallpox",
+    "categoria": "Antibióticos/curación",
+    "forma": "crema/pomada",
+    "audiencia": "general",
+    "precio_cop": 35000,
+    "precio_texto": "$35,000",
+    "presentaciones": [
+      {
+        "detalle": "Uso tópico",
+        "precio_cop": 35000
+      }
+    ],
+    "especificaciones": "Producto de uso tópico para las buas (viruela).",
+    "beneficios": "Ayuda a controlar y eliminar las buas (viruela aviar).",
+    "keywords": [
+      "rooster smallpox",
+      "curacion",
+      "topico",
+      "buas",
+      "viruela",
+      "general"
+    ],
+    "descripcion": "ROOSTER SMALLPOX\n\n$35,000\n\nProducto de uso topico para las buas\n\nAyuda a controlar y eliminar.",
+    "ruta_local_imagen": "Fotos/033_ROOSTER_SMALLPOX.jpg",
+    "nombre_archivo": "033_ROOSTER_SMALLPOX.jpg",
+    "activo": true
+  },
+  {
+    "num": "034",
+    "nombre": "Cure Chest For Rooster Pastillas",
+    "slug": "cure-chest-for-rooster-pastillas",
+    "categoria": "Antibióticos/curación",
+    "forma": "pastillas/tabletas",
+    "audiencia": "general",
+    "precio_cop": 100000,
+    "precio_texto": "$100,000",
+    "presentaciones": [
+      {
+        "detalle": "100 tabletas",
+        "precio_cop": 100000
+      }
+    ],
+    "especificaciones": "Presentación por 100 tabletas. Dosis: 1 pastilla diaria por ejemplar durante 7 días.",
+    "beneficios": "Ideal para el moquillo y afecciones respiratorias.",
+    "keywords": [
+      "cure chest for rooster",
+      "curacion",
+      "tabletas",
+      "moquillo",
+      "respiratorio",
+      "general"
+    ],
+    "descripcion": "CURE CHEST FOR ROOSTER PATILLAS\n\n$100,000\n\nPRESENTACIÓN POR 100 TABLETAS\n\nIDEAL PARA EL MOQUILLO Y AFECCIONES RESPIRATORIAS\n\nDOSIS: DE 1 PASTILLA DIARIA POR EJEMPLAR DURANTE 7 DÍAS",
+    "ruta_local_imagen": "Fotos/034_CURE_CHEST_FOR_ROOSTER_PATILLAS.jpg",
+    "nombre_archivo": "034_CURE_CHEST_FOR_ROOSTER_PATILLAS.jpg",
+    "activo": true
+  },
+  {
+    "num": "035",
+    "nombre": "Vermi Ultra",
+    "slug": "vermi-ultra",
+    "categoria": "Vermífugos/desparasitantes",
+    "forma": "pastillas/tabletas",
+    "audiencia": "general",
+    "precio_cop": 35000,
+    "precio_texto": "$35,000",
+    "presentaciones": [
+      {
+        "detalle": "10 pastillas",
+        "precio_cop": 35000
+      }
+    ],
+    "especificaciones": "Presentación por 10 pastillas.",
+    "beneficios": "Remueve, limpia y elimina parásitos internos.",
+    "keywords": [
+      "vermi ultra",
+      "vermifugo",
+      "desparasitante",
+      "pastillas",
+      "parasitos",
+      "general"
+    ],
+    "descripcion": "VERMI ULTRA\n\n$35,000\n\nPRESENTACIÓN POR 10 PASTILLAS\n\nRemueve, limpia y elimina parásitos internos.",
+    "ruta_local_imagen": "Fotos/035_VERMI_ULTRA.jpg",
+    "nombre_archivo": "035_VERMI_ULTRA.jpg",
+    "activo": true
+  },
+  {
+    "num": "036",
+    "nombre": "Clear Chicks Gotas",
+    "slug": "clear-chicks-gotas",
+    "categoria": "Antibióticos/curación",
+    "forma": "gotas",
+    "audiencia": "pollitos",
+    "precio_cop": 25000,
+    "precio_texto": "$25,000",
+    "presentaciones": [
+      {
+        "detalle": "10 ml",
+        "precio_cop": 25000
+      }
+    ],
+    "especificaciones": "Presentación por 10 ml. Dosis: de 6 a 8 gotas diarias por ejemplar durante 7 días.",
+    "beneficios": "Ideal para el moquillo y afecciones respiratorias en pollitos.",
+    "keywords": [
+      "clear chicks",
+      "curacion",
+      "gotas",
+      "moquillo",
+      "respiratorio",
+      "pollitos"
+    ],
+    "descripcion": "CLEAR CHICKS GOTAS\n\n$25,000\n\nPRESENTACIÓN POR 10 ML\n\nIDEAL PARA EL MOQUILLO Y AFECCIONES RESPIRATORIAS\n\nDOSIS: DE 6 A 8 GOTAS DIARIAS POR EJEMPLAR DURANTE 7 DÍAS",
+    "ruta_local_imagen": "Fotos/036_CLEAR_CHICKS_GOTAS.jpg",
+    "nombre_archivo": "036_CLEAR_CHICKS_GOTAS.jpg",
+    "activo": true
+  },
+  {
+    "num": "037",
+    "nombre": "Nutripeep Reforce",
+    "slug": "nutripeep-reforce",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "gotas",
+    "audiencia": "pollitos",
+    "precio_cop": 25000,
+    "precio_texto": "$25,000",
+    "presentaciones": [
+      {
+        "detalle": "10 ml",
+        "precio_cop": 25000
+      }
+    ],
+    "especificaciones": "Presentación 10 ml. Suministrar 6 gotas diarias en el bebedero por ejemplar de 0-3 meses.",
+    "beneficios": "Aumenta el peso y el crecimiento de manera equilibrada y mejora la digestión y absorción de nutrientes.",
+    "keywords": [
+      "nutripeep reforce",
+      "suplemento",
+      "gotas",
+      "pollitos",
+      "peso",
+      "crecimiento",
+      "digestion"
+    ],
+    "descripcion": "NUTRIPEEP REFOCE\n\n$25,000\n\nPRESENTACIÓN 10 ML\n\nAUMENTA EL PESO Y EL CRECIMIENTO DE MANERA EQUILIBRADA\n\nMEJORAR LA DIGESTIÓN Y ABSORCIÓN DE NUTRIENTES\n\nSUMINISTRAR 6 GOTAS DIARIAS EN EL BEBEDERO POR EJEMPLAR DE 0-3 MESES",
+    "ruta_local_imagen": "Fotos/037_NUTRIPEEP_REFOCE.jpg",
+    "nombre_archivo": "037_NUTRIPEEP_REFOCE.jpg",
+    "activo": true
+  },
+  {
+    "num": "038",
+    "nombre": "Vita Power",
+    "slug": "vita-power",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "gotas",
+    "audiencia": "gallos de combate",
+    "precio_cop": 25000,
+    "precio_texto": "$25,000",
+    "presentaciones": [
+      {
+        "detalle": "10 ml",
+        "precio_cop": 25000
+      }
+    ],
+    "especificaciones": "Presentación por 10 ml. Para ejemplares de 4 meses en adelante.",
+    "beneficios": "Complejo multivitamínico de fácil absorción.",
+    "keywords": [
+      "vita power",
+      "vitamina",
+      "multivitaminico",
+      "gotas",
+      "combate",
+      "absorcion"
+    ],
+    "descripcion": "VITA POWER\n\n$25,000\n\nPRESENTACIÓN POR 10 ML\n\nEJEMPLARES DE 4 MESES EN ADELANTE\n\nCOMPLEJO MULTIVITAMÍNICO DE FÁCIL ABSORCIÓN",
+    "ruta_local_imagen": "Fotos/038_VITA_POWER.jpg",
+    "nombre_archivo": "038_VITA_POWER.jpg",
+    "activo": true
+  },
+  {
+    "num": "039",
+    "nombre": "Purgebeak",
+    "slug": "purgebeak",
+    "categoria": "Vermífugos/desparasitantes",
+    "forma": "gotas",
+    "audiencia": "general",
+    "precio_cop": 25000,
+    "precio_texto": "$25,000",
+    "presentaciones": [
+      {
+        "detalle": "10 ml",
+        "precio_cop": 25000
+      }
+    ],
+    "especificaciones": "Presentación por 10 ml. Para ejemplares de dos meses en adelante.",
+    "beneficios": "Ayuda a expulsar lombrices, gusanos redondos, tenias, protozoos y mucho más.",
+    "keywords": [
+      "purgebeak",
+      "vermifugo",
+      "desparasitante",
+      "gotas",
+      "lombrices",
+      "tenias",
+      "general"
+    ],
+    "descripcion": "PURGEBEACK\n\n$25,000\n\nPRESENTACIÓN POR 10 ML\n\nAYUDA A EXPULSAR\n\nLOMBRICES\n\nGUSANOS REDONDO\n\nTENIAS\n\nPROTOZOOS Y MUCHO MÁS\n\nPARA EJEMPLARES DE DOS MESES EN ADELANTE",
+    "ruta_local_imagen": "Fotos/039_PURGEBEACK.jpg",
+    "nombre_archivo": "039_PURGEBEACK.jpg",
+    "activo": true
+  },
+  {
+    "num": "040",
+    "nombre": "Gallo Purga",
+    "slug": "gallo-purga",
+    "categoria": "Vermífugos/desparasitantes",
+    "forma": "pastillas/tabletas",
+    "audiencia": "general",
+    "precio_cop": 120000,
+    "precio_texto": "$120,000",
+    "presentaciones": [
+      {
+        "detalle": "100 pastillas",
+        "precio_cop": 120000
+      }
+    ],
+    "especificaciones": "Presentación por 100 pastillas.",
+    "beneficios": "Remueve, limpia y elimina parásitos internos.",
+    "keywords": [
+      "gallo purga",
+      "vermifugo",
+      "desparasitante",
+      "pastillas",
+      "parasitos",
+      "general"
+    ],
+    "descripcion": "GALLO PURGA\n\n$120,000\n\nPRESENTACIÓN POR 100 PASTILLAS\n\nRemueve, limpia y elimina parásitos internos.",
+    "ruta_local_imagen": "Fotos/040_GALLO_PURGA.jpg",
+    "nombre_archivo": "040_GALLO_PURGA.jpg",
+    "activo": true
+  },
+  {
+    "num": "041",
+    "nombre": "Super Dragón Mamba",
+    "slug": "super-dragon-mamba",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "oral líquido",
+    "audiencia": "gallos de combate",
+    "precio_cop": 150000,
+    "precio_texto": "$150,000",
+    "presentaciones": [
+      {
+        "detalle": "1 litro",
+        "precio_cop": 150000
+      }
+    ],
+    "especificaciones": "Presentación por un litro.",
+    "beneficios": "Aporta mayor energía, más masa muscular, mejora el brillo de la pluma, mejor rendimiento y mayor vitalidad.",
+    "keywords": [
+      "super dragon mamba",
+      "suplemento",
+      "liquido",
+      "litro",
+      "combate",
+      "energia",
+      "masa muscular"
+    ],
+    "descripcion": "SUPER DRAGÓN MAMBA\n\n$150,000\n\nPRESENTACIÓN POR UN LITRO\n\nMayor energía\n\nMás masa muscular\n\nMejora el brillo de la pluma\n\nMejor rendimiento y mayor vitalidad",
+    "ruta_local_imagen": "Fotos/041_SUPER_DRAGON_MAMBA.jpg",
+    "nombre_archivo": "041_SUPER_DRAGON_MAMBA.jpg",
+    "activo": true
+  },
+  {
+    "num": "042",
+    "nombre": "Karate Kill",
+    "slug": "karate-kill",
+    "categoria": "Antibióticos/curación",
+    "forma": "crema/pomada",
+    "audiencia": "general",
+    "precio_cop": 65000,
+    "precio_texto": "$65,000",
+    "presentaciones": [
+      {
+        "detalle": "Uso tópico",
+        "precio_cop": 65000
+      }
+    ],
+    "especificaciones": "Uso tópico.",
+    "beneficios": "Elimina y previene el hongo del karate.",
+    "keywords": [
+      "karate kill",
+      "curacion",
+      "topico",
+      "hongo",
+      "karate",
+      "antimicotico",
+      "general"
+    ],
+    "descripcion": "KARATE KILL\n\n$65,000\n\nElimina y previene el hongo del karate\n\nUso tópico",
+    "ruta_local_imagen": "Fotos/042_KARATE_KILL.jpg",
+    "nombre_archivo": "042_KARATE_KILL.jpg",
+    "activo": true
+  },
+  {
+    "num": "043",
+    "nombre": "Beak Boost",
+    "slug": "beak-boost",
+    "categoria": "Antibióticos/curación",
+    "forma": "crema/pomada",
+    "audiencia": "general",
+    "precio_cop": 65000,
+    "precio_texto": "$65,000",
+    "presentaciones": [
+      {
+        "detalle": "Ungüento",
+        "precio_cop": 65000
+      }
+    ],
+    "especificaciones": "Ungüento para el pico.",
+    "beneficios": "Ayuda con el dolor y promueve la regeneración del pico.",
+    "keywords": [
+      "beak boost",
+      "curacion",
+      "ungüento",
+      "pico",
+      "regeneracion",
+      "general"
+    ],
+    "descripcion": "BEAK BOOST\n\n$65,000\n\nUngüento para el pico\n\nAyuda con el dolor y promueve la regeneración",
+    "ruta_local_imagen": "Fotos/043_BEAK_BOOST.jpg",
+    "nombre_archivo": "043_BEAK_BOOST.jpg",
+    "activo": true
+  },
+  {
+    "num": "044",
+    "nombre": "Poultry Prime",
+    "slug": "poultry-prime",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "gotas",
+    "audiencia": "pollitos",
+    "precio_cop": 50000,
+    "precio_texto": "$50,000",
+    "presentaciones": [
+      {
+        "detalle": "100 ml",
+        "precio_cop": 50000
+      }
+    ],
+    "especificaciones": "Presentación por 100 ml. Se suministran ocho gotas diarias en el agua. Para pollos de 0 a 3 meses.",
+    "beneficios": "Vitaminas para pollos de 0 a 3 meses.",
+    "keywords": [
+      "poultry prime",
+      "vitamina",
+      "gotas",
+      "pollitos",
+      "0 a 3 meses",
+      "agua"
+    ],
+    "descripcion": "POULTRY PRIME\n\n$50,000\n\nPRESENTACIÓN POR 100 ML\n\nVitaminas para pollos de 0 a 3 meses\n\nSe suministran ocho gotas diarias en el agua",
+    "ruta_local_imagen": "Fotos/044_POULTRY_PRIME.jpg",
+    "nombre_archivo": "044_POULTRY_PRIME.jpg",
+    "activo": true
+  },
+  {
+    "num": "045",
+    "nombre": "Chicks Vitamax",
+    "slug": "chicks-vitamax",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "oral líquido",
+    "audiencia": "pollitos",
+    "precio_cop": 100000,
+    "precio_texto": "$100,000",
+    "presentaciones": [
+      {
+        "detalle": "1 litro",
+        "precio_cop": 100000
+      }
+    ],
+    "especificaciones": "Presentación por un litro. Multivitamínico líquido.",
+    "beneficios": "Mejora el desarrollo, fortalece las articulaciones y aporta mayor vitalidad.",
+    "keywords": [
+      "chicks vitamax",
+      "multivitaminico",
+      "liquido",
+      "pollitos",
+      "desarrollo",
+      "articulaciones"
+    ],
+    "descripcion": "CHICKS VITAMAX\n\n$100,000\n\nPRESENTACIÓN POR UN LITRO\n\nMultivitamínico liquido\n\nMejora el desarrollo\n\nFortalece las articulaciones\n\nMayor vitalidad",
+    "ruta_local_imagen": "Fotos/045_CHICKS_VITAMAX.jpg",
+    "nombre_archivo": "045_CHICKS_VITAMAX.jpg",
+    "activo": true
+  },
+  {
+    "num": "046",
+    "nombre": "Rooster Shave",
+    "slug": "rooster-shave",
+    "categoria": "Higiene/cuidado",
+    "forma": "crema/pomada",
+    "audiencia": "general",
+    "precio_cop": 30000,
+    "precio_texto": "$30,000",
+    "presentaciones": [
+      {
+        "detalle": "Crema depiladora",
+        "precio_cop": 30000
+      }
+    ],
+    "especificaciones": "Crema depiladora. Aplicar y dejar actuar de 3 a 4 minutos, retirar con un pañito.",
+    "beneficios": "Crema depiladora para el aseo del ejemplar.",
+    "keywords": [
+      "rooster shave",
+      "higiene",
+      "crema",
+      "depiladora",
+      "aseo",
+      "general"
+    ],
+    "descripcion": "ROOSTER SHAVE\n\n$30,000\n\nCREMA DEPILADORA\n\nAplicar y dejar actuar de 3 a 4 minutos retirar con un pañito",
+    "ruta_local_imagen": "Fotos/046_ROOSTER_SHAVE.jpg",
+    "nombre_archivo": "046_ROOSTER_SHAVE.jpg",
+    "activo": true
+  },
+  {
+    "num": "047",
+    "nombre": "Tijera Roja",
+    "slug": "tijera-roja",
+    "categoria": "Implementos",
+    "forma": "implemento",
+    "audiencia": "general",
+    "precio_cop": 30000,
+    "precio_texto": "$30,000 C/U",
+    "presentaciones": [
+      {
+        "detalle": "Unidad",
+        "precio_cop": 30000
+      }
+    ],
+    "especificaciones": "Punta recta o punta curva.",
+    "beneficios": "Tijera para el manejo del ejemplar, disponible en punta recta o curva.",
+    "keywords": [
+      "tijera roja",
+      "implemento",
+      "tijera",
+      "punta recta",
+      "punta curva",
+      "corte"
+    ],
+    "descripcion": "TIJERA ROJA\n\n$30,000 C/U\n\nPUNTA RECTA O PUNTA CURVA",
+    "ruta_local_imagen": "Fotos/047_TIJERA_ROJA.jpg",
+    "nombre_archivo": "047_TIJERA_ROJA.jpg",
+    "activo": true
+  },
+  {
+    "num": "048",
+    "nombre": "Botas Goma",
+    "slug": "botas-goma",
+    "categoria": "Implementos",
+    "forma": "implemento",
+    "audiencia": "general",
+    "precio_cop": 40000,
+    "precio_texto": "$40,000",
+    "presentaciones": [
+      {
+        "detalle": "Juego de 4 unidades",
+        "precio_cop": 40000
+      }
+    ],
+    "especificaciones": "Juego de 4 unidades.",
+    "beneficios": "Botas de goma para el entrenamiento y protección del ejemplar.",
+    "keywords": [
+      "botas goma",
+      "implemento",
+      "botas",
+      "entrenamiento",
+      "proteccion"
+    ],
+    "descripcion": "BOTAS GOMA\n\n$40,000\n\nJUEGO DE 4 UND",
+    "ruta_local_imagen": "Fotos/048_BOTAS_GOMA.jpg",
+    "nombre_archivo": "048_BOTAS_GOMA.jpg",
+    "activo": true
+  },
+  {
+    "num": "049",
+    "nombre": "Corta Espuela",
+    "slug": "corta-espuela",
+    "categoria": "Implementos",
+    "forma": "implemento",
+    "audiencia": "general",
+    "precio_cop": 20000,
+    "precio_texto": "$20,000",
+    "presentaciones": [
+      {
+        "detalle": "Unidad",
+        "precio_cop": 20000
+      }
+    ],
+    "especificaciones": "",
+    "beneficios": "Herramienta para cortar la espuela del ejemplar.",
+    "keywords": [
+      "corta espuela",
+      "implemento",
+      "espuela",
+      "corte",
+      "herramienta"
+    ],
+    "descripcion": "CORTA ESPUELA\n\n$20,000",
+    "ruta_local_imagen": "Fotos/049_CORTA_ESPUELA.jpg",
+    "nombre_archivo": "049_CORTA_ESPUELA.jpg",
+    "activo": true
+  },
+  {
+    "num": "050",
+    "nombre": "Compleland B12 Oral",
+    "slug": "compleland-b12-oral",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "oral líquido",
+    "audiencia": "general",
+    "precio_cop": 60000,
+    "precio_texto": "$60,000",
+    "presentaciones": [
+      {
+        "detalle": "1 litro",
+        "precio_cop": 60000
+      }
+    ],
+    "especificaciones": "Presentación por 1 litro.",
+    "beneficios": "Suplemento oral con vitamina B12.",
+    "keywords": [
+      "compleland b12 oral",
+      "vitamina",
+      "b12",
+      "oral",
+      "liquido",
+      "litro",
+      "general"
+    ],
+    "descripcion": "COMPLELAND B12 ORAL\n\n$60,000\n\nPRESENTACIÓN POR 1 LITRO",
+    "ruta_local_imagen": "Fotos/050_COMPLELAND_B12_ORAL.jpg",
+    "nombre_archivo": "050_COMPLELAND_B12_ORAL.jpg",
+    "activo": true
+  },
+  {
+    "num": "051",
+    "nombre": "Complemil Oral",
+    "slug": "complemil-oral",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "oral líquido",
+    "audiencia": "general",
+    "precio_cop": 60000,
+    "precio_texto": "$60,000",
+    "presentaciones": [
+      {
+        "detalle": "1 litro",
+        "precio_cop": 60000
+      }
+    ],
+    "especificaciones": "Presentación por litro.",
+    "beneficios": "Suplemento oral vitamínico.",
+    "keywords": [
+      "complemil oral",
+      "vitamina",
+      "oral",
+      "liquido",
+      "litro",
+      "general"
+    ],
+    "descripcion": "COMPLEMIL ORAL\n\n$60,000\n\nPRESENTACIÓN POR LITRO",
+    "ruta_local_imagen": "Fotos/051_COMPLEMIL_ORAL.jpg",
+    "nombre_archivo": "051_COMPLEMIL_ORAL.jpg",
+    "activo": true
+  },
+  {
+    "num": "052",
+    "nombre": "Espadadrapo Color",
+    "slug": "espadadrapo-color",
+    "categoria": "Implementos",
+    "forma": "implemento",
+    "audiencia": "general",
+    "precio_cop": 35000,
+    "precio_texto": "$35,000 C/U",
+    "presentaciones": [
+      {
+        "detalle": "Unidad",
+        "precio_cop": 35000
+      }
+    ],
+    "especificaciones": "",
+    "beneficios": "Esparadrapo de color para el manejo del ejemplar.",
+    "keywords": [
+      "espadadrapo color",
+      "esparadrapo",
+      "implemento",
+      "color",
+      "vendaje"
+    ],
+    "descripcion": "ESPADADRAPO COLOR\n\n$35,000 C/U",
+    "ruta_local_imagen": "Fotos/052_ESPADADRAPO_COLOR.jpg",
+    "nombre_archivo": "052_ESPADADRAPO_COLOR.jpg",
+    "activo": true
+  },
+  {
+    "num": "053",
+    "nombre": "Cera Dominicana",
+    "slug": "cera-dominicana",
+    "categoria": "Implementos",
+    "forma": "implemento",
+    "audiencia": "general",
+    "precio_cop": 18000,
+    "precio_texto": "$18,000 C/U",
+    "presentaciones": [
+      {
+        "detalle": "Unidad",
+        "precio_cop": 18000
+      }
+    ],
+    "especificaciones": "",
+    "beneficios": "Cera dominicana para el cuidado del ejemplar.",
+    "keywords": [
+      "cera dominicana",
+      "implemento",
+      "cera",
+      "dominicana",
+      "cuidado"
+    ],
+    "descripcion": "CERA DOMINICANA\n\n$18,000 C/U",
+    "ruta_local_imagen": "Fotos/053_CERA_DOMINICANA.jpg",
+    "nombre_archivo": "053_CERA_DOMINICANA.jpg",
+    "activo": true
+  },
+  {
+    "num": "054",
+    "nombre": "Cera Nacional",
+    "slug": "cera-nacional",
+    "categoria": "Implementos",
+    "forma": "implemento",
+    "audiencia": "general",
+    "precio_cop": 7000,
+    "precio_texto": "$7,000 C/U",
+    "presentaciones": [
+      {
+        "detalle": "Unidad",
+        "precio_cop": 7000
+      }
+    ],
+    "especificaciones": "",
+    "beneficios": "Cera nacional para el cuidado del ejemplar.",
+    "keywords": [
+      "cera nacional",
+      "implemento",
+      "cera",
+      "nacional",
+      "cuidado"
+    ],
+    "descripcion": "CERA NACIONAL\n\n$7,000 C/U",
+    "ruta_local_imagen": "Fotos/054_CERA_NACIONAL.jpg",
+    "nombre_archivo": "054_CERA_NACIONAL.jpg",
+    "activo": true
+  },
+  {
+    "num": "055",
+    "nombre": "Ciclosona Inyectable",
+    "slug": "ciclosona-inyectable",
+    "categoria": "Antibióticos/curación",
+    "forma": "inyectable",
+    "audiencia": "general",
+    "precio_cop": 35000,
+    "precio_texto": "50 ML $35,000 / 100 ML $70,000",
+    "presentaciones": [
+      {
+        "detalle": "50 ml",
+        "precio_cop": 35000
+      },
+      {
+        "detalle": "100 ml",
+        "precio_cop": 70000
+      }
+    ],
+    "especificaciones": "Presentación inyectable de 50 ml y 100 ml.",
+    "beneficios": "Antibiótico inyectable.",
+    "keywords": [
+      "ciclosona",
+      "antibiotico",
+      "inyectable",
+      "curacion",
+      "general"
+    ],
+    "descripcion": "CICLOSONA INYECTABLE\n\n50 ML $35,000\n\n100 ML $70,000\n\nAntibiótico",
+    "ruta_local_imagen": "Fotos/055_CICLOSONA_INYECTABLE.jpg",
+    "nombre_archivo": "055_CICLOSONA_INYECTABLE.jpg",
+    "activo": true
+  },
+  {
+    "num": "056",
+    "nombre": "Ascarbol Inyectable",
+    "slug": "ascarbol-inyectable",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "inyectable",
+    "audiencia": "general",
+    "precio_cop": 100000,
+    "precio_texto": "$100,000",
+    "presentaciones": [
+      {
+        "detalle": "50 ml",
+        "precio_cop": 100000
+      }
+    ],
+    "especificaciones": "Presentación 50 ml.",
+    "beneficios": "Vitamina inyectable.",
+    "keywords": [
+      "ascarbol",
+      "vitamina",
+      "inyectable",
+      "general"
+    ],
+    "descripcion": "ASCARBOL INYECTABLE\n\n$100,000\n\nPRESENTACIÓN 50 ML\n\nVitamina",
+    "ruta_local_imagen": "Fotos/056_ASCARBOL_INYECTABLE.jpg",
+    "nombre_archivo": "056_ASCARBOL_INYECTABLE.jpg",
+    "activo": true
+  },
+  {
+    "num": "057",
+    "nombre": "Pollon Oro Gotas",
+    "slug": "pollon-oro-gotas",
+    "categoria": "Antibióticos/curación",
+    "forma": "gotas",
+    "audiencia": "general",
+    "precio_cop": 30000,
+    "precio_texto": "$30,000",
+    "presentaciones": [
+      {
+        "detalle": "30 ml",
+        "precio_cop": 30000
+      }
+    ],
+    "especificaciones": "Presentación por 30 ml. Para todas las edades de los ejemplares.",
+    "beneficios": "Antibiótico y vitamina para todas las edades.",
+    "keywords": [
+      "pollon oro",
+      "antibiotico",
+      "vitamina",
+      "gotas",
+      "curacion",
+      "general"
+    ],
+    "descripcion": "POLLON ORO GOTAS\n\n$30,000\n\nPRESENTACIÓN POR 30 ML\n\nANTIBIÓTICO Y VITAMINA\n\nPARA TODAS LAS EDADES DE LOS EJEMPLARES",
+    "ruta_local_imagen": "Fotos/057_POLLON_ORO_GOTAS.jpg",
+    "nombre_archivo": "057_POLLON_ORO_GOTAS.jpg",
+    "activo": true
+  },
+  {
+    "num": "058",
+    "nombre": "Nutri-Cal",
+    "slug": "nutri-cal",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "N/A",
+    "audiencia": "general",
+    "precio_cop": 95000,
+    "precio_texto": "$95,000",
+    "presentaciones": [
+      {
+        "detalle": "120 gramos",
+        "precio_cop": 95000
+      }
+    ],
+    "especificaciones": "Presentación 120 gramos.",
+    "beneficios": "Suplemento nutricional y de calcio.",
+    "keywords": [
+      "nutri-cal",
+      "suplemento",
+      "calcio",
+      "nutricional",
+      "general"
+    ],
+    "descripcion": "NUTRI - CAL\n\n$95,000\n\nPRESENTACIÓN 120 GRAMOS",
+    "ruta_local_imagen": "Fotos/058_NUTRI_CAL.jpg",
+    "nombre_archivo": "058_NUTRI_CAL.jpg",
+    "activo": true
+  },
+  {
+    "num": "059",
+    "nombre": "Septibron Forte",
+    "slug": "septibron-forte",
+    "categoria": "Antibióticos/curación",
+    "forma": "N/A",
+    "audiencia": "general",
+    "precio_cop": 140000,
+    "precio_texto": "$140,000",
+    "presentaciones": [
+      {
+        "detalle": "100 ml",
+        "precio_cop": 140000
+      }
+    ],
+    "especificaciones": "Presentación por 100 ml.",
+    "beneficios": "Antibiótico.",
+    "keywords": [
+      "septibron forte",
+      "antibiotico",
+      "curacion",
+      "general"
+    ],
+    "descripcion": "SEPTIBRON FORTE\n\n$140,000\n\nPRESENTACIÓN POR 100 ML\n\nAntibiótico",
+    "ruta_local_imagen": "Fotos/059_SEPTIBRON_FORTE.jpg",
+    "nombre_archivo": "059_SEPTIBRON_FORTE.jpg",
+    "activo": true
+  },
+  {
+    "num": "060",
+    "nombre": "Super Vit 7500 Inyectable",
+    "slug": "super-vit-7500-inyectable",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "inyectable",
+    "audiencia": "general",
+    "precio_cop": 140000,
+    "precio_texto": "$140,000",
+    "presentaciones": [
+      {
+        "detalle": "50 ml",
+        "precio_cop": 140000
+      }
+    ],
+    "especificaciones": "Presentación por 50 ml.",
+    "beneficios": "Vitamina inyectable.",
+    "keywords": [
+      "super vit 7500",
+      "vitamina",
+      "inyectable",
+      "general"
+    ],
+    "descripcion": "SUPER VIT 7500 INYECTABLE\n\n$140,000\n\nPRESENTACIÓN POR 50 ML\n\nVitamina",
+    "ruta_local_imagen": "Fotos/060_SUPER_VIT_7500_INYECTABLE.jpg",
+    "nombre_archivo": "060_SUPER_VIT_7500_INYECTABLE.jpg",
+    "activo": true
+  },
+  {
+    "num": "061",
+    "nombre": "Pollon Premium",
+    "slug": "pollon-premium",
+    "categoria": "Antibióticos/curación",
+    "forma": "polvo",
+    "audiencia": "general",
+    "precio_cop": 50000,
+    "precio_texto": "$50,000",
+    "presentaciones": [
+      {
+        "detalle": "100 gr",
+        "precio_cop": 50000
+      }
+    ],
+    "especificaciones": "Presentación por 100 gr. Para todas las etapas.",
+    "beneficios": "Vitamina y antibiótico para todas las etapas.",
+    "keywords": [
+      "pollon premium",
+      "antibiotico",
+      "vitamina",
+      "polvo",
+      "curacion",
+      "general"
+    ],
+    "descripcion": "POLLON PREMIUM\n\n$50,000\n\nPRESENTACIÓN POR 100 GR\n\nVITAMINA Y ANTIBIÓTICO\n\nPARA TODAS LAS ETAPAS",
+    "ruta_local_imagen": "Fotos/061_POLLON_PREMIUM.jpg",
+    "nombre_archivo": "061_POLLON_PREMIUM.jpg",
+    "activo": true
+  },
+  {
+    "num": "062",
+    "nombre": "Piquera Peruana",
+    "slug": "piquera-peruana",
+    "categoria": "Implementos",
+    "forma": "implemento",
+    "audiencia": "general",
+    "precio_cop": 14000,
+    "precio_texto": "$14,000 C/U",
+    "presentaciones": [
+      {
+        "detalle": "Unidad",
+        "precio_cop": 14000
+      }
+    ],
+    "especificaciones": "",
+    "beneficios": "Piquera peruana, implemento para el ejemplar.",
+    "keywords": [
+      "piquera peruana",
+      "implemento",
+      "piquera",
+      "peruana"
+    ],
+    "descripcion": "PIQUERA PERUANA\n\n$14,000 C/U",
+    "ruta_local_imagen": "Fotos/062_PIQUERA_PERUANA.jpg",
+    "nombre_archivo": "062_PIQUERA_PERUANA.jpg",
+    "activo": true
+  },
+  {
+    "num": "063",
+    "nombre": "Patapiojas",
+    "slug": "patapiojas",
+    "categoria": "Implementos",
+    "forma": "implemento",
+    "audiencia": "general",
+    "precio_cop": 5000,
+    "precio_texto": "$5,000 el par / $36,000 la docena",
+    "presentaciones": [
+      {
+        "detalle": "Par",
+        "precio_cop": 5000
+      },
+      {
+        "detalle": "Docena",
+        "precio_cop": 36000
+      }
+    ],
+    "especificaciones": "",
+    "beneficios": "Patapiojas, implemento para el ejemplar.",
+    "keywords": [
+      "patapiojas",
+      "implemento",
+      "par",
+      "docena"
+    ],
+    "descripcion": "PATAPIOJAS\n\n$5,000 EL PAR\n\n$36,000 LA DOCENA",
+    "ruta_local_imagen": "Fotos/063_PATAPIOJAS.jpg",
+    "nombre_archivo": "063_PATAPIOJAS.jpg",
+    "activo": true
+  },
+  {
+    "num": "064",
+    "nombre": "Super Vitamina B12 5500 Inyectable",
+    "slug": "super-vitamina-b12-5500-inyectable",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "inyectable",
+    "audiencia": "general",
+    "precio_cop": 110000,
+    "precio_texto": "30 ML $110,000 / 100 ML $250,000",
+    "presentaciones": [
+      {
+        "detalle": "30 ml",
+        "precio_cop": 110000
+      },
+      {
+        "detalle": "100 ml",
+        "precio_cop": 250000
+      }
+    ],
+    "especificaciones": "Presentación inyectable de 30 ml y 100 ml.",
+    "beneficios": "Vitamina B12 5500 inyectable.",
+    "keywords": [
+      "super vitamina b12 5500",
+      "vitamina",
+      "b12",
+      "inyectable",
+      "general"
+    ],
+    "descripcion": "SUPER VITAMINA B12 5500 INYECTABLE\n\n30 ML $110,000\n\n100 ML $250,000\n\nVITAMINA",
+    "ruta_local_imagen": "Fotos/064_SUPER_VITAMINA_B12_5500_INYECTABLE.jpg",
+    "nombre_archivo": "064_SUPER_VITAMINA_B12_5500_INYECTABLE.jpg",
+    "activo": true
+  },
+  {
+    "num": "065",
+    "nombre": "Galliverm Super",
+    "slug": "galliverm-super",
+    "categoria": "Vermífugos/desparasitantes",
+    "forma": "pastillas/tabletas",
+    "audiencia": "general",
+    "precio_cop": 95000,
+    "precio_texto": "$95,000",
+    "presentaciones": [
+      {
+        "detalle": "100 tabletas",
+        "precio_cop": 95000
+      }
+    ],
+    "especificaciones": "Presentación por 100 tabletas.",
+    "beneficios": "Desparasitante.",
+    "keywords": [
+      "galliverm super",
+      "vermifugo",
+      "desparasitante",
+      "tabletas",
+      "parasitos",
+      "general"
+    ],
+    "descripcion": "GALLIVERM SUPER\n\n$95,000\n\nPRESENTACIÓN POR 100 TABLETAS\n\nDESPARASITANTE",
+    "ruta_local_imagen": "Fotos/065_GALLIVERM_SUPER.jpg",
+    "nombre_archivo": "065_GALLIVERM_SUPER.jpg",
+    "activo": true
+  },
+  {
+    "num": "066",
+    "nombre": "Hepatogan",
+    "slug": "hepatogan",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "N/A",
+    "audiencia": "general",
+    "precio_cop": 60000,
+    "precio_texto": "$60,000",
+    "presentaciones": [
+      {
+        "detalle": "100 ml",
+        "precio_cop": 60000
+      }
+    ],
+    "especificaciones": "Presentación por 100 ml.",
+    "beneficios": "Vitamina.",
+    "keywords": [
+      "hepatogan",
+      "vitamina",
+      "hepatico",
+      "general"
+    ],
+    "descripcion": "HEPATOGAN\n\n$60,000\n\nPRESENTACIÓN POR 100 ML\n\nVitamina",
+    "ruta_local_imagen": "Fotos/066_HEPATOGAN.jpg",
+    "nombre_archivo": "066_HEPATOGAN.jpg",
+    "activo": true
+  },
+  {
+    "num": "067",
+    "nombre": "Botas Goma",
+    "slug": "botas-goma",
+    "categoria": "Implementos",
+    "forma": "implemento",
+    "audiencia": "general",
+    "precio_cop": 40000,
+    "precio_texto": "$40,000",
+    "presentaciones": [
+      {
+        "detalle": "Juego de 4 unidades",
+        "precio_cop": 40000
+      }
+    ],
+    "especificaciones": "Juego por 4 unidades.",
+    "beneficios": "Botas de goma para el entrenamiento y protección del ejemplar.",
+    "keywords": [
+      "botas goma",
+      "implemento",
+      "botas",
+      "entrenamiento",
+      "proteccion"
+    ],
+    "descripcion": "BOTAS GOMA\n\n$40,000\n\nJUEGO POR 4 UND",
+    "ruta_local_imagen": "Fotos/067_BOTAS_GOMA.jpg",
+    "nombre_archivo": "067_BOTAS_GOMA.jpg",
+    "activo": true
+  },
+  {
+    "num": "068",
+    "nombre": "Trueno Oro Inyectable",
+    "slug": "trueno-oro-inyectable",
+    "categoria": "Antibióticos/curación",
+    "forma": "inyectable",
+    "audiencia": "general",
+    "precio_cop": 60000,
+    "precio_texto": "50 ML $60,000 / 100 ML $110,000",
+    "presentaciones": [
+      {
+        "detalle": "50 ml",
+        "precio_cop": 60000
+      },
+      {
+        "detalle": "100 ml",
+        "precio_cop": 110000
+      }
+    ],
+    "especificaciones": "Presentación inyectable de 50 ml y 100 ml.",
+    "beneficios": "Antibiótico inyectable.",
+    "keywords": [
+      "trueno oro",
+      "antibiotico",
+      "inyectable",
+      "curacion",
+      "general"
+    ],
+    "descripcion": "TRUENO ORO INYECTABLE\n\n50 ML $60,000\n\n100 ML $110,000\n\nANTIBIÓTICO",
+    "ruta_local_imagen": "Fotos/068_TRUENO_ORO_INYECTABLE.jpg",
+    "nombre_archivo": "068_TRUENO_ORO_INYECTABLE.jpg",
+    "activo": true
+  },
+  {
+    "num": "069",
+    "nombre": "Clotetrasone NF",
+    "slug": "clotetrasone-nf",
+    "categoria": "Antibióticos/curación",
+    "forma": "inyectable",
+    "audiencia": "general",
+    "precio_cop": 60000,
+    "precio_texto": "50 ML $60,000 / 100 ML $110,000",
+    "presentaciones": [
+      {
+        "detalle": "50 ml",
+        "precio_cop": 60000
+      },
+      {
+        "detalle": "100 ml",
+        "precio_cop": 110000
+      }
+    ],
+    "especificaciones": "Presentación inyectable de 50 ml y 100 ml.",
+    "beneficios": "Antibiótico inyectable.",
+    "keywords": [
+      "clotetrasone nf",
+      "antibiotico",
+      "inyectable",
+      "curacion",
+      "general"
+    ],
+    "descripcion": "CLOTETRASONE NF\n\nINYECTABLE\n\n50 ML $60,000\n\n100 ML $110,000\n\nAntibiótico",
+    "ruta_local_imagen": "Fotos/069_CLOTETRASONE_NF.jpg",
+    "nombre_archivo": "069_CLOTETRASONE_NF.jpg",
+    "activo": true
+  },
+  {
+    "num": "070",
+    "nombre": "Panacur",
+    "slug": "panacur",
+    "categoria": "Vermífugos/desparasitantes",
+    "forma": "oral líquido",
+    "audiencia": "general",
+    "precio_cop": 60000,
+    "precio_texto": "$60,000",
+    "presentaciones": [
+      {
+        "detalle": "100 ml",
+        "precio_cop": 60000
+      }
+    ],
+    "especificaciones": "Presentación por 100 ml.",
+    "beneficios": "Desparasitante.",
+    "keywords": [
+      "panacur",
+      "vermifugo",
+      "desparasitante",
+      "oral",
+      "parasitos",
+      "general"
+    ],
+    "descripcion": "PANACUR\n\n$60,000\n\nPRESENTACIÓN POR 100 ML\n\nDesparasitante",
+    "ruta_local_imagen": "Fotos/070_PANACUR.jpg",
+    "nombre_archivo": "070_PANACUR.jpg",
+    "activo": true
+  },
+  {
+    "num": "071",
+    "nombre": "Gallomin",
+    "slug": "gallomin",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "pastillas/tabletas",
+    "audiencia": "general",
+    "precio_cop": 100000,
+    "precio_texto": "$100,000",
+    "presentaciones": [
+      {
+        "detalle": "100 tabletas",
+        "precio_cop": 100000
+      }
+    ],
+    "especificaciones": "Presentación por 100 tabletas.",
+    "beneficios": "Vitamina.",
+    "keywords": [
+      "gallomin",
+      "vitamina",
+      "tabletas",
+      "general"
+    ],
+    "descripcion": "GALLOMIN\n\n$100,000\n\nPRESENTACIÓN POR 100 TABLETAS\n\nVITAMINA",
+    "ruta_local_imagen": "Fotos/071_GALLOMIN.jpg",
+    "nombre_archivo": "071_GALLOMIN.jpg",
+    "activo": true
+  },
+  {
+    "num": "072",
+    "nombre": "Super Tron B12",
+    "slug": "super-tron-b12",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "N/A",
+    "audiencia": "general",
+    "precio_cop": 85000,
+    "precio_texto": "$85,000",
+    "presentaciones": [
+      {
+        "detalle": "60 ml",
+        "precio_cop": 85000
+      }
+    ],
+    "especificaciones": "Presentación por 60 ml.",
+    "beneficios": "Vitamina B12.",
+    "keywords": [
+      "super tron b12",
+      "vitamina",
+      "b12",
+      "general"
+    ],
+    "descripcion": "SUPER TRON B12\n\n$85,000\n\nPRESENTACIÓN POR 60 ML\n\nVITAMINA",
+    "ruta_local_imagen": "Fotos/072_SUPER_TRON_B12.jpg",
+    "nombre_archivo": "072_SUPER_TRON_B12.jpg",
+    "activo": true
+  },
+  {
+    "num": "073",
+    "nombre": "Gallomec Plus",
+    "slug": "gallomec-plus",
+    "categoria": "Vermífugos/desparasitantes",
+    "forma": "pastillas/tabletas",
+    "audiencia": "general",
+    "precio_cop": 55000,
+    "precio_texto": "50 CAPSULAS $55,000 / 100 CAPSULAS $95,000",
+    "presentaciones": [
+      {
+        "detalle": "50 cápsulas",
+        "precio_cop": 55000
+      },
+      {
+        "detalle": "100 cápsulas",
+        "precio_cop": 95000
+      }
+    ],
+    "especificaciones": "Presentación en cápsulas de 50 y 100 unidades.",
+    "beneficios": "Desparasitante.",
+    "keywords": [
+      "gallomec plus",
+      "vermifugo",
+      "desparasitante",
+      "capsulas",
+      "parasitos",
+      "general"
+    ],
+    "descripcion": "GALLOMEC PLUS\n\n50 CAPSULAS $55,000\n\n100 CAPSULAS $95,000\n\nDESPARASITANTE",
+    "ruta_local_imagen": "Fotos/073_GALLOMEC_PLUS.jpg",
+    "nombre_archivo": "073_GALLOMEC_PLUS.jpg",
+    "activo": true
+  },
+  {
+    "num": "074",
+    "nombre": "Forzen B15",
+    "slug": "forzen-b15",
+    "categoria": "Doping/energizantes",
+    "forma": "N/A",
+    "audiencia": "general",
+    "precio_cop": 60000,
+    "precio_texto": "50 ML $60,000 / 100 ML $110,000",
+    "presentaciones": [
+      {
+        "detalle": "50 ml",
+        "precio_cop": 60000
+      },
+      {
+        "detalle": "100 ml",
+        "precio_cop": 110000
+      }
+    ],
+    "especificaciones": "Presentación de 50 ml y 100 ml.",
+    "beneficios": "Vitamina y energizante.",
+    "keywords": [
+      "forzen b15",
+      "energizante",
+      "vitamina",
+      "b15",
+      "general"
+    ],
+    "descripcion": "FORZEN B15\n\n50 ML $60,000\n\n100 ML $110,000\n\nVITAMINA Y ENERGIZANTE",
+    "ruta_local_imagen": "Fotos/074_FORZEN_B15.jpg",
+    "nombre_archivo": "074_FORZEN_B15.jpg",
+    "activo": true
+  },
+  {
+    "num": "075",
+    "nombre": "Catosal",
+    "slug": "catosal",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "inyectable",
+    "audiencia": "general",
+    "precio_cop": 70000,
+    "precio_texto": "50 ML $70,000 / 100 ML $120,000",
+    "presentaciones": [
+      {
+        "detalle": "50 ml",
+        "precio_cop": 70000
+      },
+      {
+        "detalle": "100 ml",
+        "precio_cop": 120000
+      }
+    ],
+    "especificaciones": "Presentación de 50 ml y 100 ml.",
+    "beneficios": "Anabólico que acorta la muda en las aves.",
+    "keywords": [
+      "catosal",
+      "anabolico",
+      "vitamina",
+      "inyectable",
+      "muda",
+      "general"
+    ],
+    "descripcion": "CATOSAL\n\n50 ML $70,000\n\n100 ML $120,000\n\nAnabólico\n\nAcorta la muda en las aves",
+    "ruta_local_imagen": "Fotos/075_CATOSAL.jpg",
+    "nombre_archivo": "075_CATOSAL.jpg",
+    "activo": true
+  },
+  {
+    "num": "076",
+    "nombre": "Promicina Corticoide N.F",
+    "slug": "promicina-corticoide-n-f",
+    "categoria": "Antibióticos/curación",
+    "forma": "inyectable",
+    "audiencia": "general",
+    "precio_cop": 70000,
+    "precio_texto": "$70,000",
+    "presentaciones": [
+      {
+        "detalle": "Frasco",
+        "precio_cop": 70000
+      }
+    ],
+    "especificaciones": "",
+    "beneficios": "Antibiótico con corticoide.",
+    "keywords": [
+      "promicina",
+      "corticoide",
+      "antibiotico",
+      "inyectable",
+      "curacion",
+      "general"
+    ],
+    "descripcion": "PROMICINA CORTICOIDE N.F\n\n$ $70,000\n\nAntibiótico",
+    "ruta_local_imagen": "Fotos/076_PROMICINA_CORTICOIDE_N_F.jpg",
+    "nombre_archivo": "076_PROMICINA_CORTICOIDE_N_F.jpg",
+    "activo": true
+  },
+  {
+    "num": "077",
+    "nombre": "Equi-Gan",
+    "slug": "equi-gan",
+    "categoria": "Doping/energizantes",
+    "forma": "inyectable",
+    "audiencia": "general",
+    "precio_cop": 80000,
+    "precio_texto": "$80,000",
+    "presentaciones": [
+      {
+        "detalle": "Frasco",
+        "precio_cop": 80000
+      }
+    ],
+    "especificaciones": "",
+    "beneficios": "Anabólico.",
+    "keywords": [
+      "equi-gan",
+      "anabolico",
+      "inyectable",
+      "general"
+    ],
+    "descripcion": "EQUI-GAN\n\n$80,000\n\nAnabólico",
+    "ruta_local_imagen": "Fotos/077_EQUI_GAN.jpg",
+    "nombre_archivo": "077_EQUI_GAN.jpg",
+    "activo": true
+  },
+  {
+    "num": "078",
+    "nombre": "Top B15+3",
+    "slug": "top-b15-3",
+    "categoria": "Doping/energizantes",
+    "forma": "N/A",
+    "audiencia": "general",
+    "precio_cop": 110000,
+    "precio_texto": "$110,000",
+    "presentaciones": [
+      {
+        "detalle": "Frasco",
+        "precio_cop": 110000
+      }
+    ],
+    "especificaciones": "",
+    "beneficios": "Energizante.",
+    "keywords": [
+      "top b15+3",
+      "energizante",
+      "b15",
+      "general"
+    ],
+    "descripcion": "TOP B15+3\n\n$110,000\n\nENERGIZANTE",
+    "ruta_local_imagen": "Fotos/078_TOP_B15_3.jpg",
+    "nombre_archivo": "078_TOP_B15_3.jpg",
+    "activo": true
+  },
+  {
+    "num": "079",
+    "nombre": "Vermicina Vermifugo",
+    "slug": "vermicina-vermifugo",
+    "categoria": "Vermífugos/desparasitantes",
+    "forma": "pastillas/tabletas",
+    "audiencia": "general",
+    "precio_cop": 35000,
+    "precio_texto": "$35,000",
+    "presentaciones": [
+      {
+        "detalle": "10 tabletas",
+        "precio_cop": 35000
+      }
+    ],
+    "especificaciones": "Presentación por 10 tabletas.",
+    "beneficios": "Vermífugo.",
+    "keywords": [
+      "vermicina",
+      "vermifugo",
+      "desparasitante",
+      "tabletas",
+      "parasitos",
+      "general"
+    ],
+    "descripcion": "VERMICINA VERMIFUGO\n\n$35,000\n\nPRESENTACIÓN POR 10 TABLETAS",
+    "ruta_local_imagen": "Fotos/079_VERMICINA_VERMIFUGO.jpg",
+    "nombre_archivo": "079_VERMICINA_VERMIFUGO.jpg",
+    "activo": true
+  },
+  {
+    "num": "080",
+    "nombre": "Percloruro",
+    "slug": "percloruro",
+    "categoria": "Antibióticos/curación",
+    "forma": "N/A",
+    "audiencia": "general",
+    "precio_cop": 10000,
+    "precio_texto": "$10,000",
+    "presentaciones": [
+      {
+        "detalle": "Frasco",
+        "precio_cop": 10000
+      }
+    ],
+    "especificaciones": "",
+    "beneficios": "Coagulante.",
+    "keywords": [
+      "percloruro",
+      "coagulante",
+      "curacion",
+      "sangrado",
+      "general"
+    ],
+    "descripcion": "PERCLORURO\n\n$10,000\n\nCOAGULANTE",
+    "ruta_local_imagen": "Fotos/080_PERCLORURO.jpg",
+    "nombre_archivo": "080_PERCLORURO.jpg",
+    "activo": true
+  },
+  {
+    "num": "081",
+    "nombre": "Tijera Roja",
+    "slug": "tijera-roja",
+    "categoria": "Implementos",
+    "forma": "implemento",
+    "audiencia": "general",
+    "precio_cop": 25000,
+    "precio_texto": "$25,000 C/U",
+    "presentaciones": [
+      {
+        "detalle": "Unidad",
+        "precio_cop": 25000
+      }
+    ],
+    "especificaciones": "Punta recta o punta curva.",
+    "beneficios": "Tijera para el manejo del ejemplar, disponible en punta recta o curva.",
+    "keywords": [
+      "tijera roja",
+      "implemento",
+      "tijera",
+      "punta recta",
+      "punta curva",
+      "corte"
+    ],
+    "descripcion": "TIJERA ROJA\n\n$25,000 C/U\n\nPUNTA RECTA O PUNTA CURVA",
+    "ruta_local_imagen": "Fotos/081_TIJERA_ROJA.jpg",
+    "nombre_archivo": "081_TIJERA_ROJA.jpg",
+    "activo": true
+  },
+  {
+    "num": "082",
+    "nombre": "Tijera Truper",
+    "slug": "tijera-truper",
+    "categoria": "Implementos",
+    "forma": "implemento",
+    "audiencia": "general",
+    "precio_cop": 35000,
+    "precio_texto": "$35,000",
+    "presentaciones": [
+      {
+        "detalle": "Unidad",
+        "precio_cop": 35000
+      }
+    ],
+    "especificaciones": "",
+    "beneficios": "Tijera Truper para el manejo del ejemplar.",
+    "keywords": [
+      "tijera truper",
+      "implemento",
+      "tijera",
+      "corte"
+    ],
+    "descripcion": "TIJERA TRUPER\n\n$35,000",
+    "ruta_local_imagen": "Fotos/082_TIJERA_TRUPER.jpg",
+    "nombre_archivo": "082_TIJERA_TRUPER.jpg",
+    "activo": true
+  },
+  {
+    "num": "083",
+    "nombre": "Botas Canilleras",
+    "slug": "botas-canilleras",
+    "categoria": "Implementos",
+    "forma": "implemento",
+    "audiencia": "general",
+    "precio_cop": 35000,
+    "precio_texto": "$35,000",
+    "presentaciones": [
+      {
+        "detalle": "Juego de 4 unidades",
+        "precio_cop": 35000
+      }
+    ],
+    "especificaciones": "Juego por 4 unidades.",
+    "beneficios": "Botas canilleras para el entrenamiento y protección del ejemplar.",
+    "keywords": [
+      "botas canilleras",
+      "implemento",
+      "botas",
+      "canilleras",
+      "entrenamiento"
+    ],
+    "descripcion": "BOTAS CANILLERAS\n\n$35,000\n\nJUEGO POR 4 UND",
+    "ruta_local_imagen": "Fotos/083_BOTAS_CANILLERAS.jpg",
+    "nombre_archivo": "083_BOTAS_CANILLERAS.jpg",
+    "activo": true
+  },
+  {
+    "num": "084",
+    "nombre": "Trabas",
+    "slug": "trabas",
+    "categoria": "Implementos",
+    "forma": "implemento",
+    "audiencia": "general",
+    "precio_cop": 7000,
+    "precio_texto": "$7,000 C/U",
+    "presentaciones": [
+      {
+        "detalle": "Unidad",
+        "precio_cop": 7000
+      }
+    ],
+    "especificaciones": "",
+    "beneficios": "Trabas, implemento para el ejemplar.",
+    "keywords": [
+      "trabas",
+      "implemento",
+      "traba"
+    ],
+    "descripcion": "TRABAS\n\n$7,000 C/U",
+    "ruta_local_imagen": "Fotos/084_TRABAS.jpg",
+    "nombre_archivo": "084_TRABAS.jpg",
+    "activo": true
+  },
+  {
+    "num": "085",
+    "nombre": "Perlas de Hígado de Bacalao",
+    "slug": "perlas-de-higado-de-bacalao",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "pastillas/tabletas",
+    "audiencia": "general",
+    "precio_cop": 80000,
+    "precio_texto": "$80,000",
+    "presentaciones": [
+      {
+        "detalle": "500 cápsulas",
+        "precio_cop": 80000
+      }
+    ],
+    "especificaciones": "Presentación 500 cápsulas.",
+    "beneficios": "Suplemento de aceite de hígado de bacalao en perlas.",
+    "keywords": [
+      "perlas de higado de bacalao",
+      "suplemento",
+      "capsulas",
+      "bacalao",
+      "omega",
+      "general"
+    ],
+    "descripcion": "PERLAS DE HIGADO DE BACALAO\n\n$80,000\n\nPRESENTACIÓN 500 CÁPSULAS",
+    "ruta_local_imagen": "Fotos/085_PERLAS_DE_HIGADO_DE_BACALAO.jpg",
+    "nombre_archivo": "085_PERLAS_DE_HIGADO_DE_BACALAO.jpg",
+    "activo": true
+  },
+  {
+    "num": "086",
+    "nombre": "Espadadrapo Blanco",
+    "slug": "espadadrapo-blanco",
+    "categoria": "Implementos",
+    "forma": "implemento",
+    "audiencia": "general",
+    "precio_cop": 35000,
+    "precio_texto": "TUBO $105,000 / 4 PULGADAS $35,000",
+    "presentaciones": [
+      {
+        "detalle": "Tubo",
+        "precio_cop": 105000
+      },
+      {
+        "detalle": "4 pulgadas",
+        "precio_cop": 35000
+      }
+    ],
+    "especificaciones": "Disponible en tubo y en presentación de 4 pulgadas.",
+    "beneficios": "Esparadrapo blanco para el manejo del ejemplar.",
+    "keywords": [
+      "espadadrapo blanco",
+      "esparadrapo",
+      "implemento",
+      "tubo",
+      "vendaje"
+    ],
+    "descripcion": "ESPADADRAPO BLANCO\n\nTUBO $105,000\n\n4 PULGADAS $35,000",
+    "ruta_local_imagen": "Fotos/086_ESPADADRAPO_BLANCO.jpg",
+    "nombre_archivo": "086_ESPADADRAPO_BLANCO.jpg",
+    "activo": true
+  },
+  {
+    "num": "087",
+    "nombre": "Candados",
+    "slug": "candados",
+    "categoria": "Implementos",
+    "forma": "implemento",
+    "audiencia": "general",
+    "precio_cop": 30000,
+    "precio_texto": "$30,000",
+    "presentaciones": [
+      {
+        "detalle": "100 unidades",
+        "precio_cop": 30000
+      }
+    ],
+    "especificaciones": "Presentación por 100 unidades.",
+    "beneficios": "Candados, implemento para el ejemplar.",
+    "keywords": [
+      "candados",
+      "implemento",
+      "candado",
+      "100 unidades"
+    ],
+    "descripcion": "CANDADOS\n\n$30,000\n\nPRESENTACIÓN POR 100 UNIDADES",
+    "ruta_local_imagen": "Fotos/087_CANDADOS.jpg",
+    "nombre_archivo": "087_CANDADOS.jpg",
+    "activo": true
+  },
+  {
+    "num": "088",
+    "nombre": "Candados Cobre",
+    "slug": "candados-cobre",
+    "categoria": "Implementos",
+    "forma": "implemento",
+    "audiencia": "general",
+    "precio_cop": 55000,
+    "precio_texto": "$55,000",
+    "presentaciones": [
+      {
+        "detalle": "100 unidades",
+        "precio_cop": 55000
+      }
+    ],
+    "especificaciones": "Presentación por 100 unidades.",
+    "beneficios": "Candados de cobre, implemento para el ejemplar.",
+    "keywords": [
+      "candados cobre",
+      "implemento",
+      "candado",
+      "cobre",
+      "100 unidades"
+    ],
+    "descripcion": "CANDADOS COBRE\n\n$55,000\n\nPRESENTACIÓN POR 100 UNIDADES",
+    "ruta_local_imagen": "Fotos/088_CANDADOS_COBRE.jpg",
+    "nombre_archivo": "088_CANDADOS_COBRE.jpg",
+    "activo": true
+  },
+  {
+    "num": "089",
+    "nombre": "Red Rooster",
+    "slug": "red-rooster",
+    "categoria": "Higiene/cuidado",
+    "forma": "N/A",
+    "audiencia": "general",
+    "precio_cop": 35000,
+    "precio_texto": "1 LITRO $35,000 / 2 LITROS $60,000 / 4 LITROS $80,000",
+    "presentaciones": [
+      {
+        "detalle": "1 litro",
+        "precio_cop": 35000
+      },
+      {
+        "detalle": "2 litros",
+        "precio_cop": 60000
+      },
+      {
+        "detalle": "4 litros",
+        "precio_cop": 80000
+      }
+    ],
+    "especificaciones": "Presentaciones de 1, 2 y 4 litros.",
+    "beneficios": "Frota de enrojecimiento para la piel del ejemplar.",
+    "keywords": [
+      "red rooster",
+      "higiene",
+      "frota",
+      "enrojecimiento",
+      "piel",
+      "general"
+    ],
+    "descripcion": "RED ROOSTER\n\n1 LITRO $35,000\n\n2 LITROS $60,000\n\n4 LITROS $80,000\n\nFROTA DE ENRROJECIMIENTO",
+    "ruta_local_imagen": "Fotos/089_RED_ROOSTER.jpg",
+    "nombre_archivo": "089_RED_ROOSTER.jpg",
+    "activo": true
+  },
+  {
+    "num": "090",
+    "nombre": "Red Cell",
+    "slug": "red-cell",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "oral líquido",
+    "audiencia": "general",
+    "precio_cop": 145000,
+    "precio_texto": "1 LITRO $145,000",
+    "presentaciones": [
+      {
+        "detalle": "1 litro",
+        "precio_cop": 145000
+      }
+    ],
+    "especificaciones": "Presentación por 1 litro.",
+    "beneficios": "Vitamina líquida.",
+    "keywords": [
+      "red cell",
+      "vitamina",
+      "liquido",
+      "litro",
+      "general"
+    ],
+    "descripcion": "RED CELL\n\n1 LITRO $145,000\n\nVitamina líquida",
+    "ruta_local_imagen": "Fotos/090_RED_CELL.jpg",
+    "nombre_archivo": "090_RED_CELL.jpg",
+    "activo": true
+  },
+  {
+    "num": "091",
+    "nombre": "Hens",
+    "slug": "hens",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "polvo",
+    "audiencia": "gallos de cría",
+    "precio_cop": 45000,
+    "precio_texto": "400 GR $45,000",
+    "presentaciones": [
+      {
+        "detalle": "400 gr",
+        "precio_cop": 45000
+      }
+    ],
+    "especificaciones": "Presentación de 400 gr.",
+    "beneficios": "Suplemento multivitamínico para gallinas.",
+    "keywords": [
+      "hens",
+      "suplemento",
+      "multivitaminico",
+      "polvo",
+      "gallinas",
+      "cria"
+    ],
+    "descripcion": "HENS\n\n400 GR $45,000\n\nSuplemento multivitamínico para gallinas",
+    "ruta_local_imagen": "Fotos/091_HENS.jpg",
+    "nombre_archivo": "091_HENS.jpg",
+    "activo": true
+  },
+  {
+    "num": "092",
+    "nombre": "Lice Free",
+    "slug": "lice-free",
+    "categoria": "Higiene/cuidado",
+    "forma": "N/A",
+    "audiencia": "general",
+    "precio_cop": 40000,
+    "precio_texto": "$40,000",
+    "presentaciones": [
+      {
+        "detalle": "1 litro",
+        "precio_cop": 40000
+      }
+    ],
+    "especificaciones": "Presentación por 1 litro. Para piojo de las aves.",
+    "beneficios": "Producto para el control del piojo de las aves.",
+    "keywords": [
+      "lice free",
+      "higiene",
+      "piojo",
+      "aves",
+      "antiparasitario externo",
+      "general"
+    ],
+    "descripcion": "LICE FREE\n\n$40,000\n\nPRESENTACIÓN POR 1 LITRO\n\nPARA PIOJO DE LAS AVES",
+    "ruta_local_imagen": "Fotos/092_LICE_FREE.jpg",
+    "nombre_archivo": "092_LICE_FREE.jpg",
+    "activo": true
+  },
+  {
+    "num": "093",
+    "nombre": "Mona",
+    "slug": "mona",
+    "categoria": "Implementos",
+    "forma": "implemento",
+    "audiencia": "general",
+    "precio_cop": 50000,
+    "precio_texto": "$50,000",
+    "presentaciones": [
+      {
+        "detalle": "Unidad",
+        "precio_cop": 50000
+      }
+    ],
+    "especificaciones": "",
+    "beneficios": "Mona, implemento para el ejemplar.",
+    "keywords": [
+      "mona",
+      "implemento"
+    ],
+    "descripcion": "MONA\n\n$50,000",
+    "ruta_local_imagen": "Fotos/093_MONA.jpg",
+    "nombre_archivo": "093_MONA.jpg",
+    "activo": true
+  },
+  {
+    "num": "094",
+    "nombre": "Mona",
+    "slug": "mona",
+    "categoria": "Implementos",
+    "forma": "implemento",
+    "audiencia": "general",
+    "precio_cop": 50000,
+    "precio_texto": "$50,000",
+    "presentaciones": [
+      {
+        "detalle": "Unidad",
+        "precio_cop": 50000
+      }
+    ],
+    "especificaciones": "",
+    "beneficios": "Mona, implemento para el ejemplar.",
+    "keywords": [
+      "mona",
+      "implemento"
+    ],
+    "descripcion": "MONA $50,000",
+    "ruta_local_imagen": "Fotos/094_MONA_50000.jpg",
+    "nombre_archivo": "094_MONA_50000.jpg",
+    "activo": true
+  },
+  {
+    "num": "095",
+    "nombre": "Comedero 8 Huecos Pollitos",
+    "slug": "comedero-8-huecos-pollitos",
+    "categoria": "Comederos",
+    "forma": "implemento",
+    "audiencia": "pollitos",
+    "precio_cop": 15000,
+    "precio_texto": "$15,000 C/U",
+    "presentaciones": [
+      {
+        "detalle": "Unidad",
+        "precio_cop": 15000
+      }
+    ],
+    "especificaciones": "",
+    "beneficios": "Comedero de 8 huecos para pollitos.",
+    "keywords": [
+      "comedero 8 huecos",
+      "comedero",
+      "pollitos",
+      "alimentacion",
+      "implemento"
+    ],
+    "descripcion": "COMEDERO 8 HUECOS POLLITOS\n\n$15,000 C/U",
+    "ruta_local_imagen": "Fotos/095_COMEDERO_8_HUECOS_POLLITOS.jpg",
+    "nombre_archivo": "095_COMEDERO_8_HUECOS_POLLITOS.jpg",
+    "activo": true
+  },
+  {
+    "num": "096",
+    "nombre": "Comedero Media Luna",
+    "slug": "comedero-media-luna",
+    "categoria": "Comederos",
+    "forma": "implemento",
+    "audiencia": "general",
+    "precio_cop": 30000,
+    "precio_texto": "12 UNIDADES $30,000",
+    "presentaciones": [
+      {
+        "detalle": "12 unidades",
+        "precio_cop": 30000
+      }
+    ],
+    "especificaciones": "Presentación por 12 unidades.",
+    "beneficios": "Comedero media luna para el ejemplar.",
+    "keywords": [
+      "comedero media luna",
+      "comedero",
+      "media luna",
+      "alimentacion",
+      "implemento"
+    ],
+    "descripcion": "COMEDERO MEDIA LUNA\n\n12 UNIDADES $30,000",
+    "ruta_local_imagen": "Fotos/096_COMEDERO_MEDIA_LUNA.jpg",
+    "nombre_archivo": "096_COMEDERO_MEDIA_LUNA.jpg",
+    "activo": true
+  },
+  {
+    "num": "097",
+    "nombre": "Comedero Profundo",
+    "slug": "comedero-profundo",
+    "categoria": "Comederos",
+    "forma": "implemento",
+    "audiencia": "general",
+    "precio_cop": 35000,
+    "precio_texto": "12 UNIDADES $35,000",
+    "presentaciones": [
+      {
+        "detalle": "12 unidades",
+        "precio_cop": 35000
+      }
+    ],
+    "especificaciones": "Presentación por 12 unidades.",
+    "beneficios": "Comedero profundo para el ejemplar.",
+    "keywords": [
+      "comedero profundo",
+      "comedero",
+      "profundo",
+      "alimentacion",
+      "implemento"
+    ],
+    "descripcion": "COMEDERO PROFUNDO\n\n12 UNIDADES $35,000",
+    "ruta_local_imagen": "Fotos/097_COMEDERO_PROFUNDO.jpg",
+    "nombre_archivo": "097_COMEDERO_PROFUNDO.jpg",
+    "activo": true
+  },
+  {
+    "num": "098",
+    "nombre": "Comedero Pollitos Largo",
+    "slug": "comedero-pollitos-largo",
+    "categoria": "Comederos",
+    "forma": "implemento",
+    "audiencia": "pollitos",
+    "precio_cop": 30000,
+    "precio_texto": "$30,000 C/U",
+    "presentaciones": [
+      {
+        "detalle": "Unidad",
+        "precio_cop": 30000
+      }
+    ],
+    "especificaciones": "",
+    "beneficios": "Comedero largo para pollitos.",
+    "keywords": [
+      "comedero pollitos largo",
+      "comedero",
+      "pollitos",
+      "largo",
+      "alimentacion",
+      "implemento"
+    ],
+    "descripcion": "COMEDERO POLLITOS LARGO\n\n$30,000 C/U",
+    "ruta_local_imagen": "Fotos/098_COMEDERO_POLLITOS_LARGO.jpg",
+    "nombre_archivo": "098_COMEDERO_POLLITOS_LARGO.jpg",
+    "activo": true
+  },
+  {
+    "num": "099",
+    "nombre": "Botas Cuero",
+    "slug": "botas-cuero",
+    "categoria": "Implementos",
+    "forma": "implemento",
+    "audiencia": "general",
+    "precio_cop": 20000,
+    "precio_texto": "$20,000",
+    "presentaciones": [
+      {
+        "detalle": "Juego de 4 unidades",
+        "precio_cop": 20000
+      }
+    ],
+    "especificaciones": "Juego por 4 unidades.",
+    "beneficios": "Botas de cuero para el entrenamiento y protección del ejemplar.",
+    "keywords": [
+      "botas cuero",
+      "implemento",
+      "botas",
+      "cuero",
+      "entrenamiento"
+    ],
+    "descripcion": "BOTAS CUERO\n\n$20,000\n\nJUEGO POR 4 UNIDADES",
+    "ruta_local_imagen": "Fotos/099_BOTAS_CUERO.jpg",
+    "nombre_archivo": "099_BOTAS_CUERO.jpg",
+    "activo": true
+  },
+  {
+    "num": "100",
+    "nombre": "Cyano Max",
+    "slug": "cyano-max",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "inyectable",
+    "audiencia": "gallos de combate",
+    "precio_cop": 70000,
+    "precio_texto": "$70.000 más el envío",
+    "presentaciones": [
+      {
+        "detalle": "Frasco inyectable",
+        "precio_cop": 70000
+      }
+    ],
+    "especificaciones": "Dosis para mayores de 4 meses: 0.5 ml en la pechuga cada 15 días.",
+    "beneficios": "Vitamina B12 de fórmula americana que aporta fortalecimiento, masa muscular, alto rendimiento y complementa el desarrollo.",
+    "keywords": [
+      "cyano max",
+      "vitamina",
+      "b12",
+      "inyectable",
+      "americano",
+      "combate",
+      "masa muscular"
+    ],
+    "descripcion": "CYANO MAX\n\nVITAMINA B12\n\nFORMULA AMERICANA PARA GALLOS\n\n. FORTALECIMIENTO\n\n.MASA MUSCULAR\n\n.ALTO RENDIMIENTO\n\n.COMPLEMENTA EL DESARROLLO\n\nDOSIS :\n\nMAYORES DE 4 MESES\n\n0.5 ML EN LA PECHUGA CADA 15 DÍAS\n\nVALOR $70.000 MAS EL ENVÍO",
+    "ruta_local_imagen": "Fotos/100_CYANO_MAX.jpg",
+    "nombre_archivo": "100_CYANO_MAX.jpg",
+    "activo": true
+  },
+  {
+    "num": "101",
+    "nombre": "Nordic Rooster",
+    "slug": "nordic-rooster",
+    "categoria": "Vitaminas y suplementos",
+    "forma": "inyectable",
+    "audiencia": "gallos de combate",
+    "precio_cop": 250000,
+    "precio_texto": "$250.000 más el envío",
+    "presentaciones": [
+      {
+        "detalle": "Frasco inyectable",
+        "precio_cop": 250000
+      }
+    ],
+    "especificaciones": "Dosis para mayores de 4 meses: 0.5 ml en la pechuga cada 15 días.",
+    "beneficios": "Vitamina B12 de fórmula americana que aporta mejor desarrollo, recuperación, vitalidad y musculatura.",
+    "keywords": [
+      "nordic rooster",
+      "vitamina",
+      "b12",
+      "inyectable",
+      "americano",
+      "combate",
+      "desarrollo"
+    ],
+    "descripcion": "NORDIC ROOSTER\n\nVITAMINA B12\n\nFORMULA AMERICANA\n\nMEJOR DESARROLLO\n\n+ RECUPERACIÓN\n\n+VITALIDAD\n\n+MUSCULATUTA\n\nDOSIS:\n\nMAYOR DE 4 MESES\n\n0.5 ML EN LA PECHUGA CADA 15 DÍAS\n\nVALOR $250.000 MAS EL ENVÍO",
+    "ruta_local_imagen": "Fotos/101_NORDIC_ROOSTER.jpg",
+    "nombre_archivo": "101_NORDIC_ROOSTER.jpg",
+    "activo": true
+  }
+]

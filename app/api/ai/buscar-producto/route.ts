@@ -1,34 +1,128 @@
 import { z } from "zod";
-import { withBridge, audit, logEvent } from "@/lib/ai/bridge";
-import { getProducts } from "@/lib/ai/data";
-import { searchProducts } from "@/lib/ai/search";
-import { publicProduct, suggestion, emptyProduct, richMensaje } from "@/lib/ai/present";
+import { withBridge, audit, logEvent, recordInterest } from "@/lib/ai/bridge";
+import { getProducts, getExtraAliases, logSearchMiss } from "@/lib/ai/data";
+import { identifyProduct, esQueryBasura, esNumeroDeProducto } from "@/lib/ai/brain";
+import { rulesForTenant } from "@/lib/ai/aliases";
+import { detectarOtraMarca, preferirOtraMarca } from "@/lib/ai/marcas";
+import { detectForma, formaDe } from "@/lib/ai/search";
+import { publicProduct, suggestion, emptyProduct, richMensaje, opcionesMensaje, cualMensaje, variosMensaje } from "@/lib/ai/present";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export const POST = withBridge(
-  z.object({ q: z.string().optional().default("") }),
-  async ({ body }) => {
-    const catalog = await getProducts();
-    const r = searchProducts(body.q, catalog);
+  // `q` = nombre LIMPIO que el agente pasa como parámetro de buscar_producto.
+  // `q_raw` = último mensaje del cliente ({{last_text_input}}), solo de respaldo:
+  // Rooster mandaba el mensaje crudo ("si", "este", "precio") y el 80% eran búsquedas
+  // fallidas. Un placeholder sin reemplazar ("{{q_producto}}") cuenta como vacío.
+  z.object({ q: z.string().optional().default(""), q_raw: z.string().optional().default("") })
+    .transform((b) => {
+      const limpio = (s: string) => (/\{\{[^}]*\}\}/.test(s) ? "" : s.trim());
+      return { q: limpio(b.q) || limpio(b.q_raw) };
+    }),
+  async ({ body, customer, tenant }) => {
+    // CANDADO DURO (antes de tocar la DB): query vacío, o basura que no es una
+    // consulta (UChat manda la URL del audio/foto como `q` cuando el cliente
+    // manda una nota de voz). Nunca se devuelve un producto "por si acaso".
+    // Excepción: "77" / "5500" son nombres de producto, no basura.
+    if (esQueryBasura(body.q) && !esNumeroDeProducto(body.q, rulesForTenant(tenant.slug))) {
+      await logEvent("busqueda_producto", { q: body.q, status: "not_found", match: "", matched_by: "descartado", score: 0 });
+      return {
+        status: "not_found" as const,
+        match: "",
+        matched_by: "descartado",
+        producto: emptyProduct(),
+        opciones: [],
+        sugerencias: [],
+        // SIEMPRE "": sin match confiable el backend NO inventa texto; el silencio
+        // lo maneja el flujo del bot (mismo contrato que el resto del cerebro).
+        mensaje: "",
+      };
+    }
 
+    const [catalog, extraAliases] = await Promise.all([getProducts(), getExtraAliases()]);
+
+    // CEREBRO: alias → nombre → keyword única → necesidad fuerte → fuzzy → necesidad → nada.
+    const r = identifyProduct(body.q, catalog, extraAliases, rulesForTenant(tenant.slug));
+    if (r.product) await recordInterest(customer.id, [r.product.slug]); // CRM: registró interés
+
+    // Sugerencias: SOLO productos RELEVANTES (comparten palabra/categoría con el query).
+    // Nunca "parecidas" sin relación. Excluye el elegido y dedupe por nombre.
+    const yaMostrados = new Set<string>(
+      [r.product, ...r.options].filter(Boolean).map((p) => (p!.name || "").toLowerCase().trim()),
+    );
     const sugerencias = r.ranked
-      .filter((x) => x.product.slug !== r.product?.slug)
+      .filter((x) => x.relevant && x.product.slug !== r.product?.slug)
+      .filter((x) => { const k = (x.product.name || "").toLowerCase().trim(); if (yaMostrados.has(k)) return false; yaMostrados.add(k); return true; })
       .slice(0, 3)
       .map((x) => suggestion(x.product));
 
-    await logEvent("busqueda_producto", { q: body.q, status: r.status, match: r.product?.slug || "" });
+    await logEvent("busqueda_producto", {
+      q: body.q, status: r.status, match: r.product?.slug || "", matched_by: r.matchedBy, score: r.score,
+    });
 
-    if (!r.product) {
-      return {
+    // APRENDIZAJE: todo not_found y todo match flojo (<0.5) queda registrado
+    // en search_misses → de ahí salen los alias nuevos.
+    if (body.q && (r.status === "not_found" || (r.matchedBy === "fuzzy" && r.score < 0.5))) {
+      await logSearchMiss({
+        query: body.q,
+        queryNormalizado: r.norm.stripped || r.norm.q,
+        mejorCandidato: r.product?.slug || r.ranked[0]?.product.slug || "",
+        score: r.score,
         status: r.status,
+      });
+    }
+
+    // Match propio por una palabra suelta que NO cubre lo que pidió ("super cobra 500"
+    // → Energy Cobra) y el otro canal sí lo tiene → se redirige (los bots no se mezclan).
+    const otraPreferida = r.product && (r.matchedBy === "alias" || r.matchedBy === "fuzzy")
+      ? await preferirOtraMarca(body.q, r.product) : null;
+    // Pidió una FORMA que el producto encontrado no tiene ("rooster deluxe shampoo" →
+    // Rooster DELUXE en pastillas, 26-nov): ese producto no es lo que pidió.
+    const formaPedida = detectForma(body.q);
+    const formaHallada = r.product ? formaDe(r.product) : "";
+    // Solo formas que son OTRO TIPO de producto (shampoo, ungüento). Gotas/inyectable/pastillas
+    // NO: "dragon mamba en gotas" debe mostrar el Dragon Mamba y que el bot aclare que es inyectable.
+    const formaChoca = !!(r.product && formaPedida && (formaPedida === "shampoo" || formaPedida === "topico")
+      && formaHallada !== formaPedida);
+    if (!r.product || otraPreferida || formaChoca) {
+      // OTRA MARCA (M-CERO): antes de dar por perdida la consulta, miramos si lo que
+      // pidió es un producto EXCLUSIVO del otro negocio (botas, canilleras, comederos,
+      // antibióticos…). Si lo es, redirigimos a ese canal en vez de callar.
+      const otra = otraPreferida || await detectarOtraMarca(body.q)
+        || (formaChoca && formaPedida ? await detectarOtraMarca(formaPedida) : null);
+      if (otra) {
+        await logEvent("otra_marca", {
+          q: body.q, marca: otra.marca, producto: otra.producto_slug, sub_id: customer.uchatSubId || "",
+        });
+        return {
+          status: otra.status, // "otra_marca"
+          match: "",
+          matched_by: "otra_marca",
+          producto: emptyProduct(),
+          opciones: [],
+          sugerencias: [], // no ofrecemos sustitutos: es del otro canal, no de este
+          otra_marca: {
+            marca: otra.marca,
+            marca_nombre: otra.marca_nombre,
+            politica_pago: otra.politica_pago,
+            whatsapp: otra.whatsapp,
+            whatsapp_link: otra.whatsapp_link,
+            producto: otra.producto_nombre,
+          },
+          mensaje: otra.mensaje,
+        };
+      }
+      // Sin match real → not_found con mensaje "" (el bot maneja el silencio).
+      // El caso de q vacío ya se cortó arriba, antes de tocar la DB.
+      return {
+        status: "not_found" as const,
         match: "",
+        matched_by: r.matchedBy,
         producto: emptyProduct(),
-        sugerencias: sugerencias.length ? sugerencias : catalog.slice(0, 3).map(suggestion),
-        mensaje: body.q
-          ? `No tengo exactamente eso, pero mira estas opciones que vuelan 🐓: ${(sugerencias.length ? sugerencias : catalog.slice(0, 3).map(suggestion)).map((s) => s.name).join(", ")}. ¿Cuál te muestro?`
-          : "¿Para qué animal y qué buscas? Tengo energía, vitaminas, respiratorio, desparasitantes y más. 🐓",
+        opciones: [],
+        sugerencias, // solo relevantes (puede ir vacío)
+        mensaje: "",
       };
     }
 
@@ -36,13 +130,28 @@ export const POST = withBridge(
     await audit("buscar_producto", "products", { slug: p.slug, q: body.q });
 
     const pub = publicProduct(p);
+    // Coherencia mensaje↔status (§4.5): si hay producto, el mensaje NUNCA dice "no encontré".
+    //  - ambiguous → "¿cuál de estos buscas?" con las versiones concretas
+    //  - category  → "pa eso te sirven" con máx 3 de esa necesidad
+    //  - found     → ficha humanizada del producto (+ su imageUrl/foto)
+    const mensaje =
+      r.multi ? variosMensaje(r.options)
+      : r.status === "ambiguous" ? cualMensaje(r.options, r.nota)
+      : r.status === "category" ? opcionesMensaje(r.options)
+      : (r.nota ? `👉 ${r.nota}\n` : "") + richMensaje(p);
+
     return {
-      status: r.status,
+      // El contrato del bot solo conoce found/ambiguous/not_found: "category" se
+      // expone como ambiguous (mismo manejo: pregunta cuál) y el detalle real va
+      // en matched_by, para no romper los flujos ya publicados en UChat.
+      status: r.status === "category" ? "ambiguous" : r.status,
       match: p.slug,
+      matched_by: r.matchedBy,
       producto: pub,
       producto_contexto: pub.producto_contexto,
+      opciones: r.options.map((x) => suggestion(x)),
       sugerencias,
-      mensaje: richMensaje(p),
+      mensaje,
     };
   },
 );

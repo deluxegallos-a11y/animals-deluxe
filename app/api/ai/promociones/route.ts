@@ -8,13 +8,14 @@ export const dynamic = "force-dynamic";
 
 export const POST = withBridge(
   z.object({ categoria: z.string().optional().default("") }),
-  async ({ body }) => {
+  async ({ body, tenant }) => {
     const promos = await getActivePromotions(body.categoria || undefined);
     const imagen_url = promos[0]?.imagen_url || "";
+    const cierre = tenant.paymentMode === "anticipado" ? "" : " Contraentrega.";
     const mensaje = promos.length
       ? `🔥 Promos activas: ` +
         promos.map((p) => `${p.titulo}${p.precio_promo ? ` a ${cop(p.precio_promo)}` : ""}`).join(", ") +
-        `. Contraentrega. ¿Cuál te interesa?`
+        `.${cierre} ¿Cuál te interesa?`
       : "Ahora mismo no tengo promos activas, pero los precios ya son de combate 🐓. ¿Qué buscas?";
     return { promos, imagen_url, mensaje };
   },

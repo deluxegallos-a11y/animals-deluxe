@@ -243,9 +243,9 @@ export function generateContent(p: GenInput) {
 
   const objeciones: Record<string, string> = {
     muy_caro: `Mirá, son ${precio} pero rinde un montón (${pres}) y es inversión pa tu ${animal}. Un ${animal} sin el apoyo correcto te cuesta más a la larga. Sale baratico por lo que da.`,
-    lo_pienso: `Tranquilo parcero, te lo aparto sin compromiso y arrancás cuando querás. Eso sí, es de los que más sale, no te quedés sin él.`,
+    lo_pienso: `Tranquilo parcero, lo dejamos listo sin compromiso y arrancás cuando querás. Eso sí, es de los que más sale, no te quedés sin él.`,
     no_confio: `Es ${og} y es contraentrega: pagás cuando lo tenés en la mano. Cero riesgo, mi rey. Miles de galleros ya lo usan.`,
-    no_tengo_plata: `De una te entiendo. Mirá que es contraentrega, no pagás nada ahora; cuando te llegue lo pagás. ¿Te lo aparto pa guardarte el cupo?`,
+    no_tengo_plata: `De una te entiendo. Mirá que es contraentrega, no pagás nada ahora; cuando te llegue lo pagás. ¿En qué ciudad estás pa ver el envío?`,
     ya_lo_uso: `¡Bacano! Entonces ya sabés cómo rinde. ¿Te mando otro pa que no te quedés sin él en el momento clave? 🐓`,
   };
 

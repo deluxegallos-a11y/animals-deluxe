@@ -43,13 +43,13 @@ function Stat({
 }) {
   const n = useCountUp(value, run);
   return (
-    <div className="flex flex-col items-center px-2 text-center">
-      <span className="h-apple text-champagne text-[clamp(30px,9vw,52px)]">
+    <div className="flex flex-col items-center px-1.5 text-center">
+      <span className="font-heading text-champagne text-[clamp(32px,9vw,52px)] leading-none">
         {prefix}
         {n.toLocaleString("es-CO")}
         {suffix}
       </span>
-      <span className="font-ui mt-2 text-[clamp(10px,2.5vw,12px)] font-medium uppercase leading-tight tracking-[0.14em] text-white/45">
+      <span className="font-ui mt-3 text-[clamp(10px,2.5vw,12px)] font-medium uppercase leading-tight tracking-[0.14em] text-white/45">
         {label}
       </span>
     </div>
@@ -61,12 +61,12 @@ export function StatsBar() {
   const inView = useInView(ref, { once: true, margin: "-80px" });
 
   return (
-    <section className="bg-background px-5 py-12">
+    <section className="bg-background px-5 py-16">
       <div
         ref={ref}
-        className="glass mx-auto max-w-2xl rounded-[28px] px-6 py-8"
+        className="glass mx-auto max-w-2xl rounded-[28px] px-6 py-11 sm:px-10"
       >
-        <div className="mb-6 flex items-center justify-center gap-2.5">
+        <div className="mb-8 flex items-center justify-center gap-2.5">
           <span className="flex gap-0.5 text-[#ffd76a]">
             {Array.from({ length: 5 }).map((_, i) => (
               <svg key={i} width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden>

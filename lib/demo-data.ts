@@ -10,6 +10,8 @@ type RawProd = {
   slug: string; name: string; category: string; audience: string; origin: string;
   priceCOP: number; presentations?: Presentacion[]; image?: string; badges?: string[];
   tagline?: string; shortDesc?: string; benefits?: string[]; usage?: string; pitch?: string; keywords?: string[];
+  envioGratis?: boolean; descripcion?: string; edadMinima?: string; dosificacion?: string; presentacion?: string; paraQue?: string;
+  soloAnticipado?: boolean; minUnidades?: number;
 };
 
 const cats = (catalogo.categories || []) as RawCat[];
@@ -38,7 +40,7 @@ export const demoProducts: ProductView[] = prods.map((p) => {
     priceCOP: p.priceCOP || 0,
     presentations: p.presentations?.length ? p.presentations : [{ label: "Unidad", priceCOP: p.priceCOP || 0 }],
     image: p.image || "",
-    imageUrl: p.image ? `${SITE}/img/${p.image}` : "",
+    imageUrl: p.image ? `${SITE}/products/${p.image}` : "",
     badges: p.badges || [],
     tagline: p.tagline || "",
     shortDesc: p.shortDesc || "",
@@ -53,6 +55,15 @@ export const demoProducts: ProductView[] = prods.map((p) => {
     disclaimer: "Producto de bienestar y rendimiento. No cura enfermedades.",
     stock: 999,
     activo: true,
+    envioGratis: p.envioGratis ?? false,
+    controlStock: false,
+    soloAnticipado: p.soloAnticipado ?? false,
+    minUnidades: Math.max(1, p.minUnidades ?? 1),
+    descripcion: p.descripcion || "",
+    edadMinima: p.edadMinima || "",
+    dosificacion: p.dosificacion || "",
+    presentacion: p.presentacion || "",
+    paraQue: p.paraQue || "",
   };
 });
 
