@@ -14,3 +14,6 @@ drizzle
 .image-backups/
 .env*
 tests/reportes/
+
+# Respaldos de prompts (contienen datos del negocio): solo locales
+bot_uchat/*/respaldo_*/

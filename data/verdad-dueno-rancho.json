@@ -2,10 +2,30 @@
   "_fuente": "Verdad del dueño del Rancho de las Estrellas (Victor). Sale del prompt vigente del agente al 26-nov-2026 (respaldo en bot_uchat/rancho/respaldo_2026-11-26). Lo que no está confirmado va en pendientes: el bot NO lo inventa, escala a la encargada.",
   "_actualizado": "2026-11-26",
   "ejemplares": [
-    { "id": "creston", "nombre": "Crestón 6 meses", "precio": 1000000, "nota": "animal joven; todavía no sirve como padrote" },
-    { "id": "listo", "nombre": "Listo para exhibición", "precio": 2000000, "nota": "marcado para torneo, en su mejor punto" },
-    { "id": "padron", "nombre": "Padrón / padrote", "precio": 3000000, "nota": "reproductor seleccionado por genética" },
-    { "id": "gallina", "nombre": "Gallina reproductora", "precio": 3000000, "nota": "misma genética que los padrones" }
+    {
+      "id": "creston",
+      "nombre": "Crestón 6 meses",
+      "precio": 1000000,
+      "nota": "animal joven; todavía no sirve como padrote"
+    },
+    {
+      "id": "listo",
+      "nombre": "Listo para exhibición",
+      "precio": 2000000,
+      "nota": "marcado para torneo, en su mejor punto"
+    },
+    {
+      "id": "padron",
+      "nombre": "Padrón / padrote",
+      "precio": 3000000,
+      "nota": "reproductor seleccionado por genética"
+    },
+    {
+      "id": "gallina",
+      "nombre": "Gallina reproductora",
+      "precio": 3000000,
+      "nota": "misma genética que los padrones"
+    }
   ],
   "promo": {
     "nombre": "Promo de diciembre: ejemplares en etapa de cuido",
@@ -16,7 +36,12 @@
     "nota": "hijos de los mejores padrotes y madrillas, misma garantía; el envío es aparte"
   },
   "promo_parejas": "terminada (no ofrecer)",
-  "combos_2_meses": { "estado": "agotados", "vuelven": "en unos 2 meses, sin fecha fija", "se_separan": false, "dar_precio": false },
+  "combos_2_meses": {
+    "estado": "agotados",
+    "vuelven": "en unos 2 meses, sin fecha fija",
+    "se_separan": false,
+    "dar_precio": false
+  },
   "proceso_compra": {
     "abono_minimo": 200000,
     "pasos": "abono desde $200.000 → galería de 4-5 ejemplares → elige y paga el saldo → envío en bus; si no le gusta ninguno se le devuelve el abono a una cuenta de Colombia",
@@ -28,13 +53,18 @@
     "nacional_principales": "50.000 a 80.000",
     "nacional_trasbordo": "100.000 a 150.000",
     "uno_o_dos_igual": true,
-    "internacional_paises": ["Ecuador", "Perú", "Venezuela", "Panamá"],
+    "internacional_paises": [
+      "Ecuador",
+      "Perú",
+      "Venezuela",
+      "Panamá"
+    ],
     "internacional_costo": null
   },
   "pagos": {
     "titular": "Santiago Gomez",
-    "bancolombia_ahorros": "27592143602",
-    "nequi": "3006739746",
+    "bancolombia_ahorros": "(en UChat: subflujo C - Enviar Cuentas)",
+    "nequi": "(en UChat: subflujo C - Enviar Cuentas)",
     "ecuador": "hay cuenta en Ecuador (la da la encargada)",
     "otros_medios": null
   },
@@ -44,7 +74,45 @@
     "productos_droga_vitaminas": "+57 315 7652850 (hermano, Rooster Deluxe)",
     "rifas_eventos": "+57 305 292 4944"
   },
-  "lineas": ["Tony Montana", "Scarface", "Dolar", "Padrino", "Fundador", "Mon Diez", "Goyito Garcia", "Herradura", "Sucesor", "Depredador", "Corralito", "Malverde", "Secreto", "Hacienda Gissel", "221", "Caña Raza", "Canibal", "Esmeraldero", "Dennis Rodman", "Diamante Azul", "Angel Martinez", "Hector Andres", "Hacienda Paulino", "Alexis Castro", "El Chamo", "Venezolano", "TT La Riera", "Duhamel Colon", "Tito Diaz", "El Papi", "Boyka", "Criminal", "Jabados del Amor", "Tiger Whoodz", "Triple Corona", "Magia Blanca", "El Mexicano"],
+  "lineas": [
+    "Tony Montana",
+    "Scarface",
+    "Dolar",
+    "Padrino",
+    "Fundador",
+    "Mon Diez",
+    "Goyito Garcia",
+    "Herradura",
+    "Sucesor",
+    "Depredador",
+    "Corralito",
+    "Malverde",
+    "Secreto",
+    "Hacienda Gissel",
+    "221",
+    "Caña Raza",
+    "Canibal",
+    "Esmeraldero",
+    "Dennis Rodman",
+    "Diamante Azul",
+    "Angel Martinez",
+    "Hector Andres",
+    "Hacienda Paulino",
+    "Alexis Castro",
+    "El Chamo",
+    "Venezolano",
+    "TT La Riera",
+    "Duhamel Colon",
+    "Tito Diaz",
+    "El Papi",
+    "Boyka",
+    "Criminal",
+    "Jabados del Amor",
+    "Tiger Whoodz",
+    "Triple Corona",
+    "Magia Blanca",
+    "El Mexicano"
+  ],
   "pendientes": [
     "Costo del envío a Ecuador, Perú, Venezuela y Panamá (el bot inventó 500-700 dólares a Perú)",
     "¿Aceptan Zelle, PayPal u otro medio para clientes de fuera? ¿Cuál es la cuenta de Ecuador?",
