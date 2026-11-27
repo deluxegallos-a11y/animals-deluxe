@@ -20,8 +20,17 @@ export const POST = withBridge(
   async ({ customer, body, tenant }) => {
     // 100% PERMISIVO: guarda los campos que lleguen, ignora los que falten, y
     // devuelve SIEMPRE {ok:true, mensaje:""} (el bot no muestra nada; maneja el flujo).
-    const nombre = (body.nombre || "").trim();
-    const telefono = (body.telefono || "").trim();
+    // Placeholders sin reemplazar de UChat ("{{cedula}}") = vacío.
+    const v = (s: unknown) => { const t = String(s ?? "").trim(); return /\{\{[^}]*\}\}/.test(t) ? "" : t; };
+    body.ciudad = v(body.ciudad); body.direccion = v(body.direccion); body.cedula = v(body.cedula);
+    // Respaldo: el cliente manda todo en un mensaje ("Luis Cortés 12258417 3202940122 Hobo Huila…")
+    // y UChat lo reenvía en `datos`. Sacamos celular (10 díg. empieza en 3) y cédula (6-10 díg.).
+    const datos = v((body as Record<string, unknown>).datos);
+    const digitos = (datos.match(/\d[\d.]{5,13}\d/g) || []).map((x) => x.replace(/\D/g, ""));
+    const celDatos = digitos.find((x) => /^3\d{9}$/.test(x)) || "";
+    if (!body.cedula) body.cedula = digitos.find((x) => x !== celDatos && x.length >= 6 && x.length <= 10) || "";
+    const nombre = v(body.nombre);
+    const telefono = v(body.telefono) || celDatos;
     let guardado = false;
     try {
       if (db && !customer.id.startsWith("demo-")) {
