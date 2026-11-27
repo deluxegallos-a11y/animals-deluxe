@@ -36,6 +36,13 @@ const BLOQUEADOS_POR_TENANT: Record<string, string[]> = {
     "plume-king-shampoo",
     "gallo-purga-plus",
     "rooster-xt-impulsor",
+    /* 2026-11-25 · auditoría de los chats con el dueño: NO están en el catálogo de
+       contra entrega que él mandó (13-jun y 4-jul) y sí existen en Rooster Deluxe
+       (anticipado). Al bloquearlos aquí, si un cliente los pide el bot lo
+       REDIRIGE al WhatsApp de Rooster (marcas.ts) en vez de ofrecerlos COD. */
+    "rooster-smallpox",
+    // Dueño 26-nov: Rooster Deluxe Shampoo es pago anticipado (Super Cobra 500 SÍ es contra entrega).
+    "rooster-deluxe-shampoo",
   ],
 };
 

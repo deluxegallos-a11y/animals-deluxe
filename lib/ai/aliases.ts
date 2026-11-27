@@ -21,7 +21,7 @@ export type AliasEntry = {
 
 export const ALIAS_CATALOG: AliasEntry[] = [
   /* ---------- DOPING / ENERGIZANTES ---------- */
-  { slugs: ["red-dopping-mamba"], aliases: ["rebamba", "red manba", "red bamba", "la mamba", "mamba roja", "mamba", "red mamba", "red doping mamba"] },
+  { slugs: ["red-dopping-mamba"], aliases: ["rebamba", "red manba", "red bamba", "la mamba", "mamba roja", "red mamba", "red doping mamba"] },
   { slugs: ["dopping-dragon-mamba"], aliases: ["dragon mamba", "dragon", "mamba inyeccion oral", "dragon mamba oral", "doping dragon"] },
   { slugs: ["super-dragon-mamba"], aliases: ["super dragon mamba", "super dragon", "super mamba"] },
   { slugs: ["rooster-fury"], aliases: ["furi", "fury", "el furi", "american fury", "american rooster fury", "la furia"] },
@@ -39,7 +39,9 @@ export const ALIAS_CATALOG: AliasEntry[] = [
   { slugs: ["rooster-booster"], aliases: ["booster", "buster", "el buster", "rooster buster"] },
   { slugs: ["nordic-rooster"], aliases: ["nordic", "nordica", "nordico"] },
   { slugs: ["super-b12-max"], aliases: ["b12 max", "super b12", "b12max"] },
-  { slugs: ["super-vitamina-b12-5500-inyectable"], aliases: ["b12 5500", "la 5500", "super vitamina", "super vitamina b12", "vitamina b12 5500"] },
+  { slugs: ["super-vitamina-b12-5500-inyectable"], aliases: ["b12 5500", "5500 b12", "b12 de 5500", "super vitamina", "super vitamina b12", "vitamina b12 5500", "vitamina 5500"] },
+  // "5500" a secas: 3 productos lo llevan en el nombre (26-nov) → opciones, nunca adivinar.
+  { slugs: ["super-vitamina-b12-5500-inyectable", "ultra-gallo-b12-5500", "super-energizante-b15-5500-ultra"], aliases: ["5500", "la 5500", "el 5500", "las 5500"] },
   { slugs: ["cyano-max"], aliases: ["siano max", "cyano", "ciano max", "sianomax", "cianomax", "ciano"] },
   { slugs: ["ultra-gallo-b12-5500"], aliases: ["ultra gallo", "ultragallo", "ultra gallo b12"] },
   { slugs: ["rooster-complet"], aliases: ["complet", "complete", "b12 complete", "rooster complete"] },
@@ -68,14 +70,14 @@ export const ALIAS_CATALOG: AliasEntry[] = [
   { slugs: ["ascarbol-inyectable"], aliases: ["ascarbol", "ascarbol inyectable", "ascarbol vitaminico"] },
   { slugs: ["poultry-prime"], aliases: ["poultry", "prime pollitos", "poultri"] },
   { slugs: ["nutripeep-reforce"], aliases: ["nutripeep", "nutri peep", "reforce"] },
-  { slugs: ["rooster-strength"], aliases: ["strength", "rooster strength"] },
+  { slugs: ["rooster-strength"], aliases: ["strength", "rooster strength", "rooster estren", "roster estren", "estren", "estrent", "rooster stren", "roster strength"] },
   { slugs: ["super-cobra-500"], aliases: ["cobra 500", "super cobra"] },
 
   /* ---------- RECUPERACIÓN ---------- */
   { slugs: ["gallo-post-recovery"], aliases: ["recovery", "post recovery", "recuperador", "gallo post recovery"] },
 
   /* ---------- VERMÍFUGOS ---------- */
-  { slugs: ["gallo-purga"], aliases: ["gallopurga", "purga plus", "gallo purga plus", "gallo purga"] },
+  { slugs: ["gallo-purga"], aliases: ["gallopurga", "purga plus", "gallo purga plus", "gallo purga", "gallo pulga", "galo purga", "gallo purgas"] },
   { slugs: ["galliverm-super"], aliases: ["galiverm", "galliverm", "galiber", "galliverm super"] },
   { slugs: ["rooster-end-worm"], aliases: ["end worm", "endworm", "and worm", "rooster worm"] },
   { slugs: ["panacur"], aliases: ["panacur", "panacur purga"] },
@@ -102,13 +104,13 @@ export const ALIAS_CATALOG: AliasEntry[] = [
   { slugs: ["pollon-premium", "pollon-oro-gotas"], aliases: ["pollon", "poyon"] },
   { slugs: ["ciclosona-inyectable"], aliases: ["siclosona", "ciclosona", "ciclosona inyectable"] },
   { slugs: ["rooster-smallpox"], aliases: ["smallpox", "viruela", "bubas", "crema viruela", "esmolpox"] },
-  { slugs: ["percloruro"], aliases: ["percloruro", "para la sangre", "pa la sangre", "pa sangre"] },
+  { slugs: ["percloruro"], aliases: ["percloruro", "cloruro", "un cloruro", "perclorulo", "para la sangre", "pa la sangre", "pa sangre"] },
 
   /* ---------- HIGIENE ---------- */
   { slugs: ["shampoo-plume-king"], aliases: ["plume king", "shampoo", "champu", "shampu", "plum king"] },
   { slugs: ["lice-free"], aliases: ["lice free", "piojos", "antipiojos", "laisfri", "lice"] },
   { slugs: ["red-rooster"], aliases: ["enrojecedor", "red rooster litro", "red rooster"] },
-  { slugs: ["rooster-shave"], aliases: ["shave", "crema afeitar", "afeitadora", "rooster shave", "cheiv"] },
+  { slugs: ["rooster-shave"], aliases: ["shave", "crema afeitar", "afeitadora", "rooster shave", "cheiv", "para afeitar", "pa afeitar", "crema para afeitar"] },
 
   /* ---------- IMPLEMENTOS ---------- */
   {
@@ -175,11 +177,11 @@ export const NEED_RULES: NeedRule[] = [
   { id: "agua-pollitos", match: ["agua de los pollitos", "agua para pollitos"], slugs: ["clear-chicks-gotas", "cure-chest-for-rooster-gotas", "septibron-forte"] },
   { id: "comida", match: ["cuido alimento", "comida", "alimento", "concentrado", "alimentar", "de comer", "cuido diario"], slugs: ["avena", "cinta-azul", "master-pollito"] },
   { id: "respiratorio", match: ["moquillo", "gripa", "mocos", "moco", "respiratorio", "ahogado", "ahogo", "tos", "estornuda", "ronquera", "pal moquillo", "para el moquillo"], slugs: ["cure-chest-for-rooster-gotas", "cure-chest-for-rooster-pastillas", "clear-chicks-gotas", "septibron-forte"] },
-  { id: "purga", match: ["purga", "purgar", "desparasitar", "desparasitante", "desparasitantes", "vermifugo", "vermifugos", "lombriz", "lombrices", "gusano", "gusanos", "parasito", "parasitos", "parasitosis"], slugs: ["gallo-purga", "galliverm-super", "vermi-ultra", "vermicina-vermifugo"] },
+  { id: "purga", match: ["purga", "purgar", "purgarlos", "purgante", "purgantes", "esparacitante", "esparasitante", "desparacitante", "desparacitar", "desparasitar", "desparasitante", "desparasitantes", "vermifugo", "vermifugos", "lombriz", "lombrices", "gusano", "gusanos", "parasito", "parasitos", "parasitosis"], slugs: ["gallo-purga", "galliverm-super", "vermi-ultra", "vermicina-vermifugo"] },
   // "dopar" (el verbo) faltaba: "goticas para dopar los gallos" no matcheaba NADA
   // aquí y quedaba a merced del fuzzy, que lo mandaba a Botas. "goticas" en jerga
   // gallera es el doping en gotas.
-  { id: "doping", match: ["pelea", "peleas", "energia", "dope", "doping", "dopin", "que lo levante", "energizante", "para la pelea", "topada", "dopar", "doparlo", "dopalo", "para dopar", "dopar los gallos", "dopar el gallo", "goticas para dopar", "gotas para dopar", "goticas", "gotica"], categorySlug: "doping-energizantes" },
+  { id: "doping", match: ["pelea", "peleas", "energia", "dope", "doping", "dopin", "dopping", "dopaje", "dopi", "doppy", "dopy", "adope", "el dia de la exhibicion", "dia de exhibicion", "para la exhibicion", "para exhibicion", "antes de la pelea", "dia de la pelea", "antes del juego", "para el juego", "gallera", "que lo levante", "energizante", "para la pelea", "topada", "dopar", "doparlo", "dopalo", "para dopar", "dopar los gallos", "dopar el gallo", "goticas para dopar", "gotas para dopar", "goticas", "gotica"], categorySlug: "doping-energizantes" },
   { id: "engorde", match: ["engorde", "engordar", "peso", "masa", "musculo", "musculatura", "masa muscular"], slugs: ["rooster-deluxe-max", "weight-muscle"] },
   { id: "pollitos", match: ["pollitos", "pollito", "levante", "cria", "crias"], slugs: ["rooster-deluxe-chicks", "chicks-vitamax", "master-pollito"] },
   { id: "piojos", match: ["piojos", "piojo", "pulgas", "pulga", "acaros", "acaro", "garrapata", "garrapatas"], slugs: ["lice-free", "shampoo-plume-king"] },
@@ -190,6 +192,11 @@ export const NEED_RULES: NeedRule[] = [
   { id: "entrenar", match: ["entrenar", "entrenamiento", "topar", "topas", "corretear", "corretiar"], slugs: ["botas-cuero", "mona", "piquera-peruana"] },
   { id: "marcar", match: ["marcar", "marcaje", "identificar"], slugs: ["placas-personalizadas"] },
   { id: "afeitar", match: ["afeitar", "motilar", "rapar"], slugs: ["rooster-shave", "tijera-roja"] },
+  // "el B12" sin decir cuál (26-nov: quedaba sin respuesta) → las B12 que hay.
+  { id: "b12", match: ["b12", "vitamina b12", "complejo b"], slugs: ["super-vitamina-b12-5500-inyectable", "super-b12-max", "ultra-gallo-b12-5500", "super-tron-b12", "compleland-b12-oral"] },
+  // "para las gallinas, que pongan" iba a Galliverm (desparasitante) por parecido.
+  { id: "gallinas", match: ["que pongan", "paque pongan", "pa que pongan", "postura", "ponedora", "ponedoras", "para las gallinas", "pa las gallinas", "gallinas", "gallina"], slugs: ["hens", "rooster-deluxe-suplement"] },
+  { id: "calzar", match: ["calzar", "calsar", "calzadar", "calzada", "de calzar", "para calzar", "botiquin de calzar", "kit de calzar", "kit de calza", "calza"], slugs: ["espadadrapo-blanco", "percloruro", "cera-dominicana", "corta-espuela"] },
   { id: "vitaminas", match: ["vitamina", "vitaminas", "fortalecer", "cuido", "etapa final", "fortaleza"], categorySlug: "vitaminas-y-suplementos" },
 ];
 
@@ -205,8 +212,8 @@ export const NEED_RULES: NeedRule[] = [
 
 export const ALIAS_CATALOG_ANIMALS: AliasEntry[] = [
   /* ---------- DOPING / ENERGÍA ---------- */
-  { slugs: ["red-copping-mamba"], aliases: ["rebamba", "red manba", "red bamba", "la mamba", "mamba roja", "mamba", "red mamba", "red doping mamba", "red dopping mamba", "red copping mamba"] },
-  { slugs: ["dragon-mamba"], aliases: ["dragon mamba", "dragon", "mamba oral", "dragon oral"] },
+  { slugs: ["red-copping-mamba"], aliases: ["rebamba", "red manba", "red bamba", "la mamba", "mamba roja", "red mamba", "red doping mamba", "red dopping mamba", "red copping mamba"] },
+  { slugs: ["dragon-mamba"], aliases: ["dragon mamba", "dragon manba", "mamba inyectable", "dragon inyectable"] },
   { slugs: ["american-rooster-fury"], aliases: ["furi", "fury", "el furi", "american fury", "american rooster fury", "la furia"] },
   { slugs: ["atp-fighter-rooster"], aliases: ["atp", "el atp", "fighter", "atp fighter"] },
   { slugs: ["atp-rooster-gold"], aliases: ["atp gold", "gold", "atp dorado"] },
@@ -225,7 +232,10 @@ export const ALIAS_CATALOG_ANIMALS: AliasEntry[] = [
   { slugs: ["rooster-booster"], aliases: ["booster", "buster", "el buster", "rooster booster"] },
   { slugs: ["nordic-rooster-vitamins"], aliases: ["nordic", "nordica", "nordico", "nordic rooster"] },
   { slugs: ["super-b12-max"], aliases: ["b12 max", "super b12", "b12max"] },
-  { slugs: ["cyanomax-b12-5500"], aliases: ["siano max", "cyano", "ciano max", "sianomax", "cianomax", "ciano", "cyanomax"] },
+  { slugs: ["cyanomax-b12-5500"], aliases: ["siano max", "cyano", "ciano max", "sianomax", "cianomax", "ciano", "cyanomax", "b12 5500", "cyanomax 5500", "cyano 5500", "ciano 5500", "vitamina b12 5500", "cyanomax b12"] },
+  // "5500" a secas = CyanoMax B12 5500 o Super Energizante B15 5500 Ultra (26-nov el bot
+  // respondió con el B15 cuando pedían el CyanoMax). Sin más pistas → opciones.
+  { slugs: ["cyanomax-b12-5500", "super-energizante-b15"], aliases: ["5500", "la 5500", "el 5500"] },
   { slugs: ["rooscer-b12-complete"], aliases: ["complet", "complete", "b12 complete", "rooster complete", "rooscer"] },
   { slugs: ["champions-choice"], aliases: ["champions", "choice", "champion choice", "champions choice"] },
   { slugs: ["dragon-rooster"], aliases: ["dragon rooster", "dragon pastillas"] },
@@ -233,16 +243,17 @@ export const ALIAS_CATALOG_ANIMALS: AliasEntry[] = [
   { slugs: ["vitalmin-rooster"], aliases: ["vitalmin", "bitalmin", "vitalmin rooster"] },
   // VitaPower: SOLO Rooster Deluxe (anticipado) → sin alias en Animals.
   { slugs: ["rooster-strength"], aliases: ["strength", "rooster strength"] },
-  { slugs: ["rooster-deluxe-max"], aliases: ["deluxe max", "polvo max", "el polvo rojo", "rooster max"] },
   { slugs: ["rooster-deluxe-supplement"], aliases: ["supplement", "suplement", "suplemento deluxe", "deluxe supplement"] },
   { slugs: ["rooster-deluxe-chicks"], aliases: ["chicks", "polvo pollitos", "deluxe chicks", "deluxe pollitos"] },
+  // "vitamina para pollitos" caía por palabra clave en el Combo 4 Tapas (26-nov):
+  // son dos opciones reales, el bot pregunta cuál.
+  { slugs: ["rooster-deluxe-chicks", "combo-4-tapas"], aliases: ["vitamina para pollitos", "vitaminas para pollitos", "vitamina pollitos", "vitaminas pollitos"] },
 
   /* ---------- DESPARASITANTES ---------- */
   // Gallo Purga Plus: SOLO Rooster Deluxe (anticipado) → sin alias en Animals.
   // "purga"/"desparasitar" caen en la regla de necesidad (Purge Beach, And Worm, Super Cobra).
   { slugs: ["purge-beach"], aliases: ["purge beach", "purgebeak", "purge beak", "purgebeack", "purguebeak"] },
   { slugs: ["rooster-and-worm"], aliases: ["and worm", "end worm", "endworm", "rooster worm", "rooster and worm"] },
-  { slugs: ["super-cobra-500"], aliases: ["cobra 500", "super cobra", "super cobra 500"] },
 
   /* ---------- RESPIRATORIO ---------- */
   { slugs: ["cure-chest-rooster"], aliases: ["cure chest", "curechest", "kiur chest", "pecho", "cure chest for rooster"] },
@@ -250,12 +261,15 @@ export const ALIAS_CATALOG_ANIMALS: AliasEntry[] = [
 
   /* ---------- CUIDADO / PLUMAJE ---------- */
   { slugs: ["omega-3"], aliases: ["omega", "omega tres", "omega 3"] },
-  // Plume King Shampoo: SOLO Rooster Deluxe (anticipado). "shampoo"/"champú" ahora
-  // resuelven al shampoo que SÍ es de contra entrega (Rooster Deluxe Shampoo).
-  { slugs: ["rooster-deluxe-shampoo"], aliases: ["rooster deluxe shampoo", "shampoo deluxe", "champu deluxe", "shampoo", "champu", "shampu", "champo"] },
+  // Shampoos (Plume King y Rooster Deluxe Shampoo) son SOLO Rooster Deluxe (anticipado,
+  // dueño 26-nov): sin alias aquí → "shampoo" se redirige al bot de Rooster.
+  // Super Cobra 500 SÍ es contra entrega (dueño 26-nov).
+  { slugs: ["super-cobra-500"], aliases: ["cobra 500", "super cobra", "super cobra 500", "supercobra"] },
+  // Los galleros le dicen "Rooster Deluxe MAX" al Supplement (26-nov: el bot lo confundía
+  // con Rooster DELUXE de pollitos e inventaba la dosis). 1 kg y 3 kg = pago anticipado.
+  { slugs: ["rooster-deluxe-supplement"], aliases: ["rooster deluxe max", "deluxe max", "rooster max", "polvo max", "el polvo rojo", "rooster deluxe suplement", "rooster deluxe supplement"] },
   // Red Rooster (enrojecedor) es SOLO de Rooster Deluxe → NO se ofrece en Animals
   // (producto desactivado en animals-deluxe). Sin alias aquí para no resolverlo.
-  { slugs: ["rooster-smallpox"], aliases: ["smallpox", "viruela", "bubas", "crema viruela", "esmolpox"] },
 
   /* ---------- ENTRENAMIENTO / RECUPERACIÓN ---------- */
   { slugs: ["gallo-post-recovery"], aliases: ["recovery", "post recovery", "recuperador", "gallo post recovery"] },
@@ -277,15 +291,16 @@ export const ALIAS_CATALOG_ANIMALS: AliasEntry[] = [
 ];
 
 export const NEED_RULES_ANIMALS: NeedRule[] = [
-  { id: "cola-emplume", match: ["que le crezca la cola", "que les crezca la cola", "crezca la cola", "crecer la cola", "emplumar", "emplume", "que emplume", "cola", "plumaje", "muda"], slugs: ["omega-3", "rooster-deluxe-shampoo", "rooster-deluxe-max"] },
+  { id: "cola-emplume", match: ["que le crezca la cola", "que les crezca la cola", "crezca la cola", "crecer la cola", "emplumar", "emplume", "que emplume", "cola", "plumaje", "muda"], slugs: ["omega-3"] },
   { id: "respiratorio", match: ["moquillo", "gripa", "mocos", "moco", "respiratorio", "ahogado", "ahogo", "tos", "estornuda", "ronquera", "pal moquillo", "para el moquillo"], categorySlug: "respiratorio" },
   { id: "purga", match: ["purga", "purgar", "desparasitar", "desparasitante", "desparasitantes", "vermifugo", "vermifugos", "lombriz", "lombrices", "gusano", "gusanos", "parasito", "parasitos", "parasitosis"], slugs: ["purge-beach", "rooster-and-worm", "super-cobra-500"] },
   { id: "doping", match: ["pelea", "peleas", "energia", "dope", "doping", "dopin", "que lo levante", "energizante", "para la pelea", "topada", "careo", "dopar", "doparlo", "dopalo", "para dopar", "dopar los gallos", "dopar el gallo", "goticas para dopar", "gotas para dopar", "goticas", "gotica"], categorySlug: "energia" },
-  { id: "engorde", match: ["engorde", "engordar", "peso", "masa", "musculo", "musculatura", "masa muscular"], slugs: ["rooster-deluxe-max", "weight-muscle-protein", "gallo-post-recovery"] },
+  { id: "engorde", match: ["engorde", "engordar", "peso", "masa", "musculo", "musculatura", "masa muscular"], slugs: ["weight-muscle-protein", "gallo-post-recovery"] },
   { id: "pollitos", match: ["pollitos", "pollito", "levante", "cria", "crias", "polluelo"], slugs: ["rooster-deluxe-chicks", "nutripeep-refoce", "rooster-deluxe"] },
-  { id: "piojos", match: ["piojos", "piojo", "pulgas", "pulga", "acaros", "acaro", "garrapata", "garrapatas"], slugs: ["rooster-deluxe-shampoo", "omega-3"] },
-  { id: "viruela", match: ["viruela", "bubas", "hongos cara", "hongos en la cara"], slugs: ["rooster-smallpox"] },
-  { id: "recuperacion", match: ["recuperacion", "recuperar", "despues de la pelea", "post pelea"], slugs: ["gallo-post-recovery"] },
+  { id: "piojos", match: ["piojos", "piojo", "pulgas", "pulga", "acaros", "acaro", "garrapata", "garrapatas"], slugs: ["omega-3"] },
+  // 26-nov: "una inyección para después de la presentación" recibía pastillas. El
+  // inyectable de recuperación es Rooster B12 Complete; la forma pedida decide cuál.
+  { id: "recuperacion", match: ["recuperacion", "recuperar", "despues de la pelea", "post pelea", "despues de la presentacion", "despues de presentarlo", "post presentacion", "despues del juego", "despues de jugarlo"], slugs: ["gallo-post-recovery", "rooscer-b12-complete"] },
   { id: "entrenar", match: ["entrenar", "entrenamiento", "topar", "topas", "pre entreno", "preentreno"], slugs: ["super-trainer", "gallo-post-recovery", "weight-muscle-protein"] },
   { id: "perros", match: ["perro", "perros", "canino", "cachorro", "musculo perro", "perro flaco"], slugs: ["more-muscle-dogs"] },
   { id: "caballos", match: ["caballo", "caballos", "equino", "yegua", "potro"], slugs: ["horse-deluxe"] },

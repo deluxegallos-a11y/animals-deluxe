@@ -291,14 +291,22 @@ export function pidioAsesor(etiquetas: string[]): boolean {
   return tieneEtiqueta(etiquetas, "asesor humano");
 }
 
+export const PEDIDO_VIGENTE_MS = 7 * 86_400_000;
+
 /** El pedido real de la plataforma manda; si no hay, las etiquetas del bot.
  *  Estados de orders: remision | por_revisar | aprobado | guia | despachado | cancelado. */
-export function etapaDe(c: { pedidoEstado?: string | null; etiquetas?: string[] | null }): Etapa {
-  const e = (c.pedidoEstado || "").toLowerCase();
+export function etapaDe(c: { pedidoEstado?: string | null; etiquetas?: string[] | null; pedidoAt?: string | Date | null; ultimoClienteAt?: string | Date | null }): Etapa {
+  // Un pedido de una compra ANTERIOR (más de 7 días antes del último mensaje del
+  // cliente) no es el de esta conversación: «Artista» volvió el 26-nov y salía
+  // «Pedido confirmado AD-MHBN» por su pedido del 13-oct.
+  const viejo = !!c.pedidoAt && !!c.ultimoClienteAt &&
+    new Date(c.ultimoClienteAt).getTime() - new Date(c.pedidoAt).getTime() > PEDIDO_VIGENTE_MS;
+  const e = viejo ? "" : (c.pedidoEstado || "").toLowerCase();
   const tags = c.etiquetas || [];
   if (e === "guia" || e === "despachado" || e === "entregado") return "despachado";
   if (e === "aprobado") return "aprobado";
-  if (e === "remision" || e === "por_revisar" || tieneEtiqueta(tags, "pedido creado")) return "confirmado";
+  // Con pedido viejo, la etiqueta «Pedido creado» también es de aquella compra.
+  if (e === "remision" || e === "por_revisar" || (!viejo && tieneEtiqueta(tags, "pedido creado"))) return "confirmado";
   if (tieneEtiqueta(tags, "datos pedido")) return "datos";
   if (tieneEtiqueta(tags, "vio producto")) return "interesado";
   return "nuevo";

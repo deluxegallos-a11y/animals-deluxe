@@ -1,21 +1,31 @@
 import { z } from "zod";
 import { withBridge, audit, logEvent, recordInterest } from "@/lib/ai/bridge";
 import { getProducts, getExtraAliases, logSearchMiss } from "@/lib/ai/data";
-import { identifyProduct, esQueryBasura } from "@/lib/ai/brain";
+import { identifyProduct, esQueryBasura, esNumeroDeProducto } from "@/lib/ai/brain";
 import { rulesForTenant } from "@/lib/ai/aliases";
-import { detectarOtraMarca } from "@/lib/ai/marcas";
-import { publicProduct, suggestion, emptyProduct, richMensaje, opcionesMensaje, cualMensaje } from "@/lib/ai/present";
+import { detectarOtraMarca, preferirOtraMarca } from "@/lib/ai/marcas";
+import { detectForma, formaDe } from "@/lib/ai/search";
+import { publicProduct, suggestion, emptyProduct, richMensaje, opcionesMensaje, cualMensaje, variosMensaje } from "@/lib/ai/present";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export const POST = withBridge(
-  z.object({ q: z.string().optional().default("") }),
+  // `q` = nombre LIMPIO que el agente pasa como parámetro de buscar_producto.
+  // `q_raw` = último mensaje del cliente ({{last_text_input}}), solo de respaldo:
+  // Rooster mandaba el mensaje crudo ("si", "este", "precio") y el 80% eran búsquedas
+  // fallidas. Un placeholder sin reemplazar ("{{q_producto}}") cuenta como vacío.
+  z.object({ q: z.string().optional().default(""), q_raw: z.string().optional().default("") })
+    .transform((b) => {
+      const limpio = (s: string) => (/\{\{[^}]*\}\}/.test(s) ? "" : s.trim());
+      return { q: limpio(b.q) || limpio(b.q_raw) };
+    }),
   async ({ body, customer, tenant }) => {
     // CANDADO DURO (antes de tocar la DB): query vacío, o basura que no es una
     // consulta (UChat manda la URL del audio/foto como `q` cuando el cliente
     // manda una nota de voz). Nunca se devuelve un producto "por si acaso".
-    if (esQueryBasura(body.q)) {
+    // Excepción: "77" / "5500" son nombres de producto, no basura.
+    if (esQueryBasura(body.q) && !esNumeroDeProducto(body.q, rulesForTenant(tenant.slug))) {
       await logEvent("busqueda_producto", { q: body.q, status: "not_found", match: "", matched_by: "descartado", score: 0 });
       return {
         status: "not_found" as const,
@@ -63,11 +73,24 @@ export const POST = withBridge(
       });
     }
 
-    if (!r.product) {
+    // Match propio por una palabra suelta que NO cubre lo que pidió ("super cobra 500"
+    // → Energy Cobra) y el otro canal sí lo tiene → se redirige (los bots no se mezclan).
+    const otraPreferida = r.product && (r.matchedBy === "alias" || r.matchedBy === "fuzzy")
+      ? await preferirOtraMarca(body.q, r.product) : null;
+    // Pidió una FORMA que el producto encontrado no tiene ("rooster deluxe shampoo" →
+    // Rooster DELUXE en pastillas, 26-nov): ese producto no es lo que pidió.
+    const formaPedida = detectForma(body.q);
+    const formaHallada = r.product ? formaDe(r.product) : "";
+    // Solo formas que son OTRO TIPO de producto (shampoo, ungüento). Gotas/inyectable/pastillas
+    // NO: "dragon mamba en gotas" debe mostrar el Dragon Mamba y que el bot aclare que es inyectable.
+    const formaChoca = !!(r.product && formaPedida && (formaPedida === "shampoo" || formaPedida === "topico")
+      && formaHallada !== formaPedida);
+    if (!r.product || otraPreferida || formaChoca) {
       // OTRA MARCA (M-CERO): antes de dar por perdida la consulta, miramos si lo que
       // pidió es un producto EXCLUSIVO del otro negocio (botas, canilleras, comederos,
       // antibióticos…). Si lo es, redirigimos a ese canal en vez de callar.
-      const otra = await detectarOtraMarca(body.q);
+      const otra = otraPreferida || await detectarOtraMarca(body.q)
+        || (formaChoca && formaPedida ? await detectarOtraMarca(formaPedida) : null);
       if (otra) {
         await logEvent("otra_marca", {
           q: body.q, marca: otra.marca, producto: otra.producto_slug, sub_id: customer.uchatSubId || "",
@@ -112,7 +135,8 @@ export const POST = withBridge(
     //  - category  → "pa eso te sirven" con máx 3 de esa necesidad
     //  - found     → ficha humanizada del producto (+ su imageUrl/foto)
     const mensaje =
-      r.status === "ambiguous" ? cualMensaje(r.options, r.nota)
+      r.multi ? variosMensaje(r.options)
+      : r.status === "ambiguous" ? cualMensaje(r.options, r.nota)
       : r.status === "category" ? opcionesMensaje(r.options)
       : (r.nota ? `👉 ${r.nota}\n` : "") + richMensaje(p);
 

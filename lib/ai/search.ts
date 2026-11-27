@@ -105,11 +105,13 @@ const ANIMAL_WORDS = new Set([
    el bot lo daba por gotas (M7). El 🥄 NO sirve como señal: esas fichas lo usan para
    encabezar "Modo de uso" incluso en inyectables. */
 const FORMAS: { forma: string; q: RegExp; prod: RegExp }[] = [
-  { forma: "inyectable", q: /\b(inyect|ampoll|jeringa|intramuscular)\w*/, prod: /(\b(inyect|ampoll|intramuscular)\w*|💉|\d+[.,]?\d*\s*(ml|cc)\b[^.\n]{0,30}\bpechuga\b)/ },
+  { forma: "inyectable", q: /\b(inyect|inyecc|ampoll|jeringa|intramuscular)\w*/, prod: /(\b(inyect|ampoll|intramuscular)\w*|💉|\d+[.,]?\d*\s*(ml|cc)\b[^.\n]{0,30}\bpechuga\b)/ },
   // "goticas"/"gotitas" son el diminutivo que usa el gallero; sin ellos, quien
   // pedía goticas recibía inyectables.
   { forma: "gotas", q: /\b(gota|gotita|gotic|gotero|goteo)\w*/, prod: /(\b(gota|gotero)\w*|💧)/ },
   { forma: "polvo", q: /\b(polvo|polvos)\w*/, prod: /\b(polvo)\w*/ },
+  // "vitamina bebible" terminaba en una INYECTABLE (26-nov Rooster).
+  { forma: "oral", q: /\b(bebible|bebibles|tomad|oral|en el agua|bebedero)\w*/, prod: /(\boral\b|liquid|bebedero|litro|\b(gota|gotero)\w*|💧)/ },
   { forma: "pastillas", q: /\b(pastilla|tableta|capsul|caps|comprimid|pildora)\w*/, prod: /\b(pastilla|tableta|capsul|caps|comprimid)\w*/ },
   { forma: "shampoo", q: /\b(shampoo|champu)\w*/, prod: /\b(shampoo|champu)\w*/ },
   { forma: "topico", q: /\b(ungu|unguent|pomada|crema|roll|topic|frota)\w*/, prod: /\b(ungu|unguent|pomada|crema|roll|topic|frota)\w*/ },
@@ -145,7 +147,14 @@ export function productMatchesForma(p: ProductView, forma: string): boolean {
  * el nombre y el gancho de venta mienten más ("Gotas de Campeón" en polvo).
  */
 export function formaDe(p: ProductView): string {
+  // Un COMBO/KIT mezcla formas (gotas + inyectable + pastillas): no tiene UNA sola.
+  // Sin esto, "Omega-3 120 cáps" hacía que el Combo del Mes saliera "en pastillas".
+  if (/^(combo|kit)\b/i.test((p.presentacion || "").trim())) return "";
   const explicito = normalize([p.presentacion, p.dosificacion || "", p.usage].filter(Boolean).join(" "));
+  // Viene en DOS formas a la vez (Rooster Deluxe Supplement: pastillas o polvo):
+  // no hay UNA forma; el bot lee las presentaciones.
+  const formasExplicitas = FORMAS.filter((f) => f.prod.test(explicito));
+  if (formasExplicitas.length >= 2 && formasExplicitas.every((f) => f.forma === "pastillas" || f.forma === "polvo")) return "";
   for (const f of FORMAS) if (f.prod.test(explicito)) return f.forma;
   // Sin campo explícito: la descripción larga (redactada a mano) es la mejor fuente.
   const desc = normalize(p.descripcion || "");

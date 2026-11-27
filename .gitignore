@@ -13,3 +13,4 @@ drizzle
 .gstack/
 .image-backups/
 .env*
+tests/reportes/

@@ -2,7 +2,7 @@
    Corre contra tests/fixtures/animals-catalog.json (congelado desde prod). */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { identifyProduct } from "@/lib/ai/brain";
+import { identifyProduct, esNumeroDeProducto } from "@/lib/ai/brain";
 import { ALIAS_CATALOG_ANIMALS, NEED_RULES_ANIMALS, ANIMALS_RULES } from "@/lib/ai/aliases";
 import type { ProductView } from "@/lib/ai/types";
 import catalogJson from "@/tests/fixtures/animals-catalog.json";
@@ -82,10 +82,9 @@ test("ANIMALS: 'para la pelea' / 'energía' → categoría energia", () => {
   }
 });
 
-test("ANIMALS: 'para las pulgas' → shampoo/omega (no lice-free, que no existe aquí)", () => {
+test("ANIMALS: 'para las pulgas' → omega (los shampoos son de Rooster/anticipado; no lice-free)", () => {
   const s = slugs("para las pulgas");
-  // Plume King es solo de Rooster Deluxe: el shampoo de contra entrega es el Deluxe.
-  assert.ok(s.includes("rooster-deluxe-shampoo"), `fue ${s.join(", ")}`);
+  assert.ok(!s.some((x) => /shampoo|lice/.test(x)), `fue ${s.join(", ")}`);
 });
 
 /* ---------- productos exclusivos de animals ---------- */
@@ -113,4 +112,34 @@ test("ANIMALS: queries basura NUNCA devuelven producto", () => {
   for (const q of ["asdfxyz", "xkcd 123", "zzzzzz"]) {
     assert.equal(id(q).status, "not_found", `'${q}' no debió matchear`);
   }
+});
+
+/* ---------- errores reales del 26-nov ---------- */
+
+test("ANIMALS: '5500' a secas → opciones CyanoMax B12 5500 y B15 5500 Ultra", () => {
+  for (const q of ["5500", "la 5500"]) {
+    const s = slugs(q);
+    assert.ok(s.includes("cyanomax-b12-5500") && s.includes("super-energizante-b15"), `${q} → ${s.join(", ")}`);
+  }
+});
+
+test("ANIMALS: con el nombre, 5500 resuelve UNO solo (CyanoMax ≠ B15)", () => {
+  for (const q of ["cyanomax b12 5500", "cyanomax 5500", "b12 5500", "el cyanomax de 5500"]) assert.deepEqual(slugs(q), ["cyanomax-b12-5500"], q);
+  for (const q of ["b15 5500 ultra", "b15 5500", "ultra 5500"]) assert.deepEqual(slugs(q), ["super-energizante-b15"], q);
+});
+
+test("ANIMALS: 'vitamina para pollitos' ofrece el Chicks (no solo el Combo 4 Tapas)", () => {
+  const s = slugs("vitamina para pollitos");
+  assert.ok(s.includes("rooster-deluxe-chicks") && s.length > 1, s.join(", "));
+});
+
+test("ANIMALS: 'para qué sirve el chicks' es el Chicks, nunca Etapa de Cuido", () => {
+  for (const q of ["para que sirve el chicks", "que es el chicks", "chicks"]) assert.deepEqual(slugs(q), ["rooster-deluxe-chicks"], q);
+});
+
+test("ANIMALS: el candado de la ruta deja pasar números de producto, no celulares", () => {
+  assert.equal(esNumeroDeProducto("5500", ANIMALS_RULES), true);
+  assert.equal(esNumeroDeProducto("77", ANIMALS_RULES), true);
+  assert.equal(esNumeroDeProducto("3001234567", ANIMALS_RULES), false);
+  assert.equal(esNumeroDeProducto("energy cobra", ANIMALS_RULES), false);
 });

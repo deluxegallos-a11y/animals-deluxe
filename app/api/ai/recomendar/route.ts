@@ -10,7 +10,13 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export const POST = withBridge(
-  z.object({ necesidad: z.string().min(1) }),
+  // `necesidad` = parámetro limpio que pasa el agente; `necesidad_raw` = último mensaje
+  // ({{last_text_input}}) solo de respaldo (Rooster mandaba el mensaje crudo, 27-nov).
+  z.object({ necesidad: z.string().optional().default(""), necesidad_raw: z.string().optional().default("") })
+    .transform((b) => {
+      const limpio = (s: string) => (/\{\{[^}]*\}\}/.test(s) ? "" : s.trim());
+      return { necesidad: limpio(b.necesidad) || limpio(b.necesidad_raw) };
+    }),
   async ({ body, tenant }) => {
     // Mismo candado que /buscar-producto: una URL de audio/foto no es una necesidad.
     if (esQueryBasura(body.necesidad)) {

@@ -97,6 +97,25 @@ export async function uchatSendTemplate(userId: string, tpl: { name: string; lan
   }
 }
 
+/** Escribe campos de usuario de UChat (PUT /subscriber/set-user-field, uno por campo).
+ *  Fail-soft: nunca lanza. Devuelve cuántos quedaron escritos. */
+export async function uchatSetUserFields(userNs: string, campos: Record<string, string>): Promise<number> {
+  const token = process.env.UCHAT_API_TOKEN || "";
+  if (!token || !userNs) return 0;
+  const base = (process.env.UCHAT_API_BASE || "https://www.uchat.com.au/api").replace(/\/$/, "");
+  const res = await Promise.all(Object.entries(campos).map(async ([varNs, value]) => {
+    try {
+      const r = await fetch(`${base}/subscriber/set-user-field`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ user_ns: userNs, var_ns: varNs, value }),
+      });
+      return r.ok;
+    } catch { return false; }
+  }));
+  return res.filter(Boolean).length;
+}
+
 /** Trae datos del suscriptor (teléfono/nombre de WhatsApp) por su user_id (sub_id).
  *  Fail-soft. Normaliza el teléfono a 57XXXXXXXXXX. Usado para recuperar leads viejos sin número. */
 export async function uchatGetSubscriber(userId: string): Promise<{ ok: boolean; telefono?: string; nombre?: string; error?: string }> {

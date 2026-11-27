@@ -111,7 +111,7 @@ function rellenar(t: string, v: { nombre: string; asesor: string }) {
   const primer = v.nombre.trim().split(/\s+/)[0] || "";
   return t.replace(/\{nombre\}/gi, primer).replace(/\{asesor\}/gi, v.asesor).replace(/\s+([,.!?])/g, "$1").replace(/ {2,}/g, " ").trim();
 }
-const etapaConv = (c: Conv) => etapaDe({ pedidoEstado: c.pedidoEstado, etiquetas: c.etiquetas });
+const etapaConv = (c: Conv) => etapaDe({ pedidoEstado: c.pedidoEstado, etiquetas: c.etiquetas, pedidoAt: c.pedidoAt, ultimoClienteAt: c.ultimoClienteAt });
 function prefijo(c: Conv) {
   if (c.ultimoEmisor === "ia") return "Neo AI: ";
   if (c.ultimoEmisor === "asesor_panel" || c.ultimoEmisor === "asesor_uchat") return "Equipo: ";

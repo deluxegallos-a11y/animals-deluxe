@@ -25,6 +25,7 @@ const view = rows.map((p) => ({
   stock: p.stock ?? 999, activo: true, envioGratis: p.envio_gratis ?? false,
   descripcion: p.descripcion || "", edadMinima: p.edad_minima || "",
   dosificacion: p.dosificacion || "", presentacion: p.presentacion || "", paraQue: p.para_que || "",
+  soloAnticipado: !!p.solo_anticipado, minUnidades: p.min_unidades ?? 1,
 }));
 writeFileSync(OUT, JSON.stringify(view, null, 2) + "\n");
 console.log(`✓ ${view.length} productos → tests/fixtures/animals-catalog.json`);

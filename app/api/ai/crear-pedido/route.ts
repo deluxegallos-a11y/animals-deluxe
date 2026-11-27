@@ -8,10 +8,10 @@ import { getProducts } from "@/lib/ai/data";
 import { createOrder, parsePlainItems } from "@/lib/ai/orders";
 import { pushOrderToShopify } from "@/lib/shopify-sync";
 import { cop } from "@/lib/ai/format";
-import { searchProducts } from "@/lib/ai/search";
+import { searchProducts, detectForma, formaDe } from "@/lib/ai/search";
 import { identifyProduct } from "@/lib/ai/brain";
 import { rulesForTenant } from "@/lib/ai/aliases";
-import { detectarOtraMarcaEnItems, telLegible } from "@/lib/ai/marcas";
+import { detectarOtraMarcaEnItems, preferirOtraMarca, telLegible } from "@/lib/ai/marcas";
 import { DEFAULT_TENANT_SLUG } from "@/lib/ai/tenant";
 import type { ProductView } from "@/lib/ai/types";
 
@@ -26,6 +26,13 @@ const qty = (x: unknown) => {
 /** Placeholder del bot ("pendiente", "N/A", "-", "sin dato"…) = dato ausente. */
 const esPlaceholder = (s: string) =>
   !s || /^(pendiente|pend|n\/?a|na|no\s*(aplica|hay|tiene|se)|ninguno?|sin\s*\w*|desconocid[oa]|\.+|-+|\?+|x+)$/i.test(s.trim());
+/** Nombre completo = al menos 2 palabras de ≥2 letras (nombre + apellido). "Luis" solo NO pasa:
+ *  Interrapidísimo rechaza guías sin apellidos. */
+const nombreCompletoValido = (s: string): boolean => {
+  if (esPlaceholder(s)) return false;
+  const palabras = s.split(/\s+/).map((w) => w.replace(/[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ]/g, "")).filter((w) => w.length >= 2);
+  return palabras.length >= 2;
+};
 /** Celular colombiano válido → 10 dígitos que empiezan en 3 (tolera prefijo 57). "" si inválido. */
 const telValido = (raw: string): string => {
   let d = String(raw || "").replace(/\D/g, "");
@@ -47,6 +54,49 @@ function resolvesToProduct(name: string, catalog: ProductView[]): boolean {
    gallos: una cantidad enorme o un total absurdo NO se confirma automático. */
 const SOSPECHA_CANTIDAD = 20;
 const SOSPECHA_TOTAL_COP = 2_000_000;
+/** Interrapidísimo no despacha contra entrega por debajo de este valor en productos. */
+const MINIMO_CONTRAENTREGA_COP = 50_000; // dueño 26-nov (decisión final): mínimo $50.000 en productos; los de $45.000 suman otro producto
+
+/** 57XXXXXXXXXX → "313 316 0235" para el aviso al asesor. "" si no hay número. */
+function telAviso(raw: string): string {
+  let d = String(raw || "").replace(/\D/g, "");
+  if (d.length === 12 && d.startsWith("57")) d = d.slice(2);
+  return d.length === 10 ? `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}` : "";
+}
+
+/* Campos de UChat que usa la plantilla `aviso_pedido_asesor` (bot f280503 de Animals).
+   Bug 25-nov (AD-VBAJ): `ad_prod_nombre` lo llenaba solo buscar_producto; si el cliente
+   pidió sin búsqueda previa quedaba VACÍO, Meta rechaza la plantilla con un parámetro
+   vacío y el aviso NO llegaba (sin error en UChat). Ahora crear-pedido los escribe con
+   los datos REALES del pedido antes de responder, así el aviso siempre sale completo. */
+const AVISO_FIELDS_ANIMALS = {
+  prodNombre: "f280503v14846981", // ad_prod_nombre
+  prodPrecio: "f280503v14846983", // ad_prod_precio
+};
+async function llenarCamposAviso(tenantSlug: string, subId: string, producto: string, total: number): Promise<void> {
+  if (tenantSlug !== DEFAULT_TENANT_SLUG || !subId.startsWith("f280503u") || !producto) return;
+  const { uchatSetUserFields } = await import("@/lib/uchat");
+  await Promise.race([
+    uchatSetUserFields(subId, { [AVISO_FIELDS_ANIMALS.prodNombre]: producto, [AVISO_FIELDS_ANIMALS.prodPrecio]: String(total) }),
+    new Promise((res) => setTimeout(res, 3000)),
+  ]);
+}
+
+/** WhatsApp DESDE EL QUE SE HIZO el pedido (no el que el cliente escribe para la guía).
+ *  El dueño busca el chat por ese número: si el aviso trae solo el del destinatario,
+ *  no encuentra al cliente (reportes 9-jul, 27-ago, 14-nov, 25-nov). Fuentes, en orden:
+ *  lo que mande UChat en el body → get-info de UChat por sub_id. Fail-soft: "" si no hay. */
+async function whatsappDelChat(b: Record<string, unknown>, subId: string): Promise<string> {
+  const crudo = str(b.telefono_wa ?? b.wa_phone ?? b.phone ?? b.whatsapp_phone);
+  if (crudo.replace(/\D/g, "").length >= 10) return crudo;
+  if (!subId || subId.startsWith("demo-")) return "";
+  const { uchatGetSubscriber } = await import("@/lib/uchat");
+  const r = await Promise.race([
+    uchatGetSubscriber(subId),
+    new Promise<{ ok: false }>((res) => setTimeout(() => res({ ok: false }), 2500)),
+  ]);
+  return r.ok && "telefono" in r ? r.telefono || "" : "";
+}
 
 export const POST = withBridge(
   // Body PERMISIVO (§2.1): NUNCA rechazamos por formato ("faltan datos"). Normalizamos
@@ -62,7 +112,12 @@ export const POST = withBridge(
     const catalog = await getProducts();
 
     // --- Campos (acepta nombres alternativos que puede mandar el bot) ---
-    const nombre = str(b.nombre ?? b.cliente ?? b.nombre_cliente ?? b.nombreCliente);
+    // Nombre COMPLETO con apellidos (Interrapidísimo lo exige para la guía). Si el bot
+    // manda el apellido en un campo aparte, se une al nombre.
+    const nombreBase = str(b.nombre ?? b.cliente ?? b.nombre_cliente ?? b.nombreCliente ?? b.nombre_completo);
+    const apellidos = str(b.apellido ?? b.apellidos ?? b.apellido_cliente);
+    const nombre = apellidos && !nombreBase.toLowerCase().includes(apellidos.toLowerCase())
+      ? `${nombreBase} ${apellidos}`.trim() : nombreBase;
     const telefono = str(b.telefono ?? b.celular ?? b.movil ?? b.whatsapp ?? b.tel ?? b.numero);
     const ciudad = str(b.ciudad ?? b.municipio ?? b.pueblo);
     const oficina = str(b.oficina ?? b.agencia ?? b.punto_recogida ?? b.transportadora_oficina);
@@ -119,6 +174,7 @@ export const POST = withBridge(
     const items: { slug: string; presentacion?: string; cantidad: number }[] = [];
     const noEncontrados: string[] = []; // sin match → "no encontré"
     const aclarar: string[] = [];       // match dudoso/ambiguo → "¿cuál exactamente?"
+    const formasNoEncontradas: string[] = []; // "shampoo"/"topico" pedidos que no hay en este canal
     for (const r of raws) {
       const bySlug = catalog.find((p) => p.slug === r.name.toLowerCase());
       if (bySlug) { items.push({ slug: bySlug.slug, presentacion: r.presentacion, cantidad: r.cantidad }); continue; }
@@ -127,7 +183,16 @@ export const POST = withBridge(
         !!res.product && res.status !== "ambiguous" &&
         (res.matchedBy === "alias" || res.matchedBy === "name" || res.matchedBy === "keyword"
           || (res.matchedBy === "fuzzy" && res.score >= 0.6));
-      if (seguro) items.push({ slug: res.product!.slug, presentacion: r.presentacion, cantidad: r.cantidad });
+      // Un alias de una palabra ("cobra") no puede convertir un producto del OTRO canal
+      // ("super cobra 500") en uno nuestro: si no lo cubre, va a la detección de otra marca.
+      const otraPreferida = seguro && (res.matchedBy === "alias" || res.matchedBy === "fuzzy") ? await preferirOtraMarca(r.name, res.product) : null;
+      // Pidió un shampoo/ungüento y el match es de otra forma (AD-VBAJ 25-nov: "Rooster Deluxe
+      // Shampoo" quedó como Rooster DELUXE en pastillas). Ese producto NO es lo que pidió.
+      const formaPedida = detectForma(r.name);
+      const formaChoca = !!(seguro && res.product && (formaPedida === "shampoo" || formaPedida === "topico") && formaDe(res.product) !== formaPedida);
+      if (formaChoca) formasNoEncontradas.push(formaPedida!);
+      if (otraPreferida || formaChoca) noEncontrados.push(r.name);
+      else if (seguro) items.push({ slug: res.product!.slug, presentacion: r.presentacion, cantidad: r.cantidad });
       else if (res.product || res.status === "ambiguous" || res.status === "category") aclarar.push(r.name);
       else noEncontrados.push(r.name);
     }
@@ -136,7 +201,8 @@ export const POST = withBridge(
     // redirige al canal que sí lo despacha, con su número y su forma de pago.
     // Va ANTES de "aclarar"/"faltan datos" para que el cliente no dé vueltas.
     if (noEncontrados.length) {
-      const otras = await detectarOtraMarcaEnItems(noEncontrados);
+      let otras = await detectarOtraMarcaEnItems(noEncontrados);
+      if (!otras.length && formasNoEncontradas.length) otras = await detectarOtraMarcaEnItems(formasNoEncontradas);
       if (otras.length) {
         const primera = otras[0];
         const nombres = otras.map((o) => `*${o.producto_nombre}*`).join(", ");
@@ -209,17 +275,52 @@ export const POST = withBridge(
       }
     }
 
+    // --- MÍNIMO DE INTERRAPIDÍSIMO (reporte del dueño 30-jul / 17-ago / 19-nov):
+    // contra entrega solo se despacha si los PRODUCTOS suman ≥ $45.000. Un gotero de
+    // $25.000 solo no sale. No se crea el pedido: se le pide sumar unidades/productos.
+    if (metodo === "contraentrega" && items.length) {
+      const subtotalProd = items.reduce((s, it) => {
+        const p = catalog.find((x) => x.slug === it.slug);
+        return s + (p?.presentations?.[0]?.priceCOP ?? p?.priceCOP ?? 0) * it.cantidad;
+      }, 0);
+      if (subtotalProd > 0 && subtotalProd < MINIMO_CONTRAENTREGA_COP) {
+        await logEvent("pedido_no_creado", { motivo: "minimo_contraentrega", subtotal: subtotalProd, sub_id: subId });
+        await updateOrderAttempt(attemptId, { resultado: "rejected", motivo: `bajo mínimo COD: ${subtotalProd}` });
+        return {
+          ok: false,
+          status: "minimo_contraentrega",
+          minimo_cop: MINIMO_CONTRAENTREGA_COP,
+          subtotal_cop: subtotalProd,
+          campos_faltantes: ["producto"],
+          mensaje:
+            `Mi rey, la transportadora despacha contra entrega desde *${cop(MINIMO_CONTRAENTREGA_COP)}* en productos ` +
+            `y tu pedido va en ${cop(subtotalProd)}. ¿Le sumamos otra unidad u otro producto y te lo despacho de una? 🐓`,
+        };
+      }
+    }
+
     // --- REQUISITOS DUROS (bug AD-7PM7: se creó un pedido sin nombre/cédula/tel/dirección).
     // NINGÚN pedido se crea sin los 5 datos + 1 ítem. Se validan formato y placeholders.
     const telOk = telValido(telefono);            // celular CO válido (10 díg, empieza en 3)
-    const nombreOk = !esPlaceholder(nombre) && nombre.replace(/[^a-zA-ZáéíóúñÁÉÍÓÚÑ]/g, "").length >= 3;
+    const nombreOk = nombreCompletoValido(nombre);
     const faltantes: string[] = [];
+    // PAGO ANTICIPADO (Rooster Deluxe): el proceso del dueño es cuentas → comprobante →
+    // datos. Pedir nombre/cédula/dirección ANTES del pago hace creer que es contra entrega
+    // y el cliente no paga. Por eso aquí el pedido nace solo con producto (+ ciudad si la
+    // dio) en 'por_verificar_pago'; los datos llegan con el comprobante (registrar-cliente
+    // los completa en ESTE pedido). Antes, crear_pedido de Rooster no registraba NADA:
+    // 0 pedidos en el sistema con miles de chats.
+    const datosDespues = metodo === "anticipado";
+    if (datosDespues) {
+      if (!items.length) faltantes.push("producto");
+    } else {
     if (!nombreOk) faltantes.push("nombre");
     if (!telOk) faltantes.push("telefono");
     if (!cedula) faltantes.push("cedula");        // cédula: numérica ≥5 díg (ya validada arriba). Requerida.
     if (esPlaceholder(ciudad)) faltantes.push("ciudad");
     if (esPlaceholder(direccion)) faltantes.push("direccion");
     if (!items.length) faltantes.push("producto");
+    }
     if (faltantes.length) {
       await logEvent("pedido_no_creado", {
         motivo: "campos_faltantes", campos: faltantes, no_encontrados: noEncontrados,
@@ -227,7 +328,7 @@ export const POST = withBridge(
       });
       await updateOrderAttempt(attemptId, { resultado: "rejected", motivo: `faltan: ${faltantes.join(", ")}${noEncontrados.length ? ` · no encontré: ${noEncontrados.join(", ")}` : ""}` });
       const et: Record<string, string> = {
-        nombre: "tu nombre", telefono: "tu teléfono", ciudad: "tu ciudad",
+        nombre: "tu *nombre completo con apellidos* (la transportadora lo exige para la guía)", telefono: "tu teléfono", ciudad: "tu ciudad",
         direccion: "tu dirección (o la oficina de la transportadora)",
         cedula: "tu número de cédula (la transportadora la exige para entregar)",
         producto: noEncontrados.length ? `el producto (no encontré "${noEncontrados[0]}")` : "el producto que quieres",
@@ -239,12 +340,14 @@ export const POST = withBridge(
       };
     }
 
-    // actualizar datos del cliente
+    // actualizar datos del cliente (sin pisar con vacíos: en anticipado aún no los dio)
     if (db && !customer.id.startsWith("demo-")) {
-      await db
-        .update(customers)
-        .set({ nombre, telefono: telOk, ciudad, direccion, estado: "cliente", ultimoContacto: new Date() })
-        .where(eq(customers.id, customer.id));
+      const set: Record<string, unknown> = { estado: "cliente", ultimoContacto: new Date() };
+      if (nombreOk) set.nombre = nombre;
+      if (telOk) set.telefono = telOk;
+      if (!esPlaceholder(ciudad)) set.ciudad = ciudad;
+      if (!esPlaceholder(direccion)) set.direccion = direccion;
+      await db.update(customers).set(set).where(eq(customers.id, customer.id));
     }
 
     // --- SALVAGUARDA DE SENSATEZ (§2 · bug $385M) ---------------------------------
@@ -259,11 +362,25 @@ export const POST = withBridge(
     const totalEstimado = items.reduce((s, it) => s + precioDe(it.slug) * it.cantidad, 0);
     const sospechoso = maxCantidad > SOSPECHA_CANTIDAD || totalEstimado > SOSPECHA_TOTAL_COP;
 
+    // Teléfonos para el AVISO AL ASESOR: el de la guía + el WhatsApp del chat.
+    const waChat = await whatsappDelChat(b, subId);
+    const telGuia = telAviso(telOk);
+    const telChat = telAviso(waChat);
+    const telefonoAviso =
+      telChat && telChat !== telGuia ? `${telGuia} · WhatsApp del chat: ${telChat}`
+      : telGuia || telChat || (canal === "messenger" ? "cliente de Messenger (sin WhatsApp)" : "sin número");
+
+    // Anticipado sin datos aún: nombre del WhatsApp y teléfono del chat, para que el
+    // asesor ubique el pedido; el resto llega con el comprobante.
+    const nombrePedido = nombreOk ? nombre
+      : (datosDespues ? (str(b.nombre_wa) || customer.nombre || "Cliente WhatsApp") : nombre);
+    const telPedido = telOk || (datosDespues ? telValido(waChat) : "");
+    const ciudadPedido = esPlaceholder(ciudad) ? "" : ciudad;
     const order = await createOrder({
       subId: customer.uchatSubId || customer.id,
       customerId: customer.id,
       items,
-      nombre, telefono: telOk, ciudad, direccion, cedula,
+      nombre: nombrePedido, telefono: telPedido, ciudad: ciudadPedido, direccion: esPlaceholder(direccion) ? "" : direccion, cedula,
       cupon: cupon || undefined,
       metodo,
       canal,
@@ -272,7 +389,11 @@ export const POST = withBridge(
       estado: sospechoso ? "por_revisar" : (metodo === "anticipado" ? "por_verificar_pago" : undefined),
       notas: sospechoso
         ? `⚠️ REVISAR CANTIDAD (posible error del bot): pidió ${maxCantidad} unid · total estimado ${cop(totalEstimado)}. Confirmar con el cliente antes de despachar. La cantidad real suele ser 1.`
-        : undefined,
+        : [
+            datosDespues && (!nombreOk || !cedula || esPlaceholder(direccion))
+              ? "Pago anticipado: datos de envío pendientes (llegan con el comprobante)." : "",
+            telChat && telChat !== telGuia ? `WhatsApp del chat: ${telChat}` : "",
+          ].filter(Boolean).join(" ") || undefined,
     });
 
     const ref = order.ref;
@@ -284,6 +405,7 @@ export const POST = withBridge(
       await audit("pedido_por_revisar", "orders", { ref, maxCantidad, total: totalEstimado });
       await updateOrderAttempt(attemptId, { resultado: "por_revisar", ref, motivo: `sospechoso: ${maxCantidad} unid / ${totalEstimado}` });
       const listaNombres = order.items.map((it) => it.name).join(", ");
+      await llenarCamposAviso(tenant.slug, subId, `${order.items.map((it) => `${it.cantidad}× ${it.name}`).join(", ")} (POR REVISAR)`, order.total_cop);
       return {
         pedido_id: order.pedido_id,
         ref,
@@ -333,17 +455,16 @@ export const POST = withBridge(
     await updateOrderAttempt(attemptId, { resultado: "created", ref: order.ref });
 
     const listaProductos = order.items.map((it) => `${it.cantidad}× ${it.name}`).join(", ");
+    await llenarCamposAviso(tenant.slug, subId, listaProductos, order.total_cop);
     // Aviso de mínimo por envío (M6.3): el total ya viene recalculado con la cantidad subida.
     const avisoMinimo = subidos.length
       ? `ℹ️ De ${subidos.join(" y ")} se envían mínimo esas unidades, así que ajusté la cantidad.\n`
       : "";
     const mensaje = metodo === "anticipado"
       // --- PAGO ANTICIPADO: nunca menciona contra entrega. Pide comprobante. ---
-      ? `✅ ¡Listo${nombre ? " " + nombre.split(" ")[0] : ""}! Tu pedido quedó registrado 🎉 Ref *${ref}*\n` +
-        `${listaProductos}\n` + avisoMinimo +
-        `*Total a pagar: ${cop(order.total_cop)}*\n` +
-        `Para despacharlo, realiza el pago por adelantado y envíame el *comprobante*. ` +
-        `Un asesor lo confirma y coordina el envío a ${ciudad}. ¡Gracias! 🐓`
+      ? `📝 Tu pedido: ${listaProductos}\n` + avisoMinimo +
+        `💵 *Total a transferir: ${cop(order.total_cop)}* (solo productos; el envío se paga al recibir)` +
+        (ciudadPedido ? ` · ${ciudadPedido}` : "") + ` · Ref *${ref}*`
       // --- CONTRA ENTREGA (Animals Deluxe) ---
       : `✅ ¡Listo${nombre ? " " + nombre.split(" ")[0] : ""}! Tu pedido quedó confirmado 🎉 Ref *${ref}*\n` +
         `${listaProductos}\n` + avisoMinimo +
@@ -362,6 +483,13 @@ export const POST = withBridge(
       // pedido recién creado (producto, total y ref), para que el bot no llene la
       // plantilla con variables de un pedido anterior.
       producto_resumen: listaProductos,
+      // Aviso al asesor: SIEMPRE con número. `telefono_aviso` trae el de la guía y,
+      // si es distinto, el WhatsApp desde el que se hizo el pedido (para encontrar el chat).
+      cliente_nombre: nombre,
+      cliente_telefono: telOk,
+      cliente_whatsapp: waChat.replace(/\D/g, ""),
+      cliente_cedula: cedula,
+      telefono_aviso: telefonoAviso,
       subtotal_cop: order.subtotal_cop,
       total_cop: order.total_cop,
       flete: order.envio_cop,

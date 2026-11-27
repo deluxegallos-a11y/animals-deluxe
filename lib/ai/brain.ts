@@ -114,8 +114,20 @@ export function esQueryBasura(raw: string): boolean {
   return false;
 }
 
+/** ¿Es un número suelto que los clientes usan como NOMBRE de producto ("77", "5500")?
+ *  Esos no son basura aunque no tengan letras: son un alias exacto del tenant. */
+export function esNumeroDeProducto(raw: string, rules: Ruleset = ROOSTER_RULES, index?: AliasIndex): boolean {
+  const q = normalizeQuery(raw).q;
+  if (!/^\d+$/.test(q)) return false;
+  return (index || buildAliasIndex([], rules.aliases)).some((e) => e.alias === q);
+}
+
 export function normalizeQuery(raw: string): NormalizedQuery {
-  const q = normalize(raw).replace(/[^a-z0-9\s+]/g, " ").replace(/\s+/g, " ").trim();
+  const q = normalize(raw).replace(/[^a-z0-9\s+]/g, " ").replace(/\s+/g, " ").trim()
+    // "la b 12 5500" / "be 12" → "b12": separada, la B12 se volvía B15 por parecido (26-nov Rooster).
+    .replace(/\b(?:b|be)\s+(12|15)\b/g, "b$1")
+    // "1espadadrapo" (número pegado) → "1 espadadrapo"
+    .replace(/\b(\d+)([a-z]{3,})/g, "$1 $2");
   const stripped = stripFillers(q);
   return {
     raw, q, stripped,
@@ -212,6 +224,8 @@ export interface BrainResult {
   /** Ranking del motor fuzzy (para sugerencias). */
   ranked: { product: ProductView; score: number; relevant: boolean }[];
   norm: NormalizedQuery;
+  /** El cliente pidió VARIOS productos distintos en un mensaje (no es "¿cuál de estos?"). */
+  multi?: boolean;
 }
 
 const THRESHOLD = 0.35;
@@ -246,6 +260,23 @@ const FUZZY_STOP = new Set([
   // Cinturón y tirantes junto al candado de URLs: si "media" vuelve a colarse por
   // otra vía, ya no puede identificar un producto por sí sola.
   "media", "luna",
+  // CHARLA de WhatsApp (chats reales Rooster 26-nov): por parecido ortográfico
+  // "en cuánto SALE"→Catosal, "muestre AVER"→Avena, "una foto de la MANO"→Mamba,
+  // "una de CUIDADO"→Candados, "maletero PERSONALIZADO"→Placas, "ESPUELAS"→Corta
+  // Espuela (no vendemos espuelas sueltas), "GALLINAS"→Galliverm. Estas palabras
+  // no nombran un producto: que decida el alias, la necesidad o el contexto.
+  "cuanto", "cuantos", "cuanta", "cuantas", "sale", "salen", "vale", "valen", "cuesta", "cuestan",
+  "precio", "precios", "valor", "muestre", "muestreme", "muestra", "mostrar", "aver", "ver",
+  "mano", "amigo", "amiga", "firma", "parce", "parcero", "hermano", "mijo", "rey", "senor",
+  "este", "esta", "ese", "esa", "estos", "estas", "esos", "esas", "eso", "esto",
+  "otro", "otra", "otros", "otras", "mejor", "bueno", "buena", "buenos", "buenas", "dias", "tardes", "noches",
+  "manejan", "maneja", "manejas", "tipos", "tipo", "clase", "clases", "envio", "enviar", "despachar",
+  "cuidado", "personalizado", "personalizada", "personalizados", "espuela", "espuelas",
+  "gallina", "gallinas", "pollo", "pollos", "combate", "exhibicion",
+  // necesidades con typo: que decida la regla de necesidad, no el parecido ("esparacitante"→Espadadrapo)
+  // "botiquín de calzar COMPLETO" → Rooster Complet (27-nov, primer chat en vivo)
+  "completo", "completa", "completos", "botiquin", "kit",
+  "purgante", "purgantes", "esparacitante", "esparasitante", "desparacitante", "dopaje", "dopi", "doppy", "dopy",
 ]);
 
 /** Dedupe por nombre (el catálogo tiene SKUs repetidos: 2× Mona, 2× Tijera Roja…). */
@@ -267,6 +298,10 @@ function bySlugs(slugs: string[], products: ProductView[]): ProductView[] {
   }
   return dedupe(out);
 }
+
+/** Palabras que están en el nombre de MEDIO catálogo: solas no identifican nada
+ *  ("rooster" → Fury, Strength, Booster, Deluxe…). El bot debe usar el contexto. */
+const PALABRA_DE_MARCA = new Set(["rooster", "gallo", "pollo", "deluxe", "for"]);
 
 function pack(
   hits: ProductView[],
@@ -337,19 +372,54 @@ export function identifyProduct(
   extraAliases: AliasEntry[] = [],
   rules: Ruleset = ROOSTER_RULES,
 ): BrainResult {
+  return familiaVitamina(rawQuery, products, identifyCore(rawQuery, products, extraAliases, rules));
+}
+
+/** B12 y B15 son familias distintas (vitamina vs energizante). 26-nov Rooster: "las 5500
+ *  B12" mostraba la B15 5500 por parecido del "5500", y el cliente pedía otra cosa.
+ *  Si el cliente dijo B12, un producto que es B15 (y no B12) nunca sale, y viceversa. */
+function familiaVitamina(rawQuery: string, products: ProductView[], r: BrainResult): BrainResult {
+  const fam = /\bb12\b/.test(r.norm.q) ? "b12" : /\bb15\b/.test(r.norm.q) ? "b15" : null;
+  if (!fam) return r;
+  const otra = fam === "b12" ? "b15" : "b12";
+  const ajena = (p: ProductView) => { const n = normalize(p.name); return n.includes(otra) && !n.includes(fam); };
+  const list = r.options.length ? r.options : r.product ? [r.product] : [];
+  if (list.length && !list.some(ajena)) return r;
+  const keep = list.filter((p) => !ajena(p));
+  if (keep.length) {
+    const st: BrainStatus = r.status === "category" ? "category" : keep.length > 1 ? "ambiguous" : "found";
+    return { ...r, status: st, product: keep[0], options: keep.length > 1 ? keep : [] };
+  }
+  // Nada válido (o no encontró nada): las de ESA familia, para que el cliente elija.
+  const fam2 = dedupe(speciesPool(rawQuery, products).filter((p) => normalize(p.name).includes(fam)));
+  if (!fam2.length) return { ...r, status: "not_found", product: null, options: [] };
+  return {
+    ...r, status: fam2.length > 1 ? "ambiguous" : "found", product: fam2[0],
+    options: fam2.length > 1 ? fam2.slice(0, 4) : [], matchedBy: "name", score: 0.5,
+  };
+}
+
+function identifyCore(
+  rawQuery: string,
+  products: ProductView[],
+  extraAliases: AliasEntry[],
+  rules: Ruleset,
+): BrainResult {
   const norm = normalizeQuery(rawQuery);
 
   /* --- PASO -1: CANDADO. Query vacío o basura (URL de audio/foto, archivo, id)
      → not_found seco, SIN mirar el catálogo. Nunca un producto "por si acaso". */
-  if (esQueryBasura(rawQuery)) {
-    return { status: "not_found", product: null, options: [], matchedBy: "", score: 0, ranked: [], norm };
-  }
-
   // Índice de alias del tenant (+ alias extra de la DB). Se cachea el del set
   // rooster sin extras (caso más común en los tests) para no reconstruirlo.
   const index = (rules === ROOSTER_RULES && !extraAliases.length)
     ? DEFAULT_INDEX
     : buildAliasIndex(extraAliases, rules.aliases);
+  // Un número suelto es basura (id, celular)… salvo que sea el número de un producto
+  // que los clientes usan como nombre ("77", "5500"): ese es un alias exacto.
+  const numeroDeProducto = esNumeroDeProducto(rawQuery, rules, index);
+  if (!numeroDeProducto && esQueryBasura(rawQuery)) {
+    return { status: "not_found", product: null, options: [], matchedBy: "", score: 0, ranked: [], norm };
+  }
   // FILTRO POR ESPECIE — se aplica de PASO 1b en adelante. Un producto de perro o
   // de caballo solo entra si el cliente nombró ese animal; si no, el pool es
   // gallos+pollos. Bug real: "algo para el músculo" resolvía More Muscle Dogs
@@ -374,24 +444,67 @@ export function identifyProduct(
   // "vitaminas y minerales" es CATEGORÍA, no el único SKU con esa keyword.
   const hasIdentity = norm.tokens.some((t) => !FUZZY_STOP.has(t));
 
+  /* --- PASO 0: UNA SOLA PALABRA que comparten varios productos ---
+     Bug 25-nov (venta perdida): el cliente venía hablando del American Rooster Fury,
+     escribió "rooster" y el alias más corto lo mandó a Rooster And Worm. Lo mismo
+     con "mamba" (Red vs Dragon), "dragon" (Mamba vs Rooster), "energy" (Cobra vs 77).
+     Una palabra suelta que está en el NOMBRE de 2+ productos no identifica a ninguno:
+     se devuelven las opciones y el bot pregunta (o usa el producto de la conversación).
+     Una palabra genérica del dominio ("gallo") sola no elige producto. */
+  const toks0 = norm.stripped.split(" ").filter(Boolean);
+  const aliasExacto = index.some((e) => e.alias === norm.q || e.alias === norm.stripped);
+  if (!aliasExacto && toks0.length === 1 && PALABRA_DE_MARCA.has(singular(toks0[0]))) return empty;
+  // Solo palabras de marca ("rooster deluxe"): están en DELUXE, Chicks, Supplement… → opciones.
+  if (!aliasExacto && toks0.length >= 2 && toks0.every((t) => PALABRA_DE_MARCA.has(singular(t)))) {
+    const duenos = pool.filter((p) => { const n = normalize(p.name).split(/[^a-z0-9]+/).map(singular); return toks0.every((t) => n.includes(singular(t))); });
+    if (dedupe(duenos).length >= 2) return pack(duenos, "name", 0.5, norm, ranked);
+  }
+  if (!aliasExacto && toks0.length === 1 && toks0[0].length >= 4 && !FUZZY_STOP.has(toks0[0])) {
+    const t = singular(toks0[0]);
+    const duenos = pool.filter((p) => normalize(p.name).split(/[^a-z0-9]+/).map(singular).includes(t));
+    if (dedupe(duenos).length >= 2) return pack(duenos, "name", 0.5, norm, ranked);
+  }
+
   /* --- PASO 1a: ALIAS contenido en el query (alias más largo gana) ---
      "dragon mamba" gana sobre "mamba"; "atp gold" sobre "gold". */
+  const aliasHits: AliasIndex = [];
   for (const e of index) {
+    // Un alias que es SOLO número ("5500", "77") va exacto: la variante fonética colapsa
+    // dígitos dobles ("5500"→"50") y "cobra 500" terminaba pegado a los productos 5500.
+    if (/^\d+$/.test(e.alias)) {
+      if (containsPhrase(norm.q, e.alias) && bySlugs(e.slugs, products).length) aliasHits.push(e);
+      continue;
+    }
     const hit =
       containsPhrase(norm.q, e.alias) ||
       containsPhrase(norm.stripped, e.alias) ||
       containsPhrase(phonetic(norm.q), phonetic(e.alias)) ||
       // singular/plural: "botas"→"bota" y viceversa
       containsPhrase(norm.stripped.split(" ").map(singular).join(" "), e.alias.split(" ").map(singular).join(" "));
-    if (!hit) continue;
-    const hits = bySlugs(e.slugs, products);
-    if (hits.length) return pack(hits, "alias", 1, norm, ranked, e.nota);
+    if (hit && bySlugs(e.slugs, products).length) aliasHits.push(e);
+  }
+  // VARIOS PRODUCTOS en un mensaje (26-nov: "tienen placas, botas, tijera y piqueras"
+  // devolvía solo la Piquera y el bot la mandó 4 veces). Alias distintos que no se
+  // contienen entre sí ("mamba" está dentro de "dragon mamba" → es el mismo pedido).
+  const sing = (s: string) => s.split(" ").map(singular).join(" ");
+  const distintos = aliasHits.filter((e, i) =>
+    !aliasHits.some((o, j) => j !== i && o.alias.length > e.alias.length && containsPhrase(sing(o.alias), sing(e.alias))));
+  const grupos = distintos.filter((e, i) => distintos.findIndex((o) => o.slugs.join() === e.slugs.join()) === i);
+  if (grupos.length >= 2 && grupos.every((g) => !grupos.some((o) => o !== g && o.slugs.some((s) => g.slugs.includes(s))))) {
+    const todos = dedupe(grupos.flatMap((g) => bySlugs(g.slugs, products)));
+    if (todos.length >= 2) return { ...pack(todos, "alias", 1, norm, ranked), options: todos.slice(0, 6), multi: true };
+  }
+  if (aliasHits.length) {
+    const e = aliasHits[0];
+    return pack(bySlugs(e.slugs, products), "alias", 1, norm, ranked, e.nota);
   }
 
   /* --- PASO 1b: el query es PARTE de un alias ("mamba" → "la mamba") ---
      Segunda pasada, y aquí gana el alias MÁS CORTO (el que mejor le calza):
-     si fuera en la misma pasada, "mamba" caería en "dragon mamba". */
-  if (norm.stripped.length >= 4) {
+     si fuera en la misma pasada, "mamba" caería en "dragon mamba".
+     Solo con palabras que identifican: "vitaminas" a secas es parte de "vitaminas
+     para pollitos", pero es una NECESIDAD amplia, no ese alias. */
+  if (norm.stripped.length >= 4 && hasIdentity) {
     for (const e of [...index].sort((a, b) => a.alias.length - b.alias.length)) {
       if (!containsPhrase(e.alias, norm.stripped)) continue;
       // Contra `pool`: "musculo" es parte del alias "musculo perro", y sin este
@@ -478,7 +591,20 @@ export function identifyProduct(
     if (best >= THRESHOLD) cands.push({ product: p, sim: best });
   }
   cands.sort((a, b) => b.sim - a.sim);
+  // Pidió una FORMA (26-nov: "inyectable para recuperación" → Gallo Post Recovery en
+  // pastillas por parecido "recovery≈recuperación"): un candidato de otra forma no gana
+  // por similitud de nombre; se deja a la regla de necesidad, que sí filtra por forma.
+  if (forma && cands.length) {
+    const enForma = cands.filter((c) => productMatchesForma(c.product, forma));
+    cands.splice(0, cands.length, ...enForma);
+  }
 
+  // Una NECESIDAD escrita tal cual ("calzadar", "purgante") gana sobre un parecido
+  // ortográfico flojo: "botiquín de calzadar completo" terminaba en Compleland (27-nov).
+  if (cands.length && need && cands[0].sim < 0.6) {
+    const prods = needProducts(need, pool, forma);
+    if (prods.length) return { status: "category", product: prods[0], options: prods, matchedBy: "need", score: 0, ranked, norm };
+  }
   if (cands.length) {
     const top = cands[0];
     // 2-3 candidatos cercanos Y de la misma categoría → ambiguous.
