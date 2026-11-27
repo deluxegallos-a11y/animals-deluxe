@@ -124,3 +124,22 @@ test("crear_pedido: la lista '1x A, 1x B, 2x C' son 3 productos con su cantidad"
   assert.deepEqual(items.map((i) => [i.name, i.cantidad]), [["Espadadrapo Blanco 4 pulgadas", 1], ["Cera Dominicana", 1], ["Mona", 2], ["Rooster Shave", 1]]);
   for (const it of items) assert.ok(r(it.name).product, it.name);
 });
+
+/* ---------- chats del 26-nov noche (versión nueva en vivo) ---------- */
+import { richMensaje } from "@/lib/ai/present";
+
+test("'comida para las gallinas que pongan' → Hens, no avena/cinta azul", () => {
+  for (const q of ["Y comía para las gallinas que pongan", "comida para gallinas ponedoras"]) {
+    const s = slugs(q);
+    assert.ok(s.includes("hens"), `${q}: ${s}`);
+    assert.ok(!s.includes("avena"), `${q}: ${s}`);
+  }
+});
+
+test("producto SIN foto: la ficha lo dice (nunca 'ya te mandé la foto')", () => {
+  const cinta = cat.find((p) => p.slug === "cinta-azul")!;
+  assert.ok(!cinta.imageUrl);
+  assert.match(richMensaje(cinta), /Foto: te la manda el asesor/);
+  const cobra = cat.find((p) => p.slug === "energy-cobra")!;
+  assert.doesNotMatch(richMensaje(cobra), /te la manda el asesor/);
+});

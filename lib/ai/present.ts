@@ -110,6 +110,9 @@ export function richMensaje(p: ProductView): string {
     !p.dosificacion && usoLimpio(p.usage).dosis ? `🥄 Uso: ${usoLimpio(p.usage).dosis}` : "",
     !p.dosificacion && usoLimpio(p.usage).info ? `📌 ${usoLimpio(p.usage).info}` : "",
     p.edadMinima ? `📅 Desde: ${p.edadMinima}` : "",
+    // Sin foto en la plataforma: decirlo de una (un cliente se fue porque el bot
+    // juraba "ya te mandé la foto" de la Cinta Azul y nunca llegó).
+    !p.imageUrl && !p.image ? `📷 Foto: te la manda el asesor por aquí mismo` : "",
   ].filter(Boolean).join("\n");
   return [
     `¡De una! 👉 Este es *${p.name}* 🔥 ${p.pitch || p.tagline || ""}`.trim(),

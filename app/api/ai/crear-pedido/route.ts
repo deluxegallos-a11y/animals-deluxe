@@ -462,7 +462,7 @@ export const POST = withBridge(
       : "";
     const mensaje = metodo === "anticipado"
       // --- PAGO ANTICIPADO: nunca menciona contra entrega. Pide comprobante. ---
-      ? `📝 Tu pedido: ${listaProductos}\n` + avisoMinimo +
+      ? (order.reused ? `📝 Tu pedido ya quedó registrado: ${listaProductos}\n` : `📝 Tu pedido: ${listaProductos}\n`) + avisoMinimo +
         `💵 *Total a transferir: ${cop(order.total_cop)}* (solo productos; el envío se paga al recibir)` +
         (ciudadPedido ? ` · ${ciudadPedido}` : "") + ` · Ref *${ref}*`
       // --- CONTRA ENTREGA (Animals Deluxe) ---
