@@ -15,12 +15,6 @@ const STOP = new Set([
   "y", "o", "mi", "me", "le", "se", "su", "lo", "en", "a", "algo", "pa", "tengo", "quiero",
   "necesito", "busco", "dame", "hay", "tienes", "tiene", "es", "como", "cosa", "producto",
   "gallo", "gallos", "ave", "aves",
-  // Muletillas de consulta (así "foto de cada una de las botas" → solo "botas").
-  "foto", "fotos", "imagen", "imagenes", "video", "cada", "ver", "muestrame", "muestra",
-  "mandar", "manda", "mande", "mandas", "enviar", "envia", "enviame", "puede", "puedes",
-  "podria", "cuanto", "cuanta", "cuantos", "cuesta", "cuestan", "vale", "valen", "precio",
-  "precios", "cual", "cuales", "esa", "ese", "esas", "esos", "esta", "este", "estos", "estas",
-  "sobre", "acerca", "info", "informacion", "porfa", "porfavor", "favor", "gracias", "hola",
 ]);
 
 /* intents: término del cliente → categoría objetivo (+ keywords de refuerzo) */
@@ -31,168 +25,11 @@ const INTENTS: { match: RegExp; category: string; kw: string[] }[] = [
   { match: /\b(moco|respir|gripa|estornud|tos|pecho|pulmon|ronqu|tupid|congestion)\w*/i, category: "respiratorio", kw: ["respiratorio", "pecho"] },
   { match: /\b(pluma|piel|plumaj|brillo|muda|emplum|cuidado|hongo|escama)\w*/i, category: "cuidado", kw: ["pluma", "piel"] },
   { match: /\b(polvo|suplement|mezcla|formula)\w*/i, category: "suplementos", kw: ["suplemento", "polvo"] },
-  { match: /\b(entren|musculo|musculatura|masa|recuper|fuerza|trainer|gym|peso|engord)\w*/i, category: "entrenamiento", kw: ["entrenamiento", "musculo", "recuperacion"] },
-  // "engord" NO enruta a pollos: engordar es necesidad de gallo tanto como de pollo.
-  { match: /\b(pollo|levante|polluel|pollito|cria)\w*/i, category: "pollos", kw: ["pollo", "levante"] },
+  { match: /\b(entren|musculo|musculatura|masa|recuper|fuerza|trainer|gym|peso)\w*/i, category: "entrenamiento", kw: ["entrenamiento", "musculo", "recuperacion"] },
+  { match: /\b(pollo|levante|polluel|pollito|cria|engord)\w*/i, category: "pollos", kw: ["pollo", "levante"] },
   { match: /\b(perro|canino|cachorro|dog|mascota)\w*/i, category: "perros", kw: ["perro"] },
   { match: /\b(caballo|equino|yegua|potro|horse)\w*/i, category: "caballos", kw: ["caballo"] },
 ];
-
-/* ---- Animal / audiencia (para NUNCA mezclar animales) ----
-   El animal del producto se deduce de su categoría; el resto del catálogo
-   (energia, vitaminas, respiratorio, etc.) son productos de gallos. */
-export type Animal = "perros" | "caballos" | "pollos" | "gallos";
-
-export function animalOf(p: ProductView): Animal {
-  const c = p.categorySlug;
-  if (c === "perros") return "perros";
-  if (c === "caballos") return "caballos";
-  if (c === "pollos") return "pollos";
-  return "gallos";
-}
-
-/* Detecta el animal mencionado en el query. null si no es claro.
-   Dos pasadas a propósito: primero el animal NOMBRADO, después las palabras de
-   ETAPA. Si "engordar"/"levante" competían de tú a tú con "gallo", un
-   "quiero engordar mi gallo" caía en pollos y el bot recomendaba cuido de pollitos. */
-const ANIMAL_Q: { animal: Animal; re: RegExp }[] = [
-  { animal: "caballos", re: /\b(caball|equin|yegua|potr|horse)\w*/ },
-  { animal: "perros", re: /\b(perr|canin|cachorr|dog|mascota)\w*/ },
-  { animal: "gallos", re: /\b(gallo|gallin|rooster)\w*/ },
-  { animal: "pollos", re: /\b(pollo|polluel|pollit)\w*/ },
-];
-/* Palabras de ETAPA: no nombran al animal, solo deciden cuando NADIE lo nombró.
-   "engordar" NO está aquí: se engorda igual un gallo que un pollo. */
-const ETAPA_Q: { animal: Animal; re: RegExp }[] = [
-  { animal: "pollos", re: /\b(levante|cria|crias)\b/ },
-];
-export function detectAnimal(query: string): Animal | null {
-  const q = normalize(query);
-  for (const a of ANIMAL_Q) if (a.re.test(q)) return a.animal;
-  for (const a of ETAPA_Q) if (a.re.test(q)) return a.animal;
-  return null;
-}
-
-/* Especies EXCLUSIVAS: mundos aparte del gallo. Un producto de perro o de caballo
-   SOLO puede salir si el cliente nombró a ese animal. */
-const EXCLUSIVAS = new Set<Animal>(["perros", "caballos"]);
-
-/**
- * Pool de productos permitido para ese query (§ "nunca mezclar animales").
- *  · nombra perro/caballo → SOLO ese animal
- *  · nombra gallo/pollo, o no nombra ninguno → gallos + pollos, JAMÁS perro ni caballo
- * Sin esto, "músculo"/"masa"/"polvo"/"proteína" sacaban More Muscle Dogs o
- * Horse Deluxe para clientes de gallos.
- */
-export function speciesPool(query: string, products: ProductView[]): ProductView[] {
-  const a = detectAnimal(query);
-  if (a && EXCLUSIVAS.has(a)) return products.filter((p) => animalOf(p) === a);
-  return products.filter((p) => !EXCLUSIVAS.has(animalOf(p)));
-}
-
-/* Palabras de animal (para medir si el match es por la NECESIDAD y no solo por el animal). */
-const ANIMAL_WORDS = new Set([
-  "caballo", "caballos", "equino", "equinos", "yegua", "potro", "potra", "horse",
-  "perro", "perros", "perra", "canino", "cachorro", "dog", "mascota",
-  "pollo", "pollos", "polluelo", "pollito", "levante", "engorde", "engordar", "cria",
-  "gallo", "gallos", "gallina", "rooster", "ave", "aves",
-]);
-
-/* ---- Presentación / forma (§4.5b): si piden "inyectable", NO ofrecer gotas ---- */
-/* `prod` reconoce además las señales que usan las descripciones redactadas a mano:
-   el emoji 💉/💧 y la VÍA de aplicación ("0.5 ml en la pechuga"). El CyanoMax B12 5500
-   nunca escribe la palabra "inyectable" —solo 💉 y la dosis en la pechuga— y por eso
-   el bot lo daba por gotas (M7). El 🥄 NO sirve como señal: esas fichas lo usan para
-   encabezar "Modo de uso" incluso en inyectables. */
-const FORMAS: { forma: string; q: RegExp; prod: RegExp }[] = [
-  { forma: "inyectable", q: /\b(inyect|inyecc|ampoll|jeringa|intramuscular)\w*/, prod: /(\b(inyect|ampoll|intramuscular)\w*|💉|\d+[.,]?\d*\s*(ml|cc)\b[^.\n]{0,30}\bpechuga\b)/ },
-  // "goticas"/"gotitas" son el diminutivo que usa el gallero; sin ellos, quien
-  // pedía goticas recibía inyectables.
-  { forma: "gotas", q: /\b(gota|gotita|gotic|gotero|goteo)\w*/, prod: /(\b(gota|gotero)\w*|💧)/ },
-  { forma: "polvo", q: /\b(polvo|polvos)\w*/, prod: /\b(polvo)\w*/ },
-  // "vitamina bebible" terminaba en una INYECTABLE (26-nov Rooster).
-  { forma: "oral", q: /\b(bebible|bebibles|tomad|oral|en el agua|bebedero)\w*/, prod: /(\boral\b|liquid|bebedero|litro|\b(gota|gotero)\w*|💧)/ },
-  { forma: "pastillas", q: /\b(pastilla|tableta|capsul|caps|comprimid|pildora)\w*/, prod: /\b(pastilla|tableta|capsul|caps|comprimid)\w*/ },
-  { forma: "shampoo", q: /\b(shampoo|champu)\w*/, prod: /\b(shampoo|champu)\w*/ },
-  { forma: "topico", q: /\b(ungu|unguent|pomada|crema|roll|topic|frota)\w*/, prod: /\b(ungu|unguent|pomada|crema|roll|topic|frota)\w*/ },
-];
-export function detectForma(query: string): string | null {
-  const q = normalize(query);
-  for (const f of FORMAS) if (f.q.test(q)) return f.forma;
-  return null;
-}
-function formaText(p: ProductView): string {
-  return normalize([
-    p.presentacion,
-    (p.presentations || []).map((x) => x.label).join(" "),
-    p.tagline, p.shortDesc, p.name, p.descripcion || "",
-  ].filter(Boolean).join(" "));
-}
-/** ¿El producto es de esa presentación? (según su texto: presentación, tagline, nombre…). */
-export function productMatchesForma(p: ProductView, forma: string): boolean {
-  const f = FORMAS.find((x) => x.forma === forma);
-  return f ? f.prod.test(formaText(p)) : true;
-}
-
-/**
- * FORMA DE ADMINISTRACIÓN del producto (M7) — inyectable | gotas | polvo | pastillas |
- * shampoo | topico, o "" si no se puede afirmar.
- *
- * Existe porque el bot le dijo a clientes que el CyanoMax B12 5500 se da "en gotas"
- * cuando es INYECTABLE (0.5 ml en la pechuga): mandar a inyectar por vía oral —o al
- * revés— es peligroso. Si no hay evidencia en la ficha devolvemos "" para que el bot
- * diga "te confirmo con el asesor" en vez de ADIVINAR.
- *
- * Se leen primero los campos EXPLÍCITOS (presentación, dosificación, modo de uso):
- * el nombre y el gancho de venta mienten más ("Gotas de Campeón" en polvo).
- */
-export function formaDe(p: ProductView): string {
-  // Un COMBO/KIT mezcla formas (gotas + inyectable + pastillas): no tiene UNA sola.
-  // Sin esto, "Omega-3 120 cáps" hacía que el Combo del Mes saliera "en pastillas".
-  if (/^(combo|kit)\b/i.test((p.presentacion || "").trim())) return "";
-  const explicito = normalize([p.presentacion, p.dosificacion || "", p.usage].filter(Boolean).join(" "));
-  // Viene en DOS formas a la vez (Rooster Deluxe Supplement: pastillas o polvo):
-  // no hay UNA forma; el bot lee las presentaciones.
-  const formasExplicitas = FORMAS.filter((f) => f.prod.test(explicito));
-  if (formasExplicitas.length >= 2 && formasExplicitas.every((f) => f.forma === "pastillas" || f.forma === "polvo")) return "";
-  for (const f of FORMAS) if (f.prod.test(explicito)) return f.forma;
-  // Sin campo explícito: la descripción larga (redactada a mano) es la mejor fuente.
-  const desc = normalize(p.descripcion || "");
-  for (const f of FORMAS) if (f.prod.test(desc)) return f.forma;
-  // Último recurso: nombre/tagline. Si tampoco dice nada → "" (no inventar).
-  const resto = normalize([p.name, p.tagline, p.shortDesc, (p.presentations || []).map((x) => x.label).join(" ")].filter(Boolean).join(" "));
-  for (const f of FORMAS) if (f.prod.test(resto)) return f.forma;
-  return "";
-}
-
-/* ¿El query describe un problema médico/síntoma/lesión? (no lo tratan los
-   suplementos → mejor pasar a un asesor que fabricar una recomendación). */
-const MEDICAL_RE = /\b(ojo|ojos|vista|ceguer|herida|herid|fractur|hueso|quebr|cojea|cojer|renqu|sangr|infecci|infectad|tumor|cancer|bulto|pelota|masa|quiste|hinchad|inflamad|absces|vomit|diarre|moquillo|parvo|garrapat|sarna|hongo|fiebre|dolor|convuls|paraliz|picadur|mordedur|quemadur|ampoll|ulcer|desnutr|anemi)\w*/;
-export function looksMedical(query: string): boolean {
-  return MEDICAL_RE.test(normalize(query));
-}
-
-/**
- * Puntaje de RELEVANCIA por la necesidad (ignora el impulso de animal/categoría).
- * Sirve para NO fabricar recomendaciones: si el query pide algo que el producto
- * no trata (ej. "perro con pelota en el ojo" vs suplemento muscular), da ~0.
- */
-/* Palabras de presentación/forma (se excluyen del needScore: "gotas" no es la necesidad). */
-const FORM_WORDS = new Set([
-  "inyectable", "inyectado", "inyeccion", "ampolla", "jeringa", "intramuscular",
-  "gotas", "gota", "gotero", "polvo", "polvos", "pastilla", "pastillas", "tableta",
-  "tabletas", "capsula", "capsulas", "caps", "comprimido", "shampoo", "champu",
-  "unguento", "pomada", "crema", "roll", "topico", "frota", "liquido", "jarabe",
-]);
-
-export function needScore(query: string, p: ProductView): number {
-  const qNorm = normalize(query);
-  const qTokens = qNorm
-    .split(/[^a-z0-9]+/)
-    .filter((w) => w.length >= 2 && !STOP.has(w) && !ANIMAL_WORDS.has(w) && !FORM_WORDS.has(w));
-  if (!qTokens.length) return -1; // query sin necesidad concreta (ej. "algo para mi perro") → no bloquear
-  return scoreProduct(qTokens, qNorm, p, new Set<string>(), []);
-}
 
 function trigrams(s: string): Set<string> {
   const t = `  ${s} `;
@@ -211,94 +48,48 @@ function dice(a: string, b: string): number {
   return (2 * inter) / (A.size + B.size);
 }
 
-/* Stem singular/plural es (botas→bota, monas→mona, comederos→comedero, tijeras→tijera). */
-function stem(w: string): string {
-  if (w.length > 4 && w.endsWith("es")) return w.slice(0, -2);
-  if (w.length > 3 && w.endsWith("s")) return w.slice(0, -1);
-  return w;
-}
-function toks(text: string): string[] {
-  return normalize(text).split(/[^a-z0-9]+/).filter((w) => w.length >= 2 && !STOP.has(w)).map(stem);
-}
-
-/* Buckets de tokens por prioridad: NOMBRE (+slug) > KEYWORDS > DESCRIPCIÓN. + categoría. */
-type Buckets = { name: Set<string>; nameArr: string[]; kw: Set<string>; kwArr: string[]; desc: Set<string>; cat: Set<string> };
-const _bcache = new WeakMap<ProductView, Buckets>();
-function buckets(p: ProductView): Buckets {
-  const c = _bcache.get(p);
-  if (c) return c;
-  const nameArr = toks([p.slug.replace(/-/g, " "), p.name].join(" "));
-  const kwArr = toks((p.keywords?.length ? p.keywords : deriveKeywords(p)).join(" "));
-  const descArr = toks([p.audience, p.tagline, p.shortDesc, p.pitch, p.benefits.join(" "), p.paraQue || "", p.descripcion || ""].join(" "));
-  const catArr = toks([p.categoryName, p.categorySlug].join(" "));
-  const b: Buckets = {
-    name: new Set(nameArr), nameArr,
-    kw: new Set(kwArr), kwArr,
-    desc: new Set(descArr), cat: new Set(catArr),
-  };
-  _bcache.set(p, b);
-  return b;
-}
-
-/** ¿El producto COMPARTE señal real con el query? (token exacto en nombre/keyword/categoría
- *  o typo fuerte del nombre/keyword, o su categoría es el intent). Sin esto → jamás se sugiere. */
-function isRelevant(qStems: string[], p: ProductView, intentCats: Set<string>): boolean {
-  if (intentCats.has(p.categorySlug)) return true;
-  const b = buckets(p);
-  /* Typos DÉBILES contra el nombre: uno solo no basta (sería adivinar), pero DOS
-     tokens distintos que caen cada uno cerca de una palabra distinta del nombre sí
-     es señal real. Caso "enrgy kobra" → "Energy Cobra": con trigramas padded da
-     0.615 y 0.50, ambos bajo el 0.66 de un token suelto, y el cliente se quedaba
-     sin respuesta. Se exige emparejar palabras DISTINTAS para no contar dos veces
-     la misma. */
-  const casiName = new Map<string, string>(); // token del query → palabra del nombre
-  for (const q of qStems) {
-    if (b.name.has(q) || b.kw.has(q) || b.cat.has(q)) return true;
-    // substring solo con tokens de ≥4 (evita que "ojo" matchee "piojos"/"rojo").
-    for (const h of b.nameArr) { if (q.length >= 4 && h.length >= 4 && (h.includes(q) || q.includes(h))) return true; if (dice(q, h) >= 0.66) return true; }
-    for (const h of b.kwArr) { if (q.length >= 4 && h.length >= 4 && (h.includes(q) || q.includes(h))) return true; if (dice(q, h) >= 0.7) return true; }
-    // no llegó al umbral fuerte: guardamos el mejor "casi" contra el nombre.
-    let mejor = "", mejorS = 0;
-    for (const h of b.nameArr) {
-      const s = dice(q, h);
-      if (s >= 0.5 && s > mejorS && q.length >= 4 && h.length >= 4) { mejor = h; mejorS = s; }
-    }
-    if (mejor) casiName.set(q, mejor);
-  }
-  return new Set(casiName.values()).size >= 2;
+function haystackTokens(p: ProductView): string[] {
+  const text = [
+    p.slug.replace(/-/g, " "),
+    p.name,
+    p.audience,
+    p.tagline,
+    p.shortDesc,
+    p.pitch,
+    p.benefits.join(" "),
+    p.categoryName,
+    p.categorySlug,
+    (p.keywords?.length ? p.keywords : deriveKeywords(p)).join(" "),
+  ].join(" ");
+  return normalize(text).split(/[^a-z0-9]+/).filter((w) => w.length >= 2 && !STOP.has(w));
 }
 
 function scoreProduct(qTokens: string[], qNorm: string, p: ProductView, intentCats: Set<string>, intentKw: string[]): number {
-  const b = buckets(p);
-  const qStems = qTokens.map(stem);
+  const hayTokens = haystackTokens(p);
+  const haySet = new Set(hayTokens);
   let score = 0;
 
   // intent / categoría
-  if (intentCats.has(p.categorySlug)) score += 5;
-  for (const kw of intentKw) { const s = stem(kw); if (b.kw.has(s) || b.name.has(s)) score += 1.2; }
+  if (intentCats.has(p.categorySlug)) score += 6;
+  for (const kw of intentKw) if (haySet.has(kw)) score += 1.5;
 
-  // tokens del query, POR PRIORIDAD: nombre > keyword > categoría > descripción.
-  for (const q of qStems) {
-    if (b.name.has(q)) { score += 6; continue; }
-    if (b.kw.has(q)) { score += 4; continue; }
-    if (b.cat.has(q)) { score += 3; continue; }
-    if (b.desc.has(q)) { score += 2.2; continue; }
-    // typo tolerance: fuzzy con más peso contra el NOMBRE que contra keywords.
+  // tokens del query
+  for (const q of qTokens) {
+    if (haySet.has(q)) { score += 4; continue; }
+    // substring dentro de algún token (ej "cobra" en "supercobra")
     let best = 0;
-    for (const h of b.nameArr) {
-      if (q.length >= 4 && h.length >= 4 && (h.includes(q) || q.includes(h))) { best = Math.max(best, 3); continue; }
-      const d = dice(q, h); if (d * 5 > best) best = d * 5;
-    }
-    for (const h of b.kwArr) {
-      if (q.length >= 4 && h.length >= 4 && (h.includes(q) || q.includes(h))) { best = Math.max(best, 2.5); continue; }
-      const d = dice(q, h); if (d * 3.5 > best) best = d * 3.5;
+    for (const h of hayTokens) {
+      if (h.includes(q) || q.includes(h)) { best = Math.max(best, 2.5); continue; }
+      const d = dice(q, h);
+      if (d > best) best = d * 3.5; // typo tolerance
     }
     score += best;
   }
 
-  // nombre completo muy parecido al query (frase)
+  // nombre completo muy parecido al query
   const nameNorm = normalize(p.name);
-  if (qNorm && (nameNorm.includes(qNorm) || qNorm.includes(nameNorm))) score += 4;
+  if (qNorm && (nameNorm.includes(qNorm) || qNorm.includes(nameNorm))) score += 5;
+  score += dice(qNorm, nameNorm) * 2;
 
   return score;
 }
@@ -308,31 +99,17 @@ export type SearchStatus = "found" | "ambiguous" | "not_found" | "empty_query";
 export interface SearchResult {
   status: SearchStatus;
   product: ProductView | null;
-  ranked: { product: ProductView; score: number; relevant: boolean }[];
+  ranked: { product: ProductView; score: number }[];
 }
 
 /** Busca el mejor match + ranking. `products` = catálogo activo. */
 export function searchProducts(query: string, products: ProductView[]): SearchResult {
   const qNorm = normalize(query);
   if (!qNorm) {
-    return { status: "empty_query", product: null, ranked: products.slice(0, 6).map((p) => ({ product: p, score: 0, relevant: false })) };
+    return { status: "empty_query", product: null, ranked: products.slice(0, 6).map((p) => ({ product: p, score: 0 })) };
   }
 
   const qTokens = qNorm.split(/[^a-z0-9]+/).filter((w) => w.length >= 2 && !STOP.has(w));
-  const qStems = qTokens.map(stem);
-
-  // Filtro por animal: perros/caballos son mundos APARTE (no mezclar). Pero "pollitos"
-  // son gallos jóvenes → gallos y pollos comparten pool (Master Pollito es alimento de gallos).
-  const animal = detectAnimal(query);
-  let pool = products;
-  if (animal === "perros" || animal === "caballos") {
-    pool = products.filter((p) => animalOf(p) === animal);
-  } else if (animal === "gallos" || animal === "pollos") {
-    pool = products.filter((p) => animalOf(p) === "gallos" || animalOf(p) === "pollos");
-  }
-  // Filtro por presentación (§4.5b): si piden "inyectable", NO ofrecer gotas/otras formas.
-  const forma = detectForma(query);
-  if (forma) pool = pool.filter((p) => productMatchesForma(p, forma));
 
   // intents
   const intentCats = new Set<string>();
@@ -341,21 +118,16 @@ export function searchProducts(query: string, products: ProductView[]): SearchRe
     if (it.match.test(qNorm)) { intentCats.add(it.category); intentKw.push(...it.kw); }
   }
 
-  const ranked = pool
-    .map((p) => ({ product: p, score: scoreProduct(qTokens, qNorm, p, intentCats, intentKw), relevant: isRelevant(qStems, p, intentCats) }))
+  const ranked = products
+    .map((p) => ({ product: p, score: scoreProduct(qTokens, qNorm, p, intentCats, intentKw) }))
     .sort((a, b) => b.score - a.score);
 
   const top = ranked[0];
   const second = ranked[1];
-  // El match SOLO vale si comparte señal real (palabra/categoría) con el query.
-  // Sin relevancia o con puntaje bajo → not_found (el bot maneja el silencio).
-  if (!top || !top.relevant || top.score < 3) {
+  if (!top || top.score < 3) {
     return { status: "not_found", product: null, ranked };
   }
   const gap = top.score - (second?.score ?? 0);
-  // Ambiguo solo si el 2º TAMBIÉN es relevante y está muy cerca (y no es el mismo nombre).
-  const mismoNombre = !!second && normalize(second.product.name) === normalize(top.product.name);
-  const segOk = !!second && second.relevant && (second.score ?? 0) >= 3;
-  const status: SearchStatus = !mismoNombre && segOk && gap < 2.5 ? "ambiguous" : "found";
+  const status: SearchStatus = gap < 2.5 && (second?.score ?? 0) >= 3 ? "ambiguous" : "found";
   return { status, product: top.product, ranked };
 }

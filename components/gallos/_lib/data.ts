@@ -23,7 +23,7 @@ export const PRODUCTS: Product[] = [
       "Recuperación acelerada",
       "Vitaminas y minerales",
     ],
-    price: 150000,
+    price: 120000,
     currency: "COP",
     volume: "10ml",
     dose: "0.2 ml por ejemplar",
@@ -44,7 +44,7 @@ export const PRODUCTS: Product[] = [
       "Recuperación instantánea",
       "Extractos premium",
     ],
-    price: 150000,
+    price: 140000,
     currency: "COP",
     volume: "10ml",
     dose: "0.2 ml por ejemplar",
@@ -52,22 +52,6 @@ export const PRODUCTS: Product[] = [
     badges: ["premium", "original"],
   },
 ];
-
-/** Opciones del paso "¿cuál quieres?" del asistente (botón genérico):
- *  American, Dragon o "los dos". Usa los precios ya inyectados en PRODUCTS. */
-export function gallosChoices() {
-  const fmt = (n: number) => "$" + n.toLocaleString("es-CO");
-  const [a, d] = PRODUCTS;
-  return [
-    { label: a.name, sub: fmt(a.price), products: [a] },
-    { label: d.name, sub: fmt(d.price), products: [d] },
-    {
-      label: "Quiero los dos",
-      sub: `${fmt(a.price + d.price)} · pack completo`,
-      products: [a, d],
-    },
-  ];
-}
 
 export const BENEFITS: Benefit[] = [
   { icon: "energia", title: "Aumenta la energía" },

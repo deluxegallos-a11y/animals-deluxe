@@ -5,15 +5,13 @@
 import { and, eq, asc, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import {
-  products, categories, promotions, coupons, advisors, storeConfig, tenants,
+  products, categories, promotions, coupons, advisors, storeConfig,
   type CiudadCobertura, type CuentaBancaria, type CodFormConfig,
 } from "@/lib/db/schema";
 import type { ProductView, CategoryView } from "@/lib/ai/types";
 import { demoProducts, demoCategories, demoStore } from "@/lib/demo-data";
 import { normalize } from "@/lib/ai/format";
-import { computeShipping, resolveZonaInfo, tiempoZona, ZONES, ZONE_RATE } from "@/lib/ai/shipping";
-import { currentTenantId, currentTenant, DEFAULT_TENANT_SLUG } from "@/lib/ai/tenant";
-import { filtrarCatalogo, esBloqueado } from "@/lib/ai/catalog-rules";
+import { computeShipping, resolveZona, TIEMPO_ENTREGA } from "@/lib/ai/shipping";
 
 type ProdRow = typeof products.$inferSelect;
 type CatRow = typeof categories.$inferSelect;
@@ -23,7 +21,7 @@ const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://animalsdeluxe.com";
 function imageUrl(p: ProdRow): string {
   if (p.imageUrl) return p.imageUrl;
   if (p.image && /^https?:\/\//.test(p.image)) return p.image;
-  if (p.image) return `${SITE}/products/${p.image}`;
+  if (p.image) return `${SITE}/img/${p.image}`;
   return "";
 }
 
@@ -55,88 +53,42 @@ function toView(p: ProdRow, cat?: CatRow | null): ProductView {
     stock: p.stock ?? 999,
     activo: p.activo ?? true,
     envioGratis: p.envioGratis ?? false,
-    controlStock: p.controlStock ?? false,
-    soloAnticipado: p.soloAnticipado ?? false,
-    minUnidades: Math.max(1, p.minUnidades ?? 1),
-    descripcion: p.descripcion || "",
-    edadMinima: p.edadMinima || "",
-    dosificacion: p.dosificacion || "",
-    presentacion: p.presentacion || "",
-    paraQue: p.paraQue || "",
   };
 }
 
 /* ---------- Categorías ---------- */
 export async function getCategories(): Promise<CategoryView[]> {
   if (!db) return demoCategories;
-  const tid = await currentTenantId();
-  const rows = await db.select().from(categories)
-    .where(eq(categories.tenantId, tid!))
-    .orderBy(asc(categories.sortOrder), asc(categories.name));
+  const rows = await db.select().from(categories).orderBy(asc(categories.sortOrder), asc(categories.name));
   return rows.map((c) => ({ id: c.id, slug: c.slug, name: c.name, color: c.color || "#FF4D2E" }));
 }
 
-/* ---------- Productos ----------
-   ÚNICO punto de entrada del catálogo (bot + web). Aquí se aplican las reglas de
-   `catalog-rules.ts`: los productos que son SOLO de Rooster Deluxe (anticipado)
-   nunca salen del tenant de contra entrega. Filtrar aquí cubre /buscar-producto,
-   /catalogo, /recomendar, /producto y /crear-pedido de una sola vez. */
+/* ---------- Productos ---------- */
 export async function getProducts(opts: { categorySlug?: string; limit?: number } = {}): Promise<ProductView[]> {
   if (!db) {
-    let list = filtrarCatalogo(DEFAULT_TENANT_SLUG, demoProducts.filter((p) => p.activo));
+    let list = demoProducts.filter((p) => p.activo);
     if (opts.categorySlug) list = list.filter((p) => p.categorySlug === opts.categorySlug);
     return opts.limit ? list.slice(0, opts.limit) : list;
   }
-  const tenant = await currentTenant();
-  const tid = await currentTenantId();
   const rows = await db
     .select({ p: products, c: categories })
     .from(products)
     .leftJoin(categories, eq(products.categoryId, categories.id))
-    .where(and(eq(products.tenantId, tid!), eq(products.activo, true)))
+    .where(eq(products.activo, true))
     .orderBy(asc(products.name));
-  let list = filtrarCatalogo(tenant.slug, rows.map((r) => toView(r.p, r.c)));
+  let list = rows.map((r) => toView(r.p, r.c));
   if (opts.categorySlug) list = list.filter((p) => p.categorySlug === opts.categorySlug);
   return opts.limit ? list.slice(0, opts.limit) : list;
 }
 
-/* Catálogo activo de OTRO tenant, resuelto por slug EXPLÍCITO (no por el contexto
-   ALS del request). Lo usa `marcas.ts` para detectar que el cliente está pidiendo
-   algo del otro negocio y redirigirlo, en vez de responder "no encontré".
-   Cacheado 5 min: se consulta en cada búsqueda que falla y el catálogo casi no cambia. */
-const otroCatalogoCache = new Map<string, { at: number; list: ProductView[] }>();
-
-export async function getProductsDeTenant(tenantSlug: string): Promise<ProductView[]> {
-  if (!db || !tenantSlug) return [];
-  const hit = otroCatalogoCache.get(tenantSlug);
-  if (hit && Date.now() - hit.at < 300_000) return hit.list;
-  const rows = await db
-    .select({ p: products, c: categories })
-    .from(products)
-    .innerJoin(tenants, eq(products.tenantId, tenants.id))
-    .leftJoin(categories, eq(products.categoryId, categories.id))
-    .where(and(eq(tenants.slug, tenantSlug), eq(products.activo, true)))
-    .orderBy(asc(products.name));
-  const list = filtrarCatalogo(tenantSlug, rows.map((r) => toView(r.p, r.c)));
-  otroCatalogoCache.set(tenantSlug, { at: Date.now(), list });
-  return list;
-}
-
 export async function getProductBySlug(slug: string): Promise<ProductView | null> {
   if (!slug) return null;
-  if (!db) {
-    if (esBloqueado(DEFAULT_TENANT_SLUG, slug)) return null;
-    return demoProducts.find((p) => p.slug === slug) || null;
-  }
-  const tenant = await currentTenant();
-  // Bloqueado para este tenant → se comporta como si no existiera (ni ficha, ni pedido).
-  if (esBloqueado(tenant.slug, slug)) return null;
-  const tid = await currentTenantId();
+  if (!db) return demoProducts.find((p) => p.slug === slug) || null;
   const [row] = await db
     .select({ p: products, c: categories })
     .from(products)
     .leftJoin(categories, eq(products.categoryId, categories.id))
-    .where(and(eq(products.tenantId, tid!), eq(products.slug, slug)))
+    .where(eq(products.slug, slug))
     .limit(1);
   return row ? toView(row.p, row.c) : null;
 }
@@ -163,38 +115,15 @@ export async function getStoreConfig(): Promise<StoreCfg> {
     };
   }
   const [row] = await db.select().from(storeConfig).limit(1);
-  const tenant = await currentTenant();
-  const esDefault = tenant.slug === DEFAULT_TENANT_SLUG;
-
-  // PERFIL POR MARCA (M-CERO). `store_config` es todavía UNA fila compartida por
-  // las dos marcas (separarla necesita DDL: supabase/05-perfiles-por-marca.sql).
-  // Mientras tanto, la IDENTIDAD de cada negocio se toma del tenant, que ya la
-  // tiene y es la fuente de verdad. Sin esto, el bot de Rooster Deluxe se
-  // presentaba como "Animals Deluxe", daba el WhatsApp de Animals y saludaba
-  // ofreciendo contra entrega en un canal de pago anticipado.
-  // El tenant por defecto (Animals) sigue leyendo la fila tal cual: cero cambios.
-  const anticipado = tenant.paymentMode === "anticipado";
-  const cuentasTenant = (tenant.cuentasPago || "").trim();
-
   return {
-    nombre: (esDefault ? row?.nombre : tenant.nombre) || row?.nombre || "Animals Deluxe",
-    whatsapp: (esDefault ? row?.whatsapp : tenant.asesorWa) || row?.whatsapp || process.env.NEXT_PUBLIC_WHATSAPP || "",
+    nombre: row?.nombre || "Animals Deluxe",
+    whatsapp: row?.whatsapp || process.env.NEXT_PUBLIC_WHATSAPP || "",
     ciudadBase: row?.ciudadBase || "",
     envioDefaultCop: row?.envioDefaultCop ?? 12000,
     ciudadesCobertura: (row?.ciudadesCobertura as CiudadCobertura[]) || [],
-    mensajeBienvenida: esDefault
-      ? row?.mensajeBienvenida || ""
-      : `¡Bienvenido a ${tenant.nombre}! 🐓 ${anticipado
-          ? "Suplementos e implementos para tus campeones. Pago anticipado y despacho a todo el país."
-          : "Suplementos premium para tus campeones, contraentrega en toda Colombia."}`,
-    // Las cuentas de una marca que no es la dueña del store_config viven en
-    // `tenants.cuentas_pago` (texto libre, lo usa asignar-asesor). Nunca se
-    // heredan las de Animals: mandar a un cliente a la cuenta equivocada es plata
-    // que se pierde.
-    cuentasBancarias: esDefault ? ((row?.cuentasBancarias as CuentaBancaria[]) || []) : [],
-    // El formulario de contraentrega (upsell COD) no aplica en una marca que
-    // cobra por adelantado: se apaga en vez de heredar el de Animals.
-    codForm: anticipado ? {} : ((row?.codForm as CodFormConfig) || {}),
+    mensajeBienvenida: row?.mensajeBienvenida || "",
+    cuentasBancarias: (row?.cuentasBancarias as CuentaBancaria[]) || [],
+    codForm: (row?.codForm as CodFormConfig) || {},
   };
 }
 
@@ -217,10 +146,6 @@ export interface CoberturaResult {
   zona: string;
   zona_label: string;
   tiempo: string;
-  dias_min: number;
-  dias_max: number;
-  requiere_confirmar: boolean;
-  ciudad_encontrada: boolean;
   ciudad: string;
 }
 
@@ -228,38 +153,27 @@ export interface CoberturaResult {
     Respeta overrides explícitos del admin (store_config.ciudadesCobertura). */
 export async function cotizarEnvio(ciudad: string, opts: CotizarOpts = {}): Promise<CoberturaResult> {
   const cfg = await getStoreConfig();
-  const tenant = await currentTenant();
+  const norm = normalize(ciudad);
   const metodo = opts.metodo ?? "contraentrega";
 
-  // FLETE según flete_modo del TENANT:
-  //   incluido → $0 (envío gratis)
-  //   fijo     → flete_valor fijo
-  //   por_ciudad → tarifa única $20.000 + 7% (comportamiento Animals Deluxe)
-  const zi = resolveZonaInfo(ciudad || cfg.ciudadBase);
-  if (tenant.fleteModo === "incluido" || opts.envioGratis) {
+  // 1) override explícito configurado por el admin para esa ciudad
+  const match = cfg.ciudadesCobertura.find(
+    (c) => normalize(c.ciudad) && (normalize(c.ciudad).includes(norm) || norm.includes(normalize(c.ciudad))),
+  );
+  if (match) {
+    const gratis = !!opts.envioGratis || match.costo_envio === 0;
     return {
-      cobertura: true, cubre: true, contraentrega: metodo === "contraentrega",
-      costo_envio: 0, envio_gratis: true,
-      zona: zi.zona, zona_label: ZONES[zi.zona].label, tiempo: tiempoZona(zi.zona),
-      dias_min: ZONE_RATE[zi.zona].diasMin, dias_max: ZONE_RATE[zi.zona].diasMax,
-      requiere_confirmar: ZONE_RATE[zi.zona].confirmar || !zi.encontrada,
-      ciudad_encontrada: zi.encontrada,
-      ciudad: ciudad || cfg.ciudadBase,
+      cobertura: true, cubre: true,
+      contraentrega: match.contraentrega,
+      costo_envio: gratis ? 0 : match.costo_envio,
+      envio_gratis: gratis,
+      zona: resolveZona(match.ciudad), zona_label: "",
+      tiempo: TIEMPO_ENTREGA,
+      ciudad: match.ciudad,
     };
   }
-  if (tenant.fleteModo === "fijo") {
-    return {
-      cobertura: true, cubre: true, contraentrega: metodo === "contraentrega",
-      costo_envio: tenant.fleteValor || 0, envio_gratis: (tenant.fleteValor || 0) === 0,
-      zona: zi.zona, zona_label: ZONES[zi.zona].label, tiempo: tiempoZona(zi.zona),
-      dias_min: ZONE_RATE[zi.zona].diasMin, dias_max: ZONE_RATE[zi.zona].diasMax,
-      requiere_confirmar: ZONE_RATE[zi.zona].confirmar || !zi.encontrada,
-      ciudad_encontrada: zi.encontrada,
-      ciudad: ciudad || cfg.ciudadBase,
-    };
-  }
-  // por_ciudad (default): flete con la tarifa ÚNICA ($20.000 + 7%) y días por ZONA
-  // (Interrapidísimo) desde la ciudad base. El precio NO varía por zona; los tiempos sí.
+
+  // 2) tabla de zonas (cobertura nacional por defecto)
   const s = computeShipping({
     ciudad: ciudad || cfg.ciudadBase,
     subtotalCop: opts.subtotalCop ?? 0,
@@ -274,8 +188,6 @@ export async function cotizarEnvio(ciudad: string, opts: CotizarOpts = {}): Prom
     envio_gratis: s.envio_gratis,
     zona: s.zona, zona_label: s.zona_label,
     tiempo: s.tiempo,
-    dias_min: s.dias_min, dias_max: s.dias_max, requiere_confirmar: s.requiere_confirmar,
-    ciudad_encontrada: s.ciudad_encontrada,
     ciudad: ciudad || cfg.ciudadBase,
   };
 }
@@ -298,12 +210,11 @@ export type PromoView = {
 
 export async function getActivePromotions(categorySlug?: string): Promise<PromoView[]> {
   if (!db) return [];
-  const tid = await currentTenantId();
   const rows = await db
     .select({ pr: promotions, prod: products })
     .from(promotions)
     .leftJoin(products, eq(promotions.productId, products.id))
-    .where(and(eq(promotions.tenantId, tid!), eq(promotions.activa, true)))
+    .where(eq(promotions.activa, true))
     .orderBy(asc(promotions.orden));
   return rows
     .map((r) => ({
@@ -321,10 +232,7 @@ export async function getActivePromotions(categorySlug?: string): Promise<PromoV
 export async function validateCoupon(codigo: string) {
   if (!codigo) return null;
   if (!db) return null;
-  const tid = await currentTenantId();
-  const [c] = await db.select().from(coupons)
-    .where(and(eq(coupons.tenantId, tid!), eq(coupons.codigo, codigo.toUpperCase().trim())))
-    .limit(1);
+  const [c] = await db.select().from(coupons).where(eq(coupons.codigo, codigo.toUpperCase().trim())).limit(1);
   if (!c || !c.activo) return null;
   if (c.vence && new Date(c.vence).getTime() < Date.now()) return null;
   if (c.usosMax != null && (c.usos ?? 0) >= c.usosMax) return null;
@@ -334,64 +242,13 @@ export async function validateCoupon(codigo: string) {
 /* ---------- Asesores (round-robin) ---------- */
 export async function assignAdvisor() {
   if (!db) return { nombre: "Asesor Animals Deluxe", whatsapp: process.env.NEXT_PUBLIC_WHATSAPP || "" };
-  const tid = await currentTenantId();
   const [a] = await db
     .select()
     .from(advisors)
-    .where(and(eq(advisors.tenantId, tid!), eq(advisors.activo, true)))
+    .where(eq(advisors.activo, true))
     .orderBy(asc(advisors.pedidosAsignados), asc(advisors.createdAt))
     .limit(1);
-  if (!a) return { nombre: "Asesor", whatsapp: process.env.NEXT_PUBLIC_WHATSAPP || "" };
+  if (!a) return { nombre: "Asesor Animals Deluxe", whatsapp: process.env.NEXT_PUBLIC_WHATSAPP || "" };
   await db.update(advisors).set({ pedidosAsignados: (a.pedidosAsignados ?? 0) + 1 }).where(eq(advisors.id, a.id));
   return { id: a.id, nombre: a.nombre, whatsapp: a.whatsapp || "" };
-}
-
-/* ---------- Cerebro de búsqueda: alias extra (panel/logs) ---------- */
-import { productAliases, searchMisses } from "@/lib/db/schema";
-import type { AliasEntry } from "@/lib/ai/aliases";
-
-/** Alias adicionales del tenant (los del panel). El catálogo base vive en
- *  lib/ai/aliases.ts; esto permite ampliarlo sin deploy. Fail-soft: si la
- *  tabla no existe todavía, el cerebro sigue con el catálogo en código. */
-export async function getExtraAliases(): Promise<AliasEntry[]> {
-  if (!db) return [];
-  try {
-    const tid = await currentTenantId();
-    const rows = await db.select().from(productAliases).where(eq(productAliases.tenantId, tid!));
-    // Agrupa por (alias, nota) para respetar alias que apuntan a varios productos.
-    const byAlias = new Map<string, { slugs: string[]; nota: string }>();
-    for (const r of rows) {
-      const k = normalize(r.alias);
-      if (!k) continue;
-      const cur = byAlias.get(k) || { slugs: [], nota: r.nota || "" };
-      cur.slugs.push(r.productSlug);
-      if (r.nota) cur.nota = r.nota;
-      byAlias.set(k, cur);
-    }
-    return [...byAlias.entries()].map(([alias, v]) => ({
-      aliases: [alias], slugs: v.slugs, nota: v.nota || undefined,
-    }));
-  } catch {
-    return [];
-  }
-}
-
-/** Registra una búsqueda que no resolvió bien (para sacar alias nuevos). */
-export async function logSearchMiss(data: {
-  query: string; queryNormalizado: string; mejorCandidato?: string; score?: number; status?: string;
-}) {
-  if (!db) return;
-  try {
-    const tid = await currentTenantId();
-    await db.insert(searchMisses).values({
-      tenantId: tid || null,
-      query: (data.query || "").slice(0, 500),
-      queryNormalizado: (data.queryNormalizado || "").slice(0, 500),
-      mejorCandidato: (data.mejorCandidato || "").slice(0, 200),
-      score: data.score ?? 0,
-      status: data.status || "",
-    });
-  } catch {
-    /* fail-soft: nunca romper una búsqueda por no poder loguear */
-  }
 }

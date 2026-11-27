@@ -73,7 +73,7 @@
     },
     {
       "slug": "dragon-mamba", "name": "Dragon Mamba", "category": "energia", "audience": "Gallos de exhibición",
-      "origin": "br", "priceCOP": 150000, "presentations": [{ "label": "10 ml", "priceCOP": 150000 }],
+      "origin": "br", "priceCOP": 90000, "presentations": [{ "label": "10 ml", "priceCOP": 90000 }],
       "image": "dragon-mamba.jpg", "badges": ["Premium", "Importado"],
       "tagline": "El mejor doping importado: vitalidad, resistencia, energía y movilidad.",
       "shortDesc": "Doping especial para gallos de exhibición. No combinar con otros medicamentos.",
@@ -425,16 +425,6 @@
       "benefits": ["Más músculo", "Más energía", "Soporte integral"],
       "usage": "Administra según peso y etapa de tu mascota.",
       "pitch": "Suplemento premium canino: músculo y energía por 6 meses. Contraentrega."
-    },
-    {
-      "slug": "more-muscle-dogs-3m", "name": "More Muscle Dogs Premium", "category": "perros", "audience": "Perros",
-      "origin": "co", "priceCOP": 100000, "presentations": [{ "label": "Plan 3 meses", "priceCOP": 100000 }],
-      "image": "more-muscle-dogs.jpg", "badges": ["High Quality", "Best Product"],
-      "tagline": "Suplementa a tu mascota durante 3 meses.",
-      "shortDesc": "Suplemento premium para perros: desarrollo muscular y rendimiento por 3 meses.",
-      "benefits": ["Más músculo", "Más energía", "Soporte integral"],
-      "usage": "Administra según peso y etapa de tu mascota.",
-      "pitch": "Suplemento premium canino: músculo y energía por 3 meses. Contraentrega."
     },
     {
       "slug": "horse-deluxe", "name": "Horse Deluxe — Protein Lysine", "category": "caballos", "audience": "Caballos",

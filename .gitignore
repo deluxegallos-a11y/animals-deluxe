@@ -11,6 +11,3 @@ next-env.d.ts
 .vercel
 drizzle
 .gstack/
-.image-backups/
-.env*
-tests/reportes/

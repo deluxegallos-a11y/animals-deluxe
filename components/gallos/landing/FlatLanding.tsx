@@ -3,13 +3,12 @@
 import Image from "next/image";
 import type { CSSProperties, ReactNode } from "react";
 import { Icon } from "@/components/gallos/shared/Icon";
-import { useCheckout } from "@/components/gallos/_lib/useCheckout";
-import { PRODUCTS, gallosChoices } from "@/components/gallos/_lib/data";
+import { useCart } from "@/components/gallos/_lib/useCart";
+import { PRODUCTS } from "@/components/gallos/_lib/data";
 import { ReviewsNative } from "@/components/gallos/reviews/ReviewsNative";
 import { FaqNative } from "@/components/gallos/faq/FaqNative";
 import { StatsBar } from "@/components/gallos/sections/StatsBar";
 import { TrustBadges } from "@/components/gallos/sections/TrustBadges";
-import { Reveal3D } from "@/components/gallos/shared/Reveal3D";
 
 /* ------------------------------------------------------------------ *
  * Landing "plana": cada imagen de sección se monta tal cual (calidad
@@ -81,16 +80,15 @@ function FlatImage({
 }
 
 export function FlatLanding() {
-  const { start } = useCheckout();
-  // Botón genérico -> pregunta cuál (American/Dragon/los dos);
-  // botón de un producto -> directo al pago.
-  const buyChoices = () => start({ choices: gallosChoices() });
+  const { add } = useCart();
+  const scrollTo = (id: string) =>
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
 
   const arrow = (size = 18) => <Icon name="arrow-right" size={size} />;
   const cart = (size = 16) => <Icon name="cart" size={size} />;
 
   return (
-    <div className="mx-auto w-full max-w-[760px] overflow-x-clip bg-background pt-20 md:pt-24">
+    <div className="mx-auto w-full max-w-[760px] bg-background">
       {/* SECCIÓN 1 — Hero + beneficios + "la diferencia es real" */}
       <FlatImage
         id="top"
@@ -102,7 +100,7 @@ export function FlatLanding() {
       >
         <OverlayButton
           box={{ top: "54.0%", left: "17.5%", width: "65.5%", height: "5.5%" }}
-          onClick={buyChoices}
+          onClick={() => scrollTo("productos")}
           ariaLabel="Quiero un gallo campeón"
           fontClass="text-[clamp(13px,3.4vw,19px)]"
         >
@@ -111,32 +109,30 @@ export function FlatLanding() {
       </FlatImage>
 
       {/* SECCIÓN 2 — Productos (2 botones) + comparativa */}
-      <Reveal3D>
-        <FlatImage
-          id="productos"
-          src="/assets/sections/sec2.png"
-          width={1104}
-          height={1425}
-          alt="Nuestros productos: American Rooster Fury y Dragon Mamba"
+      <FlatImage
+        id="productos"
+        src="/assets/sections/sec2.png"
+        width={1104}
+        height={1425}
+        alt="Nuestros productos: American Rooster Fury y Dragon Mamba"
+      >
+        <OverlayButton
+          box={{ top: "45.5%", left: "6.3%", width: "40.8%", height: "5.0%" }}
+          onClick={() => add(PRODUCTS[0])}
+          ariaLabel="Comprar American Rooster Fury"
+          fontClass="text-[clamp(10px,2.4vw,14px)]"
         >
-          <OverlayButton
-            box={{ top: "45.5%", left: "6.3%", width: "40.8%", height: "5.0%" }}
-            onClick={() => start({ products: [PRODUCTS[0]] })}
-            ariaLabel="Comprar American Rooster Fury"
-            fontClass="text-[clamp(10px,2.4vw,14px)]"
-          >
-            Comprar {cart(15)}
-          </OverlayButton>
-          <OverlayButton
-            box={{ top: "45.5%", left: "52.9%", width: "40.9%", height: "5.0%" }}
-            onClick={() => start({ products: [PRODUCTS[1]] })}
-            ariaLabel="Comprar Dragon Mamba"
-            fontClass="text-[clamp(10px,2.4vw,14px)]"
-          >
-            Comprar {cart(15)}
-          </OverlayButton>
-        </FlatImage>
-      </Reveal3D>
+          Comprar {cart(15)}
+        </OverlayButton>
+        <OverlayButton
+          box={{ top: "45.5%", left: "52.9%", width: "40.9%", height: "5.0%" }}
+          onClick={() => add(PRODUCTS[1])}
+          ariaLabel="Comprar Dragon Mamba"
+          fontClass="text-[clamp(10px,2.4vw,14px)]"
+        >
+          Comprar {cart(15)}
+        </OverlayButton>
+      </FlatImage>
 
       {/* Contador premium (estadísticas con count-up) */}
       <StatsBar />
@@ -145,23 +141,21 @@ export function FlatLanding() {
       <ReviewsNative />
 
       {/* SECCIÓN 3b — Sellos de confianza + garantía (imagen recortada) */}
-      <Reveal3D>
-        <FlatImage
-          src="/assets/sections/sec3b.png"
-          width={1055}
-          height={951}
-          alt="Garantía 100% satisfacción — envío seguro, pago contra entrega, producto original"
+      <FlatImage
+        src="/assets/sections/sec3b.png"
+        width={1055}
+        height={951}
+        alt="Garantía 100% satisfacción — envío seguro, pago contra entrega, producto original"
+      >
+        <OverlayButton
+          box={{ top: "76.4%", left: "12.2%", width: "75.2%", height: "11.9%" }}
+          onClick={() => scrollTo("productos")}
+          ariaLabel="Quiero probarlo"
+          fontClass="text-[clamp(14px,3.6vw,20px)]"
         >
-          <OverlayButton
-            box={{ top: "76.4%", left: "12.2%", width: "75.2%", height: "11.9%" }}
-            onClick={buyChoices}
-            ariaLabel="Quiero probarlo"
-            fontClass="text-[clamp(14px,3.6vw,20px)]"
-          >
-            Quiero probarlo {arrow(20)}
-          </OverlayButton>
-        </FlatImage>
-      </Reveal3D>
+          Quiero probarlo {arrow(20)}
+        </OverlayButton>
+      </FlatImage>
 
       {/* Marcas de confianza: pago seguro + transportadoras */}
       <TrustBadges />
@@ -170,23 +164,21 @@ export function FlatLanding() {
       <FaqNative />
 
       {/* SECCIÓN 4b — Banner final "¡No esperes más!" (imagen recortada) */}
-      <Reveal3D>
-        <FlatImage
-          src="/assets/sections/sec4b.png"
-          width={901}
-          height={501}
-          alt="No esperes más — lleva tu gallo al siguiente nivel"
+      <FlatImage
+        src="/assets/sections/sec4b.png"
+        width={901}
+        height={501}
+        alt="No esperes más — lleva tu gallo al siguiente nivel"
+      >
+        <OverlayButton
+          box={{ top: "37.9%", left: "26.7%", width: "46.0%", height: "17.8%" }}
+          onClick={() => scrollTo("productos")}
+          ariaLabel="Comprar ahora"
+          fontClass="text-[clamp(12px,2.8vw,16px)]"
         >
-          <OverlayButton
-            box={{ top: "37.9%", left: "26.7%", width: "46.0%", height: "17.8%" }}
-            onClick={buyChoices}
-            ariaLabel="Comprar ahora"
-            fontClass="text-[clamp(12px,2.8vw,16px)]"
-          >
-            Comprar ahora {arrow(16)}
-          </OverlayButton>
-        </FlatImage>
-      </Reveal3D>
+          Comprar ahora {arrow(16)}
+        </OverlayButton>
+      </FlatImage>
 
     </div>
   );
