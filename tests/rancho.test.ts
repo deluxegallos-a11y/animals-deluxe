@@ -32,11 +32,15 @@ test("combos agotados: el catálogo nunca da precio de combos", () => {
   assert.match(combos, /agotados/);
 });
 
-test("envío internacional: sin cifra inventada (Angel Portugal: '500 a 700 dólares' a Perú)", () => {
-  assert.equal(v.envios.internacional_costo, null);
-  assert.doesNotMatch(cat, /\d[\d.]*\s*d[óo]lares|USD|US\$/i); // "Dolar" es una línea, no plata
-  assert.match(cat, /escalar_humano, sin dar cifra/);
-  assert.match(reglas, /Peru.*escalar_humano, sin dar cifra/);
+test("envío internacional: solo las cifras del dueño (Angel Portugal: inventó '500 a 700 dólares' a Perú)", () => {
+  assert.match(cat, /Ecuador: 50 dólares por cada ejemplar/);
+  assert.match(cat, /Perú: 150 dólares por cada ejemplar/);
+  assert.match(cat, /Venezuela: 70 dólares por cada ejemplar/);
+  assert.match(cat, /Panamá: .*6889-5322/);
+  assert.doesNotMatch(cat, /\b(500|700)\s*(a\s*\d+\s*)?d[óo]lares/);
+  assert.match(cat, /Western Union/);
+  assert.match(cat, /Otros países: .*escalar_humano, sin dar cifra/);
+  assert.match(reglas, /Peru ciento cincuenta dolares/);
 });
 
 test("reglas de los errores reales: una respuesta, cuentas con precio+proceso, seguir tras cuentas, fotos sin repetir", () => {

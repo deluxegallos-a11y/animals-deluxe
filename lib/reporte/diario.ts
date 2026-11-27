@@ -140,7 +140,7 @@ async function uchatGet(token: string, path: string): Promise<Record<string, unk
 
 /** Contactos internos (aviso de pedidos, número de control) que no son clientes. */
 function internos(): string[] {
-  return (process.env.REPORTE_EXCLUIR_NS || "f280503u1065709577,f280503u1014074893,f280503u1032906375")
+  return (process.env.REPORTE_EXCLUIR_NS || "f280503u1065709577,f280503u1014074893,f280503u1032906375,f276483u1078026747") // último: chat web de pruebas del Rancho (etiqueta prueba_bot)
     .split(",").map((s) => s.trim()).filter(Boolean);
 }
 

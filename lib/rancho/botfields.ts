@@ -10,11 +10,13 @@ export type VerdadRancho = {
   promo: { nombre: string; precio: number; precio_normal: number; lote: number; vigencia: string; nota: string };
   promo_parejas: string;
   combos_2_meses: { estado: string; vuelven: string; se_separan: boolean; dar_precio: boolean };
-  proceso_compra: { abono_minimo: number; pasos: string; fotos: string; color: string };
-  envios: { medio: string; nacional_principales: string; nacional_trasbordo: string; uno_o_dos_igual: boolean; internacional_paises: string[]; internacional_costo: string | null };
-  pagos: { titular: string; bancolombia_ahorros: string; nequi: string; ecuador: string; otros_medios: string | null };
+  proceso_compra: { abono_minimo: number; pasos: string; fotos: string; color: string; galeria_con_abono_para_todos: boolean; estrategia_empatica: string[] };
+  edades_que_manejamos: string;
+  envios: { medio: string; nacional_principales: string; nacional_trasbordo: string; uno_o_dos_igual: boolean; internacional_paises: string[]; internacional_costo: string | null; internacional: Record<string, string> };
+  pagos: { titular: string; bancolombia_ahorros: string; nequi: string; ecuador: string; otros_medios: string | null; internacional: string };
   garantia: string;
   telegram: string;
+  facebook: string | null;
   derivar: Record<string, string>;
   lineas: string[];
   pendientes: string[];
@@ -43,12 +45,15 @@ export function catalogoCod(v: VerdadRancho = leerVerdad()): string {
     `CATÁLOGO OFICIAL RANCHO DE LAS ESTRELLAS (verdad del dueño, ${v._actualizado}). Manda sobre cualquier precio escrito en otra parte del prompt. Lo que no está aquí no se inventa: escalar_humano.`,
     `EJEMPLARES (precio por animal, envío aparte):\n${ej}`,
     `PROMO ACTIVA — ${p.nombre}: ${enPalabras(p.precio)} (${cop(p.precio)}); normalmente ${enPalabras(p.precio_normal)}; lote de ${p.lote}; ${p.vigencia}; ${p.nota}. Promo de parejas: ${v.promo_parejas}.`,
-    `COMBOS DE 2 MESES: ${v.combos_2_meses.estado}, vuelven ${v.combos_2_meses.vuelven}. No se separan ni se reciben abonos. No se dan precios de combos.`,
+    `EDADES: ${v.edades_que_manejamos}.`,
+    `COMBOS DE 2 MESES: ${v.combos_2_meses.estado}; ${v.combos_2_meses.vuelven}. No se separan ni se reciben abonos. No se dan precios de combos.`,
     `CÓMO SE COMPRA: ${v.proceso_compra.pasos}. Abono mínimo ${enPalabras(v.proceso_compra.abono_minimo)}. Fotos: ${v.proceso_compra.fotos}. Color: ${v.proceso_compra.color}.`,
-    `ENVÍOS: ${v.envios.medio}. Ciudades principales ${v.envios.nacional_principales}; con trasbordo ${v.envios.nacional_trasbordo}; ${v.envios.uno_o_dos_igual ? "vale lo mismo para uno o dos ejemplares" : ""}. Internacional: ${v.envios.internacional_paises.join(", ")} — ${v.envios.internacional_costo ?? "costo lo cotiza la encargada (escalar_humano, sin dar cifra)"}.`,
-    `PAGOS: Bancolombia ahorros y Nequi a nombre de ${v.pagos.titular} (las cuentas las manda enviar_cuentas). Ecuador: ${v.pagos.ecuador}. Otros medios: ${v.pagos.otros_medios ?? "no confirmados → escalar_humano"}.`,
-    `GARANTÍA: ${v.garantia}. Telegram (galería gratis): ${v.telegram}.`,
-    `DERIVAR: productos/droga/vitaminas → ${v.derivar.productos_droga_vitaminas}; rifas/eventos → ${v.derivar.rifas_eventos}.`,
+    `GALERÍA SOLO CON ABONO (todos, sin excepción) — cómo explicarlo con empatía:\n${v.proceso_compra.estrategia_empatica.map((x) => `• ${x}`).join("\n")}`,
+    `ENVÍOS NACIONALES: ${v.envios.medio}. Ciudades principales ${v.envios.nacional_principales}; con trasbordo ${v.envios.nacional_trasbordo}; ${v.envios.uno_o_dos_igual ? "vale lo mismo para uno o dos ejemplares" : ""}.`,
+    `ENVÍOS INTERNACIONALES (por cada ejemplar):\n${Object.entries(v.envios.internacional).map(([k, x]) => `• ${k.replace("otros_paises", "Otros países")}: ${x}`).join("\n")}`,
+    `PAGOS: en Colombia Bancolombia ahorros y Nequi (las cuentas las manda enviar_cuentas; nunca digas números de cuenta ni a nombre de quién están). Desde otro país: ${v.pagos.internacional}. ${v.pagos.otros_medios ?? ""}`,
+    `GARANTÍA: ${v.garantia}. Telegram (todo el contenido, gratis): ${v.telegram}.${v.facebook ? ` Facebook (si no tiene Telegram): ${v.facebook}.` : ""}`,
+    `DERIVAR (teléfonos SIEMPRE en números, nunca en letras): productos/droga/vitaminas → ${v.derivar.productos_droga_vitaminas}; rifas/eventos → ${v.derivar.rifas_eventos}.`,
     `LÍNEAS QUE MANEJAMOS (${v.lineas.length}): ${v.lineas.join(", ")}.`,
   ].join("\n\n");
 }
