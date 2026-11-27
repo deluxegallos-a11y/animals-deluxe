@@ -37,7 +37,12 @@ export function parsePlainItems(
   resolves: (name: string) => boolean,
 ): { name: string; cantidad: number }[] {
   const out: { name: string; cantidad: number }[] = [];
-  for (const part of String(text).split(/[\n;]+|\s\+\s/).map((s) => s.trim()).filter(Boolean)) {
+  // Separadores: salto de línea, ";", " + " y COMA (27-nov: el agente manda
+  // "1x Espadadrapo Blanco, 1x Cera Dominicana, 1x Mona" y salía como UN solo producto).
+  for (const part of String(text).split(/[\n;,]+|\s\+\s/).map((s) => s.trim()).filter(Boolean)) {
+    // 0) "1x Gallo Purga" / "2 x Mona" / "3× Avena": multiplicador al INICIO.
+    const mPre = part.match(/^\s*(\d+)\s*[x×]\s+(.+)$/i) || part.match(/^\s*(\d+)[x×](\S.*)$/i);
+    if (mPre && mPre[2].trim()) { out.push({ name: mPre[2].trim(), cantidad: Math.max(1, parseInt(mPre[1], 10)) }); continue; }
     // 1) Multiplicador EXPLÍCITO. "x2" o "2 und/unidades/tarros/frascos/productos".
     const mX = part.match(/\bx\s*(\d+)\b/i) || part.match(/\b(\d+)\s*(?:und|unid|unidades|productos?|tarros?|frascos?)\b/i);
     if (mX) {

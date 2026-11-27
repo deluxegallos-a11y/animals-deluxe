@@ -125,7 +125,9 @@ export function esNumeroDeProducto(raw: string, rules: Ruleset = ROOSTER_RULES, 
 export function normalizeQuery(raw: string): NormalizedQuery {
   const q = normalize(raw).replace(/[^a-z0-9\s+]/g, " ").replace(/\s+/g, " ").trim()
     // "la b 12 5500" / "be 12" → "b12": separada, la B12 se volvía B15 por parecido (26-nov Rooster).
-    .replace(/\b(?:b|be)\s+(12|15)\b/g, "b$1");
+    .replace(/\b(?:b|be)\s+(12|15)\b/g, "b$1")
+    // "1espadadrapo" (número pegado) → "1 espadadrapo"
+    .replace(/\b(\d+)([a-z]{3,})/g, "$1 $2");
   const stripped = stripFillers(q);
   return {
     raw, q, stripped,
@@ -272,6 +274,8 @@ const FUZZY_STOP = new Set([
   "cuidado", "personalizado", "personalizada", "personalizados", "espuela", "espuelas",
   "gallina", "gallinas", "pollo", "pollos", "combate", "exhibicion",
   // necesidades con typo: que decida la regla de necesidad, no el parecido ("esparacitante"→Espadadrapo)
+  // "botiquín de calzar COMPLETO" → Rooster Complet (27-nov, primer chat en vivo)
+  "completo", "completa", "completos", "botiquin", "kit",
   "purgante", "purgantes", "esparacitante", "esparasitante", "desparacitante", "dopaje", "dopi", "doppy", "dopy",
 ]);
 
@@ -595,6 +599,12 @@ function identifyCore(
     cands.splice(0, cands.length, ...enForma);
   }
 
+  // Una NECESIDAD escrita tal cual ("calzadar", "purgante") gana sobre un parecido
+  // ortográfico flojo: "botiquín de calzadar completo" terminaba en Compleland (27-nov).
+  if (cands.length && need && cands[0].sim < 0.6) {
+    const prods = needProducts(need, pool, forma);
+    if (prods.length) return { status: "category", product: prods[0], options: prods, matchedBy: "need", score: 0, ranked, norm };
+  }
   if (cands.length) {
     const top = cands[0];
     // 2-3 candidatos cercanos Y de la misma categoría → ambiguous.

@@ -104,3 +104,23 @@ test("ficha: 'Uso: Presentación por 100 pastillas' NO es dosis", () => {
   assert.match(usoLimpio("Aplicar de 4 a 5 gotas 1 hora antes del juego.").dosis, /4 a 5 gotas/);
   assert.equal(usoLimpio("Ungüento tópico para la visión.").dosis, "");
 });
+
+/* ---------- primer chat EN VIVO con la versión nueva (27-nov 01:22) ---------- */
+import { parsePlainItems } from "@/lib/ai/orders";
+
+test("'botiquín de calzar completo' → lo de calzar, nunca Rooster Complet", () => {
+  const s = slugs("Necesito botiquín de calzadar completo amigo");
+  assert.ok(!s.includes("rooster-complet"), String(s));
+  assert.ok(s.includes("espadadrapo-blanco"), String(s));
+});
+
+test("lista larga del cliente: blanco pegado al número, cloruro y 'para afeitar' también salen", () => {
+  const s = slugs("Necesito 1espadadrapo blanco 35 1 espadadrapo de color Una cera dominicana Un cloruro Una mona Una para afeitar");
+  for (const k of ["espadadrapo-blanco", "cera-dominicana", "percloruro", "mona", "rooster-shave"]) assert.ok(s.includes(k), `${k}: ${s}`);
+});
+
+test("crear_pedido: la lista '1x A, 1x B, 2x C' son 3 productos con su cantidad", () => {
+  const items = parsePlainItems("1x Espadadrapo Blanco 4 pulgadas, 1x Cera Dominicana, 2x Mona, 1x Rooster Shave", () => true);
+  assert.deepEqual(items.map((i) => [i.name, i.cantidad]), [["Espadadrapo Blanco 4 pulgadas", 1], ["Cera Dominicana", 1], ["Mona", 2], ["Rooster Shave", 1]]);
+  for (const it of items) assert.ok(r(it.name).product, it.name);
+});

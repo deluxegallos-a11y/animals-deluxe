@@ -104,13 +104,13 @@ export const ALIAS_CATALOG: AliasEntry[] = [
   { slugs: ["pollon-premium", "pollon-oro-gotas"], aliases: ["pollon", "poyon"] },
   { slugs: ["ciclosona-inyectable"], aliases: ["siclosona", "ciclosona", "ciclosona inyectable"] },
   { slugs: ["rooster-smallpox"], aliases: ["smallpox", "viruela", "bubas", "crema viruela", "esmolpox"] },
-  { slugs: ["percloruro"], aliases: ["percloruro", "para la sangre", "pa la sangre", "pa sangre"] },
+  { slugs: ["percloruro"], aliases: ["percloruro", "cloruro", "un cloruro", "perclorulo", "para la sangre", "pa la sangre", "pa sangre"] },
 
   /* ---------- HIGIENE ---------- */
   { slugs: ["shampoo-plume-king"], aliases: ["plume king", "shampoo", "champu", "shampu", "plum king"] },
   { slugs: ["lice-free"], aliases: ["lice free", "piojos", "antipiojos", "laisfri", "lice"] },
   { slugs: ["red-rooster"], aliases: ["enrojecedor", "red rooster litro", "red rooster"] },
-  { slugs: ["rooster-shave"], aliases: ["shave", "crema afeitar", "afeitadora", "rooster shave", "cheiv"] },
+  { slugs: ["rooster-shave"], aliases: ["shave", "crema afeitar", "afeitadora", "rooster shave", "cheiv", "para afeitar", "pa afeitar", "crema para afeitar"] },
 
   /* ---------- IMPLEMENTOS ---------- */
   {
@@ -196,7 +196,7 @@ export const NEED_RULES: NeedRule[] = [
   { id: "b12", match: ["b12", "vitamina b12", "complejo b"], slugs: ["super-vitamina-b12-5500-inyectable", "super-b12-max", "ultra-gallo-b12-5500", "super-tron-b12", "compleland-b12-oral"] },
   // "para las gallinas, que pongan" iba a Galliverm (desparasitante) por parecido.
   { id: "gallinas", match: ["que pongan", "paque pongan", "pa que pongan", "postura", "ponedora", "ponedoras", "para las gallinas", "pa las gallinas", "gallinas", "gallina"], slugs: ["hens", "rooster-deluxe-suplement"] },
-  { id: "calzar", match: ["calzar", "calsar", "para calzar", "kit de calza", "calza"], slugs: ["espadadrapo-blanco", "percloruro", "cera-dominicana", "corta-espuela"] },
+  { id: "calzar", match: ["calzar", "calsar", "calzadar", "calzada", "de calzar", "para calzar", "botiquin de calzar", "kit de calzar", "kit de calza", "calza"], slugs: ["espadadrapo-blanco", "percloruro", "cera-dominicana", "corta-espuela"] },
   { id: "vitaminas", match: ["vitamina", "vitaminas", "fortalecer", "cuido", "etapa final", "fortaleza"], categorySlug: "vitaminas-y-suplementos" },
 ];
 
