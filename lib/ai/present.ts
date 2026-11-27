@@ -19,6 +19,22 @@ function esAnticipado(): boolean {
   return politicaPago() === "anticipado";
 }
 
+/** El `usage` viejo (Rooster) muchas veces NO es dosis: repite la presentación
+ *  ("Presentación por 100 pastillas.") y el bot lo mandaba como "🥄 Uso:". Separa:
+ *  · dosis → solo si trae cantidad + unidad de dosis (gotas, ml, pastilla, gramos…)
+ *  · info  → otro dato útil del producto que no es dosis (ej. placas: "se graban de a 25") */
+export function usoLimpio(usage?: string | null): { dosis: string; info: string } {
+  let u = (usage || "").replace(/\s+/g, " ").trim();
+  if (!u) return { dosis: "", info: "" };
+  const m = u.match(/\bdosis\s*:\s*(.+)$/i);
+  if (m) return { dosis: m[1].trim(), info: "" };
+  // Quita la frase de presentación ("Presentación por 100 pastillas." / "de 50 ml y 100 ml.")
+  u = u.replace(/^presentaci[oó]n[^.]*\.?\s*/i, "").trim();
+  if (!u) return { dosis: "", info: "" };
+  const esDosis = /\d/.test(u) && /(gota|\bml\b|pastilla|tableta|capsul|gramo|\bgr?\b|cucharad|jeringa|pechuga)/i.test(u);
+  return esDosis ? { dosis: u, info: "" } : { dosis: "", info: u };
+}
+
 /** Bloque de contexto que el LLM del bot (Victor) usa pa asesorar a fondo. */
 export function buildContexto(p: ProductView): string {
   const forma = formaDe(p);
@@ -40,7 +56,10 @@ export function buildContexto(p: ProductView): string {
       : `FORMA: no registrada — NO afirmes si es inyectable, gotas o polvo; confirma con el asesor.`,
     // UNA sola dosis: la del dueño (dosificacion). El `usage` viejo traía otra
     // ("6 a 8 gotas") y el bot mezclaba las dos (23 dosis inventadas el 25-nov).
-    p.dosificacion ? `DOSIS (única válida): ${p.dosificacion}` : p.usage ? `MODO DE USO: ${p.usage}` : "",
+    p.dosificacion ? `DOSIS (única válida): ${p.dosificacion}`
+      : usoLimpio(p.usage).dosis ? `DOSIS (sin confirmar por el dueño; si preguntan, dila tal cual): ${usoLimpio(p.usage).dosis}`
+      : `DOSIS: no registrada — NO inventes dosis; di que la confirma el asesor.`,
+    usoLimpio(p.usage).info ? `INFO: ${usoLimpio(p.usage).info}` : "",
     faqs ? `FAQS: ${faqs}` : "",
     obj ? `OBJECIONES: ${obj}` : "",
     `NOTA: ${p.disclaimer || "Producto de bienestar y rendimiento. No cura enfermedades."}`,
@@ -88,7 +107,8 @@ export function richMensaje(p: ProductView): string {
     forma ? `${ICONO[forma] || "📌"} Se aplica: *${forma}*` : "",
     p.presentacion ? `📦 Presentación: ${p.presentacion}` : "",
     p.dosificacion ? `🥄 Dosis: ${p.dosificacion}` : "",
-    p.usage && !p.dosificacion ? `🥄 Uso: ${p.usage}` : "",
+    !p.dosificacion && usoLimpio(p.usage).dosis ? `🥄 Uso: ${usoLimpio(p.usage).dosis}` : "",
+    !p.dosificacion && usoLimpio(p.usage).info ? `📌 ${usoLimpio(p.usage).info}` : "",
     p.edadMinima ? `📅 Desde: ${p.edadMinima}` : "",
   ].filter(Boolean).join("\n");
   return [
@@ -118,7 +138,7 @@ export function publicProduct(p: ProductView) {
     benefits: p.benefits,
     ingredients: p.ingredients,
     // Con dosis del dueño, `usage` repite ESA dosis (nunca otra distinta).
-    usage: p.dosificacion || p.usage,
+    usage: p.dosificacion || usoLimpio(p.usage).dosis,
     pitch: p.pitch,
     faq: p.faq,
     keywords: p.keywords || [],
@@ -133,7 +153,7 @@ export function publicProduct(p: ProductView) {
     // (el CyanoMax es inyectable y el bot lo mandaba dar en gotas).
     forma: formaDe(p),
     // La dosis concreta manda sobre el `usage` genérico ("aplica la dosis recomendada").
-    uso: p.dosificacion || p.usage || "",
+    uso: p.dosificacion || usoLimpio(p.usage).dosis || "",
     envio_gratis: !!p.envioGratis,
     // Reglas de negocio (M6.2 · M6.3): el bot no debe ofrecer contra entrega un
     // producto solo-anticipado, ni 1 unidad de uno que va de a 2+.
@@ -187,6 +207,15 @@ export function cualMensaje(products: ProductView[], nota?: string): string {
     ? `${nombres.slice(0, -1).join(", ")} o ${nombres[nombres.length - 1]}`
     : nombres[0] || "";
   return [nota ? `👉 ${nota}` : "", `¡De una mi rey! 🐓 ¿Cuál de estos buscas: ${lista}?`].filter(Boolean).join("\n");
+}
+
+/** El cliente pidió VARIOS productos en un mensaje: precio de cada uno, sin preguntar
+ *  "¿cuál de estos?" (no son versiones del mismo producto). */
+export function variosMensaje(products: ProductView[]): string {
+  const vistos = new Set<string>();
+  const uniq = products.filter((p) => { const k = p.name.toLowerCase().trim(); if (vistos.has(k)) return false; vistos.add(k); return true; });
+  const lines = uniq.slice(0, 4).map((p) => `🔥 *${p.name}* · ${cop(p.priceCOP)}`);
+  return `¡De una mi rey! 🐓 Te paso los que pediste:\n${lines.join("\n")}\n¿Cuáles te mando y pa qué ciudad?`;
 }
 
 /** Producto "vacío" pero nunca null (regla de oro UChat). */

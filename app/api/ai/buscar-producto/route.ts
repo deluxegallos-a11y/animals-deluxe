@@ -5,7 +5,7 @@ import { identifyProduct, esQueryBasura, esNumeroDeProducto } from "@/lib/ai/bra
 import { rulesForTenant } from "@/lib/ai/aliases";
 import { detectarOtraMarca, preferirOtraMarca } from "@/lib/ai/marcas";
 import { detectForma, formaDe } from "@/lib/ai/search";
-import { publicProduct, suggestion, emptyProduct, richMensaje, opcionesMensaje, cualMensaje } from "@/lib/ai/present";
+import { publicProduct, suggestion, emptyProduct, richMensaje, opcionesMensaje, cualMensaje, variosMensaje } from "@/lib/ai/present";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -127,7 +127,8 @@ export const POST = withBridge(
     //  - category  → "pa eso te sirven" con máx 3 de esa necesidad
     //  - found     → ficha humanizada del producto (+ su imageUrl/foto)
     const mensaje =
-      r.status === "ambiguous" ? cualMensaje(r.options, r.nota)
+      r.multi ? variosMensaje(r.options)
+      : r.status === "ambiguous" ? cualMensaje(r.options, r.nota)
       : r.status === "category" ? opcionesMensaje(r.options)
       : (r.nota ? `👉 ${r.nota}\n` : "") + richMensaje(p);
 

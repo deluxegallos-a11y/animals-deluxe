@@ -123,7 +123,9 @@ export function esNumeroDeProducto(raw: string, rules: Ruleset = ROOSTER_RULES, 
 }
 
 export function normalizeQuery(raw: string): NormalizedQuery {
-  const q = normalize(raw).replace(/[^a-z0-9\s+]/g, " ").replace(/\s+/g, " ").trim();
+  const q = normalize(raw).replace(/[^a-z0-9\s+]/g, " ").replace(/\s+/g, " ").trim()
+    // "la b 12 5500" / "be 12" → "b12": separada, la B12 se volvía B15 por parecido (26-nov Rooster).
+    .replace(/\b(?:b|be)\s+(12|15)\b/g, "b$1");
   const stripped = stripFillers(q);
   return {
     raw, q, stripped,
@@ -220,6 +222,8 @@ export interface BrainResult {
   /** Ranking del motor fuzzy (para sugerencias). */
   ranked: { product: ProductView; score: number; relevant: boolean }[];
   norm: NormalizedQuery;
+  /** El cliente pidió VARIOS productos distintos en un mensaje (no es "¿cuál de estos?"). */
+  multi?: boolean;
 }
 
 const THRESHOLD = 0.35;
@@ -254,6 +258,21 @@ const FUZZY_STOP = new Set([
   // Cinturón y tirantes junto al candado de URLs: si "media" vuelve a colarse por
   // otra vía, ya no puede identificar un producto por sí sola.
   "media", "luna",
+  // CHARLA de WhatsApp (chats reales Rooster 26-nov): por parecido ortográfico
+  // "en cuánto SALE"→Catosal, "muestre AVER"→Avena, "una foto de la MANO"→Mamba,
+  // "una de CUIDADO"→Candados, "maletero PERSONALIZADO"→Placas, "ESPUELAS"→Corta
+  // Espuela (no vendemos espuelas sueltas), "GALLINAS"→Galliverm. Estas palabras
+  // no nombran un producto: que decida el alias, la necesidad o el contexto.
+  "cuanto", "cuantos", "cuanta", "cuantas", "sale", "salen", "vale", "valen", "cuesta", "cuestan",
+  "precio", "precios", "valor", "muestre", "muestreme", "muestra", "mostrar", "aver", "ver",
+  "mano", "amigo", "amiga", "firma", "parce", "parcero", "hermano", "mijo", "rey", "senor",
+  "este", "esta", "ese", "esa", "estos", "estas", "esos", "esas", "eso", "esto",
+  "otro", "otra", "otros", "otras", "mejor", "bueno", "buena", "buenos", "buenas", "dias", "tardes", "noches",
+  "manejan", "maneja", "manejas", "tipos", "tipo", "clase", "clases", "envio", "enviar", "despachar",
+  "cuidado", "personalizado", "personalizada", "personalizados", "espuela", "espuelas",
+  "gallina", "gallinas", "pollo", "pollos", "combate", "exhibicion",
+  // necesidades con typo: que decida la regla de necesidad, no el parecido ("esparacitante"→Espadadrapo)
+  "purgante", "purgantes", "esparacitante", "esparasitante", "desparacitante", "dopaje", "dopi", "doppy", "dopy",
 ]);
 
 /** Dedupe por nombre (el catálogo tiene SKUs repetidos: 2× Mona, 2× Tijera Roja…). */
@@ -349,6 +368,39 @@ export function identifyProduct(
   extraAliases: AliasEntry[] = [],
   rules: Ruleset = ROOSTER_RULES,
 ): BrainResult {
+  return familiaVitamina(rawQuery, products, identifyCore(rawQuery, products, extraAliases, rules));
+}
+
+/** B12 y B15 son familias distintas (vitamina vs energizante). 26-nov Rooster: "las 5500
+ *  B12" mostraba la B15 5500 por parecido del "5500", y el cliente pedía otra cosa.
+ *  Si el cliente dijo B12, un producto que es B15 (y no B12) nunca sale, y viceversa. */
+function familiaVitamina(rawQuery: string, products: ProductView[], r: BrainResult): BrainResult {
+  const fam = /\bb12\b/.test(r.norm.q) ? "b12" : /\bb15\b/.test(r.norm.q) ? "b15" : null;
+  if (!fam) return r;
+  const otra = fam === "b12" ? "b15" : "b12";
+  const ajena = (p: ProductView) => { const n = normalize(p.name); return n.includes(otra) && !n.includes(fam); };
+  const list = r.options.length ? r.options : r.product ? [r.product] : [];
+  if (list.length && !list.some(ajena)) return r;
+  const keep = list.filter((p) => !ajena(p));
+  if (keep.length) {
+    const st: BrainStatus = r.status === "category" ? "category" : keep.length > 1 ? "ambiguous" : "found";
+    return { ...r, status: st, product: keep[0], options: keep.length > 1 ? keep : [] };
+  }
+  // Nada válido (o no encontró nada): las de ESA familia, para que el cliente elija.
+  const fam2 = dedupe(speciesPool(rawQuery, products).filter((p) => normalize(p.name).includes(fam)));
+  if (!fam2.length) return { ...r, status: "not_found", product: null, options: [] };
+  return {
+    ...r, status: fam2.length > 1 ? "ambiguous" : "found", product: fam2[0],
+    options: fam2.length > 1 ? fam2.slice(0, 4) : [], matchedBy: "name", score: 0.5,
+  };
+}
+
+function identifyCore(
+  rawQuery: string,
+  products: ProductView[],
+  extraAliases: AliasEntry[],
+  rules: Ruleset,
+): BrainResult {
   const norm = normalizeQuery(rawQuery);
 
   /* --- PASO -1: CANDADO. Query vacío o basura (URL de audio/foto, archivo, id)
@@ -411,16 +463,36 @@ export function identifyProduct(
 
   /* --- PASO 1a: ALIAS contenido en el query (alias más largo gana) ---
      "dragon mamba" gana sobre "mamba"; "atp gold" sobre "gold". */
+  const aliasHits: AliasIndex = [];
   for (const e of index) {
+    // Un alias que es SOLO número ("5500", "77") va exacto: la variante fonética colapsa
+    // dígitos dobles ("5500"→"50") y "cobra 500" terminaba pegado a los productos 5500.
+    if (/^\d+$/.test(e.alias)) {
+      if (containsPhrase(norm.q, e.alias) && bySlugs(e.slugs, products).length) aliasHits.push(e);
+      continue;
+    }
     const hit =
       containsPhrase(norm.q, e.alias) ||
       containsPhrase(norm.stripped, e.alias) ||
       containsPhrase(phonetic(norm.q), phonetic(e.alias)) ||
       // singular/plural: "botas"→"bota" y viceversa
       containsPhrase(norm.stripped.split(" ").map(singular).join(" "), e.alias.split(" ").map(singular).join(" "));
-    if (!hit) continue;
-    const hits = bySlugs(e.slugs, products);
-    if (hits.length) return pack(hits, "alias", 1, norm, ranked, e.nota);
+    if (hit && bySlugs(e.slugs, products).length) aliasHits.push(e);
+  }
+  // VARIOS PRODUCTOS en un mensaje (26-nov: "tienen placas, botas, tijera y piqueras"
+  // devolvía solo la Piquera y el bot la mandó 4 veces). Alias distintos que no se
+  // contienen entre sí ("mamba" está dentro de "dragon mamba" → es el mismo pedido).
+  const sing = (s: string) => s.split(" ").map(singular).join(" ");
+  const distintos = aliasHits.filter((e, i) =>
+    !aliasHits.some((o, j) => j !== i && o.alias.length > e.alias.length && containsPhrase(sing(o.alias), sing(e.alias))));
+  const grupos = distintos.filter((e, i) => distintos.findIndex((o) => o.slugs.join() === e.slugs.join()) === i);
+  if (grupos.length >= 2 && grupos.every((g) => !grupos.some((o) => o !== g && o.slugs.some((s) => g.slugs.includes(s))))) {
+    const todos = dedupe(grupos.flatMap((g) => bySlugs(g.slugs, products)));
+    if (todos.length >= 2) return { ...pack(todos, "alias", 1, norm, ranked), multi: true };
+  }
+  if (aliasHits.length) {
+    const e = aliasHits[0];
+    return pack(bySlugs(e.slugs, products), "alias", 1, norm, ranked, e.nota);
   }
 
   /* --- PASO 1b: el query es PARTE de un alias ("mamba" → "la mamba") ---

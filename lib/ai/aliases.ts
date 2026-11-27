@@ -39,7 +39,9 @@ export const ALIAS_CATALOG: AliasEntry[] = [
   { slugs: ["rooster-booster"], aliases: ["booster", "buster", "el buster", "rooster buster"] },
   { slugs: ["nordic-rooster"], aliases: ["nordic", "nordica", "nordico"] },
   { slugs: ["super-b12-max"], aliases: ["b12 max", "super b12", "b12max"] },
-  { slugs: ["super-vitamina-b12-5500-inyectable"], aliases: ["b12 5500", "la 5500", "super vitamina", "super vitamina b12", "vitamina b12 5500"] },
+  { slugs: ["super-vitamina-b12-5500-inyectable"], aliases: ["b12 5500", "5500 b12", "b12 de 5500", "super vitamina", "super vitamina b12", "vitamina b12 5500", "vitamina 5500"] },
+  // "5500" a secas: 3 productos lo llevan en el nombre (26-nov) → opciones, nunca adivinar.
+  { slugs: ["super-vitamina-b12-5500-inyectable", "ultra-gallo-b12-5500", "super-energizante-b15-5500-ultra"], aliases: ["5500", "la 5500", "el 5500", "las 5500"] },
   { slugs: ["cyano-max"], aliases: ["siano max", "cyano", "ciano max", "sianomax", "cianomax", "ciano"] },
   { slugs: ["ultra-gallo-b12-5500"], aliases: ["ultra gallo", "ultragallo", "ultra gallo b12"] },
   { slugs: ["rooster-complet"], aliases: ["complet", "complete", "b12 complete", "rooster complete"] },
@@ -68,14 +70,14 @@ export const ALIAS_CATALOG: AliasEntry[] = [
   { slugs: ["ascarbol-inyectable"], aliases: ["ascarbol", "ascarbol inyectable", "ascarbol vitaminico"] },
   { slugs: ["poultry-prime"], aliases: ["poultry", "prime pollitos", "poultri"] },
   { slugs: ["nutripeep-reforce"], aliases: ["nutripeep", "nutri peep", "reforce"] },
-  { slugs: ["rooster-strength"], aliases: ["strength", "rooster strength"] },
+  { slugs: ["rooster-strength"], aliases: ["strength", "rooster strength", "rooster estren", "roster estren", "estren", "estrent", "rooster stren", "roster strength"] },
   { slugs: ["super-cobra-500"], aliases: ["cobra 500", "super cobra"] },
 
   /* ---------- RECUPERACIÓN ---------- */
   { slugs: ["gallo-post-recovery"], aliases: ["recovery", "post recovery", "recuperador", "gallo post recovery"] },
 
   /* ---------- VERMÍFUGOS ---------- */
-  { slugs: ["gallo-purga"], aliases: ["gallopurga", "purga plus", "gallo purga plus", "gallo purga"] },
+  { slugs: ["gallo-purga"], aliases: ["gallopurga", "purga plus", "gallo purga plus", "gallo purga", "gallo pulga", "galo purga", "gallo purgas"] },
   { slugs: ["galliverm-super"], aliases: ["galiverm", "galliverm", "galiber", "galliverm super"] },
   { slugs: ["rooster-end-worm"], aliases: ["end worm", "endworm", "and worm", "rooster worm"] },
   { slugs: ["panacur"], aliases: ["panacur", "panacur purga"] },
@@ -175,11 +177,11 @@ export const NEED_RULES: NeedRule[] = [
   { id: "agua-pollitos", match: ["agua de los pollitos", "agua para pollitos"], slugs: ["clear-chicks-gotas", "cure-chest-for-rooster-gotas", "septibron-forte"] },
   { id: "comida", match: ["cuido alimento", "comida", "alimento", "concentrado", "alimentar", "de comer", "cuido diario"], slugs: ["avena", "cinta-azul", "master-pollito"] },
   { id: "respiratorio", match: ["moquillo", "gripa", "mocos", "moco", "respiratorio", "ahogado", "ahogo", "tos", "estornuda", "ronquera", "pal moquillo", "para el moquillo"], slugs: ["cure-chest-for-rooster-gotas", "cure-chest-for-rooster-pastillas", "clear-chicks-gotas", "septibron-forte"] },
-  { id: "purga", match: ["purga", "purgar", "desparasitar", "desparasitante", "desparasitantes", "vermifugo", "vermifugos", "lombriz", "lombrices", "gusano", "gusanos", "parasito", "parasitos", "parasitosis"], slugs: ["gallo-purga", "galliverm-super", "vermi-ultra", "vermicina-vermifugo"] },
+  { id: "purga", match: ["purga", "purgar", "purgarlos", "purgante", "purgantes", "esparacitante", "esparasitante", "desparacitante", "desparacitar", "desparasitar", "desparasitante", "desparasitantes", "vermifugo", "vermifugos", "lombriz", "lombrices", "gusano", "gusanos", "parasito", "parasitos", "parasitosis"], slugs: ["gallo-purga", "galliverm-super", "vermi-ultra", "vermicina-vermifugo"] },
   // "dopar" (el verbo) faltaba: "goticas para dopar los gallos" no matcheaba NADA
   // aquí y quedaba a merced del fuzzy, que lo mandaba a Botas. "goticas" en jerga
   // gallera es el doping en gotas.
-  { id: "doping", match: ["pelea", "peleas", "energia", "dope", "doping", "dopin", "que lo levante", "energizante", "para la pelea", "topada", "dopar", "doparlo", "dopalo", "para dopar", "dopar los gallos", "dopar el gallo", "goticas para dopar", "gotas para dopar", "goticas", "gotica"], categorySlug: "doping-energizantes" },
+  { id: "doping", match: ["pelea", "peleas", "energia", "dope", "doping", "dopin", "dopping", "dopaje", "dopi", "doppy", "dopy", "adope", "el dia de la exhibicion", "dia de exhibicion", "para la exhibicion", "para exhibicion", "antes de la pelea", "dia de la pelea", "antes del juego", "para el juego", "gallera", "que lo levante", "energizante", "para la pelea", "topada", "dopar", "doparlo", "dopalo", "para dopar", "dopar los gallos", "dopar el gallo", "goticas para dopar", "gotas para dopar", "goticas", "gotica"], categorySlug: "doping-energizantes" },
   { id: "engorde", match: ["engorde", "engordar", "peso", "masa", "musculo", "musculatura", "masa muscular"], slugs: ["rooster-deluxe-max", "weight-muscle"] },
   { id: "pollitos", match: ["pollitos", "pollito", "levante", "cria", "crias"], slugs: ["rooster-deluxe-chicks", "chicks-vitamax", "master-pollito"] },
   { id: "piojos", match: ["piojos", "piojo", "pulgas", "pulga", "acaros", "acaro", "garrapata", "garrapatas"], slugs: ["lice-free", "shampoo-plume-king"] },
@@ -190,6 +192,11 @@ export const NEED_RULES: NeedRule[] = [
   { id: "entrenar", match: ["entrenar", "entrenamiento", "topar", "topas", "corretear", "corretiar"], slugs: ["botas-cuero", "mona", "piquera-peruana"] },
   { id: "marcar", match: ["marcar", "marcaje", "identificar"], slugs: ["placas-personalizadas"] },
   { id: "afeitar", match: ["afeitar", "motilar", "rapar"], slugs: ["rooster-shave", "tijera-roja"] },
+  // "el B12" sin decir cuál (26-nov: quedaba sin respuesta) → las B12 que hay.
+  { id: "b12", match: ["b12", "vitamina b12", "complejo b"], slugs: ["super-vitamina-b12-5500-inyectable", "super-b12-max", "ultra-gallo-b12-5500", "super-tron-b12", "compleland-b12-oral"] },
+  // "para las gallinas, que pongan" iba a Galliverm (desparasitante) por parecido.
+  { id: "gallinas", match: ["que pongan", "paque pongan", "pa que pongan", "postura", "ponedora", "ponedoras", "para las gallinas", "pa las gallinas", "gallinas", "gallina"], slugs: ["hens", "rooster-deluxe-suplement"] },
+  { id: "calzar", match: ["calzar", "calsar", "para calzar", "kit de calza", "calza"], slugs: ["espadadrapo-blanco", "percloruro", "cera-dominicana", "corta-espuela"] },
   { id: "vitaminas", match: ["vitamina", "vitaminas", "fortalecer", "cuido", "etapa final", "fortaleza"], categorySlug: "vitaminas-y-suplementos" },
 ];
 

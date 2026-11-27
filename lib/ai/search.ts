@@ -110,6 +110,8 @@ const FORMAS: { forma: string; q: RegExp; prod: RegExp }[] = [
   // pedía goticas recibía inyectables.
   { forma: "gotas", q: /\b(gota|gotita|gotic|gotero|goteo)\w*/, prod: /(\b(gota|gotero)\w*|💧)/ },
   { forma: "polvo", q: /\b(polvo|polvos)\w*/, prod: /\b(polvo)\w*/ },
+  // "vitamina bebible" terminaba en una INYECTABLE (26-nov Rooster).
+  { forma: "oral", q: /\b(bebible|bebibles|tomad|oral|en el agua|bebedero)\w*/, prod: /(\boral\b|liquid|bebedero|litro|\b(gota|gotero)\w*|💧)/ },
   { forma: "pastillas", q: /\b(pastilla|tableta|capsul|caps|comprimid|pildora)\w*/, prod: /\b(pastilla|tableta|capsul|caps|comprimid)\w*/ },
   { forma: "shampoo", q: /\b(shampoo|champu)\w*/, prod: /\b(shampoo|champu)\w*/ },
   { forma: "topico", q: /\b(ungu|unguent|pomada|crema|roll|topic|frota)\w*/, prod: /\b(ungu|unguent|pomada|crema|roll|topic|frota)\w*/ },
