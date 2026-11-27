@@ -24,6 +24,8 @@ export const ERRORES = [
   "ofrecio_contra_entrega",
   "mando_cuentas_antes_de_tiempo",
   "repitio_mensaje_o_perdio_contexto",
+  // Rancho de las Estrellas (venta de ejemplares, chats reales 25-26 nov):
+  "fotos_mal_o_telegram_repetido",
   "otro_error",
 ] as const;
 
@@ -53,6 +55,7 @@ export const NOMBRE_ERROR: Record<string, string> = {
   ofrecio_contra_entrega: "ofreció contra entrega",
   mando_cuentas_antes_de_tiempo: "cuentas antes de tiempo",
   repitio_mensaje_o_perdio_contexto: "repitió/perdió el hilo",
+  fotos_mal_o_telegram_repetido: "fotos/Telegram mal",
   otro_error: "otro",
 };
 
@@ -115,10 +118,16 @@ export function diaAnterior(dia: string): string {
  *  · animals-deluxe: chats en livechat_mensajes (sync cada 5 min) · contra entrega
  *  · rooster-deluxe: otra cuenta de UChat (f287229) sin Live Chat → se leen por la API
  *    de UChat con ROOSTER_UCHAT_API_TOKEN · pago anticipado */
-type CfgMarca = { nombre: string; tokenEnv: string; fuente: "livechat" | "uchat"; modo: "contra_entrega" | "anticipado" };
+type CfgMarca = {
+  nombre: string; tokenEnv: string; fuente: "livechat" | "uchat"; modo: "contra_entrega" | "anticipado" | "rancho";
+  /** Bot que no vende por la plataforma (sin tenant ni pedidos en la base): "pedidos" = chats con cuentas enviadas. */
+  sinTenant?: boolean;
+};
 export const MARCAS_REPORTE: Record<string, CfgMarca> = {
   "animals-deluxe": { nombre: "Animals Deluxe", tokenEnv: "UCHAT_API_TOKEN", fuente: "livechat", modo: "contra_entrega" },
   "rooster-deluxe": { nombre: "Rooster Deluxe", tokenEnv: "ROOSTER_UCHAT_API_TOKEN", fuente: "uchat", modo: "anticipado" },
+  // Rancho de las Estrellas: cuenta UChat aparte (f276483), vende ejemplares con abono; solo UChat.
+  "rancho-estrellas": { nombre: "Rancho de las Estrellas", tokenEnv: "RANCHO_UCHAT_API_TOKEN", fuente: "uchat", modo: "rancho", sinTenant: true },
 };
 const cfgDe = (slug: string): CfgMarca => MARCAS_REPORTE[slug] || MARCAS_REPORTE["animals-deluxe"];
 const UCHAT_BASE = () => (process.env.UCHAT_API_BASE || "https://www.uchat.com.au/api").replace(/\/$/, "");
@@ -143,6 +152,7 @@ async function tenantId(slug: string): Promise<string | null> {
 
 /** Cifras que salen directo de la base (sin IA). */
 export async function cifras(slug: string, dia: string) {
+  if (cfgDe(slug).sinTenant) return { tid: "", chats: 0, pedidos: 0, ventas_cop: 0, pedidos_no_creados: 0 };
   const tid = await tenantId(slug);
   if (!db || !tid) throw new Error("sin_db_o_tenant");
   const excluir = sql.join(internos().map((x) => sql`${x}`), sql`, `);
@@ -200,7 +210,7 @@ async function chatsDelDia(tid: string, dia: string): Promise<ChatDia[]> {
  *  /subscribers viene ordenado por última interacción: se pagina hasta pasar el día. */
 async function chatsDesdeUchat(tid: string, slug: string, dia: string): Promise<ChatDia[]> {
   const token = process.env[cfgDe(slug).tokenEnv] || "";
-  if (!token || !db) return [];
+  if (!token) return [];
   const diaDe = (unix: number) => new Date(unix * 1000).toLocaleDateString("en-CA", { timeZone: TZ });
   const horaDe = (unix: number) => new Date(unix * 1000).toLocaleTimeString("en-GB", { timeZone: TZ, hour: "2-digit", minute: "2-digit" });
   const corte = new Date(`${dia}T00:00:00-05:00`).getTime() - 86_400_000; // margen de 1 día por zona horaria
@@ -217,9 +227,9 @@ async function chatsDesdeUchat(tid: string, slug: string, dia: string): Promise<
     }
     if (viejo) break;
   }
-  const tels = new Set(filas<{ t: string }>(await db.execute(sql`
+  const tels = new Set(tid && db ? filas<{ t: string }>(await db.execute(sql`
     select right(regexp_replace(coalesce(telefono,''), '\\D', '', 'g'), 10) t from orders
-    where tenant_id = ${tid} and (created_at at time zone ${TZ})::date = ${dia}::date`)).map((r) => r.t));
+    where tenant_id = ${tid} and (created_at at time zone ${TZ})::date = ${dia}::date`)).map((r) => r.t) : []);
   const excl = new Set(internos());
   const out = await enParalelo(subs.filter((x) => !excl.has(x.ns)), 5, async (sb): Promise<ChatDia | null> => {
     const j = await uchatGet(token, `/subscriber/chat-messages?user_ns=${encodeURIComponent(sb.ns)}&include_bot=1&limit=100`);
@@ -255,10 +265,16 @@ let ultimoErrorOpenAI = "";
 const JUEZ_ANTICIPADO = `Revisás chats de WhatsApp del bot de ventas de PAGO ANTICIPADO de Rooster Deluxe (suplementos e implementos para gallos finos; el cliente TRANSFIERE el valor de los productos ANTES del despacho y el ENVÍO lo paga al recibir según su zona — así funciona, no es error). Abajo están el catálogo y las reglas OFICIALES: son la única verdad.
 Marcá un error SOLO si es claro y verificable: precio distinto al catálogo o cambiar de precio en el mismo chat; producto distinto al que pidió el cliente o forma equivocada (gotas/inyectable/pastillas/polvo/crema); dosis o dato que no está en el catálogo; el BOT ofrece o acepta contra entrega (ofrecio_contra_entrega); el bot manda las cuentas de pago sin haber dado antes el producto y el total, o cuando el cliente dijo "más tarde/te aviso/lo pienso" (mando_cuentas_antes_de_tiempo); el bot repite el mismo mensaje, vuelve a saludar como si fuera nuevo, o pregunta algo que el cliente ya dijo (repitio_mensaje_o_perdio_contexto); no responder o responder doble. NO son errores: el tono o el saludo inicial; que el cliente no compre; lo que escribe un ASESOR humano (aunque ofrezca contra entrega o precio por mayor: eso lo decide el negocio); decir "el envío lo pagas al recibir"; una dosis igual al catálogo con otras palabras. Ante la duda, NO es error.`;
 
+export const JUEZ_RANCHO = `Revisás chats de WhatsApp del bot del RANCHO DE LAS ESTRELLAS (Victor vende ejemplares de gallo fino: crestón, listo, padrón, gallina y la promo de diciembre en cuido). Así vende el negocio y NO es error: abono desde doscientos mil para ver la galería de disponibles, devolución si no le gusta, Telegram con fotos gratis, envío aparte en bus, combos de 2 meses agotados, tono paisa con bendiciones, respuestas en audio. Abajo están el catálogo y las reglas OFICIALES: son la única verdad.
+Marcá un error SOLO si es claro y verificable: precio distinto al catálogo (precio_incorrecto); habló de otro ejemplar distinto al que preguntó el cliente (producto_equivocado); dio un dato que no está en el catálogo, como costo de envío internacional, historia de una línea o fecha de combos (dato_o_dosis_inventada); mandó las cuentas sin haber dado antes precio y proceso del abono, o sin que el cliente dijera sí o pidiera pagar (mando_cuentas_antes_de_tiempo); saludó o mandó la misma imagen, Telegram, promo o cuentas más de una vez, o preguntó algo que el cliente ya dijo (repitio_mensaje_o_perdio_contexto); el cliente pidió fotos y no recibió ni la imagen de precios ni Telegram, o le repitió Telegram (fotos_mal_o_telegram_repetido); dejó sin respuesta un mensaje del cliente que no estaba escalado, o respondió doble (no_respondio_o_respuesta_doble). NO son errores: que pida abono para ver la galería; lo que escribe un ASESOR humano; que no responda después de pasar el chat a la encargada; el tono. Ante la duda, NO es error.`;
+
 async function juzgar(ctx: string, ch: ChatDia, modelo: string, modo: CfgMarca["modo"] = "contra_entrega"): Promise<ChatRevisado | null> {
   const key = process.env.OPENAI_API_KEY || "";
   if (!key) return null;
-  const sistema = modo === "anticipado" ? `${JUEZ_ANTICIPADO}
+  const sistema = modo === "rancho" ? `${JUEZ_RANCHO}
+Respondé SOLO JSON: {"compro": boolean (true solo si mandó comprobante de pago), "motivo": una de ${JSON.stringify(MOTIVOS)}, "producto": "ejemplar que le interesó o vacío", "errores": [{"tipo": una de ${JSON.stringify(ERRORES)}, "detalle": "frase corta en español con lo que pasó"}]}
+
+${ctx}` : modo === "anticipado" ? `${JUEZ_ANTICIPADO}
 Respondé SOLO JSON: {"compro": boolean, "motivo": una de ${JSON.stringify(MOTIVOS)}, "producto": "producto principal que le interesó o vacío", "errores": [{"tipo": una de ${JSON.stringify(ERRORES)}, "detalle": "frase corta en español con lo que pasó"}]}
 
 ${ctx}` : `Revisás chats de WhatsApp del bot de ventas CONTRA ENTREGA de Animals Deluxe (suplementos para gallos de pelea, perros y caballos; el cliente paga al recibir). Abajo están el catálogo y las reglas OFICIALES que el bot debe cumplir: son la única verdad.
@@ -314,6 +330,8 @@ export async function generarReporte(slug: string, dia: string, opts: { modelo?:
   let chats = cfg.fuente === "uchat" ? await chatsDesdeUchat(base.tid, slug, dia) : await chatsDelDia(base.tid, dia);
   // Sin Live Chat, los chats del día se cuentan desde UChat.
   if (cfg.fuente === "uchat") base.chats = chats.length;
+  // Sin pedidos en la base: cuenta los chats donde el bot mandó las cuentas (cliente decidido).
+  if (cfg.sinTenant) base.pedidos = chats.filter((c) => c.lineas.some((l) => / BOT: .*BANCOLOMBIA/i.test(l))).length;
   if (opts.limite) chats = chats.slice(0, opts.limite);
   const modelo = opts.modelo || process.env.REPORTE_MODELO || "gpt-4o-mini";
   ultimoErrorOpenAI = "";
@@ -388,7 +406,9 @@ export function parametrosPlantilla(hoy: Reporte, ayer: Reporte | null): string[
   // La plantilla es la misma para las dos marcas: la fecha lleva el nombre de la marca
   // cuando no es Animals, para que en el WhatsApp de control no se confundan.
   return [
-    hoy.tenant && hoy.tenant !== "animals-deluxe" ? `${cfgDe(hoy.tenant).nombre.toUpperCase()} · ${fecha}` : fecha,
+    hoy.tenant && hoy.tenant !== "animals-deluxe"
+      ? `${cfgDe(hoy.tenant).nombre.toUpperCase()}${cfgDe(hoy.tenant).sinTenant ? " (pedidos = cuentas enviadas)" : ""} · ${fecha}`
+      : fecha,
     dif(hoy.chats, ayer?.chats),
     dif(hoy.pedidos, ayer?.pedidos),
     dif(hoy.ventas_cop, ayer?.ventas_cop, cop),
